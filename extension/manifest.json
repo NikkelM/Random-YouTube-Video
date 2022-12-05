@@ -17,7 +17,8 @@
 			],
 			"matches": [
 				"*://*.youtube.com/channel/*",
-				"*://*.youtube.com/@*"
+				"*://*.youtube.com/@*",
+				"*://*.youtube.com/c/*"
 			],
 			"run_at": "document_idle"
 		}

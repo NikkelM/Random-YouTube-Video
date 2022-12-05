@@ -1,3 +1,7 @@
+let oldURL = getChannelUrl(window.location.href)
+
+document.addEventListener('yt-navigate-start', handleNavigateStart);
+
 var observer = new MutationObserver(function (mutations, me) {
 	// `mutations` is an array of mutations that occurred
 	// `me` is the MutationObserver instance
@@ -14,6 +18,30 @@ observer.observe(document, {
 	childList: true,
 	subtree: true
 });
+
+function handleNavigateStart() {
+  const newUrl = getChannelUrl(window.location.href);
+  
+  if (newUrl && newUrl !== oldURL) {
+    oldURL = newUrl;
+    window.location.reload();
+  }
+}
+
+function getChannelUrl(url) {
+  const urlParts = url.split('/');
+
+  // This can be either "channel", "c" or "@Username"
+  if(urlParts[3].startsWith('@')) {
+    return urlParts.slice(0, 4).join('/');
+  } else if (urlParts[3] == "c") {
+    return urlParts.slice(0, 3).join('/') + '/@' + urlParts[4];
+  } else if(urlParts[3] == "channel") {
+    return urlParts.slice(0, 5).join('/');
+  }
+  // We're not on a channel page 
+  return null;
+}
 
 function addShuffleButtonSkeleton() {
 	let newButton = document.createElement("div");
