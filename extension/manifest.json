@@ -14,8 +14,7 @@
       "js": ["content.js"],
       "matches": [
         "*://*.youtube.com/channel/*",
-		"*://*.youtube.com/@*",
-		"*://*.youtube.com/*"
+		"*://*.youtube.com/@*"
       ],
       "run_at": "document_start"
     }
