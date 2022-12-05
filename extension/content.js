@@ -98,6 +98,8 @@ function addButtonShape() {
 	document.getElementById('inner-header-container').children.namedItem('buttons').children.namedItem("shuffle-button").addEventListener("click", shuffleVideos)
 }
 
-function shuffleVideos() {
-	console.log("Shuffle button clicked")
+async function shuffleVideos() {
+	await pingAPI()
+	  
+	// chrome.storage.local.clear()
 }
