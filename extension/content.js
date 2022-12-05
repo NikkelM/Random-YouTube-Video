@@ -55,6 +55,7 @@ function addButtonShape() {
 	button.classList.add("yt-spec-button-shape-next--tonal")
 	button.classList.add("yt-spec-button-shape-next--mono")
 	button.classList.add("yt-spec-button-shape-next--size-m")
+	button.setAttribute("aria-label", "Shuffle all Videos")
 
 	let buttonDiv = document.createElement("div")
 	buttonDiv.classList.add("cbox")
