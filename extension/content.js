@@ -20,6 +20,7 @@ function addShuffleButtonSkeleton() {
 	newButton.id = "shuffle-button"
 	newButton.classList.add("style-scope")
 	newButton.classList.add("ytd-c4-tabbed-header-renderer")
+	newButton.style = "align-items: center; display: flex; flex-direction: row;"
 
 	let buttonRenderer = document.createElement("ytd-button-renderer")
 	buttonRenderer.classList.add("style-scope")
