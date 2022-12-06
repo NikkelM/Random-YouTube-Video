@@ -94,7 +94,7 @@ function addButtonShape() {
 	buttonSpan.classList.add("yt-core-attributed-string")
 	buttonSpan.classList.add("yt-core-attributed-string--white-space-no-wrap")
 	buttonSpan.setAttribute("role", "text")
-	buttonSpan.innerHTML = "Shuffle"
+	buttonSpan.innerHTML = "Random"
 	
 	buttonDiv.appendChild(buttonSpan)
 	button.appendChild(buttonDiv)
@@ -127,7 +127,5 @@ function addButtonShape() {
 }
 
 async function shuffleVideos() {
-	await pingAPI()
-	  
-	// chrome.storage.local.clear()
+	await pingAPI();
 }
