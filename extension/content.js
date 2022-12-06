@@ -19,6 +19,8 @@ observer.observe(document, {
 	subtree: true
 });
 
+// -------- functions --------
+
 function handleNavigateStart() {
 	const newUrl = getChannelUrl(window.location.href);
 
