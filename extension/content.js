@@ -29,6 +29,10 @@ function handleNavigateStart() {
 }
 
 function getChannelUrl(url) {
+	if (!isChannelUrl(url)) {
+		return null;
+	}
+
 	const urlParts = url.split('/');
 
 	// This can be either "channel", "c" or "@Username"
@@ -39,14 +43,13 @@ function getChannelUrl(url) {
 	} else if (urlParts[3] == "channel") {
 		return urlParts.slice(0, 5).join('/');
 	}
-	// We're not on a channel page 
-	return null;
+	throw new Error('Url is a channel url, but not handled correctly');
 }
 
 function buildShuffleButton() {
 	const currUrl = window.location.href;
 	console.log(currUrl);
-	if(isChannelUrl(currUrl)) {
+	if (isChannelUrl(currUrl)) {
 		console.log("Building shuffle button");
 		addShuffleButtonSkeleton();
 	}
