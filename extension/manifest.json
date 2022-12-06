@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "Random YouTube Video",
-	"description": "Play a random video from a specific YouTube channel.",
+	"description": "Play a random video uploaded on the current YouTube channel.",
 	"version": "0.0.1",
 	"icons": {
 		"16": "images/icon-16.png",
