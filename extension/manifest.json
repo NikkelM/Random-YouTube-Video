@@ -12,9 +12,9 @@
 	"content_scripts": [
 		{
 			"js": [
-				"utils.js",
-				"youtubeAPI.js",
-				"content.js"
+				"js/utils.js",
+				"js/youtubeAPI.js",
+				"js/content.js"
 			],
 			"matches": [
 				"*://*.youtube.com/*"
@@ -23,7 +23,7 @@
 		}
 	],
 	"action": {
-		"default_popup": "popup.html",
+		"default_popup": "html/popup.html",
 		"default_icon": {
 			"16": "images/icon-16.png",
 			"32": "images/icon-32.png",
