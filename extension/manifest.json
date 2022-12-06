@@ -33,7 +33,6 @@
 	},
 	"permissions": [
 		"activeTab",
-		"scripting",
 		"storage"
 	]
 }
