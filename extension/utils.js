@@ -5,3 +5,8 @@ console.log = function () {
 	args.unshift("[youtube-random-video]: ");
 	log.apply(console, args);
 }
+
+function isChannelUrl(url) {
+	const urlParts = url.split('/');
+	return urlParts[3].startsWith('@') || urlParts[3] == "c" || urlParts[3] == "channel";
+}

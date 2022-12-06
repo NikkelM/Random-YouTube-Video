@@ -17,9 +17,7 @@
 				"content.js"
 			],
 			"matches": [
-				"*://*.youtube.com/channel/*",
-				"*://*.youtube.com/@*",
-				"*://*.youtube.com/c/*"
+				"*://*.youtube.com/*"
 			],
 			"run_at": "document_idle"
 		}

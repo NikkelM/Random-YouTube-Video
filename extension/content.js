@@ -7,7 +7,7 @@ var observer = new MutationObserver(function (mutations, me) {
 	// `me` is the MutationObserver instance
 	var buttons = document.getElementById('inner-header-container');
 	if (buttons) {
-		addShuffleButtonSkeleton();
+		buildShuffleButton();
 		me.disconnect(); // stop observing
 		return;
 	}
@@ -20,27 +20,36 @@ observer.observe(document, {
 });
 
 function handleNavigateStart() {
-  const newUrl = getChannelUrl(window.location.href);
-  
-  if (newUrl && newUrl !== oldURL) {
-    oldURL = newUrl;
-    window.location.reload();
-  }
+	const newUrl = getChannelUrl(window.location.href);
+
+	if (newUrl !== oldURL) {
+		oldURL = newUrl;
+		window.location.reload();
+	}
 }
 
 function getChannelUrl(url) {
-  const urlParts = url.split('/');
+	const urlParts = url.split('/');
 
-  // This can be either "channel", "c" or "@Username"
-  if(urlParts[3].startsWith('@')) {
-    return urlParts.slice(0, 4).join('/');
-  } else if (urlParts[3] == "c") {
-    return urlParts.slice(0, 3).join('/') + '/@' + urlParts[4];
-  } else if(urlParts[3] == "channel") {
-    return urlParts.slice(0, 5).join('/');
-  }
-  // We're not on a channel page 
-  return null;
+	// This can be either "channel", "c" or "@Username"
+	if (urlParts[3].startsWith('@')) {
+		return urlParts.slice(0, 4).join('/');
+	} else if (urlParts[3] == "c") {
+		return urlParts.slice(0, 3).join('/') + '/@' + urlParts[4];
+	} else if (urlParts[3] == "channel") {
+		return urlParts.slice(0, 5).join('/');
+	}
+	// We're not on a channel page 
+	return null;
+}
+
+function buildShuffleButton() {
+	const currUrl = window.location.href;
+	console.log(currUrl);
+	if(isChannelUrl(currUrl)) {
+		console.log("Building shuffle button");
+		addShuffleButtonSkeleton();
+	}
 }
 
 function addShuffleButtonSkeleton() {
@@ -53,11 +62,11 @@ function addShuffleButtonSkeleton() {
 	let buttonRenderer = document.createElement("ytd-button-renderer")
 	buttonRenderer.classList.add("style-scope")
 	buttonRenderer.classList.add("ytd-c4-tabbed-header-renderer")
-	
+
 	newButton.appendChild(buttonRenderer)
 
 	document.getElementById('inner-header-container').children.namedItem('buttons').prepend(newButton);
-	
+
 	// Wait for the button to get the child elements defined by the element type
 	var observer = new MutationObserver(function (mutations, me) {
 		// `mutations` is an array of mutations that occurred
@@ -69,7 +78,7 @@ function addShuffleButtonSkeleton() {
 			return;
 		}
 	});
-	
+
 	// start observing
 	observer.observe(document, {
 		childList: true,
@@ -78,7 +87,6 @@ function addShuffleButtonSkeleton() {
 }
 
 function addButtonShape() {
-
 	let button = document.createElement("button")
 	button.classList.add("yt-spec-button-shape-next")
 	button.classList.add("yt-spec-button-shape-next--tonal")
@@ -95,7 +103,7 @@ function addButtonShape() {
 	buttonSpan.classList.add("yt-core-attributed-string--white-space-no-wrap")
 	buttonSpan.setAttribute("role", "text")
 	buttonSpan.innerHTML = "Random"
-	
+
 	buttonDiv.appendChild(buttonSpan)
 	button.appendChild(buttonDiv)
 
