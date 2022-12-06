@@ -90,6 +90,7 @@ function addShuffleButtonSkeleton() {
 }
 
 function addButtonShape() {
+	// The button itself
 	let button = document.createElement("button")
 	button.classList.add("yt-spec-button-shape-next")
 	button.classList.add("yt-spec-button-shape-next--tonal")
@@ -97,6 +98,21 @@ function addButtonShape() {
 	button.classList.add("yt-spec-button-shape-next--size-m")
 	button.setAttribute("aria-label", "Shuffle all Videos")
 
+	// Load the font used for the "shuffle" icon
+	let iconFont = document.createElement("link");
+	iconFont.rel = "stylesheet";
+	iconFont.href = "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0";
+
+	document.head.appendChild(iconFont);
+
+	// The shuffle icon, using a Google font icon
+	let shuffleIcon = document.createElement("span");
+	shuffleIcon.classList.add("material-symbols-outlined");
+	shuffleIcon.innerHTML = "shuffle";
+
+	button.appendChild(shuffleIcon);
+
+	// Various divs and spans to make the button look like a normal YouTube button
 	let buttonDiv = document.createElement("div")
 	buttonDiv.classList.add("cbox")
 	buttonDiv.classList.add("yt-spec-button-shape-next--button-text-content")
@@ -105,10 +121,10 @@ function addButtonShape() {
 	buttonSpan.classList.add("yt-core-attributed-string")
 	buttonSpan.classList.add("yt-core-attributed-string--white-space-no-wrap")
 	buttonSpan.setAttribute("role", "text")
-	buttonSpan.innerHTML = "Random"
+	buttonSpan.innerHTML = "&nbsp;Random"
 
-	buttonDiv.appendChild(buttonSpan)
-	button.appendChild(buttonDiv)
+	buttonDiv.appendChild(buttonSpan);
+	button.appendChild(buttonDiv);
 
 	let buttonTouchResponse = document.createElement("yt-touch-feedback-shape")
 	buttonTouchResponse.style.borderRadius = "inherit"
@@ -132,9 +148,11 @@ function addButtonShape() {
 
 	button.appendChild(buttonTouchResponse)
 
+	// Add the button to the page
 	document.getElementById('inner-header-container').children.namedItem('buttons').children.namedItem("shuffle-button").children[0].children[0].appendChild(button);
 
-	document.getElementById('inner-header-container').children.namedItem('buttons').children.namedItem("shuffle-button").addEventListener("click", shuffleVideos)
+	// Add the event listener that shuffles the videos to the button
+	document.getElementById('inner-header-container').children.namedItem('buttons').children.namedItem("shuffle-button").addEventListener("click", shuffleVideos);
 }
 
 async function shuffleVideos() {
