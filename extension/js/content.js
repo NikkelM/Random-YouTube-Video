@@ -52,7 +52,6 @@ function getChannelUrl(url) {
 
 function buildShuffleButton() {
 	const currUrl = window.location.href;
-	console.log(currUrl);
 	if (isChannelUrl(currUrl)) {
 		console.log("Building shuffle button");
 		addShuffleButtonSkeleton();
