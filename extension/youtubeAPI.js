@@ -40,10 +40,10 @@ async function pingAPI() {
 
 async function getPlaylistFromLocalStorage(playlistId) {
 	let localStoragePlaylists = await chrome.storage.local.get(["uploadsPlaylists"]).then((result) => {
-		if (result.uploadsPlaylists) {
+		if (result.uploadsPlaylists !== undefined) {
 			return result.uploadsPlaylists;
 		}
-		return null;
+		return {};
 	});
 
 	if (localStoragePlaylists[playlistId]) {
@@ -54,7 +54,7 @@ async function getPlaylistFromLocalStorage(playlistId) {
 	// No information for this playlist is saved in local storage
 	// Ping the youtube api and get the videos in the playlist with playlistId
 	console.log('Uploads playlist for this channel is unknown. Getting it from the API...');
-	uploadsPlaylist = await getWholePlaylistFromAPI(playlistId);
+	return await getWholePlaylistFromAPI(playlistId);
 }
 
 async function getWholePlaylistFromAPI(playlistId) {

@@ -12,6 +12,7 @@
 	"content_scripts": [
 		{
 			"js": [
+				"utils.js",
 				"youtubeAPI.js",
 				"content.js"
 			],
