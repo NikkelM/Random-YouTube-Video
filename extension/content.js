@@ -22,7 +22,7 @@ observer.observe(document, {
 function handleNavigateStart() {
 	const newUrl = getChannelUrl(window.location.href);
 
-	if (newUrl !== oldURL) {
+	if (newUrl && newUrl !== oldURL) {
 		oldURL = newUrl;
 		window.location.reload();
 	}
