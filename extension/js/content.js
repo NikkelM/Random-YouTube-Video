@@ -44,6 +44,8 @@ function getChannelUrl(url) {
 		return urlParts.slice(0, 3).join('/') + '/@' + urlParts[4];
 	} else if (urlParts[3] == "channel") {
 		return urlParts.slice(0, 5).join('/');
+	} else if (urlParts[3] == "user") {
+		return urlParts.slice(0, 5).join('/');
 	}
 	throw new Error('Url is a channel url, but not handled correctly');
 }

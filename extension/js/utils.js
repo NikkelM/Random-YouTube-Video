@@ -8,5 +8,5 @@ console.log = function () {
 
 function isChannelUrl(url) {
 	const urlParts = url.split('/');
-	return urlParts[3].startsWith('@') || urlParts[3] == "c" || urlParts[3] == "channel";
+	return urlParts[3].startsWith('@') || urlParts[3] == "c" || urlParts[3] == "channel" || urlParts[3] == "user";
 }
