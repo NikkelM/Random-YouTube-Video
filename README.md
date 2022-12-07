@@ -4,8 +4,6 @@
 
 [Get it in the Chrome Web store](https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf)
 
-Play a random video uploaded on the current YouTube channel.
-
 Adds a button to YouTube channel pages that plays a random video from that channel.
 
 ## Setup
