@@ -133,6 +133,7 @@ async function updateLocalStoragePlaylistFromApi(playlistId, localStoragePlaylis
 }
 
 async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
+	// TODO: Better error handling for when this returns an error!
 	await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${API_KEY}`)
 		.then((response) => response.json())
 		.then((data) => apiResponse = data);
@@ -147,15 +148,15 @@ async function getAPIKey() {
 		}
 	};
 
-	let resp = await chrome.runtime.sendMessage(msg);
-	
-	console.log(resp);
-	return;
+	let apiKey = await chrome.runtime.sendMessage(msg);
+	console.log(apiKey);
 
-	return await chrome.storage.local.get(["API_KEY"]).then((result) => {
-		if (result) {
-			return result.API_KEY;
-		}
-		return null;
-	});
+	return apiKey;
+
+	// return await chrome.storage.local.get(["API_KEY"]).then((result) => {
+	// 	if (result) {
+	// 		return result.API_KEY;
+	// 	}
+	// 	return null;
+	// });
 }

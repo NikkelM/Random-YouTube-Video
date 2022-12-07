@@ -21,7 +21,6 @@ try {
 	chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		if (request.command === 'get') {
 			readDataOnce(request.data.key).then(sendResponse);
-			return true;
 		}
 
 		// if (request.command === "post") {
@@ -29,7 +28,6 @@ try {
 		// 	sendResponse("This is the result");
 		// 	return true;
 		// }
-
 		return true;
 	});
 
@@ -39,12 +37,15 @@ try {
 	// 	});
 	// }
 
+	// Prefers to get cached data instead of sending a request to the database
 	async function readDataOnce(key) {
-		return await db.ref(key).once('value').then((snapshot) => {
+		const res = await db.ref(key).once('value').then((snapshot) => {
 			return snapshot.val();
 		});
+		
+		return res;
 	}
 
 } catch (error) {
-	console.error(error);
+	console.log(error);
 }
