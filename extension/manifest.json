@@ -32,6 +32,18 @@
 		}
 	},
 	"permissions": [
-		"storage"
-	]
+		"storage",
+    "identity"
+	],
+	"background": {
+    "service_worker": "js/firebase.js"
+  },
+	"oauth2": {
+    "client_id": "141257152664-f2ttfvam44sa3fa7ilsgljimktdfkieo.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAilwrcuRrzIdLxzgbba7oWLNc1PEmXO0o2jKoIqyCjHASU35zMRJ2u+4qseZjgUcavQ+7enlFNlnV6FX9glqfm9n5FgByf2/NsIXG5U3WjmQvd8Wg8a67jWeA2YXE5MYW3v8nntgaLlnFZNa4/ORbvi8K17I0ByWUY9OoBKh8bEJjpbAsieLwG7tTTRfPlxcF0vZqr2lvwsKVSd+VDJTKLg1e1xR6tnatxyjamicu6WFrgmKAe1rgmdc3HFyGbLYGQCtVKbhZxAD1AkLPe4u/5DmE0AXU3l1U1zyZWm2ce2BZawlQsxMvmZf8PvHmjijO9iQDYbBsjkwkDkPSx8VdhwIDAQAB"
 }
