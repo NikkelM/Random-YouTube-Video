@@ -30,7 +30,7 @@ async function pingAPI() {
 	}
 	*/
 	let playlistInfo = await getPlaylistFromLocalStorage(uploadsPlaylistId);
-	
+
 	const randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
 	console.log('A random video has been chosen: ' + randomVideo);
 
@@ -141,6 +141,17 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 }
 
 async function getAPIKey() {
+	const msg = {
+		command: 'get', data: {
+			key: "YOUTUBE_API_KEY"
+		}
+	};
+
+	let resp = await chrome.runtime.sendMessage(msg);
+	
+	console.log(resp);
+	return;
+
 	return await chrome.storage.local.get(["API_KEY"]).then((result) => {
 		if (result) {
 			return result.API_KEY;
