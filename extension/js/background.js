@@ -4,7 +4,9 @@ initExtension();
 
 async function initExtension() {
 	// false if the user has not set an API key
+	console.log("Initializing extension, getting API key...");
 	APIKey = await getAPIKey();
+	console.log("API key: " + APIKey);
 }
 
 async function getAPIKey() {

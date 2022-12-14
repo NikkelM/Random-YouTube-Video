@@ -18,8 +18,8 @@ async function pingAPI() {
 	await initAPI();
 
 	if (!API_KEY) {
-		console.log('No API key set.');
-		return;
+		console.error('No API key set.');
+		throw new Error('No API key set.');
 	}
 	console.log('The current API key is: ' + API_KEY);
 
@@ -143,7 +143,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 		.then((data) => apiResponse = data);
 
 	if (apiResponse["error"]) {
-		throw apiResponse["error"];
+		throw new APIError(apiResponse["error"]["code"], apiResponse["error"]["message"]);
 	}
 	return apiResponse;
 }

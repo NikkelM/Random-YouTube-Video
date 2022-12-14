@@ -18,3 +18,17 @@ function isChannelUrl(url) {
 	const urlParts = url.split('/');
 	return urlParts[3].startsWith('@') || urlParts[3] == "c" || urlParts[3] == "channel" || urlParts[3] == "user";
 }
+
+function isVideoUrl(url) {
+	const urlParts = url.split('/');
+	return urlParts[3].startsWith('watch?v=');
+}
+
+class APIError extends Error {
+	constructor(code, message) {
+		super(message);
+		this.code = code;
+		this.message = message;
+		this.name = "APIError";
+	}
+}
