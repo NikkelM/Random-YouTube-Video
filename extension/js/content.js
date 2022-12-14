@@ -178,6 +178,7 @@ async function addButtonShape() {
 }
 
 async function shuffleVideos() {
+	shuffleButton.children[0].children[0].children[0].children[1].children[0].innerHTML = `&nbsp;Please wait...`;
 	try {
 		await pingAPI();
 	} catch (error) {
