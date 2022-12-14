@@ -4,7 +4,7 @@ let API_KEY = null;
 
 async function initAPI() {
 	if (!API_KEY) {
-		console.log('Getting API key from local storage...');
+		console.log('Getting API key from database...');
 		API_KEY = await getAPIKey();
 	}
 }
@@ -16,7 +16,6 @@ async function pingAPI() {
 		console.log('No API key set.');
 		return;
 	}
-	console.log('The current API key is: ' + API_KEY);
 
 	const uploadsPlaylistId = document.querySelector('[itemprop=channelId]').getAttribute('content').replace('UC', 'UU');
 	console.log('Pinging API for playlist ID: ' + uploadsPlaylistId);
@@ -29,7 +28,7 @@ async function pingAPI() {
 		]
 	}
 	*/
-	let playlistInfo = await getPlaylistFromLocalStorage(uploadsPlaylistId);
+	let playlistInfo = await tryGetPlaylistFromLocalStorage(uploadsPlaylistId);
 
 	const randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
 	console.log('A random video has been chosen: ' + randomVideo);
@@ -38,7 +37,7 @@ async function pingAPI() {
 	window.location.href = 'https://www.youtube.com/watch?v=' + randomVideo;
 }
 
-async function getPlaylistFromLocalStorage(playlistId) {
+async function tryGetPlaylistFromLocalStorage(playlistId) {
 	let localStoragePlaylists = await chrome.storage.local.get(["uploadsPlaylists"]).then((result) => {
 		if (result.uploadsPlaylists !== undefined) {
 			return result.uploadsPlaylists;
@@ -47,6 +46,8 @@ async function getPlaylistFromLocalStorage(playlistId) {
 	});
 
 	if (localStoragePlaylists[playlistId]) {
+		// TODO: Introduce "lastUpdated" field in db to control how often we query the API. E.g. only once every 24 hours.
+		// TODO: Only get updated values from db once per day as well, and update from db to youtube API once per day.
 		localStoragePlaylists = await updateLocalStoragePlaylistFromApi(playlistId, localStoragePlaylists);
 		return localStoragePlaylists[playlistId];
 	}
@@ -61,11 +62,12 @@ async function getWholePlaylistFromAPI(playlistId) {
 	// This function is only called if there is no playlist already saved in local storage
 	let uploadsPlaylist = {
 		"lastVideoPublishedAt": null,
+		"lastUpdatedAt": Date.now(),
 		"videos": []
 	};
 	let pageToken = "";
 
-	// The first time, we also want to get the uploadTime of the most recent video
+	// We also want to get the uploadTime of the most recent video
 	let apiResponse = await getPlaylistSnippetFromAPI(playlistId, pageToken);
 
 	uploadsPlaylist["videos"] = uploadsPlaylist["videos"].concat(apiResponse["items"].map((video) => video["contentDetails"]["videoId"]));
@@ -89,7 +91,19 @@ async function getWholePlaylistFromAPI(playlistId) {
 
 	localStoragePlaylists[playlistId] = uploadsPlaylist;
 
-	await chrome.storage.local.set({ "uploadsPlaylists": localStoragePlaylists })
+	// Update local storage
+	// await chrome.storage.local.set({ "uploadsPlaylists": localStoragePlaylists });
+	
+	// Update db
+	const msg = {
+		command: 'post',
+		data: {
+			key: "uploadsPlaylists/" + playlistId,
+			val: uploadsPlaylist
+		}
+	};
+
+	chrome.runtime.sendMessage(msg);
 
 	return uploadsPlaylist;
 }
@@ -143,13 +157,13 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 
 async function getAPIKey() {
 	const msg = {
-		command: 'get', data: {
+		command: 'get',
+		data: {
 			key: "YOUTUBE_API_KEY"
 		}
 	};
 
 	let apiKey = await chrome.runtime.sendMessage(msg);
-	console.log(apiKey);
 
 	return apiKey;
 

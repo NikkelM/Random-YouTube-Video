@@ -21,21 +21,17 @@ try {
 	chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		if (request.command === 'get') {
 			readDataOnce(request.data.key).then(sendResponse);
+		}	else if (request.command === "post") {
+			writeData(request.data.key, request.data.val).then(sendResponse);
 		}
 
-		// if (request.command === "post") {
-		// 	writeData(request.data.key, request.data.val);
-		// 	sendResponse("This is the result");
-		// 	return true;
-		// }
 		return true;
 	});
 
-	// async function writeData(key, val) {
-	// 	db.ref().update({
-	// 		[key]: val
-	// 	});
-	// }
+	async function writeData(key, val) {
+		db.ref(key).update(val);
+		return "Update sent to database."
+	}
 
 	// Prefers to get cached data instead of sending a request to the database
 	async function readDataOnce(key) {
