@@ -5,7 +5,12 @@ let API_KEY = null;
 async function initAPI() {
 	if (!API_KEY) {
 		console.log('Getting API key from local storage...');
-		API_KEY = await getAPIKey();
+
+		const msg = {
+			command: 'get_API_key'
+		};
+	
+		API_KEY = await chrome.runtime.sendMessage(msg);
 	}
 }
 
@@ -138,13 +143,4 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 		.then((data) => apiResponse = data);
 
 	return apiResponse;
-}
-
-async function getAPIKey() {
-	return await chrome.storage.local.get(["API_KEY"]).then((result) => {
-		if (result) {
-			return result.API_KEY;
-		}
-		return null;
-	});
 }

@@ -1,6 +1,9 @@
-let oldURL = getChannelUrl(window.location.href)
+// ---------- Initialization ----------
+
+let oldURL = getChannelUrl(window.location.href);
 
 document.addEventListener('yt-navigate-start', handleNavigateStart);
+
 
 var observer = new MutationObserver(function (mutations, me) {
 	// `mutations` is an array of mutations that occurred
@@ -60,16 +63,16 @@ function buildShuffleButton() {
 
 function addShuffleButtonSkeleton() {
 	let newButton = document.createElement("div");
-	newButton.id = "shuffle-button"
-	newButton.classList.add("style-scope")
-	newButton.classList.add("ytd-c4-tabbed-header-renderer")
-	newButton.style = "align-items: center; display: flex; flex-direction: row;"
+	newButton.id = "shuffle-button";
+	newButton.classList.add("style-scope");
+	newButton.classList.add("ytd-c4-tabbed-header-renderer");
+	newButton.style = "align-items: center; display: flex; flex-direction: row;";
 
-	let buttonRenderer = document.createElement("ytd-button-renderer")
-	buttonRenderer.classList.add("style-scope")
-	buttonRenderer.classList.add("ytd-c4-tabbed-header-renderer")
+	let buttonRenderer = document.createElement("ytd-button-renderer");
+	buttonRenderer.classList.add("style-scope");
+	buttonRenderer.classList.add("ytd-c4-tabbed-header-renderer");
 
-	newButton.appendChild(buttonRenderer)
+	newButton.appendChild(buttonRenderer);
 
 	document.getElementById('inner-header-container').children.namedItem('buttons').prepend(newButton);
 
@@ -92,14 +95,28 @@ function addShuffleButtonSkeleton() {
 	});
 }
 
-function addButtonShape() {
+async function addButtonShape() {
+
+	const msg = {
+		command: 'get_API_key'
+	};
+
+	APIKeySet = await chrome.runtime.sendMessage(msg) !== null;
+
+	let shuffleButtonText;
+	if (APIKeySet) {
+		shuffleButtonText = "&nbsp;Random";
+	} else {
+		shuffleButtonText = "&nbsp;No API Key";
+	}
+
 	// The button itself
-	let button = document.createElement("button")
-	button.classList.add("yt-spec-button-shape-next")
-	button.classList.add("yt-spec-button-shape-next--tonal")
-	button.classList.add("yt-spec-button-shape-next--mono")
-	button.classList.add("yt-spec-button-shape-next--size-m")
-	button.setAttribute("aria-label", "Shuffle all Videos")
+	let button = document.createElement("button");
+	button.classList.add("yt-spec-button-shape-next");
+	button.classList.add("yt-spec-button-shape-next--tonal");
+	button.classList.add("yt-spec-button-shape-next--mono");
+	button.classList.add("yt-spec-button-shape-next--size-m");
+	button.setAttribute("aria-label", "Shuffle all Videos");
 
 	// Load the font used for the "shuffle" icon
 	let iconFont = document.createElement("link");
@@ -116,40 +133,40 @@ function addButtonShape() {
 	button.appendChild(shuffleIcon);
 
 	// Various divs and spans to make the button look like a normal YouTube button
-	let buttonDiv = document.createElement("div")
-	buttonDiv.classList.add("cbox")
-	buttonDiv.classList.add("yt-spec-button-shape-next--button-text-content")
+	let buttonDiv = document.createElement("div");
+	buttonDiv.classList.add("cbox");
+	buttonDiv.classList.add("yt-spec-button-shape-next--button-text-content");
 
-	let buttonSpan = document.createElement("span")
-	buttonSpan.classList.add("yt-core-attributed-string")
-	buttonSpan.classList.add("yt-core-attributed-string--white-space-no-wrap")
-	buttonSpan.setAttribute("role", "text")
-	buttonSpan.innerHTML = "&nbsp;Random"
+	let buttonSpan = document.createElement("span");
+	buttonSpan.classList.add("yt-core-attributed-string");
+	buttonSpan.classList.add("yt-core-attributed-string--white-space-no-wrap");
+	buttonSpan.setAttribute("role", "text");
+	buttonSpan.innerHTML = shuffleButtonText;
 
 	buttonDiv.appendChild(buttonSpan);
 	button.appendChild(buttonDiv);
 
-	let buttonTouchResponse = document.createElement("yt-touch-feedback-shape")
-	buttonTouchResponse.style.borderRadius = "inherit"
+	let buttonTouchResponse = document.createElement("yt-touch-feedback-shape");
+	buttonTouchResponse.style.borderRadius = "inherit";
 
-	let buttonTouchResponseDiv = document.createElement("div")
-	buttonTouchResponseDiv.classList.add("yt-spec-touch-feedback-shape")
-	buttonTouchResponseDiv.classList.add("yt-spec-touch-feedback-shape--touch-response")
-	buttonTouchResponseDiv.setAttribute("aria-hidden", "true")
+	let buttonTouchResponseDiv = document.createElement("div");
+	buttonTouchResponseDiv.classList.add("yt-spec-touch-feedback-shape");
+	buttonTouchResponseDiv.classList.add("yt-spec-touch-feedback-shape--touch-response");
+	buttonTouchResponseDiv.setAttribute("aria-hidden", "true");
 
-	let buttonTouchResponseStroke = document.createElement("div")
-	buttonTouchResponseStroke.classList.add("yt-spec-touch-feedback-shape__stroke")
-	buttonTouchResponseStroke.style = ""
+	let buttonTouchResponseStroke = document.createElement("div");
+	buttonTouchResponseStroke.classList.add("yt-spec-touch-feedback-shape__stroke");
+	buttonTouchResponseStroke.style = "";
 
-	let buttonTouchResponseFill = document.createElement("div")
-	buttonTouchResponseFill.classList.add("yt-spec-touch-feedback-shape__fill")
-	buttonTouchResponseFill.style = ""
+	let buttonTouchResponseFill = document.createElement("div");
+	buttonTouchResponseFill.classList.add("yt-spec-touch-feedback-shape__fill");
+	buttonTouchResponseFill.style = "";
 
-	buttonTouchResponseDiv.appendChild(buttonTouchResponseStroke)
-	buttonTouchResponseDiv.appendChild(buttonTouchResponseFill)
-	buttonTouchResponse.appendChild(buttonTouchResponseDiv)
+	buttonTouchResponseDiv.appendChild(buttonTouchResponseStroke);
+	buttonTouchResponseDiv.appendChild(buttonTouchResponseFill);
+	buttonTouchResponse.appendChild(buttonTouchResponseDiv);
 
-	button.appendChild(buttonTouchResponse)
+	button.appendChild(buttonTouchResponse);
 
 	// Add the button to the page
 	document.getElementById('inner-header-container').children.namedItem('buttons').children.namedItem("shuffle-button").children[0].children[0].appendChild(button);
