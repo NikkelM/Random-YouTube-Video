@@ -1,9 +1,9 @@
 // ---------- Initialization ----------
 
 let oldURL = getChannelUrl(window.location.href);
+let shuffleButton = null;
 
 document.addEventListener('yt-navigate-start', handleNavigateStart);
-
 
 var observer = new MutationObserver(function (mutations, me) {
 	// `mutations` is an array of mutations that occurred
@@ -171,10 +171,18 @@ async function addButtonShape() {
 	// Add the button to the page
 	document.getElementById('inner-header-container').children.namedItem('buttons').children.namedItem("shuffle-button").children[0].children[0].appendChild(button);
 
+	shuffleButton = document.getElementById('inner-header-container').children.namedItem('buttons').children.namedItem("shuffle-button");
+
 	// Add the event listener that shuffles the videos to the button
-	document.getElementById('inner-header-container').children.namedItem('buttons').children.namedItem("shuffle-button").addEventListener("click", shuffleVideos);
+	shuffleButton.addEventListener("click", shuffleVideos);
 }
 
 async function shuffleVideos() {
-	await pingAPI();
+	try {
+		await pingAPI();
+	} catch (error) {
+		console.error(error["message"]);
+		shuffleButton.children[0].children[0].children[0].children[1].children[0].innerHTML = `&nbsp;API Error (${error["code"]})`;
+		return;
+	}
 }

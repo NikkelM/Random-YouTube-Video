@@ -9,7 +9,7 @@ async function initAPI() {
 		const msg = {
 			command: 'get_API_key'
 		};
-	
+
 		API_KEY = await chrome.runtime.sendMessage(msg);
 	}
 }
@@ -34,8 +34,8 @@ async function pingAPI() {
 		]
 	}
 	*/
-	let playlistInfo = await getPlaylistFromLocalStorage(uploadsPlaylistId);
-	
+	let	playlistInfo = await getPlaylistFromLocalStorage(uploadsPlaylistId);
+
 	const randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
 	console.log('A random video has been chosen: ' + randomVideo);
 
@@ -142,5 +142,8 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 		.then((response) => response.json())
 		.then((data) => apiResponse = data);
 
+	if (apiResponse["error"]) {
+		throw apiResponse["error"];
+	}
 	return apiResponse;
 }

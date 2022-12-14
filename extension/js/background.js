@@ -25,7 +25,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	} else if (request.command === 'refresh_API_key') {
 		APIKey = request.data.val;
 	}
-	
+
 	return true;
 });
 
