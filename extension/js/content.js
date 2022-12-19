@@ -178,8 +178,12 @@ async function shuffleVideos() {
 		await pingAPI();
 	} catch (error) {
 		console.error(error["message"]);
-		if (error instanceof APIError) {
-			displayText = `&nbsp;API Error (${error.code})`;
+		if (error instanceof YoutubeVideoError) {
+			if (error.code) {
+				displayText = `&nbsp;API Error (${error.code})`;
+			} else {
+				displayText = `&nbsp;${error.message}`;
+			}
 		} else {
 			displayText = `&nbsp;Unknown Error`;
 		}

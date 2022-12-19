@@ -24,11 +24,11 @@ function isVideoUrl(url) {
 	return urlParts[3].startsWith('watch?v=');
 }
 
-class APIError extends Error {
-	constructor(code, message) {
+class YoutubeVideoError extends Error {
+	constructor(message, code) {
 		super(message);
 		this.code = code;
 		this.message = message;
-		this.name = "APIError";
+		this.name = "YoutubeVideoError";
 	}
 }
