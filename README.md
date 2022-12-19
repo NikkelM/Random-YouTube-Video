@@ -2,9 +2,7 @@
 
 ![Chrome Web store version](https://img.shields.io/chrome-web-store/v/kijgnjhogkjodpakfmhgleobifempckf)
 
-[Get it in the Chrome Web store](https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf)
-
-Play a random video uploaded on the current YouTube channel.
+[Get it on the Chrome Web store](https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf)
 
 Adds a button to YouTube channel pages that plays a random video from that channel.
 
