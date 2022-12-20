@@ -34,7 +34,8 @@ function delay(time) {
 }
 // ---------- Classes ----------
 
-class ChangeToken {
+// Used to pass a boolean by reference
+class BooleanReference {
 	constructor() {
 		this.value = true;
 	}

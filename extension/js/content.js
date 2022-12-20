@@ -86,7 +86,7 @@ function setShuffleButtonTextWithDelay(newText, delayMS, changeToken) {
 
 async function shuffleVideos() {
 	// Called when the randomize-button is clicked
-	let changeToken = new ChangeToken();
+	let changeToken = new BooleanReference();
 	setShuffleButtonTextWithDelay(`&nbsp;Please wait...`, 500, changeToken);
 
 	try {
