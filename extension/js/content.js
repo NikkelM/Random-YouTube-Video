@@ -4,6 +4,7 @@
 
 let currUrl = getUrl(window.location.href);
 let shuffleButton = null;
+// Access the actual text using shuffleButtonText.innerHTML
 let shuffleButtonText = null;
 
 // Whenever a YouTube navigation event fires, we need to check if we have entered a different channel page
