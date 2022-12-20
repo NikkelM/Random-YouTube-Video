@@ -14,7 +14,7 @@
 			"js": [
 				"js/utils.js",
 				"js/youtubeAPI.js",
-				"js/buttons.js",
+				"js/buildShuffleButton.js",
 				"js/content.js"
 			],
 			"matches": [
