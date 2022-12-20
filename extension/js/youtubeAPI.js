@@ -43,8 +43,8 @@ async function pingAPI() {
 
 async function tryGetPlaylistFromLocalStorage(playlistId) {
 	let localStoragePlaylists = await chrome.storage.local.get(["uploadsPlaylists"]).then((result) => {
-		if (result.uploadsPlaylists !== undefined) {
-			return result.uploadsPlaylists;
+		if (result["uploadsPlaylists"]) {
+			return result["uploadsPlaylists"];
 		}
 		return {};
 	});
@@ -87,8 +87,8 @@ async function getWholePlaylistFromAPI(playlistId) {
 	}
 
 	let localStoragePlaylists = await chrome.storage.local.get(["uploadsPlaylists"]).then((result) => {
-		if (result.uploadsPlaylists) {
-			return result.uploadsPlaylists;
+		if (result["uploadsPlaylists"]) {
+			return result["uploadsPlaylists"];
 		}
 		return {};
 	});
@@ -96,7 +96,7 @@ async function getWholePlaylistFromAPI(playlistId) {
 	localStoragePlaylists[playlistId] = uploadsPlaylist;
 
 	// Update local storage
-	// await chrome.storage.local.set({ "uploadsPlaylists": localStoragePlaylists });
+	await chrome.storage.local.set({ "uploadsPlaylists": localStoragePlaylists });
 	
 	// Update db
 	const msg = {
@@ -145,6 +145,7 @@ async function updateLocalStoragePlaylistFromApi(playlistId, localStoragePlaylis
 	}
 
 	// Push the new list to local storage
+	console.log("Setting locally");
 	await chrome.storage.local.set({ "uploadsPlaylists": localStoragePlaylists })
 
 	return localStoragePlaylists;
