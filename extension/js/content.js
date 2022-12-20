@@ -68,9 +68,9 @@ function addShuffleButtonToPage() {
 	console.log("Building shuffle button...");
 
 	if (isChannelUrl(currUrl)) {
-		buildShuffleButton();
+		buildShuffleButton("channel");
 	} else if (isVideoUrl(currUrl)) {
-		buildShuffleButtonVideo();
+		buildShuffleButton("video");
 	}
 }
 
