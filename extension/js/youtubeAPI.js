@@ -1,23 +1,23 @@
 // Handles access to the Youtube API to get video information
 
-let API_KEY = null;
+let APIKey = null;
 
 async function initAPI() {
-	if (!API_KEY) {
-		console.log("Getting API key...");
+	if (!APIKey) {
+		console.log('Getting API key...');
 
 		const msg = {
-			command: "get_API_key"
+			command: "getAPIKey"
 		};
 
-		API_KEY = await chrome.runtime.sendMessage(msg);
+		APIKey = await chrome.runtime.sendMessage(msg);
 	}
 }
 
 async function pingAPI() {
 	await initAPI();
 
-	if (!API_KEY) {
+	if (!APIKey) {
 		throw new RandomYoutubeVideoError("No API key");
 	}
 
@@ -152,7 +152,7 @@ async function updateLocalStoragePlaylistFromApi(playlistId, localStoragePlaylis
 
 async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 	// TODO: Better error handling for when this returns an error!
-	await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${API_KEY}`)
+	await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${APIKey}`)
 		.then((response) => response.json())
 		.then((data) => apiResponse = data);
 
@@ -160,24 +160,4 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 		throw new YoutubeAPIError(apiResponse["error"]["code"], apiResponse["error"]["message"]);
 	}
 	return apiResponse;
-}
-
-async function getAPIKey() {
-	const msg = {
-		command: 'get',
-		data: {
-			key: "YOUTUBE_API_KEY"
-		}
-	};
-
-	let apiKey = await chrome.runtime.sendMessage(msg);
-
-	return apiKey;
-
-	// return await chrome.storage.local.get(["API_KEY"]).then((result) => {
-	// 	if (result) {
-	// 		return result.API_KEY;
-	// 	}
-	// 	return null;
-	// });
 }
