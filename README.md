@@ -1,10 +1,21 @@
-# Random YouTube Video
+<h1 align="center">Random YouTube Video</h1>
 
-![Chrome Web store version](https://img.shields.io/chrome-web-store/v/kijgnjhogkjodpakfmhgleobifempckf)
-
-[Get it in the Chrome Web store](https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf)
-
-Play a random video uploaded on the current YouTube channel.
+<p align="center">
+<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
+  <img src="https://img.shields.io/badge/Get%20it%20on%20the-Chrome%20web%20store-brightgreen"
+    alt="Get it on the Chrome web store"></a>
+<br>
+<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
+  <img src="https://img.shields.io/chrome-web-store/v/kijgnjhogkjodpakfmhgleobifempckf"
+    alt="Chrome web store version"></a>
+<a href="https://github.com/NikkelM/Random-YouTube-Video/tree/dev">
+  <img src="https://img.shields.io/github/manifest-json/v/NikkelM/Random-YouTube-Video?filename=extension%2Fmanifest.json&label=dev"
+    alt="Development version"></a>
+<br>
+<a href="https://github.com/NikkelM/Random-YouTube-Video/tree/main/CHANGELOG.md">
+  <img src="https://img.shields.io/badge/View-changelog-lightgrey"
+    alt="View changelog"></a>
+</p>
 
 Adds a button to YouTube channel pages that plays a random video from that channel.
 
