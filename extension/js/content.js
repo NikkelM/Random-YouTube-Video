@@ -73,13 +73,22 @@ function addShuffleButtonToPage() {
 	}
 }
 
-function setShuffleButtonText(text) {
-	shuffleButtonText.innerHTML = text;
+function setShuffleButtonTextWithDelay(newText, delayMS, changeToken) {
+	// Sets the text of the shuffle button after a delay, if something else hasn't changed it yet
+	delay(delayMS).then(() => {
+		if (changeToken.value) {
+			shuffleButtonText.innerHTML = newText;
+			changeToken.value = false;
+		}
+	});
+
 }
 
 async function shuffleVideos() {
-	setShuffleButtonText(`&nbsp;Please wait...`);
-	
+	// Called when the randomize-button is clicked
+	let changeToken = new ChangeToken();
+	setShuffleButtonTextWithDelay(`&nbsp;Please wait...`, 500, changeToken);
+
 	try {
 		await pingAPI();
 	} catch (error) {
@@ -96,7 +105,7 @@ async function shuffleVideos() {
 				displayText = `&nbsp;Unknown Error`;
 		}
 
-		setShuffleButtonText(displayText);
+		setShuffleButtonTextWithDelay(displayText, 0, changeToken);
 		return;
 	}
 }

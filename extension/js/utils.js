@@ -29,7 +29,16 @@ function isVideoUrl(url) {
 	return urlParts[3].startsWith('watch?v=');
 }
 
-// ---------- Error classes ----------
+function delay(time) {
+  return new Promise(resolve => setTimeout(resolve, time));
+}
+// ---------- Classes ----------
+
+class ChangeToken {
+	constructor() {
+		this.value = true;
+	}
+}
 
 class RandomYoutubeVideoError extends Error {
 	constructor(message) {

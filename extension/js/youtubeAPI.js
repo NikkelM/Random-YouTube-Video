@@ -4,7 +4,7 @@ let API_KEY = null;
 
 async function initAPI() {
 	if (!API_KEY) {
-		console.log('Getting API key from local storage...');
+		console.log('Getting API key...');
 
 		const msg = {
 			command: 'get_API_key'

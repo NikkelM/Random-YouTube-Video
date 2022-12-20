@@ -13,7 +13,7 @@ button.addEventListener("click", async () => {
 	await chrome.storage.local.set({ "API_KEY": textInput });
 	
 	const msg = {
-		command: 'refresh_API_key',
+		command: 'set_API_key',
 		data: {
 			val: textInput
 		}
