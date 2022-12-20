@@ -4,6 +4,7 @@
 
 let currUrl = getUrl(window.location.href);
 let shuffleButton = null;
+let shuffleButtonText = null;
 
 // Whenever a YouTube navigation event fires, we need to check if we have entered a different channel page
 // as the corresponding html element we need doesn't get refreshed by default
@@ -72,12 +73,18 @@ function addShuffleButtonToPage() {
 	}
 }
 
+function setShuffleButtonText(text) {
+	shuffleButtonText.innerHTML = text;
+}
+
 async function shuffleVideos() {
-	shuffleButton.children[0].children[0].children[0].children[1].children[0].innerHTML = `&nbsp;Please wait...`;
+	setShuffleButtonText(`&nbsp;Please wait...`);
+	
 	try {
 		await pingAPI();
 	} catch (error) {
 		console.error(error["message"]);
+
 		switch (error.name) {
 			case "RandomYoutubeVideoError":
 				displayText = `&nbsp;${error.message}`;
@@ -89,7 +96,7 @@ async function shuffleVideos() {
 				displayText = `&nbsp;Unknown Error`;
 		}
 
-		shuffleButton.children[0].children[0].children[0].children[1].children[0].innerHTML = displayText;
+		setShuffleButtonText(displayText);
 		return;
 	}
 }

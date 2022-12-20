@@ -97,6 +97,7 @@ async function addButtonShape() {
 	document.getElementById('inner-header-container').children.namedItem('buttons').children.namedItem("shuffle-button").children[0].children[0].appendChild(button);
 
 	shuffleButton = document.getElementById('inner-header-container').children.namedItem('buttons').children.namedItem("shuffle-button");
+	shuffleButtonText = shuffleButton.children[0].children[0].children[0].children[1].children[0];
 
 	// Add the event listener that shuffles the videos to the button
 	shuffleButton.addEventListener("click", shuffleVideos);
@@ -199,6 +200,7 @@ async function addButtonShapeVideo() {
 	document.getElementById('above-the-fold').children.namedItem("top-row").children.namedItem("owner").children.namedItem("shuffle-button").children[0].children[0].appendChild(button);
 
 	shuffleButton = document.getElementById('above-the-fold').children.namedItem("top-row").children.namedItem("owner").children.namedItem("shuffle-button");
+	shuffleButtonText = shuffleButton.children[0].children[0].children[0].children[1].children[0];
 
 	// Add the event listener that shuffles the videos to the button
 	shuffleButton.addEventListener("click", shuffleVideos);
