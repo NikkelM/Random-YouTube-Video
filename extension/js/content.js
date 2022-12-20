@@ -9,14 +9,14 @@ let shuffleButtonText = null;
 
 // Whenever a YouTube navigation event fires, we need to check if we have entered a different channel page
 // as the corresponding html element we need doesn't get refreshed by default
-document.addEventListener('yt-navigate-start', handleNavigateStart);
+document.addEventListener("yt-navigate-start", handleNavigateStart);
 
 var observer = new MutationObserver(function (mutations, me) {
 	let requiredElement = null;
 	if (isChannelUrl(currUrl)) {
-		requiredElement = document.getElementById('inner-header-container');
+		requiredElement = document.getElementById("inner-header-container");
 	} else if (isVideoUrl(currUrl)) {
-		requiredElement = document.getElementById('above-the-fold');
+		requiredElement = document.getElementById("above-the-fold");
 	}
 
 	if (requiredElement) {
@@ -48,16 +48,16 @@ function getUrl(url) {
 	if (isVideoUrl(url)) {
 		return url;
 	} else if (isChannelUrl(url)) {
-		const urlParts = url.split('/');
+		const urlParts = url.split("/");
 		// We handle "channel", "c", "user" and "@Username"
-		if (urlParts[3].startsWith('@')) {
-			return urlParts.slice(0, 4).join('/');
+		if (urlParts[3].startsWith("@")) {
+			return urlParts.slice(0, 4).join("/");
 		} else if (urlParts[3] == "c") {
-			return urlParts.slice(0, 3).join('/') + '/@' + urlParts[4];
+			return urlParts.slice(0, 3).join("/") + "/@" + urlParts[4];
 		} else if (urlParts[3] == "channel") {
-			return urlParts.slice(0, 5).join('/');
+			return urlParts.slice(0, 5).join("/");
 		} else if (urlParts[3] == "user") {
-			return urlParts.slice(0, 5).join('/');
+			return urlParts.slice(0, 5).join("/");
 		}
 	}
 

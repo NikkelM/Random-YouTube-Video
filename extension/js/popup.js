@@ -11,9 +11,9 @@ if (await chrome.storage.local.get(["API_KEY"]) != null) {
 button.addEventListener("click", async () => {
 	const textInput = document.getElementById("api-key-input").value;
 	await chrome.storage.local.set({ "API_KEY": textInput });
-	
+
 	const msg = {
-		command: 'set_API_key',
+		command: "set_API_key",
 		data: {
 			val: textInput
 		}

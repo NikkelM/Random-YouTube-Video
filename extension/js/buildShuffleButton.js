@@ -13,7 +13,7 @@ function buildShuffleButton(pageType) {
 			break;
 		case "video":
 			buttonDivExtraStyle = "margin-left: 8px;";
-			buttonDivOwner = document.getElementById('above-the-fold').children.namedItem("top-row").children.namedItem("owner");
+			buttonDivOwner = document.getElementById("above-the-fold").children.namedItem("top - row").children.namedItem("owner");
 			buttonDivPrepend = false;
 			break;
 		default:
@@ -66,7 +66,7 @@ function finalizeButton(pageType) {
 			buttonDivOwner = document.getElementById("inner-header-container").children.namedItem("buttons");
 			break;
 		case "video":
-			buttonDivOwner = document.getElementById('above-the-fold').children.namedItem("top-row").children.namedItem("owner");
+			buttonDivOwner = document.getElementById("above-the-fold").children.namedItem("top - row").children.namedItem("owner");
 			break;
 		default:
 			console.warn("Cannot build button: unknown page type: " + pageType);

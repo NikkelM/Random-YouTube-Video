@@ -5,11 +5,11 @@ let APIKey = null;
 
 // Message handler
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-	if (request.command === 'get_API_key') {
+	if (request.command === "get_API_key") {
 		sendResponse(APIKey);
-	} else if (request.command === 'set_API_key') {
+	} else if (request.command === "set_API_key") {
 		APIKey = request.data.val;
-		setLocalStorage('API_KEY', request.data.val).then(sendResponse);
+		setLocalStorage("API_KEY", request.data.val).then(sendResponse);
 	}
 
 	return true;

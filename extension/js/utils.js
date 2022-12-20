@@ -20,17 +20,17 @@ console.error = function () {
 // ---------- Utility functions ----------
 
 function isChannelUrl(url) {
-	const urlParts = url.split('/');
-	return urlParts[3].startsWith('@') || urlParts[3] == "c" || urlParts[3] == "channel" || urlParts[3] == "user";
+	const urlParts = url.split("/");
+	return urlParts[3].startsWith("@") || urlParts[3] == "c" || urlParts[3] == "channel" || urlParts[3] == "user";
 }
 
 function isVideoUrl(url) {
-	const urlParts = url.split('/');
-	return urlParts[3].startsWith('watch?v=');
+	const urlParts = url.split("/");
+	return urlParts[3].startsWith("watch?v=");
 }
 
 function delay(time) {
-  return new Promise(resolve => setTimeout(resolve, time));
+	return new Promise(resolve => setTimeout(resolve, time));
 }
 // ---------- Classes ----------
 
