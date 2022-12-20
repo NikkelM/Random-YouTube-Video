@@ -1,4 +1,4 @@
-// Builds the randomize buttons that are used by the extension
+// Builds the randomize-buttons that are used by the extension
 
 // Channel page
 function buildShuffleButton(pageType) {
@@ -9,7 +9,6 @@ function buildShuffleButton(pageType) {
 	// Depending on the type of page we're on, we might need to change certain parts of the button
 	switch (pageType) {
 		case "channel":
-		default:
 			buttonDivOwner = document.getElementById("inner-header-container").children.namedItem("buttons");
 			break;
 		case "video":
@@ -17,6 +16,9 @@ function buildShuffleButton(pageType) {
 			buttonDivOwner = document.getElementById('above-the-fold').children.namedItem("top-row").children.namedItem("owner");
 			buttonDivPrepend = false;
 			break;
+		default:
+			console.warn("Cannot build button: unknown page type: " + pageType);
+			return;
 	}
 
 	// Load the font used for the "shuffle" icon
@@ -56,17 +58,19 @@ function buildShuffleButton(pageType) {
 	});
 }
 
-async function finalizeButton(pageType) {
+function finalizeButton(pageType) {
 	let buttonDivOwner = null;
 
 	switch (pageType) {
 		case "channel":
-		default:
 			buttonDivOwner = document.getElementById("inner-header-container").children.namedItem("buttons");
 			break;
 		case "video":
 			buttonDivOwner = document.getElementById('above-the-fold').children.namedItem("top-row").children.namedItem("owner");
 			break;
+		default:
+			console.warn("Cannot build button: unknown page type: " + pageType);
+			return;
 	}
 
 	let buttonText = "&nbsp;Random";
