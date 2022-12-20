@@ -1,3 +1,5 @@
+# Changelog
+
 ## v0.0.2
 
 - Added randomize-button to YouTube video page - find it next to the subscribe button!

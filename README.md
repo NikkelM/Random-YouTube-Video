@@ -1,8 +1,16 @@
-# Random YouTube Video
+<h1 align="center">Random YouTube Video</h1>
 
-![Chrome Web store version](https://img.shields.io/chrome-web-store/v/kijgnjhogkjodpakfmhgleobifempckf)
-
-[Get it on the Chrome Web store](https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf)
+<p align="center">
+<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
+        <img src="https://img.shields.io/chrome-web-store/v/kijgnjhogkjodpakfmhgleobifempckf"
+            alt="Get it on the Chrome Web store"></a>
+<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
+        <img src="https://img.shields.io/chrome-web-store/rating-count/kijgnjhogkjodpakfmhgleobifempckf"
+            alt="Get it on the Chrome Web store"></a>
+<a href="https://github.com/NikkelM/Random-YouTube-Video/tree/main/CHANGELOG.md">
+        <img src="https://img.shields.io/badge/View-changelog-lightgrey"
+            alt="View changelog"></a>
+</p>
 
 Adds a button to YouTube channel pages that plays a random video from that channel.
 
