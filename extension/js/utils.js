@@ -1,3 +1,6 @@
+// Utility functions
+
+// ---------- Console extension ----------
 let log = console.log;
 
 console.log = function () {
@@ -14,6 +17,8 @@ console.error = function () {
 	error.apply(console, args);
 }
 
+// ---------- Utility functions ----------
+
 function isChannelUrl(url) {
 	const urlParts = url.split('/');
 	return urlParts[3].startsWith('@') || urlParts[3] == "c" || urlParts[3] == "channel" || urlParts[3] == "user";
@@ -24,11 +29,21 @@ function isVideoUrl(url) {
 	return urlParts[3].startsWith('watch?v=');
 }
 
-class YoutubeVideoError extends Error {
-	constructor(message, code) {
+// ---------- Error classes ----------
+
+class RandomYoutubeVideoError extends Error {
+	constructor(message) {
+		super(message);
+		this.message = message;
+		this.name = "RandomYoutubeVideoError";
+	}
+}
+
+class YoutubeAPIError extends RandomYoutubeVideoError {
+	constructor(code, message) {
 		super(message);
 		this.code = code;
 		this.message = message;
-		this.name = "YoutubeVideoError";
+		this.name = "YoutubeAPIError";
 	}
 }

@@ -18,7 +18,7 @@ async function pingAPI() {
 	await initAPI();
 
 	if (!API_KEY) {
-		throw new YoutubeVideoError('No API key');
+		throw new RandomYoutubeVideoError('No API key');
 	}
 	console.log('The current API key is: ' + API_KEY);
 
@@ -142,7 +142,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 		.then((data) => apiResponse = data);
 
 	if (apiResponse["error"]) {
-		throw new YoutubeVideoError(apiResponse["error"]["code"], apiResponse["error"]["message"]);
+		throw new YoutubeAPIError(apiResponse["error"]["code"], apiResponse["error"]["message"]);
 	}
 	return apiResponse;
 }
