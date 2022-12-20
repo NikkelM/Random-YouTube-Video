@@ -75,6 +75,7 @@ function addShuffleButtonToPage() {
 
 function setShuffleButtonTextWithDelay(newText, delayMS, changeToken) {
 	// Sets the text of the shuffle button after a delay, if something else hasn't changed it yet
+	// I.e. only one function can change the text among all functions that were passed the same changeToken
 	delay(delayMS).then(() => {
 		if (changeToken.value) {
 			shuffleButtonText.innerHTML = newText;
