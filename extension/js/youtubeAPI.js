@@ -2,7 +2,7 @@
 
 let APIKey = null;
 
-async function initAPI() {
+async function validateAPIKey() {
 	if (!APIKey) {
 		console.log('Getting API key...');
 
@@ -11,15 +11,15 @@ async function initAPI() {
 		};
 
 		APIKey = await chrome.runtime.sendMessage(msg);
+
+		if(!APIKey) {
+			throw new RandomYoutubeVideoError("No API key");
+		}
 	}
 }
 
-async function pingAPI() {
-	await initAPI();
-
-	if (!APIKey) {
-		throw new RandomYoutubeVideoError("No API key");
-	}
+async function chooseRandomVideo() {
+	await validateAPIKey();
 
 	const uploadsPlaylistId = document.querySelector("[itemprop=channelId]").getAttribute("content").replace("UC", "UU");
 	console.log("Pinging API for playlist ID: " + uploadsPlaylistId);

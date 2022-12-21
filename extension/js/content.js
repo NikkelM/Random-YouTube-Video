@@ -92,7 +92,7 @@ async function shuffleVideos() {
 	setShuffleButtonTextWithDelay(`&nbsp;Please wait...`, 500, changeToken);
 
 	try {
-		await pingAPI();
+		await chooseRandomVideo();
 	} catch (error) {
 		console.error(error["message"]);
 
