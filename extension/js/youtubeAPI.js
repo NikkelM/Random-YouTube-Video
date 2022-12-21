@@ -82,7 +82,7 @@ async function chooseRandomVideo() {
 	console.log("A random video has been chosen: " + randomVideo);
 
 	// Navigate to the random video
-	window.location.href = "https://www.youtube.com/watch?v=" + randomVideo;
+	// window.location.href = "https://www.youtube.com/watch?v=" + randomVideo;
 }
 
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
@@ -110,13 +110,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 		data: playlistId
 	};
 
-	let playlistInfo = await chrome.runtime.sendMessage(msg);
-
-	if (playlistInfo) {
-		return playlistInfo;
-	}
-
-	return {};
+	return await chrome.runtime.sendMessage(msg) ?? {};
 }
 
 // OLD --------------------------------

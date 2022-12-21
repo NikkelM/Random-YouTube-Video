@@ -53,11 +53,11 @@ async function readDataOnce(key) {
 
 async function initExtension() {
 	console.log("Initializing extension, getting API key...");
-	APIKey = await getFromLocalStorage("YOUTUBE_API_KEY");
+	APIKey = await getFromLocalStorage("youtubeAPIKey");
 	// If the API key is not saved in local storage, get it from the database
 	if (!APIKey) {
-		APIKey = await readDataOnce("YOUTUBE_API_KEY");
-		setLocalStorage("YOUTUBE_API_KEY", APIKey);
+		APIKey = await readDataOnce("youtubeAPIKey");
+		setLocalStorage("youtubeAPIKey", APIKey);
 	}
 }
 
