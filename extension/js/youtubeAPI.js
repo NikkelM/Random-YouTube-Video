@@ -83,7 +83,7 @@ async function chooseRandomVideo() {
 		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 
 		// Update local storage
-		chrome.storage.local.set({ [uploadsPlaylistId]: locallyStoredPlaylist });
+		chrome.storage.local.set({ [uploadsPlaylistId]: playlistInfo });
 	}
 
 	// Choose a random video from the playlist
