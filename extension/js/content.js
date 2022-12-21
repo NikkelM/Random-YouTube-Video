@@ -94,7 +94,8 @@ async function shuffleVideos() {
 	try {
 		await chooseRandomVideo();
 	} catch (error) {
-		console.error(error["message"]);
+		console.error(error.stack);
+		console.error(error.message);
 
 		switch (error.name) {
 			case "RandomYoutubeVideoError":
