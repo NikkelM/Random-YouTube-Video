@@ -53,7 +53,7 @@ async function chooseRandomVideo() {
 		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 
 		// Update local storage. We don't care if it already exists, because we always have the newest version.
-		chrome.storage.local.set({ [uploadsPlaylistId]: locallyStoredPlaylist });
+		chrome.storage.local.set({ [uploadsPlaylistId]: playlistInfo });
 
 		// The playlist exists locally, but is outdated. Update it from the database. If needed, update the database values as well.
 	} else if (playlistInfo["lastFetchedFromDB"] < addHours(new Date(), -48).toISOString()) {
