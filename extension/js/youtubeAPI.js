@@ -2,6 +2,7 @@
 
 let APIKey = null;
 
+// Requests the API key from the background script
 async function validateAPIKey() {
 	if (!APIKey) {
 		console.log('Getting API key...');
@@ -12,28 +13,71 @@ async function validateAPIKey() {
 
 		APIKey = await chrome.runtime.sendMessage(msg);
 
-		if(!APIKey) {
+		if (!APIKey) {
 			throw new RandomYoutubeVideoError("No API key");
 		}
 	}
 }
 
+// Chooses a random video uploaded on the current YouTube channel
 async function chooseRandomVideo() {
+	// TODO: Move this to where we actually need it
+	// Make sure an API key is available
 	await validateAPIKey();
 
+	// Get the id of the uploads playlist for this channel
 	const uploadsPlaylistId = document.querySelector("[itemprop=channelId]").getAttribute("content").replace("UC", "UU");
-	console.log("Pinging API for playlist ID: " + uploadsPlaylistId);
+	console.log("Choosing a random video from playlist/channel: " + uploadsPlaylistId);
 
+	// TODO: Make sure this format is up-to-date
 	/* Get a dictionary in format
 	{
 		"lastVideoPublishedAt": DateTimeString,
+		"lastFetchedFromDB": DateTimeString,
 		"videos": [
 			"videoId"
 		]
 	}
 	*/
+
+	// Check if the playlist is already saved in local storage, so we don't need to access the database
 	let playlistInfo = await tryGetPlaylistFromLocalStorage(uploadsPlaylistId);
 
+	// The playlist does not exist locally. Try to get it from the database first
+	if (isEmpty(playlistInfo)) {
+		// TODO
+
+		// No information for this playlist is saved in local storage
+		// Try to get it from the database
+		console.log("Uploads playlist for this channel does not exist locally. Trying to get it from the database...");
+		playlistInfo = await tryGetPlaylistFromDB(uploadsPlaylistId);
+
+		// If the playlist does not exist in the database, get it from the API
+		if (isEmpty(playlistInfo)) {
+			console.log("Uploads playlist for this channel does not exist in the database. Trying to get it from the YouTube API...");
+			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
+
+			// TODO: Save the playlist to the database
+			// TODO: Save the playlist to local storage
+		}
+		// The playlist exists locally, but is outdated. Update it from the database. If needed, update the database values as well.
+	} else if (playlistInfo["lastFetchedFromDB"] < "Date now - xx hours") {
+		// TODO
+
+		// TODO: Introduce "lastUpdated" field in db to control how often we query the API. E.g. only once every 24 hours.
+		// TODO: Only get updated values from db once per day as well, and update from db to youtube API once per day.
+
+		// TODO: Update from DB here
+		// localStoragePlaylists = await updateLocalStoragePlaylistFromApi(playlistId, localStoragePlaylists);
+		console.log("Uploads playlist for this channel is outdated. Trying to update from the database...");
+		playlistInfo = await tryUpdatePlaylistFromDB(uploadsPlaylistId, lastFetchedFromDB);
+
+		// TODO: Handle case where the playlist no longer exists in the database
+		// TODO: Update the lastFetchedFromDB field in the local storage
+	}
+
+	// TODO: Not modified below
+	// Choose a random video from the playlist
 	const randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
 	console.log("A random video has been chosen: " + randomVideo);
 
@@ -41,6 +85,7 @@ async function chooseRandomVideo() {
 	window.location.href = "https://www.youtube.com/watch?v=" + randomVideo;
 }
 
+// Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
 async function tryGetPlaylistFromLocalStorage(playlistId) {
 	let localStoragePlaylists = await chrome.storage.local.get(["uploadsPlaylists"]).then((result) => {
 		if (result["uploadsPlaylists"]) {
@@ -49,18 +94,32 @@ async function tryGetPlaylistFromLocalStorage(playlistId) {
 		return {};
 	});
 
+	// If the playlist is already saved in local storage, return it
 	if (localStoragePlaylists[playlistId]) {
-		// TODO: Introduce "lastUpdated" field in db to control how often we query the API. E.g. only once every 24 hours.
-		// TODO: Only get updated values from db once per day as well, and update from db to youtube API once per day.
-		localStoragePlaylists = await updateLocalStoragePlaylistFromApi(playlistId, localStoragePlaylists);
 		return localStoragePlaylists[playlistId];
 	}
 
-	// No information for this playlist is saved in local storage
-	// Ping the youtube api and get the videos in the playlist with playlistId
-	console.log("Uploads playlist for this channel is unknown. Getting it from the API...");
-	return await getWholePlaylistFromAPI(playlistId);
+	// The playlist does not exist locally
+	return {};
 }
+
+// Tries to get the playlist from the database. If it is not present, returns an empty dictionary
+async function tryGetPlaylistFromDB(playlistId) {
+	const msg = {
+		command: "getPlaylistFromDB",
+		data: playlistId
+	};
+
+	let playlistInfo = await chrome.runtime.sendMessage(msg);
+
+	if (playlistInfo) {
+		return playlistInfo;
+	}
+
+	return {};
+}
+
+// OLD --------------------------------
 
 async function getWholePlaylistFromAPI(playlistId) {
 	// This function is only called if there is no playlist already saved in local storage
@@ -97,7 +156,7 @@ async function getWholePlaylistFromAPI(playlistId) {
 
 	// Update local storage
 	await chrome.storage.local.set({ "uploadsPlaylists": localStoragePlaylists });
-	
+
 	// Update db
 	const msg = {
 		command: 'post',
