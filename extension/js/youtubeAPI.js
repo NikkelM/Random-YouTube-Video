@@ -2,29 +2,8 @@
 
 let APIKey = null;
 
-// Requests the API key from the background script
-async function validateAPIKey() {
-	if (!APIKey) {
-		console.log('Getting API key...');
-
-		const msg = {
-			command: "getAPIKey"
-		};
-
-		APIKey = await chrome.runtime.sendMessage(msg);
-
-		if (!APIKey) {
-			throw new RandomYoutubeVideoError("No API key");
-		}
-	}
-}
-
 // Chooses a random video uploaded on the current YouTube channel
 async function chooseRandomVideo() {
-	// TODO: Move this to where we actually need it
-	// Make sure an API key is available
-	await validateAPIKey();
-
 	// Get the id of the uploads playlist for this channel
 	const uploadsPlaylistId = document.querySelector("[itemprop=channelId]").getAttribute("content").replace("UC", "UU");
 	console.log("Choosing a random video from playlist/channel: " + uploadsPlaylistId);
@@ -134,6 +113,9 @@ async function tryGetPlaylistFromDB(playlistId) {
 }
 
 async function getPlaylistFromApi(playlistId) {
+	// Make sure an API key is available
+	await validateAPIKey();
+
 	// Make a call to the Api to get the playlist
 	let playlistInfo = {
 		"lastVideoPublishedAt": null,
@@ -169,4 +151,21 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 		throw new YoutubeAPIError(apiResponse["error"]["code"], apiResponse["error"]["message"]);
 	}
 	return apiResponse;
+}
+
+// Requests the API key from the background script
+async function validateAPIKey() {
+	if (!APIKey) {
+		console.log('Getting API key...');
+
+		const msg = {
+			command: "getAPIKey"
+		};
+
+		APIKey = await chrome.runtime.sendMessage(msg);
+
+		if (!APIKey) {
+			throw new RandomYoutubeVideoError("No API key");
+		}
+	}
 }
