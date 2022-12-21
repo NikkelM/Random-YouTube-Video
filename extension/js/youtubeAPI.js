@@ -46,27 +46,17 @@ async function chooseRandomVideo() {
 			chrome.runtime.sendMessage(msg);
 		}
 
-		// The playlist exists in the database, but is not saved locally. Save it locally.
+		// Save the playlist locally
 		console.log("Uploads playlist for this channel successfully retrieved. Saving it locally...")
 
 		// First update the lastFetchedFromDB field
 		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 
-		// Get the locally stored playlist
-		let locallyStoredPlaylist = await chrome.storage.local.get([uploadsPlaylistId]).then((result) => {
-			if (result[uploadsPlaylistId]) {
-				return result[uploadsPlaylistId];
-			}
-			return {};
-		});
-
-		locallyStoredPlaylist = playlistInfo;
-
-		// Update local storage
-		await chrome.storage.local.set({ [uploadsPlaylistId]: locallyStoredPlaylist });
+		// Update local storage. We don't care if it already exists, because we always have the newest version.
+		chrome.storage.local.set({ [uploadsPlaylistId]: locallyStoredPlaylist });
 
 		// The playlist exists locally, but is outdated. Update it from the database. If needed, update the database values as well.
-	} else if (playlistInfo["lastFetchedFromDB"] < addHours(new Date(), -72).toISOString()) {
+	} else if (playlistInfo["lastFetchedFromDB"] < addHours(new Date(), -48).toISOString()) {
 		console.log("Uploads playlist for this channel is outdated. Trying to update from the database...");
 		playlistInfo = await tryGetPlaylistFromDB(uploadsPlaylistId);
 
@@ -76,6 +66,23 @@ async function chooseRandomVideo() {
 		}
 
 		// TODO: Check when the playlist was last updated in the database. ("lastUpdatedDBAt" field)
+		if (playlistInfo["lastUpdatedDBAt"] < addHours(new Date(), -48).toISOString()) {
+			playlistInfo = await updatePlaylistFromApi(playlistInfo, uploadsPlaylistId);
+
+			// Save the playlist locally
+			chrome.storage.local.set({ [uploadsPlaylistId]: playlistInfo });
+
+			// Send the playlist info to the db
+			const msg = {
+				command: 'postToDB',
+				data: {
+					key: 'uploadsPlaylists/' + uploadsPlaylistId,
+					val: playlistInfo
+				}
+			};
+
+			chrome.runtime.sendMessage(msg);
+		}
 
 		// Update the lastFetchedFromDB field
 		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
@@ -116,7 +123,6 @@ async function getPlaylistFromApi(playlistId) {
 	// Make sure an API key is available
 	await validateAPIKey();
 
-	// Make a call to the Api to get the playlist
 	let playlistInfo = {
 		"lastVideoPublishedAt": null,
 		"lastUpdatedDBAt": new Date().toISOString(),
@@ -142,6 +148,54 @@ async function getPlaylistFromApi(playlistId) {
 	return playlistInfo;
 }
 
+// Get snippets from the API as long as new videos are being found
+async function updatePlaylistFromApi(localPlaylist, playlistId) {
+	// Make sure an API key is available
+	await validateAPIKey();
+
+	// Update the lastUpdatedDBAt field
+	localPlaylist["lastUpdatedDBAt"] = new Date().toISOString();
+
+	let lastKnownUploadTime = localPlaylist["lastVideoPublishedAt"];
+	let apiResponse = await getPlaylistSnippetFromAPI(playlistId, "");
+
+	// Update the "last video published at" date (only for the most recent video)
+	// If the newest video isn't newer than what we already have, we don't need to update the local storage
+	if (lastKnownUploadTime < apiResponse["items"][0]["contentDetails"]["videoPublishedAt"]) {
+		console.log("At least one video has been published since the last check.");
+		localPlaylist["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
+	} else {
+		console.log("No new videos have been published since the last check.");
+		return localPlaylist;
+	}
+
+	let currVideo = 0;
+	let newVideos = [];
+	// While the currently saved last video is older then the currently checked video from the API response, we need to add videos to local storage
+	while (lastVideoPublishedAt < apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"]) {
+		newVideos.push(apiResponse["items"][currVideo]["contentDetails"]["videoId"]);
+
+		currVideo++;
+
+		// If the current page has been completely checked
+		if (currVideo >= apiResponse["items"].length) {
+			// If another page exists, continue checking
+			if (apiResponse["nextPageToken"]) {
+				apiResponse = await getPlaylistSnippetFromAPI(playlistId, apiResponse["nextPageToken"]);
+				currVideo = 0;
+				// Else, we have checked all videos
+			} else {
+				break;
+			}
+		}
+	}
+	// Add the new videos to the localPlaylist
+	localPlaylist["videos"] = newVideos.concat(localPlaylist["videos"]);
+
+	return localPlaylist;
+}
+
+// Sends a request to the Youtube API to get the snippet of a playlist
 async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 	await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${APIKey}`)
 		.then((response) => response.json())
