@@ -66,9 +66,7 @@ async function chooseRandomVideo() {
 		await chrome.storage.local.set({ [uploadsPlaylistId]: locallyStoredPlaylist });
 
 		// The playlist exists locally, but is outdated. Update it from the database. If needed, update the database values as well.
-		// TODO: Make the 72 hours a setting for the user (to reduce load on database, set a min-value)
 	} else if (playlistInfo["lastFetchedFromDB"] < addHours(new Date(), -72).toISOString()) {
-		// TODO: Introduce "lastUpdated" field in db to control how often we query the API. E.g. only once every 24 hours.
 		console.log("Uploads playlist for this channel is outdated. Trying to update from the database...");
 		playlistInfo = await tryGetPlaylistFromDB(uploadsPlaylistId);
 
@@ -76,6 +74,8 @@ async function chooseRandomVideo() {
 		if (isEmpty(playlistInfo)) {
 			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
 		}
+
+		// TODO: Check when the playlist was last updated in the database. ("lastUpdatedDBAt" field)
 
 		// Update the lastFetchedFromDB field
 		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
@@ -119,7 +119,7 @@ async function getPlaylistFromApi(playlistId) {
 	// Make a call to the Api to get the playlist
 	let playlistInfo = {
 		"lastVideoPublishedAt": null,
-		"lastUpdatedAt": new Date().toISOString(),
+		"lastUpdatedDBAt": new Date().toISOString(),
 		"videos": []
 	};
 	let pageToken = "";

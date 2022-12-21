@@ -74,6 +74,3 @@ async function setLocalStorage(key, value) {
 	await chrome.storage.local.set({ [key]: value });
 	return value;
 }
-
-// DEBUG
-chrome.storage.local.get(console.log);
