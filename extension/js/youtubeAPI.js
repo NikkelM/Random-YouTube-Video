@@ -30,7 +30,7 @@ async function chooseRandomVideo() {
 	console.log("Choosing a random video from playlist/channel: " + uploadsPlaylistId);
 
 	// TODO: Make sure this format is up-to-date
-	/* Get a dictionary in format
+	/* Local dictionary format
 	{
 		"lastVideoPublishedAt": DateTimeString,
 		"lastFetchedFromDB": DateTimeString,
@@ -45,8 +45,6 @@ async function chooseRandomVideo() {
 
 	// The playlist does not exist locally. Try to get it from the database first
 	if (isEmpty(playlistInfo)) {
-		// TODO
-
 		// No information for this playlist is saved in local storage
 		// Try to get it from the database
 		console.log("Uploads playlist for this channel does not exist locally. Trying to get it from the database...");
@@ -59,6 +57,25 @@ async function chooseRandomVideo() {
 
 			// TODO: Save the playlist to the database
 			// TODO: Save the playlist to local storage
+		} else {
+			// The playlist exists in the database, but is not saved locally. Save it locally.
+			console.log("Uploads playlist for this channel successfully retrieved from the database. Saving it locally...")
+
+			// First update the lastFetchedFromDB field
+			playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
+			
+			// Get the local storage dictionary
+			let localStoragePlaylists = await chrome.storage.local.get(["uploadsPlaylists"]).then((result) => {
+				if (result["uploadsPlaylists"]) {
+					return result["uploadsPlaylists"];
+				}
+				return {};
+			});
+		
+			localStoragePlaylists[uploadsPlaylistId] = playlistInfo;
+		
+			// Update local storage
+			await chrome.storage.local.set({ "uploadsPlaylists": localStoragePlaylists });
 		}
 		// The playlist exists locally, but is outdated. Update it from the database. If needed, update the database values as well.
 	} else if (playlistInfo["lastFetchedFromDB"] < "Date now - xx hours") {
@@ -119,7 +136,7 @@ async function getWholePlaylistFromAPI(playlistId) {
 	// This function is only called if there is no playlist already saved in local storage
 	let uploadsPlaylist = {
 		"lastVideoPublishedAt": null,
-		"lastUpdatedAt": Date.now(),
+		"lastUpdatedAt": new Date().toISOString(),
 		"videos": []
 	};
 	let pageToken = "";
