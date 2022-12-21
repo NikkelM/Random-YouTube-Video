@@ -21,11 +21,11 @@ const app = firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database(app);
 
-
+// Message handler
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-	if (request.command === "get") {
-		readDataOnce(request.data.key).then(sendResponse);
-	} else if (request.command === "post") {
+	if (request.command === "getPlaylistFromDB") {
+		readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
+	} else if (request.command === "postToDB") {
 		writeData(request.data.key, request.data.val).then(sendResponse);
 	} else if (request.command === "getAPIKey") {
 		sendResponse(APIKey);
