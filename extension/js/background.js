@@ -33,13 +33,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 async function writeData(key, val) {
+	console.log("Writing data to database...");
 	db.ref(key).update(val);
-	return "Update sent to database."
+	return "Update sent to database.";
 }
 
 // Prefers to get cached data instead of sending a request to the database
 async function readDataOnce(key) {
-	console.log("Reading data from database...")
+	console.log("Reading data from database...");
 	const res = await db.ref(key).once("value").then((snapshot) => {
 		return snapshot.val();
 	});
@@ -73,3 +74,6 @@ async function setLocalStorage(key, value) {
 	await chrome.storage.local.set({ [key]: value });
 	return value;
 }
+
+// DEBUG
+chrome.storage.local.get(console.log);
