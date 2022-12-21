@@ -47,6 +47,10 @@ function sendMessage(msg) {
 	})
 }
 
+function isEmpty(obj) {
+  return Object.keys(obj).length === 0;
+}
+
 // ---------- Classes ----------
 
 // Used to pass a boolean by reference
