@@ -32,8 +32,8 @@ async function chooseRandomVideo() {
 	// TODO: Make sure this format is up-to-date
 	/* Local dictionary format
 	{
-		"lastVideoPublishedAt": DateTimeString,
-		"lastFetchedFromDB": DateTimeString,
+		"lastVideoPublishedAt": DateTimeString (iso),
+		"lastFetchedFromDB": DateTimeString (iso),
 		"videos": [
 			"videoId"
 		]
@@ -63,7 +63,7 @@ async function chooseRandomVideo() {
 
 			// First update the lastFetchedFromDB field
 			playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
-			
+
 			// Get the locally stored playlist
 			let locallyStoredPlaylist = await chrome.storage.local.get([uploadsPlaylistId]).then((result) => {
 				if (result[uploadsPlaylistId]) {
@@ -71,25 +71,32 @@ async function chooseRandomVideo() {
 				}
 				return {};
 			});
-		
+
 			locallyStoredPlaylist = playlistInfo;
-		
+
 			// Update local storage
 			await chrome.storage.local.set({ [uploadsPlaylistId]: locallyStoredPlaylist });
 		}
 		// The playlist exists locally, but is outdated. Update it from the database. If needed, update the database values as well.
-	} else if (playlistInfo["lastFetchedFromDB"] < "Date now - xx hours") {
-		// TODO
-
+		// TODO: Make the 72 hours a setting for the user (to reduce load on database, set a min-value)
+	} else if (playlistInfo["lastFetchedFromDB"] < addHours(new Date(), -72).toISOString()) {
 		// TODO: Introduce "lastUpdated" field in db to control how often we query the API. E.g. only once every 24 hours.
-		// TODO: Only get updated values from db once per day as well, and update from db to youtube API once per day.
 
-		// TODO: Update from DB here
-		// localStoragePlaylists = await updateLocalStoragePlaylistFromApi(playlistId, localStoragePlaylists);
 		console.log("Uploads playlist for this channel is outdated. Trying to update from the database...");
-		playlistInfo = await tryUpdatePlaylistFromDB(uploadsPlaylistId, lastFetchedFromDB);
+		playlistInfo = await tryGetPlaylistFromDB(uploadsPlaylistId);
 
-		// TODO: Handle case where the playlist no longer exists in the database
+		// The playlist does not exist in the database. Get it from the API
+		if (isEmpty(playlistInfo)) {
+			playlistInfo = await getPlaylistFromApi(playlistId);
+		}
+
+		// Update the lastFetchedFromDB field
+		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
+
+		// Update local storage
+		await chrome.storage.local.set({ [uploadsPlaylistId]: locallyStoredPlaylist });
+
+		// TODO: Update the playlist locally
 		// TODO: Update the lastFetchedFromDB field in the local storage
 	}
 

@@ -1,8 +1,6 @@
 // Background script for the extension, which is run on extension initialization
 // Handles communication between the extension and the content script as well as firebase
 
-let APIKey = null;
-
 // ---------- firebase ----------
 
 self.importScripts('../firebase/firebase-compat.js');
@@ -28,7 +26,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	} else if (request.command === "postToDB") {
 		writeData(request.data.key, request.data.val).then(sendResponse);
 	} else if (request.command === "getAPIKey") {
-		sendResponse(APIKey);
+		getAPIKey().then(sendResponse);
 	}
 
 	return true;
@@ -51,14 +49,15 @@ async function readDataOnce(key) {
 
 // ---------- end firebase ----------
 
-async function initExtension() {
-	console.log("Initializing extension, getting API key...");
+async function getAPIKey() {
 	APIKey = await getFromLocalStorage("youtubeAPIKey");
 	// If the API key is not saved in local storage, get it from the database
 	if (!APIKey) {
 		APIKey = await readDataOnce("youtubeAPIKey");
 		setLocalStorage("youtubeAPIKey", APIKey);
 	}
+
+	return APIKey;
 }
 
 async function getFromLocalStorage(key) {
@@ -74,5 +73,3 @@ async function setLocalStorage(key, value) {
 	await chrome.storage.local.set({ [key]: value });
 	return value;
 }
-
-initExtension();

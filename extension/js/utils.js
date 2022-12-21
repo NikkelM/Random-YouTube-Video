@@ -29,8 +29,9 @@ function isVideoUrl(url) {
 	return urlParts[3].startsWith("watch?v=");
 }
 
-function delay(time) {
-	return new Promise(resolve => setTimeout(resolve, time));
+// Waits for a certain amount of milliseconds
+function delay(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // Wrapper around sendMessage to work with asynchronous responses
@@ -47,8 +48,14 @@ function sendMessage(msg) {
 	})
 }
 
+// Determines if an object is empty
 function isEmpty(obj) {
-  return Object.keys(obj).length === 0;
+	return Object.keys(obj).length === 0;
+}
+
+// Adds a number of hours to a date
+function addHours(date, hours) {
+	return new Date(date.getTime() + hours * 3600000);
 }
 
 // ---------- Classes ----------
