@@ -63,16 +63,11 @@ async function chooseRandomVideo() {
 		// The playlist does not exist in the database (==it was deleted since the user last fetched it). Get it from the API.
 		if (isEmpty(playlistInfo)) {
 			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
-		}
-
-		// TODO: Check when the playlist was last updated in the database. ("lastUpdatedDBAt" field)
-		if (playlistInfo["lastUpdatedDBAt"] < addHours(new Date(), -48).toISOString()) {
+			// If the playlist exists in the db but is outdated, update it from the API
+		} else if (playlistInfo["lastUpdatedDBAt"] < addHours(new Date(), -48).toISOString()) {
 			playlistInfo = await updatePlaylistFromApi(playlistInfo, uploadsPlaylistId);
 
-			// Save the playlist locally
-			chrome.storage.local.set({ [uploadsPlaylistId]: playlistInfo });
-
-			// Send the playlist info to the db
+			// Send the updated playlist info to the db
 			const msg = {
 				command: 'postToDB',
 				data: {
@@ -88,7 +83,7 @@ async function chooseRandomVideo() {
 		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 
 		// Update local storage
-		await chrome.storage.local.set({ [uploadsPlaylistId]: locallyStoredPlaylist });
+		chrome.storage.local.set({ [uploadsPlaylistId]: locallyStoredPlaylist });
 	}
 
 	// Choose a random video from the playlist
