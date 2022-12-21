@@ -64,18 +64,18 @@ async function chooseRandomVideo() {
 			// First update the lastFetchedFromDB field
 			playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 			
-			// Get the local storage dictionary
-			let localStoragePlaylists = await chrome.storage.local.get(["uploadsPlaylists"]).then((result) => {
-				if (result["uploadsPlaylists"]) {
-					return result["uploadsPlaylists"];
+			// Get the locally stored playlist
+			let locallyStoredPlaylist = await chrome.storage.local.get([uploadsPlaylistId]).then((result) => {
+				if (result[uploadsPlaylistId]) {
+					return result[uploadsPlaylistId];
 				}
 				return {};
 			});
 		
-			localStoragePlaylists[uploadsPlaylistId] = playlistInfo;
+			locallyStoredPlaylist = playlistInfo;
 		
 			// Update local storage
-			await chrome.storage.local.set({ "uploadsPlaylists": localStoragePlaylists });
+			await chrome.storage.local.set({ [uploadsPlaylistId]: locallyStoredPlaylist });
 		}
 		// The playlist exists locally, but is outdated. Update it from the database. If needed, update the database values as well.
 	} else if (playlistInfo["lastFetchedFromDB"] < "Date now - xx hours") {
@@ -104,20 +104,12 @@ async function chooseRandomVideo() {
 
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
 async function tryGetPlaylistFromLocalStorage(playlistId) {
-	let localStoragePlaylists = await chrome.storage.local.get(["uploadsPlaylists"]).then((result) => {
-		if (result["uploadsPlaylists"]) {
-			return result["uploadsPlaylists"];
+	return await chrome.storage.local.get([playlistId]).then((result) => {
+		if (result[playlistId]) {
+			return result[playlistId];
 		}
 		return {};
 	});
-
-	// If the playlist is already saved in local storage, return it
-	if (localStoragePlaylists[playlistId]) {
-		return localStoragePlaylists[playlistId];
-	}
-
-	// The playlist does not exist locally
-	return {};
 }
 
 // Tries to get the playlist from the database. If it is not present, returns an empty dictionary
