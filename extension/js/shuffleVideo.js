@@ -187,6 +187,7 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 
 // Sends a request to the Youtube API to get the snippet of a playlist
 async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
+	console.log("Getting snippet from YouTube API...");
 	await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${APIKey}`)
 		.then((response) => response.json())
 		.then((data) => apiResponse = data);
