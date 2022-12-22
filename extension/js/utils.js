@@ -20,11 +20,15 @@ console.error = function () {
 // ---------- Utility functions ----------
 
 function isChannelUrl(url) {
+	if (!url) return false;
+
 	const urlParts = url.split("/");
 	return urlParts[3].startsWith("@") || urlParts[3] == "c" || urlParts[3] == "channel" || urlParts[3] == "user";
 }
 
 function isVideoUrl(url) {
+	if (!url) return false;
+
 	const urlParts = url.split("/");
 	return urlParts[3].startsWith("watch?v=");
 }
