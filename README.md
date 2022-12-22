@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/chrome-web-store/v/kijgnjhogkjodpakfmhgleobifempckf"
     alt="Chrome web store version"></a>
 <a href="https://github.com/NikkelM/Random-YouTube-Video/tree/dev">
-  <img src="https://img.shields.io/github/manifest-json/v/NikkelM/Random-YouTube-Video?filename=extension%2Fmanifest.json&label=dev"
+  <img src="https://img.shields.io/github/manifest-json/v/NikkelM/Random-YouTube-Video/dev?filename=extension%2Fmanifest.json&label=dev"
     alt="Development version"></a>
 <br>
 <a href="https://github.com/NikkelM/Random-YouTube-Video/tree/main/CHANGELOG.md">
