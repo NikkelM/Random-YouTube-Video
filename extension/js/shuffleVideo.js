@@ -8,17 +8,6 @@ async function chooseRandomVideo() {
 	const uploadsPlaylistId = document.querySelector("[itemprop=channelId]").getAttribute("content").replace("UC", "UU");
 	console.log("Choosing a random video from playlist/channel: " + uploadsPlaylistId);
 
-	/* Local dictionary format
-	{
-		"lastFetchedFromDB": DateTimeString (iso),
-		"lastUpdatedDBAt": DateTimeString (iso),
-		"lastVideoPublishedAt": DateTimeString (iso),
-		"videos": [
-			"videoId"
-		]
-	}
-	*/
-
 	// Check if the playlist is already saved in local storage, so we don't need to access the database
 	let playlistInfo = await tryGetPlaylistFromLocalStorage(uploadsPlaylistId);
 
