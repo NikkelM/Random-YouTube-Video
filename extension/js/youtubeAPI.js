@@ -11,8 +11,9 @@ async function chooseRandomVideo() {
 	// TODO: Make sure this format is up-to-date
 	/* Local dictionary format
 	{
-		"lastVideoPublishedAt": DateTimeString (iso),
 		"lastFetchedFromDB": DateTimeString (iso),
+		"lastUpdatedDBAt": DateTimeString (iso),
+		"lastVideoPublishedAt": DateTimeString (iso),
 		"videos": [
 			"videoId"
 		]
