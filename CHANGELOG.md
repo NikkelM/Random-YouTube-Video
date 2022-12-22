@@ -2,7 +2,7 @@
 
 ## v0.1.0
 
-- Added a backend database to remove the need for users to provide an API key
+- Added a backend database removing the need for users to provide an API key
 
 ## v0.0.2
 
