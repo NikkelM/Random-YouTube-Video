@@ -13,7 +13,7 @@
 		{
 			"js": [
 				"js/utils.js",
-				"js/youtubeAPI.js",
+				"js/shuffleVideo.js",
 				"js/buildShuffleButton.js",
 				"js/content.js"
 			],
