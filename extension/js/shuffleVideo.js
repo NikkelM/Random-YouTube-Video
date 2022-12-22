@@ -1,4 +1,4 @@
-// HAndles everything concerning the shuffling of videos, including sending messages to the backend db and the YouTube API
+// Handles everything concerning the shuffling of videos, including sending messages to the backend database and the YouTube API
 
 let APIKey = null;
 
@@ -23,7 +23,7 @@ async function chooseRandomVideo() {
 			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
 			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
 
-			// Send the playlist info to the db
+			// Send the playlist info to the database
 			const msg = {
 				command: 'postToDB',
 				data: {
@@ -59,7 +59,7 @@ async function chooseRandomVideo() {
 			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...")
 			playlistInfo = await updatePlaylistFromApi(playlistInfo, uploadsPlaylistId);
 
-			// Send the updated playlist info to the db
+			// Send the updated playlist info to the database
 			const msg = {
 				command: 'postToDB',
 				data: {
