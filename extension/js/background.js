@@ -1,7 +1,20 @@
 // Background script for the extension, which is run on extension initialization
 // Handles communication between the extension and the content script as well as firebase
 
-// ---------- firebase ----------
+// Message handler
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+	if (request.command === "getPlaylistFromDB") {
+		readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
+	} else if (request.command === "postToDB") {
+		writeData(request.data.key, request.data.val).then(sendResponse);
+	} else if (request.command === "getAPIKey") {
+		getAPIKey().then(sendResponse);
+	}
+
+	return true;
+});
+
+// ---------- Firebase ----------
 
 self.importScripts('../firebase/firebase-compat.js');
 
@@ -19,19 +32,6 @@ const app = firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database(app);
 
-// Message handler
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-	if (request.command === "getPlaylistFromDB") {
-		readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
-	} else if (request.command === "postToDB") {
-		writeData(request.data.key, request.data.val).then(sendResponse);
-	} else if (request.command === "getAPIKey") {
-		getAPIKey().then(sendResponse);
-	}
-
-	return true;
-});
-
 async function writeData(key, val) {
 	console.log("Writing data to database...");
 	db.ref(key).update(val);
@@ -48,7 +48,7 @@ async function readDataOnce(key) {
 	return res;
 }
 
-// ---------- end firebase ----------
+// ---------- Helpers ----------
 
 async function getAPIKey() {
 	APIKey = await getFromLocalStorage("youtubeAPIKey");
@@ -60,6 +60,8 @@ async function getAPIKey() {
 
 	return APIKey;
 }
+
+// ---------- Local storage ----------
 
 async function getFromLocalStorage(key) {
 	return await chrome.storage.local.get([key]).then((result) => {
