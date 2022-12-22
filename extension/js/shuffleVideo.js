@@ -36,24 +36,27 @@ async function chooseRandomVideo() {
 		}
 
 		// Save the playlist locally
-		console.log("Uploads playlist for this channel successfully retrieved. Saving it locally...")
+		console.log("Uploads playlist for this channel successfully retrieved from database or API. Saving it locally...")
 
 		// First update the lastFetchedFromDB field
 		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 
-		// Update local storage. We don't care if it already exists, because we always have the newest version.
+		// Update local storage. We don't care if it already exists, because we always have the newest version here.
 		chrome.storage.local.set({ [uploadsPlaylistId]: playlistInfo });
 
 		// The playlist exists locally, but is outdated. Update it from the database. If needed, update the database values as well.
 	} else if (playlistInfo["lastFetchedFromDB"] < addHours(new Date(), -48).toISOString()) {
-		console.log("Uploads playlist for this channel is outdated. Trying to update from the database...");
+		console.log("Local uploads playlist for this channel may be outdated. Updating from the database...");
 		playlistInfo = await tryGetPlaylistFromDB(uploadsPlaylistId);
 
 		// The playlist does not exist in the database (==it was deleted since the user last fetched it). Get it from the API.
 		if (isEmpty(playlistInfo)) {
+			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
 			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
-			// If the playlist exists in the db but is outdated, update it from the API
+
+			// If the playlist exists in the database but is outdated there as well, update it from the API.
 		} else if (playlistInfo["lastUpdatedDBAt"] < addHours(new Date(), -48).toISOString()) {
+			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...")
 			playlistInfo = await updatePlaylistFromApi(playlistInfo, uploadsPlaylistId);
 
 			// Send the updated playlist info to the db
