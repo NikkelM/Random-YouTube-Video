@@ -44,12 +44,13 @@ async function chooseRandomVideo() {
 		// Update local storage. We don't care if it already exists, because we always have the newest version here.
 		chrome.storage.local.set({ [uploadsPlaylistId]: playlistInfo });
 
-		// The playlist exists locally, but is outdated. Update it from the database. If needed, update the database values as well.
+		// The playlist exists locally, but may be outdated. Update it from the database. If needed, update the database values as well.
 	} else if (playlistInfo["lastFetchedFromDB"] < addHours(new Date(), -48).toISOString()) {
 		console.log("Local uploads playlist for this channel may be outdated. Updating from the database...");
 		playlistInfo = await tryGetPlaylistFromDB(uploadsPlaylistId);
 
 		// The playlist does not exist in the database (==it was deleted since the user last fetched it). Get it from the API.
+		// With the current functionality and db rules, this shouldn't happen.
 		if (isEmpty(playlistInfo)) {
 			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
 			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
@@ -59,6 +60,7 @@ async function chooseRandomVideo() {
 			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...")
 			playlistInfo = await updatePlaylistFromApi(playlistInfo, uploadsPlaylistId);
 
+			// TODO: Make this more efficient, meaning only add the new videos to the list. (#24)
 			// Send the updated playlist info to the database
 			const msg = {
 				command: 'postToDB',
@@ -82,6 +84,7 @@ async function chooseRandomVideo() {
 	const randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
 	console.log("A random video has been chosen: " + randomVideo);
 
+	// TODO: If the video does not exist anymore, remove it from the locally and db stored playlist and choose a new one. (#5)
 	// Navigate to the random video
 	window.location.href = "https://www.youtube.com/watch?v=" + randomVideo;
 }
