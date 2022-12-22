@@ -1,7 +1,69 @@
-body {
-  width: 20rem;
+:root {
+  --randomYoutubeVideo-font-family: "Roboto", sans-serif;
+  --randomYoutubeVideo-bg-color: #222;
+  --randomYoutubeVideo-fg-color: #fff;
+  --randomYoutubeVideo-grey-fg-color: #999;
 }
 
-input {
-	width: 19rem;
+/*
+ * Generic utilities
+ */
+ .grey-text {
+  color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+/*
+ * Main containers
+ */
+ #randomYoutubeVideoPopupHTML {
+  color-scheme: dark;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+#randomYoutubeVideoPopupBody {
+  margin: 4px;
+  width: 400px;
+  max-width: 100%; /* NOTE: Ensures content doesn't exceed restricted popup widths in Firefox */
+  font-size: 14px;
+  font-family: var(--randomYoutubeVideo-font-family);
+  background-color: var(--randomYoutubeVideo-bg-color);
+  color: var(--randomYoutubeVideo-fg-color);
+  color-scheme: dark;
+}
+
+#randomYoutubeVideoPopup {
+  text-align: center;
+}
+
+body {
+  margin: 4px;
+  width: 400px;
+  max-width: 100%; /* NOTE: Ensures content doesn't exceed restricted popup widths in Firefox */
+  font-size: 14px;
+  font-family: var(--randomYoutubeVideo-font-family);
+  background-color: var(--randomYoutubeVideo-bg-color);
+  color: var(--randomYoutubeVideo-fg-color);
+  color-scheme: dark;
+}
+
+
+/*
+ * Footer
+ */
+ #randomYoutubeVideoFooter {
+  padding: 10px 0;
+}
+#randomYoutubeVideoFooter a {
+  color: var(--randomYoutubeVideo-fg-color);
+  display: inline-block;
+  text-decoration: none;
+  border-radius: 3px;
+  background-color: #333;
+  padding: 4px 10px;
+  font-weight: 500;
+  margin: 2px 1px;
+}
+#randomYoutubeVideoFooter a:hover {
+  background-color: #444;
 }
