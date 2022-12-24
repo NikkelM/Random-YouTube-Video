@@ -1,7 +1,34 @@
 // Background script for the extension, which is run on extension initialization
 // Handles communication between the extension and the content script as well as firebase
 
-// Message handler
+// ---------- Initialization ----------
+
+function initializeExtension() {
+	const manifestData = chrome.runtime.getManifest();
+	console.log("The extension is running on version: " + manifestData.version);
+
+	// This variable indicates if the local storage should be cleared when updating to the newest version
+	const clearStorageOnUpdate = false;
+
+	// Check if the extension is updated
+	getFromLocalStorage("extensionVersion").then((result) => {
+		if (result !== manifestData.version) {
+			console.log("Extension updated from version " + result + " to " + manifestData.version);
+
+			if (clearStorageOnUpdate) {
+				console.log("Variable indicates local storage should be cleared. Clearing...");
+				chrome.storage.local.clear();
+			}
+
+			// Make sure the current extension version is always saved in local storage
+			setLocalStorage("extensionVersion", manifestData.version);
+		}
+	});
+}
+
+initializeExtension();
+
+// ---------- Message handler ----------
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.command === "getPlaylistFromDB") {
 		readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
