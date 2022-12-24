@@ -84,9 +84,12 @@ async function chooseRandomVideo() {
 	const randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
 	console.log("A random video has been chosen: " + randomVideo);
 
+	// Test if video still exists
+	const videoExists = await testVideoExistence(randomVideo);
+
 	// TODO: If the video does not exist anymore, remove it from the locally and db stored playlist and choose a new one. (#5)
 	// Navigate to the random video
-	window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
+	// window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
 }
 
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
@@ -196,6 +199,19 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 		throw new YoutubeAPIError(apiResponse["error"]["code"], apiResponse["error"]["message"]);
 	}
 	return apiResponse;
+}
+
+async function testVideoExistence(videoId) {
+	try {
+		await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`)
+			.then((response) => response.json())
+			.then((data) => apiResponse = data);
+	} catch (error) {
+		console.log("Video doesn't exist.");
+		return false;
+	}
+
+	return true;
 }
 
 // Requests the API key from the background script
