@@ -86,7 +86,7 @@ async function chooseRandomVideo() {
 
 	// TODO: If the video does not exist anymore, remove it from the locally and db stored playlist and choose a new one. (#5)
 	// Navigate to the random video
-	window.location.href = "https://www.youtube.com/watch?v=" + randomVideo;
+	window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
 }
 
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary

@@ -8,6 +8,7 @@ function initializeExtension() {
 	console.log("The extension is running on version: " + manifestData.version);
 
 	// This variable indicates if the local storage should be cleared when updating to the newest version
+	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
 	const clearStorageOnUpdate = false;
 
 	// Check if the extension is updated
