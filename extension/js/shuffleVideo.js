@@ -77,6 +77,8 @@ async function chooseRandomVideo() {
 	}
 
 	if (shouldUpdateDatabase) {
+		console.log("Updating the playlist in the database...");
+
 		// Send the playlist info to the database
 		const msg = {
 			command: 'postToDB',
@@ -222,6 +224,8 @@ async function testVideoExistence(videoId) {
 }
 
 function savePlaylistToLocalStorage(playlistInfo, playlistId) {
+	console.log("Saving playlist to local storage...");
+
 	// Update the lastFetchedFromDB field
 	playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 
