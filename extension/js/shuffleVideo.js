@@ -4,6 +4,9 @@ let APIKey = null;
 
 // Chooses a random video uploaded on the current YouTube channel
 async function chooseRandomVideo() {
+	// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
+	let shouldUpdateDatabase = false;
+
 	// Get the id of the uploads playlist for this channel
 	const uploadsPlaylistId = document.querySelector("[itemprop=channelId]").getAttribute("content").replace("UC", "UU");
 	console.log("Choosing a random video from playlist/channel: " + uploadsPlaylistId);
@@ -23,26 +26,10 @@ async function chooseRandomVideo() {
 			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
 			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
 
-			// Send the playlist info to the database
-			const msg = {
-				command: 'postToDB',
-				data: {
-					key: 'uploadsPlaylists/' + uploadsPlaylistId,
-					val: playlistInfo
-				}
-			};
-
-			chrome.runtime.sendMessage(msg);
+			shouldUpdateDatabase = true;
 		}
 
-		// Save the playlist locally
-		console.log("Uploads playlist for this channel successfully retrieved from database or API. Saving it locally...")
-
-		// First update the lastFetchedFromDB field
-		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
-
-		// Update local storage. We don't care if it already exists, because we always have the newest version here.
-		chrome.storage.local.set({ [uploadsPlaylistId]: playlistInfo });
+		console.log("Uploads playlist for this channel successfully retrieved from database or API.");
 
 		// The playlist exists locally, but may be outdated. Update it from the database. If needed, update the database values as well.
 	} else if (playlistInfo["lastFetchedFromDB"] < addHours(new Date(), -48).toISOString()) {
@@ -57,36 +44,61 @@ async function chooseRandomVideo() {
 
 			// If the playlist exists in the database but is outdated there as well, update it from the API.
 		} else if (playlistInfo["lastUpdatedDBAt"] < addHours(new Date(), -48).toISOString()) {
-			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...")
+			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
 			playlistInfo = await updatePlaylistFromApi(playlistInfo, uploadsPlaylistId);
 
-			// TODO: Make this more efficient, meaning only add the new videos to the list. (#24)
-			// Send the updated playlist info to the database
-			const msg = {
-				command: 'postToDB',
-				data: {
-					key: 'uploadsPlaylists/' + uploadsPlaylistId,
-					val: playlistInfo
-				}
-			};
-
-			chrome.runtime.sendMessage(msg);
+			shouldUpdateDatabase = true;
 		}
-
-		// Update the lastFetchedFromDB field
-		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
-
-		// Update local storage
-		chrome.storage.local.set({ [uploadsPlaylistId]: playlistInfo });
 	}
 
 	// Choose a random video from the playlist
-	const randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
+	let randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
 	console.log("A random video has been chosen: " + randomVideo);
 
-	// TODO: If the video does not exist anymore, remove it from the locally and db stored playlist and choose a new one. (#5)
+	// Test if video still exists
+	let videoExists = await testVideoExistence(randomVideo);
+
+	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
+	if (!videoExists) {
+		while (!videoExists) {
+			console.log("The chosen video does not exist anymore. Removing it from the playlist and choosing a new one...");
+
+			// Remove the video from the playlist
+			playlistInfo["videos"] = playlistInfo["videos"].filter(video => video !== randomVideo);
+
+			// Choose a new random video
+			randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
+			console.log("A new random video has been chosen: " + randomVideo);
+
+			videoExists = await testVideoExistence(randomVideo);
+		}
+
+		shouldUpdateDatabase = true;
+	}
+
+	if (shouldUpdateDatabase) {
+		console.log("Updating the playlist in the database...");
+
+		// Send the playlist info to the database
+		const msg = {
+			command: 'postToDB',
+			data: {
+				key: 'uploadsPlaylists/' + uploadsPlaylistId,
+				val: playlistInfo
+			}
+		};
+
+		chrome.runtime.sendMessage(msg);
+	}
+
+	// Remember the last time the playlist was accessed locally
+	playlistInfo["lastAccessedLocally"] = new Date().toISOString();
+
+	// Update the playlist locally
+	savePlaylistToLocalStorage(playlistInfo, uploadsPlaylistId);
+
 	// Navigate to the random video
-	window.location.href = "https://www.youtube.com/watch?v=" + randomVideo;
+	window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
 }
 
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
@@ -196,6 +208,29 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 		throw new YoutubeAPIError(apiResponse["error"]["code"], apiResponse["error"]["message"]);
 	}
 	return apiResponse;
+}
+
+async function testVideoExistence(videoId) {
+	try {
+		await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`)
+			.then((response) => response.json())
+			.then((data) => apiResponse = data);
+	} catch (error) {
+		console.log("Video doesn't exist: " + videoId);
+		return false;
+	}
+
+	return true;
+}
+
+function savePlaylistToLocalStorage(playlistInfo, playlistId) {
+	console.log("Saving playlist to local storage...");
+
+	// Update the lastFetchedFromDB field
+	playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
+
+	// Update local storage
+	chrome.storage.local.set({ [playlistId]: playlistInfo });
 }
 
 // Requests the API key from the background script

@@ -1,7 +1,66 @@
 // Background script for the extension, which is run on extension initialization
 // Handles communication between the extension and the content script as well as firebase
 
-// Message handler
+// ---------- Initialization ----------
+
+async function initializeExtension() {
+	const manifestData = chrome.runtime.getManifest();
+	console.log("The extension is running on version: " + manifestData.version);
+
+	// This variable indicates if the local storage should be cleared when updating to the newest version
+	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
+	const clearStorageOnUpdate = false;
+
+	// Check if the extension was updated
+	getFromLocalStorage("extensionVersion").then((result) => {
+		if (result !== manifestData.version) {
+			console.log("Extension updated from version " + result + " to " + manifestData.version);
+
+			if (clearStorageOnUpdate) {
+				console.log("Variable indicates local storage should be cleared. Clearing...");
+				chrome.storage.local.clear();
+			}
+
+			// Make sure the current extension version is always saved in local storage
+			setLocalStorage("extensionVersion", manifestData.version);
+		}
+	});
+
+	// If over 90% of the storage quota for playlists is used, remove playlists that have not been accessed in a long time
+	const utilizedStorage = await chrome.storage.local.getBytesInUse();
+	const maxLocalStorage = chrome.storage.local.QUOTA_BYTES;
+
+	console.log(((utilizedStorage / maxLocalStorage) * 100).toFixed(2) + "% of local storage is used. (" + utilizedStorage + "/" + maxLocalStorage + " bytes)");
+
+	if (maxLocalStorage * 0.9 < utilizedStorage) {
+		console.log("Local storage is over 90% utilized. Removing playlists that have not been accessed the longest...");
+
+		// Get all playlists from local storage
+		const localStorageContents = await chrome.storage.local.get();
+
+		// We only need the keys that hold playlists
+		const allPlaylists = Object.fromEntries(Object.entries(localStorageContents).filter(([k, v]) => v["videos"]));
+
+		// Sort the playlists by lastAccessedLocally value
+		const sortedPlaylists = Object.entries(allPlaylists).sort((a, b) => {
+			return new Date(b[1]["lastAccessedLocally"]) - new Date(a[1]["lastAccessedLocally"]);
+		});
+
+		chrome.storage.local.get(console.log)
+		// Remove the 20% of playlists that have not been accessed the longest
+		const playlistsToRemove = sortedPlaylists.slice(Math.floor(sortedPlaylists.length * 0.8));
+		for (const [playlistId, playlistInfo] of playlistsToRemove) {
+			console.log("Removing playlist " + playlistId + " from local storage...");
+			chrome.storage.local.remove(playlistId);
+		}
+		chrome.storage.local.get(console.log)
+	}
+
+}
+
+initializeExtension();
+
+// ---------- Message handler ----------
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.command === "getPlaylistFromDB") {
 		readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
