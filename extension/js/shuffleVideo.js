@@ -216,7 +216,7 @@ async function testVideoExistence(videoId) {
 			.then((response) => response.json())
 			.then((data) => apiResponse = data);
 	} catch (error) {
-		console.log("Video doesn't exist.");
+		console.log("Video doesn't exist: " + videoId);
 		return false;
 	}
 
