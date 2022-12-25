@@ -36,8 +36,7 @@ async function chooseRandomVideo() {
 		}
 
 		// Save the playlist locally
-		console.log("Uploads playlist for this channel successfully retrieved from database or API. Saving it locally...")
-		savePlaylistToLocalStorage(playlistInfo, uploadsPlaylistId);
+		console.log("Uploads playlist for this channel successfully retrieved from database or API.");
 
 		// The playlist exists locally, but may be outdated. Update it from the database. If needed, update the database values as well.
 	} else if (playlistInfo["lastFetchedFromDB"] < addHours(new Date(), -48).toISOString()) {
@@ -67,9 +66,6 @@ async function chooseRandomVideo() {
 
 			chrome.runtime.sendMessage(msg);
 		}
-
-		// Update the playlist locally
-		savePlaylistToLocalStorage(playlistInfo, uploadsPlaylistId);
 	}
 
 	// Choose a random video from the playlist
@@ -104,10 +100,13 @@ async function chooseRandomVideo() {
 		};
 
 		chrome.runtime.sendMessage(msg);
-
-		// Update the playlist locally
-		savePlaylistToLocalStorage(playlistInfo, uploadsPlaylistId);
 	}
+
+	// Remember the last time the playlist was accessed locally
+	playlistInfo["lastAccessedLocally"] = new Date().toISOString();
+
+	// Update the playlist locally
+	savePlaylistToLocalStorage(playlistInfo, uploadsPlaylistId);
 
 	// Navigate to the random video
 	// window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
