@@ -37,12 +37,7 @@ async function chooseRandomVideo() {
 
 		// Save the playlist locally
 		console.log("Uploads playlist for this channel successfully retrieved from database or API. Saving it locally...")
-
-		// First update the lastFetchedFromDB field
-		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
-
-		// Update local storage. We don't care if it already exists, because we always have the newest version here.
-		chrome.storage.local.set({ [uploadsPlaylistId]: playlistInfo });
+		savePlaylistToLocalStorage(playlistInfo, uploadsPlaylistId);
 
 		// The playlist exists locally, but may be outdated. Update it from the database. If needed, update the database values as well.
 	} else if (playlistInfo["lastFetchedFromDB"] < addHours(new Date(), -48).toISOString()) {
@@ -73,21 +68,47 @@ async function chooseRandomVideo() {
 			chrome.runtime.sendMessage(msg);
 		}
 
-		// Update the lastFetchedFromDB field
-		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
-
-		// Update local storage
-		chrome.storage.local.set({ [uploadsPlaylistId]: playlistInfo });
+		// Update the playlist locally
+		savePlaylistToLocalStorage(playlistInfo, uploadsPlaylistId);
 	}
 
 	// Choose a random video from the playlist
-	const randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
+	let randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
 	console.log("A random video has been chosen: " + randomVideo);
 
 	// Test if video still exists
-	const videoExists = await testVideoExistence(randomVideo);
+	let videoExists = await testVideoExistence(randomVideo);
 
-	// TODO: If the video does not exist anymore, remove it from the locally and db stored playlist and choose a new one. (#5)
+	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
+	if (!videoExists) {
+		while (!videoExists) {
+			console.log("The chosen video does not exist anymore. Removing it from the playlist and choosing a new one...");
+
+			// Remove the video from the playlist
+			playlistInfo["videos"] = playlistInfo["videos"].filter(video => video !== randomVideo);
+
+			// Choose a new random video
+			randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
+			console.log("A new random video has been chosen: " + randomVideo);
+
+			videoExists = await testVideoExistence(randomVideo);
+		}
+
+		// Update the playlist in the database
+		const msg = {
+			command: 'postToDB',
+			data: {
+				key: 'uploadsPlaylists/' + uploadsPlaylistId,
+				val: playlistInfo
+			}
+		};
+
+		chrome.runtime.sendMessage(msg);
+
+		// Update the playlist locally
+		savePlaylistToLocalStorage(playlistInfo, uploadsPlaylistId);
+	}
+
 	// Navigate to the random video
 	// window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
 }
@@ -212,6 +233,14 @@ async function testVideoExistence(videoId) {
 	}
 
 	return true;
+}
+
+function savePlaylistToLocalStorage(playlistInfo, playlistId) {
+	// Update the lastFetchedFromDB field
+	playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
+
+	// Update local storage
+	chrome.storage.local.set({ [playlistId]: playlistInfo });
 }
 
 // Requests the API key from the background script
