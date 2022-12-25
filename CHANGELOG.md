@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.0.1
+
+- If a deleted video is chosen by the extension, it will now choose a new one instead of redirecting to a broken YouTube page.
+- Various improvements to how local storage is handled.
+- The extension will now make less requests to the database.
+
 ## v0.1.0
 
 - Added a backend database removing the need for users to provide an API key.
