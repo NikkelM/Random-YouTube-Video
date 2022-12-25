@@ -98,7 +98,7 @@ async function chooseRandomVideo() {
 	savePlaylistToLocalStorage(playlistInfo, uploadsPlaylistId);
 
 	// Navigate to the random video
-	// window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
+	window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
 }
 
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
