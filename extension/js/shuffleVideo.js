@@ -44,7 +44,7 @@ async function chooseRandomVideo() {
 
 			// If the playlist exists in the database but is outdated there as well, update it from the API.
 		} else if (playlistInfo["lastUpdatedDBAt"] < addHours(new Date(), -48).toISOString()) {
-			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...")
+			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
 			playlistInfo = await updatePlaylistFromApi(playlistInfo, uploadsPlaylistId);
 
 			shouldUpdateDatabase = true;
