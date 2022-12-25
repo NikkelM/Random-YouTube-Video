@@ -4,6 +4,9 @@ let APIKey = null;
 
 // Chooses a random video uploaded on the current YouTube channel
 async function chooseRandomVideo() {
+	// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
+	let shouldUpdateDatabase = false;
+
 	// Get the id of the uploads playlist for this channel
 	const uploadsPlaylistId = document.querySelector("[itemprop=channelId]").getAttribute("content").replace("UC", "UU");
 	console.log("Choosing a random video from playlist/channel: " + uploadsPlaylistId);
@@ -23,19 +26,9 @@ async function chooseRandomVideo() {
 			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
 			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
 
-			// Send the playlist info to the database
-			const msg = {
-				command: 'postToDB',
-				data: {
-					key: 'uploadsPlaylists/' + uploadsPlaylistId,
-					val: playlistInfo
-				}
-			};
-
-			chrome.runtime.sendMessage(msg);
+			shouldUpdateDatabase = true;
 		}
 
-		// Save the playlist locally
 		console.log("Uploads playlist for this channel successfully retrieved from database or API.");
 
 		// The playlist exists locally, but may be outdated. Update it from the database. If needed, update the database values as well.
@@ -54,17 +47,7 @@ async function chooseRandomVideo() {
 			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...")
 			playlistInfo = await updatePlaylistFromApi(playlistInfo, uploadsPlaylistId);
 
-			// TODO: Make this more efficient, meaning only add the new videos to the list. (#24)
-			// Send the updated playlist info to the database
-			const msg = {
-				command: 'postToDB',
-				data: {
-					key: 'uploadsPlaylists/' + uploadsPlaylistId,
-					val: playlistInfo
-				}
-			};
-
-			chrome.runtime.sendMessage(msg);
+			shouldUpdateDatabase = true;
 		}
 	}
 
@@ -90,7 +73,11 @@ async function chooseRandomVideo() {
 			videoExists = await testVideoExistence(randomVideo);
 		}
 
-		// Update the playlist in the database
+		shouldUpdateDatabase = true;
+	}
+
+	if (shouldUpdateDatabase) {
+		// Send the playlist info to the database
 		const msg = {
 			command: 'postToDB',
 			data: {
