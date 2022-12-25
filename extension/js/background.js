@@ -9,7 +9,7 @@ async function initializeExtension() {
 
 	// This variable indicates if the local storage should be cleared when updating to the newest version
 	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
-	const clearStorageOnUpdate = false;
+	const clearStorageOnUpdate = true;
 
 	// Check if the extension was updated
 	getFromLocalStorage("extensionVersion").then((result) => {
@@ -61,6 +61,7 @@ async function initializeExtension() {
 initializeExtension();
 
 // ---------- Message handler ----------
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.command === "getPlaylistFromDB") {
 		readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
@@ -111,13 +112,27 @@ async function readDataOnce(key) {
 
 async function getAPIKey() {
 	APIKey = await getFromLocalStorage("youtubeAPIKey");
-	// If the API key is not saved in local storage, get it from the database
+
+	// If the API key is not saved in local storage, get it from the database.
 	if (!APIKey) {
 		APIKey = await readDataOnce("youtubeAPIKey");
-		setLocalStorage("youtubeAPIKey", APIKey);
+		setLocalStorage("youtubeAPIKey", rot13(APIKey, true));
+		return APIKey;
 	}
 
-	return APIKey;
+	return rot13(APIKey, false);
+}
+
+// Very simple cipher to scramble a string
+function rot13(message, encrypt) {
+	const originalAlpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	const cipher = "nopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLM";
+	// do a replace based off of indices
+	if (encrypt) {
+		return message.replace(/[a-z0-9]/gi, letter => cipher[originalAlpha.indexOf(letter)]);
+	} else {
+		return message.replace(/[a-z0-9]/gi, letter => originalAlpha[cipher.indexOf(letter)]);
+	}
 }
 
 // ---------- Local storage ----------
