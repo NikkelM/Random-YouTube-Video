@@ -54,6 +54,7 @@ body {
  #randomYoutubeVideoFooter {
   padding: 10px 0;
 }
+
 #randomYoutubeVideoFooter a {
   color: var(--randomYoutubeVideo-fg-color);
   display: inline-block;
@@ -64,6 +65,7 @@ body {
   font-weight: 500;
   margin: 2px 1px;
 }
+
 #randomYoutubeVideoFooter a:hover {
   background-color: #444;
 }
