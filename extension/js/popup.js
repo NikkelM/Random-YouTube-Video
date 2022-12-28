@@ -85,7 +85,12 @@ function manageDependents(parent, checked) {
 
 async function setSyncStorageValue(key, value) {
 	configSync[key] = value;
+
 	await chrome.storage.sync.set({ [key]: value });
+
+	// Refresh the config in the background script
+	chrome.runtime.sendMessage({ command: "refreshConfigSync" });
+
 	console.log("Set " + key + " to " + value + " in sync storage.");
 }
 

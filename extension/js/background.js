@@ -1,6 +1,8 @@
 // Background script for the extension, which is run on extension initialization
 // Handles communication between the extension and the content script as well as firebase
 
+let configSync = null;
+
 // ---------- Initialization ----------
 
 async function initializeExtension() {
@@ -63,14 +65,28 @@ initializeExtension();
 // ---------- Message handler ----------
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-	if (request.command === "getPlaylistFromDB") {
-		readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
-	} else if (request.command === "postToDB") {
-		writeData(request.data.key, request.data.val).then(sendResponse);
-	} else if (request.command === "getDefaultApiKey") {
-		getDefaultApiKey().then(sendResponse);
+	switch (request.command) {
+		case "getPlaylistFromDB":
+			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
+			break;
+		case "postToDB":
+			writeData(request.data.key, request.data.val).then(sendResponse);
+			break;
+		// Gets the API key depending on user setting
+		case "getApiKey":
+			getApiKey(false).then(sendResponse);
+			break;
+		// Gets the default API key saved in the database
+		case "getDefaultApiKey":
+			getApiKey(true).then(sendResponse);
+			break;
+		case "refreshConfigSync":
+			fetchConfigSync().then(sendResponse);
+			break;
+		default:
+			console.log("Unknown command: " + request.command);
+			break;
 	}
-
 	return true;
 });
 
@@ -110,12 +126,21 @@ async function readDataOnce(key) {
 
 // ---------- Helpers ----------
 
-async function getDefaultApiKey() {
-	APIKey = await getFromLocalStorage("youtubeAPIKey");
+async function getApiKey(forceDefault) {
+	await fetchConfigSync();
+
+	// If the user has opted to use a custom API key, use that instead of the default one
+	if (!forceDefault && configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
+		APIKey = configSync.customYoutubeApiKey;
+		return APIKey;
+	} else {
+		APIKey = await getFromLocalStorage("youtubeAPIKey");
+	}
 
 	// If the API key is not saved in local storage, get it from the database.
 	if (!APIKey) {
 		APIKey = await readDataOnce("youtubeAPIKey");
+		// The locally stored API key gets scrambled to make "stealing" it harder
 		setLocalStorage("youtubeAPIKey", rot13(APIKey, true));
 		return APIKey;
 	}
@@ -149,4 +174,18 @@ async function getFromLocalStorage(key) {
 async function setLocalStorage(key, value) {
 	await chrome.storage.local.set({ [key]: value });
 	return value;
+}
+
+// ---------- Sync storage ----------
+
+async function fetchConfigSync() {
+	if (configSync) {
+		return configSync;
+	}
+
+	configSync = await chrome.storage.sync.get().then((result) => {
+		return result;
+	});
+
+	return configSync;
 }
