@@ -14,7 +14,7 @@
 		<h1>Random YouTube Video</h1>
 
 		<h2>Extension Options</h2>
-		<p class="grey-text">Customize your experience. Hover over an option to view a more detailed explanation.</p>
+		<p class="grey-text">Customize your experience.<br>Hover over an option to view a more detailed explanation.</p>
 
 		<div class="optionsRow">
 			<div class="toggle optionsRow-item">
@@ -36,9 +36,14 @@
 			</div>
 		</div>
 
-		<div id="customApiKeyInput" class="optionTextInput hidden">
-			<input type="text" id="apiKeyInput" name="apiKeyInput" placeholder="Enter your API key here">
-			<button class="button" id="submitCustomApiKeyButton" type="button">Submit</button>
+		<div id="customApiKeyInputDiv" class="optionTextInput hidden">
+			<p class="lowBottomMargin">Enter your custom YouTube API key here:</p>
+			<input type="text" id="customApiKeyInputField" name="apiKeyInput" title="Enter your YouTube API key here. It will be checked for validity." placeholder="Enter your API key here (will be checked for validity)">
+			<br>
+			<button class="button" id="customApiKeySubmitButton" type="button">Submit</button>
+			<div id="customApiKeyInputErrorDiv" class="hidden">
+				<p id="customApiKeyInputErrorText">Placeholder</p>
+			</div>
 		</div>
 
 		<footer id="randomYoutubeVideoFooter">

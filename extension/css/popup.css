@@ -55,6 +55,14 @@ body {
 }
 
 /*
+ * Texts
+ */
+
+.lowBottomMargin {
+	margin-bottom: 2px;
+}
+
+/*
  * Options Row
  */
 .optionsRow {
@@ -119,7 +127,8 @@ body {
 	padding: 4px 10px;
 	margin: 2px 1px;
 	background-color: #333;
-	width: 60%;
+	text-align: center;
+	width: 80%;
 }
 
 .optionTextInput input:focus {

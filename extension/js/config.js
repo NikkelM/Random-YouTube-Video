@@ -4,6 +4,6 @@ async function fetchConfig() {
 	});
 }
 
-const configSync = await fetchConfig();
+let configSync = await fetchConfig();
 
 export default configSync;
