@@ -81,7 +81,7 @@ body {
 /*
  * Buttons
  */
-#optionTextInput button {
+.optionTextInput button {
 	color: var(--randomYoutubeVideo-fg-color);
 	font-family: var(--randomYoutubeVideo-font-family);
 	display: inline-block;
@@ -96,21 +96,21 @@ body {
 	margin: 2px 1px;
 }
 
-#optionTextInput button:hover {
+.optionTextInput button:hover {
 	background-color: #444;
 }
 
-#optionTextInput button:active {
+.optionTextInput button:active {
 	background-color: #555;
 }
 
-#optionTextInput button:disabled {
+.optionTextInput button:disabled {
 	background-color: #444;
 	cursor: default;
 	color: var(--randomYoutubeVideo-grey-fg-color);
 }
 
-#optionTextInput input {
+.optionTextInput input {
 	color: var(--randomYoutubeVideo-fg-color);
 	font-family: var(--randomYoutubeVideo-font-family);
 	font-size: 14px;
@@ -122,11 +122,11 @@ body {
 	width: 60%;
 }
 
-#optionTextInput input:focus {
+.optionTextInput input:focus {
 	outline: none;
 }
 
-#optionTextInput input:disabled {
+.optionTextInput input:disabled {
 	background-color: #444;
 	cursor: default;
 	color: var(--randomYoutubeVideo-grey-fg-color);

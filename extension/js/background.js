@@ -67,8 +67,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
 	} else if (request.command === "postToDB") {
 		writeData(request.data.key, request.data.val).then(sendResponse);
-	} else if (request.command === "getAPIKey") {
-		getAPIKey().then(sendResponse);
+	} else if (request.command === "getDefaultApiKey") {
+		getDefaultApiKey().then(sendResponse);
 	}
 
 	return true;
@@ -100,7 +100,7 @@ async function writeData(key, val) {
 
 // Prefers to get cached data instead of sending a request to the database
 async function readDataOnce(key) {
-	console.log("Reading data from database...");
+	console.log("Reading data for key " + key + " from database...");
 	const res = await db.ref(key).once("value").then((snapshot) => {
 		return snapshot.val();
 	});
@@ -110,7 +110,7 @@ async function readDataOnce(key) {
 
 // ---------- Helpers ----------
 
-async function getAPIKey() {
+async function getDefaultApiKey() {
 	APIKey = await getFromLocalStorage("youtubeAPIKey");
 
 	// If the API key is not saved in local storage, get it from the database.

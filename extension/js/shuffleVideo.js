@@ -239,7 +239,7 @@ async function validateAPIKey() {
 		console.log('Getting API key...');
 
 		const msg = {
-			command: "getAPIKey"
+			command: "getDefaultApiKey"
 		};
 
 		APIKey = await chrome.runtime.sendMessage(msg);
