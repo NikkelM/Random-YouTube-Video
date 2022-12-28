@@ -1,6 +1,6 @@
-import configSync from "./config.js";
-
 const defaultApiKey = await chrome.runtime.sendMessage({ command: "getDefaultApiKey" });
+
+let configSync = await fetchConfig();
 
 // ---------- Get DOM elements ----------
 
@@ -87,6 +87,12 @@ async function setSyncStorageValue(key, value) {
 	configSync[key] = value;
 	await chrome.storage.sync.set({ [key]: value });
 	console.log("Set " + key + " to " + value + " in sync storage.");
+}
+
+async function fetchConfig() {
+	return await chrome.storage.sync.get().then((result) => {
+		return result;
+	});
 }
 
 // ---------- Helper functions ----------
