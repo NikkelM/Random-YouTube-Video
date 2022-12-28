@@ -13,24 +13,24 @@
 
 		<h1>Random YouTube Video</h1>
 
-		<p class="grey-text">
-			Do you have any questions or feedback? Feel free to open an issue on the project's Github page.
-		</p>
-
 		<h2>Extension Options</h2>
-		<p class="grey-text">Customize your experience</p>
+		<p class="grey-text">Customize your experience. Hover over an option to view a more detailed explanation.</p>
 
 		<div class="optionsRow">
 			<div class="toggle optionsRow-item">
-				<label id="useCustomApiKeyOption"> Use custom API key
+				<label id="useCustomApiKeyOption"
+					title="Using your own YouTube API key gives you more control over the usage of the extension. Enter your API key in the corresponding field below after enabling this option. This also enables you to opt out of sharing video id's with other users through the database. Unsure how to get an API key? Follow the official documentation: https://developers.google.com/youtube/v3/getting-started">
+					Use custom API key
 					<input type="checkbox" id="useCustomApiKeyOptionToggle">
 					<span class="slider"></span>
 				</label>
 			</div>
 
 			<div class="toggle optionsRow-item">
-				<label id="optionBButton" class="disabled"> Option B
-					<input type="checkbox" id="optionBToggle">
+				<label id="dbOptOutOption"
+					title="Can be enabled if a custom API key is provided. By opting out of database sharing, the video id's of channel's you visit will not be shared to the database. However, you will also not be able to access video id's uploaded to the database by other users. Video id's will still be stored locally. When opting back in to sharing again, locally stored video id's may be shared with other users again and you will regain access to the database.">
+					No database sharing
+					<input type="checkbox" id="dbOptOutOptionToggle">
 					<span class="slider"></span>
 				</label>
 			</div>
