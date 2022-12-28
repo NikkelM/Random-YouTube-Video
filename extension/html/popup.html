@@ -17,23 +17,35 @@
 			Do you have any questions or feedback? Feel free to open an issue on the project's Github page.
 		</p>
 
-		<div class="toggle">
-			<label id="optionAButton"> Option A
-				<input type="checkbox" style="display: none" id="optionAToggle">
-				<span class="slider"></span>
-			</label>
+		<h2>Extension Options</h2>
+		<p class="grey-text">Customize your experience</p>
+
+		<div class="optionsRow">
+			<div class="toggle optionsRow-item">
+				<label id="useCustomApiKeyOption"> Use custom API key
+					<input type="checkbox" id="useCustomApiKeyOptionToggle">
+					<span class="slider"></span>
+				</label>
+			</div>
+
+			<div class="toggle optionsRow-item">
+				<label id="optionBButton" class="disabled"> Option B
+					<input type="checkbox" id="optionBToggle">
+					<span class="slider"></span>
+				</label>
+			</div>
 		</div>
 
-		<div class="toggle">
-			<label id="optionBButton"> Option B
-				<input type="checkbox" style="display: none" id="optionBToggle">
-				<span class="slider"></span>
-			</label>
+		<div id="optionTextInput" class="hidden">
+			<input class="button" type="text" id="apiKeyInput" name="apiKeyInput" placeholder="Enter your API key here">
+			<button class="button" id="submitApiKey" type="button">Submit</button>
 		</div>
 
 		<footer id="randomYoutubeVideoFooter">
 			<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
 				target="_blank" rel="noopener">Chrome store</a>
+			<a href="https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose" target="_blank"
+				rel="noopener">Feedback</a>
 			<a href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank" rel="noopener">GitHub</a>
 			<a href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener">Donate</a>
 		</footer>

@@ -26,6 +26,15 @@
   border-radius: 1em; 
   transition: all .3s ease-in-out;
 }
+
+.toggle .disabled {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+.toggle .disabled > .slider {
+	cursor: default !important;
+}
  
 .toggle .slider::before {
   position: absolute;

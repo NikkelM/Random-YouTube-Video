@@ -1,14 +1,24 @@
 import configSync from "./config.js";
 
-const optionAToggle = document.getElementById("optionAToggle");
+// ---------- Get DOM elements ----------
 
-optionAToggle.addEventListener("change", function () {
+const useCustomApiKeyOptionToggle = document.getElementById("useCustomApiKeyOptionToggle");
+
+// ---------- Set default values from config ----------
+
+useCustomApiKeyOptionToggle.checked = configSync.useCustomApiKeyOption;
+
+// ---------- Event listeners ----------
+
+useCustomApiKeyOptionToggle.addEventListener("change", function () {
 	if (this.checked) {
-		setSyncStorageValue("optionAToggle", true);
+		setSyncStorageValue("useCustomApiKeyOption", true);
 	} else {
-		setSyncStorageValue("optionAToggle", false);
+		setSyncStorageValue("useCustomApiKeyOption", false);
 	}
 });
+
+// ---------- Sync storage interaction ----------
 
 async function setSyncStorageValue(key, value) {
 	await chrome.storage.sync.set({ [key]: value });

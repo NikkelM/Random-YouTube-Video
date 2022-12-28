@@ -1,71 +1,160 @@
 :root {
-  --randomYoutubeVideo-font-family: "Roboto", sans-serif;
-  --randomYoutubeVideo-bg-color: #222;
-  --randomYoutubeVideo-fg-color: #fff;
-  --randomYoutubeVideo-grey-fg-color: #999;
+	--randomYoutubeVideo-font-family: "Roboto", sans-serif;
+	--randomYoutubeVideo-bg-color: #222;
+	--randomYoutubeVideo-fg-color: #fff;
+	--randomYoutubeVideo-grey-fg-color: #999;
+	--randomYoutubeVideo-grey-bg-color: #333;
 }
 
 /*
  * Generic utilities
  */
- .grey-text {
-  color: var(--randomYoutubeVideo-grey-fg-color);
+.grey-text {
+	color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+.hidden {
+	display: none;
 }
 
 /*
  * Main containers
  */
- #randomYoutubeVideoPopupHTML {
-  color-scheme: dark;
-  max-height: 600px;
-  overflow-y: auto;
+#randomYoutubeVideoPopupHTML {
+	color-scheme: dark;
+	max-height: 600px;
+	overflow-y: auto;
 }
 
 #randomYoutubeVideoPopupBody {
-  margin: 4px;
-  width: 400px;
-  max-width: 100%; /* NOTE: Ensures content doesn't exceed restricted popup widths in Firefox */
-  font-size: 14px;
-  font-family: var(--randomYoutubeVideo-font-family);
-  background-color: var(--randomYoutubeVideo-bg-color);
-  color: var(--randomYoutubeVideo-fg-color);
-  color-scheme: dark;
+	margin: 4px;
+	width: 400px;
+	max-width: 100%;
+	/* NOTE: Ensures content doesn't exceed restricted popup widths in Firefox */
+	font-size: 14px;
+	font-family: var(--randomYoutubeVideo-font-family);
+	background-color: var(--randomYoutubeVideo-bg-color);
+	color: var(--randomYoutubeVideo-fg-color);
+	color-scheme: dark;
 }
 
 #randomYoutubeVideoPopup {
-  text-align: center;
+	text-align: center;
 }
 
 body {
-  margin: 4px;
-  width: 400px;
-  max-width: 100%; /* NOTE: Ensures content doesn't exceed restricted popup widths in Firefox */
-  font-size: 14px;
-  font-family: var(--randomYoutubeVideo-font-family);
-  background-color: var(--randomYoutubeVideo-bg-color);
-  color: var(--randomYoutubeVideo-fg-color);
-  color-scheme: dark;
+	margin: 4px;
+	width: 400px;
+	max-width: 100%;
+	/* NOTE: Ensures content doesn't exceed restricted popup widths in Firefox */
+	font-size: 14px;
+	font-family: var(--randomYoutubeVideo-font-family);
+	background-color: var(--randomYoutubeVideo-bg-color);
+	color: var(--randomYoutubeVideo-fg-color);
+	color-scheme: dark;
 }
 
+/*
+ * Options Row
+ */
+.optionsRow {
+	margin: 16px;
+	margin-top: 6px;
+	border-radius: 8px;
+	justify-content: space-evenly;
+	overflow: hidden;
+	display: flex;
+}
+
+.optionsRow-item {
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	justify-content: center;
+	background: transparent;
+	user-select: none;
+	border: none;
+	flex: 1;
+	padding: 10px 15px;
+}
+
+/* .optionsRow-item .disabled {
+	opacity: 0.5;
+	cursor: default;
+} */
+
+/*
+ * Buttons
+ */
+#optionTextInput button {
+	color: var(--randomYoutubeVideo-fg-color);
+	font-family: var(--randomYoutubeVideo-font-family);
+	display: inline-block;
+	text-decoration: none;
+	border: none;
+	border-radius: 3px;
+	font-size: 14px;
+	cursor: pointer;
+	background-color: #333;
+	padding: 4px 10px;
+	font-weight: 500;
+	margin: 2px 1px;
+}
+
+#optionTextInput button:hover {
+	background-color: #444;
+}
+
+#optionTextInput button:active {
+	background-color: #555;
+}
+
+#optionTextInput button:disabled {
+	background-color: #444;
+	cursor: default;
+	color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+#optionTextInput input {
+	color: var(--randomYoutubeVideo-fg-color);
+	font-family: var(--randomYoutubeVideo-font-family);
+	font-size: 14px;
+	border: none;
+	border-radius: 3px;
+	padding: 4px 10px;
+	margin: 2px 1px;
+	background-color: #333;
+	width: 60%;
+}
+
+#optionTextInput input:focus {
+	outline: none;
+}
+
+#optionTextInput input:disabled {
+	background-color: #444;
+	cursor: default;
+	color: var(--randomYoutubeVideo-grey-fg-color);
+}
 
 /*
  * Footer
  */
- #randomYoutubeVideoFooter {
-  padding: 10px 0;
+#randomYoutubeVideoFooter {
+	padding: 10px 0;
 }
 
 #randomYoutubeVideoFooter a {
-  color: var(--randomYoutubeVideo-fg-color);
-  display: inline-block;
-  text-decoration: none;
-  border-radius: 3px;
-  background-color: #333;
-  padding: 4px 10px;
-  font-weight: 500;
-  margin: 2px 1px;
+	color: var(--randomYoutubeVideo-fg-color);
+	display: inline-block;
+	text-decoration: none;
+	border-radius: 3px;
+	background-color: #333;
+	padding: 4px 10px;
+	font-weight: 500;
+	margin: 2px 1px;
 }
 
 #randomYoutubeVideoFooter a:hover {
-  background-color: #444;
+	background-color: #444;
 }
