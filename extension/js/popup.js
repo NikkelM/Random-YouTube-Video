@@ -53,13 +53,8 @@ async function setSyncStorageValue(key, value) {
 // ---------- Helper functions ----------
 
 function checkDbOptOutOptionEligibility() {
-	console.log(configSync.customYoutubeApiKey)
 	// This option may only be enabled if the user has provided a valid custom Youtube API key
-	if (configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey && configSync.customYoutubeApiKey !== defaultApiKey) {
-		return true;
-	} else {
-		return false;
-	}
+	return (configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey && configSync.customYoutubeApiKey !== defaultApiKey);
 }
 
 function manageDbOptOutOption() {
@@ -118,7 +113,6 @@ async function validateApiKey(key) {
 		.then((response) => response.json());
 
 	if (apiResponse["error"]) {
-		console.log(apiResponse);
 		domElements.customApiKeyInputErrorDiv.classList.remove("hidden");
 		domElements.customApiKeyInputErrorText.innerText = apiResponse["error"]["message"];
 		return false;
