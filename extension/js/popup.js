@@ -16,6 +16,19 @@ const domElements = {
 
 // ---------- Set default values from config ----------
 
+function setDomElementDefaultsFromConfig() {
+	// If this option is checked is only dependent on the value in sync storage
+	domElements.useCustomApiKeyOptionToggle.checked = configSync.useCustomApiKeyOption;
+	// Determine if the dbOptOutOptionToggle should be checked and enabled
+	manageDbOptOutOption();
+	// Show the customAPIKeyInputDiv if the user has enabled the option
+	if (configSync.useCustomApiKeyOption) {
+		domElements.customApiKeyInputDiv.classList.remove("hidden");
+	}
+	// Set the value of the custom API key input field to the value in sync storage
+	domElements.customApiKeyInputField.value = configSync.customYoutubeApiKey ? configSync.customYoutubeApiKey : "";
+}
+
 setDomElementDefaultsFromConfig();
 
 // ---------- Event listeners ----------
@@ -41,6 +54,32 @@ domElements.customApiKeySubmitButton.addEventListener("click", async function ()
 	}
 	manageDbOptOutOption();
 });
+
+function manageDependents(parent, checked) {
+	switch (parent) {
+		case domElements.useCustomApiKeyOptionToggle:
+			if (checked) {
+				// Show input field for custom API key
+				domElements.customApiKeyInputDiv.classList.remove("hidden");
+				// Set the value of the custom API key input field to the value in sync storage
+				domElements.customApiKeyInputField.value = configSync.customYoutubeApiKey ? configSync.customYoutubeApiKey : "";
+
+				manageDbOptOutOption();
+			} else {
+				// The user may no longer opt to not use the database
+				domElements.dbOptOutOptionToggle.checked = false;
+				setSyncStorageValue("dbOptOutOption", false);
+				manageDbOptOutOption();
+
+				// Hide input field for custom API key
+				domElements.customApiKeyInputDiv.classList.add("hidden");
+			}
+			break;
+		default:
+			console.log("No dependents to manage for element: " + parent.id);
+			break;
+	}
+}
 
 // ---------- Sync storage interaction ----------
 
@@ -69,45 +108,6 @@ function manageDbOptOutOption() {
 	domElements.dbOptOutOptionToggle.checked = checkDbOptOutOptionEligibility() && configSync.dbOptOutOption;
 }
 
-function setDomElementDefaultsFromConfig() {
-	// If this option is checked is only dependent on the value in sync storage
-	domElements.useCustomApiKeyOptionToggle.checked = configSync.useCustomApiKeyOption;
-	// Determine if the dbOptOutOptionToggle should be checked and enabled
-	manageDbOptOutOption();
-	// Show the customAPIKeyInputDiv if the user has enabled the option
-	if (configSync.useCustomApiKeyOption) {
-		domElements.customApiKeyInputDiv.classList.remove("hidden");
-	}
-	// Set the value of the custom API key input field to the value in sync storage
-	domElements.customApiKeyInputField.value = configSync.customYoutubeApiKey ? configSync.customYoutubeApiKey : "";
-}
-
-function manageDependents(parent, checked) {
-	switch (parent) {
-		case domElements.useCustomApiKeyOptionToggle:
-			if (checked) {
-				// Show input field for custom API key
-				domElements.customApiKeyInputDiv.classList.remove("hidden");
-				// Set the value of the custom API key input field to the value in sync storage
-				domElements.customApiKeyInputField.value = configSync.customYoutubeApiKey ? configSync.customYoutubeApiKey : "";
-
-				manageDbOptOutOption();
-			} else {
-				// The user may no longer opt to not use the database
-				domElements.dbOptOutOptionToggle.checked = false;
-				setSyncStorageValue("dbOptOutOption", false);
-				manageDbOptOutOption();
-
-				// Hide input field for custom API key
-				domElements.customApiKeyInputDiv.classList.add("hidden");
-			}
-			break;
-		default:
-			console.log("No dependents to manage for element: " + parent.id);
-			break;
-	}
-}
-
 async function validateApiKey(key) {
 	const apiResponse = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=YouTube+Data+API&type=video&key=${key}`)
 		.then((response) => response.json());
@@ -120,5 +120,3 @@ async function validateApiKey(key) {
 	domElements.customApiKeyInputErrorDiv.classList.add("hidden");
 	return true;
 }
-
-chrome.storage.sync.get(console.log);
