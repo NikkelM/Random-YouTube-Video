@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.0.2
+
+- Fixed a bug where the extension would not be able to choose a video if a channel has uploaded a new video since the last check.
+
 ## v0.1.0.1
 
 - If a deleted video is chosen by the extension, it will now choose a new one instead of redirecting to a broken YouTube page.

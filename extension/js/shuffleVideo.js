@@ -173,8 +173,9 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 
 	let currVideo = 0;
 	let newVideos = [];
+
 	// While the currently saved last video is older then the currently checked video from the API response, we need to add videos to local storage
-	while (lastVideoPublishedAt < apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"]) {
+	while (lastKnownUploadTime < apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"]) {
 		newVideos.push(apiResponse["items"][currVideo]["contentDetails"]["videoId"]);
 
 		currVideo++;
