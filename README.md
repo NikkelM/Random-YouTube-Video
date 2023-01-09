@@ -2,10 +2,6 @@
 
 <p align="center">
 <a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
-  <img src="https://img.shields.io/badge/Get%20it%20on%20the-Chrome%20web%20store-brightgreen"
-    alt="Get it on the Chrome web store"></a>
-<br>
-<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
   <img src="https://img.shields.io/chrome-web-store/v/kijgnjhogkjodpakfmhgleobifempckf"
     alt="Chrome web store version"></a>
 <br>
