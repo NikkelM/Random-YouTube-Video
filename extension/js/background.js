@@ -12,8 +12,8 @@ async function initializeExtension() {
 	// This variable indicates if the local storage should be cleared when updating to the newest version
 	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
 	// Provide reason for clearing if applicable
-	// Reason: Security enhancement regarding API key
-	const clearStorageOnUpdate = true;
+	// Reason: N/A
+	const clearStorageOnUpdate = false;
 
 	// Check if the extension was updated
 	await getFromLocalStorage("extensionVersion").then(async (result) => {
