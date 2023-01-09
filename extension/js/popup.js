@@ -76,7 +76,7 @@ function manageDependents(parent, checked) {
 			}
 			break;
 		default:
-			console.log("No dependents to manage for element: " + parent.id);
+			console.log(`No dependents to manage for element: ${parent.id}`);
 			break;
 	}
 }
@@ -91,7 +91,7 @@ async function setSyncStorageValue(key, value) {
 	// Refresh the config in the background script. Send it like this to avoid a request to the chrome storage API
 	chrome.runtime.sendMessage({ command: "newConfigSync", data: configSync });
 
-	console.log("Set " + key + " to " + value + " in sync storage.");
+	console.log(`Set ${key} to ${value} in sync storage.`);
 }
 
 async function fetchConfigSync() {

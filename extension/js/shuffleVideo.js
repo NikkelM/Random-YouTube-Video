@@ -9,7 +9,11 @@ async function chooseRandomVideo() {
 
 	// Get the id of the uploads playlist for this channel
 	const uploadsPlaylistId = document.querySelector("[itemprop=channelId]").getAttribute("content").replace("UC", "UU");
-	console.log("Choosing a random video from playlist/channel: " + uploadsPlaylistId);
+	if (!uploadsPlaylistId) {
+		throw new RandomYoutubeVideoError("Could not find channel ID. Are you on a valid page?");
+	}
+
+	console.log(`Choosing a random video from playlist/channel: ${uploadsPlaylistId}`);
 
 	// Check if the playlist is already saved in local storage, so we don't need to access the database
 	let playlistInfo = await tryGetPlaylistFromLocalStorage(uploadsPlaylistId);
@@ -61,14 +65,14 @@ async function chooseRandomVideo() {
 	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
 	if (!videoExists) {
 		while (!videoExists) {
-			console.log("The chosen video does not exist anymore. Removing it from the playlist and choosing a new one...");
+			console.log("The chosen video does not exist anymore. Removing it from the database and choosing a new one...");
 
 			// Remove the video from the playlist
 			playlistInfo["videos"] = playlistInfo["videos"].filter(video => video !== randomVideo);
 
 			// Choose a new random video
 			randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
-			console.log("A new random video has been chosen: " + randomVideo);
+			console.log(`A new random video has been chosen: ${randomVideo}`);
 
 			videoExists = await testVideoExistence(randomVideo);
 		}
@@ -224,7 +228,7 @@ async function testVideoExistence(videoId) {
 			.then((response) => response.json())
 			.then((data) => apiResponse = data);
 	} catch (error) {
-		console.log("Video doesn't exist: " + videoId);
+		console.log(`Video doesn't exist: ${videoId}`);
 		return false;
 	}
 

@@ -7,7 +7,7 @@ let configSync = null;
 
 async function initializeExtension() {
 	const manifestData = chrome.runtime.getManifest();
-	console.log("The extension is running on version: " + manifestData.version);
+	console.log(`The extension is running on version ${manifestData.version}`);
 
 	// This variable indicates if the local storage should be cleared when updating to the newest version
 	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
@@ -16,7 +16,7 @@ async function initializeExtension() {
 	// Check if the extension was updated
 	getFromLocalStorage("extensionVersion").then((result) => {
 		if (result !== manifestData.version) {
-			console.log("Extension updated from version " + result + " to " + manifestData.version);
+			console.log(`Extension updated from version ${result} to ${manifestData.version}`);
 
 			if (clearStorageOnUpdate) {
 				console.log("Variable indicates local storage should be cleared. Clearing...");
@@ -32,7 +32,7 @@ async function initializeExtension() {
 	const utilizedStorage = await chrome.storage.local.getBytesInUse();
 	const maxLocalStorage = chrome.storage.local.QUOTA_BYTES;
 
-	console.log(((utilizedStorage / maxLocalStorage) * 100).toFixed(2) + "% of local storage is used. (" + utilizedStorage + "/" + maxLocalStorage + " bytes)");
+	console.log(`${((utilizedStorage / maxLocalStorage) * 100).toFixed(2)}% of local storage is used. (${utilizedStorage}/${maxLocalStorage} bytes)`);
 
 	if (maxLocalStorage * 0.9 < utilizedStorage) {
 		console.log("Local storage is over 90% utilized. Removing playlists that have not been accessed the longest...");
@@ -52,7 +52,7 @@ async function initializeExtension() {
 		// Remove the 20% of playlists that have not been accessed the longest
 		const playlistsToRemove = sortedPlaylists.slice(Math.floor(sortedPlaylists.length * 0.8));
 		for (const [playlistId, playlistInfo] of playlistsToRemove) {
-			console.log("Removing playlist " + playlistId + " from local storage...");
+			console.log(`Removing playlist ${playlistId} from local storage...`);
 			chrome.storage.local.remove(playlistId);
 		}
 		chrome.storage.local.get(console.log)
@@ -86,8 +86,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			sendResponse("New configSync set.");
 			break;
 		default:
-			console.log("Unknown command: " + request.command);
-			sendResponse("Unknown command: " + request.command);
+			console.log(`Unknown command: ${request.command}`);
+			sendResponse(`Unknown command: ${request.command}`);
 			break;
 	}
 	return true;
@@ -119,7 +119,7 @@ async function writeData(key, val) {
 
 // Prefers to get cached data instead of sending a request to the database
 async function readDataOnce(key) {
-	console.log("Reading data for key " + key + " from database...");
+	console.log(`Reading data for key ${key} from database...`);
 	const res = await db.ref(key).once("value").then((snapshot) => {
 		return snapshot.val();
 	});
