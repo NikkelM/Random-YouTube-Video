@@ -77,21 +77,28 @@ async function chooseRandomVideo() {
 	}
 
 	if (shouldUpdateDatabase) {
-		console.log("Updating the playlist in the database...");
+		console.log("Uploading the playlist to the database...");
+
+		// Only upload the wanted keys
+		playlistInfoForDatabase = {
+			"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString(),
+			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
+			"videos": playlistInfo["videos"] ?? []
+		};
 
 		// Send the playlist info to the database
 		const msg = {
 			command: 'postToDB',
 			data: {
 				key: 'uploadsPlaylists/' + uploadsPlaylistId,
-				val: playlistInfo
+				val: playlistInfoForDatabase
 			}
 		};
 
 		chrome.runtime.sendMessage(msg);
 	}
 
-	// Remember the last time the playlist was accessed locally
+	// Remember the last time the playlist was accessed locally (==now)
 	playlistInfo["lastAccessedLocally"] = new Date().toISOString();
 
 	// Update the playlist locally
