@@ -39,7 +39,7 @@ domElements.useCustomApiKeyOptionToggle.addEventListener("change", function () {
 });
 
 domElements.dbOptOutOptionToggle.addEventListener("change", function () {
-	setSyncStorageValue("dbOptOutOption", this.checked);
+	setSyncStorageValue("databaseSharingEnabledOption", !this.checked);
 	manageDependents(dbOptOutOptionToggle, this.checked);
 });
 
@@ -68,7 +68,7 @@ function manageDependents(parent, checked) {
 			} else {
 				// The user may no longer opt to not use the database
 				domElements.dbOptOutOptionToggle.checked = false;
-				setSyncStorageValue("dbOptOutOption", false);
+				setSyncStorageValue("databaseSharingEnabledOption", true);
 				manageDbOptOutOption();
 
 				// Hide input field for custom API key
@@ -115,7 +115,7 @@ function manageDbOptOutOption() {
 		domElements.dbOptOutOptionToggle.parentElement.classList.add("disabled");
 	}
 	// If this option is checked is dependent on the value of the customApiKeyOption and the value in sync storage 
-	domElements.dbOptOutOptionToggle.checked = checkDbOptOutOptionEligibility() && configSync.dbOptOutOption;
+	domElements.dbOptOutOptionToggle.checked = checkDbOptOutOptionEligibility() && !configSync.databaseSharingEnabledOption;
 }
 
 // Validates a YouTube API key by sending a short request

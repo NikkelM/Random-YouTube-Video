@@ -78,7 +78,7 @@ async function shuffleVideos() {
 	// Called when the randomize-button is clicked
 	let changeToken = new BooleanReference();
 	setDOMTextWithDelay(shuffleButtonText, `&nbsp;Please wait...`, 500, changeToken);
-	setDOMTextWithDelay(shuffleButtonText, `&nbsp;Working on it...`, 3000, changeToken);
+	setDOMTextWithDelay(shuffleButtonText, `&nbsp;Working on it...`, 6000, changeToken);
 
 	try {
 		await chooseRandomVideo();

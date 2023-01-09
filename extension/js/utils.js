@@ -77,7 +77,17 @@ function sendMessage(msg) {
 	})
 }
 
-// ---------- Classes ----------
+// ---------- Sync storage ----------
+
+async function fetchConfigSync() {
+	configSync = await chrome.storage.sync.get().then((result) => {
+		return result;
+	});
+
+	return configSync;
+}
+
+// ---------- Custom classes ----------
 
 // Used to pass a boolean by reference
 class BooleanReference {
@@ -86,6 +96,8 @@ class BooleanReference {
 		this.isFinalized = false;
 	}
 }
+
+// ----- Errors -----
 
 class RandomYoutubeVideoError extends Error {
 	constructor(message) {

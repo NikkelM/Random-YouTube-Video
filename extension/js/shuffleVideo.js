@@ -1,11 +1,17 @@
 // Handles everything concerning the shuffling of videos, including sending messages to the backend database and the YouTube API
 
 let APIKey = null;
+let configSync = null;
 
 // Chooses a random video uploaded on the current YouTube channel
 async function chooseRandomVideo() {
+	await fetchConfigSync();
+
 	// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
 	let shouldUpdateDatabase = false;
+	
+	// User preferences
+	const databaseSharing = configSync.databaseSharingEnabledOption;
 
 	// Get the id of the uploads playlist for this channel
 	const uploadsPlaylistId = document.querySelector("[itemprop=channelId]").getAttribute("content").replace("UC", "UU");
@@ -80,7 +86,7 @@ async function chooseRandomVideo() {
 		shouldUpdateDatabase = true;
 	}
 
-	if (shouldUpdateDatabase) {
+	if (shouldUpdateDatabase && databaseSharing) {
 		console.log("Uploading the playlist to the database...");
 
 		// Only upload the wanted keys
