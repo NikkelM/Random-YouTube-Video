@@ -1,15 +1,25 @@
 // Handles everything concerning the shuffling of videos, including sending messages to the backend database and the YouTube API
 
 let APIKey = null;
+let configSync = null;
 
 // Chooses a random video uploaded on the current YouTube channel
 async function chooseRandomVideo() {
+	await fetchConfigSync();
+
 	// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
 	let shouldUpdateDatabase = false;
+	
+	// User preferences
+	const databaseSharing = configSync.databaseSharingEnabledOption;
 
 	// Get the id of the uploads playlist for this channel
 	const uploadsPlaylistId = document.querySelector("[itemprop=channelId]").getAttribute("content").replace("UC", "UU");
-	console.log("Choosing a random video from playlist/channel: " + uploadsPlaylistId);
+	if (!uploadsPlaylistId) {
+		throw new RandomYoutubeVideoError("Could not find channel ID. Are you on a valid page?");
+	}
+
+	console.log(`Choosing a random video from playlist/channel: ${uploadsPlaylistId}`);
 
 	// Check if the playlist is already saved in local storage, so we don't need to access the database
 	let playlistInfo = await tryGetPlaylistFromLocalStorage(uploadsPlaylistId);
@@ -19,7 +29,7 @@ async function chooseRandomVideo() {
 		// No information for this playlist is saved in local storage
 		// Try to get it from the database
 		console.log("Uploads playlist for this channel does not exist locally. Trying to get it from the database...");
-		playlistInfo = await tryGetPlaylistFromDB(uploadsPlaylistId);
+		playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId) : {};
 
 		// If the playlist does not exist in the database, get it from the API
 		if (isEmpty(playlistInfo)) {
@@ -34,10 +44,10 @@ async function chooseRandomVideo() {
 		// The playlist exists locally, but may be outdated. Update it from the database. If needed, update the database values as well.
 	} else if (playlistInfo["lastFetchedFromDB"] < addHours(new Date(), -48).toISOString()) {
 		console.log("Local uploads playlist for this channel may be outdated. Updating from the database...");
-		playlistInfo = await tryGetPlaylistFromDB(uploadsPlaylistId);
+		playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId) : {};
 
 		// The playlist does not exist in the database (==it was deleted since the user last fetched it). Get it from the API.
-		// With the current functionality and db rules, this shouldn't happen.
+		// With the current functionality and db rules, this shouldn't happen, except if the user has opted out of database sharing.
 		if (isEmpty(playlistInfo)) {
 			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
 			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
@@ -61,14 +71,14 @@ async function chooseRandomVideo() {
 	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
 	if (!videoExists) {
 		while (!videoExists) {
-			console.log("The chosen video does not exist anymore. Removing it from the playlist and choosing a new one...");
+			console.log("The chosen video does not exist anymore. Removing it from the database and choosing a new one...");
 
 			// Remove the video from the playlist
 			playlistInfo["videos"] = playlistInfo["videos"].filter(video => video !== randomVideo);
 
 			// Choose a new random video
 			randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
-			console.log("A new random video has been chosen: " + randomVideo);
+			console.log(`A new random video has been chosen: ${randomVideo}`);
 
 			videoExists = await testVideoExistence(randomVideo);
 		}
@@ -76,22 +86,29 @@ async function chooseRandomVideo() {
 		shouldUpdateDatabase = true;
 	}
 
-	if (shouldUpdateDatabase) {
-		console.log("Updating the playlist in the database...");
+	if (shouldUpdateDatabase && databaseSharing) {
+		console.log("Uploading the playlist to the database...");
+
+		// Only upload the wanted keys
+		playlistInfoForDatabase = {
+			"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString(),
+			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
+			"videos": playlistInfo["videos"] ?? []
+		};
 
 		// Send the playlist info to the database
 		const msg = {
 			command: 'postToDB',
 			data: {
 				key: 'uploadsPlaylists/' + uploadsPlaylistId,
-				val: playlistInfo
+				val: playlistInfoForDatabase
 			}
 		};
 
 		chrome.runtime.sendMessage(msg);
 	}
 
-	// Remember the last time the playlist was accessed locally
+	// Remember the last time the playlist was accessed locally (==now)
 	playlistInfo["lastAccessedLocally"] = new Date().toISOString();
 
 	// Update the playlist locally
@@ -123,7 +140,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 async function getPlaylistFromApi(playlistId) {
 	// Make sure an API key is available
-	await validateAPIKey();
+	await getAPIKey();
 
 	let playlistInfo = {
 		"lastVideoPublishedAt": null,
@@ -153,7 +170,7 @@ async function getPlaylistFromApi(playlistId) {
 // Get snippets from the API as long as new videos are being found
 async function updatePlaylistFromApi(localPlaylist, playlistId) {
 	// Make sure an API key is available
-	await validateAPIKey();
+	await getAPIKey();
 
 	// Update the lastUpdatedDBAt field
 	localPlaylist["lastUpdatedDBAt"] = new Date().toISOString();
@@ -217,7 +234,7 @@ async function testVideoExistence(videoId) {
 			.then((response) => response.json())
 			.then((data) => apiResponse = data);
 	} catch (error) {
-		console.log("Video doesn't exist: " + videoId);
+		console.log(`Video doesn't exist: ${videoId}`);
 		return false;
 	}
 
@@ -235,18 +252,16 @@ function savePlaylistToLocalStorage(playlistInfo, playlistId) {
 }
 
 // Requests the API key from the background script
-async function validateAPIKey() {
+async function getAPIKey() {
+	console.log('Getting API key...');
+
+	const msg = {
+		command: "getApiKey"
+	};
+
+	APIKey = await chrome.runtime.sendMessage(msg);
+
 	if (!APIKey) {
-		console.log('Getting API key...');
-
-		const msg = {
-			command: "getAPIKey"
-		};
-
-		APIKey = await chrome.runtime.sendMessage(msg);
-
-		if (!APIKey) {
-			throw new RandomYoutubeVideoError("No API key");
-		}
+		throw new RandomYoutubeVideoError("No API key! Please inform the developer if this keeps happening.");
 	}
 }
