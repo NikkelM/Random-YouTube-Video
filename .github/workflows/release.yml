@@ -1,0 +1,74 @@
+## Creates a Github Release if the version in the manifest.json file changed
+# All files that are in the "extension" folder will be zipped up and added to the Release
+# The Release notes will be taken from the CHANGELOG.md file, which must contain two lines that mark start and end of the changes:
+## <!--Releasenotes start-->
+## <!--Releasenotes end-->
+
+name: Create Github Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  CheckVersion:
+    runs-on: ubuntu-latest
+    outputs:
+      versionChanged: ${{ steps.check_version.outputs.changed }}
+      newVersion: ${{ steps.check_version.outputs.version }}
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Set up node 
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Check if version has been updated
+        id: check_version
+        uses: EndBug/version-check@v2
+        with:
+          diff-search: true
+          file-name: ./extension/manifest.json
+
+      - name: Log version change
+        if: steps.check_version.outputs.changed == 'true'
+        run: 'echo "Version change found in commit ${{ steps.check_version.outputs.commit }}! New version: ${{ steps.check_version.outputs.version }}"'
+
+  CreateRelease:
+    needs: CheckVersion
+    if: needs.CheckVersion.outputs.versionChanged == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Create .zip of required files 
+        run: |
+          cd extension
+          zip -r ../Random.Youtube.Video.zip *
+
+      - name: Create Release notes
+        run: |
+          echo "## What's Changed
+          
+          " > RELEASE_NOTES.md
+          sed -n '/<!--Releasenotes start-->/,/<!--Releasenotes end-->/p' CHANGELOG.md >> RELEASE_NOTES.md
+          cat RELEASE_NOTES.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.CheckVersion.outputs.newVersion }}
+          name: v${{ needs.CheckVersion.outputs.newVersion }}
+          files: Random.Youtube.Video.zip
+          body_path: RELEASE_NOTES.md

@@ -1,5 +1,8 @@
 # Changelog
 
+<!--Releasenotes start-->
+<!--Releasenotes end-->
+
 ## v0.1.0.2
 
 - Fixed a bug where the extension would not be able to choose a video if a channel has uploaded a new video since the last check.
