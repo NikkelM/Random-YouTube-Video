@@ -5,30 +5,47 @@ let configSync = null;
 
 // ---------- Initialization ----------
 
-async function initializeExtension() {
+// Check whether new version is installed
+chrome.runtime.onInstalled.addListener(async function (details) {
 	const manifestData = chrome.runtime.getManifest();
-	console.log(`The extension is running on version ${manifestData.version}`);
+
+	if (details.reason == "install") {
+		await handleExtensionFirstInstall(manifestData);
+	} else if (details.reason == "update" && details.previousVersion !== manifestData.version) {
+		await handleExtensionUpdate(manifestData);
+	}
+});
+
+async function handleExtensionFirstInstall(manifestData) {
+	console.log("Extension was newly installed. Initializing settings...");
+
+	// Set default settings
+	await chrome.storage.sync.set({
+		"useCustomApiKeyOption": false,
+		"customYoutubeApiKey": null,
+		"databaseSharingEnabledOption": true
+	});
+
+	// Make sure the current extension version is always saved in local storage
+	setLocalStorage("extensionVersion", manifestData.version);
+}
+
+async function handleExtensionUpdate(manifestData) {
+	console.log(`Extension updated to version v${manifestData.version}`);
 
 	// This variable indicates if the local storage should be cleared when updating to the newest version
 	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
 	// Provide reason for clearing if applicable
 	// Reason: N/A
-	const clearStorageOnUpdate = false;
+	const clearLocalStorageOnUpdate = false;
 
-	// Check if the extension was updated
-	await getFromLocalStorage("extensionVersion").then(async (result) => {
-		if (result !== manifestData.version) {
-			console.log(`Extension updated from version ${result} to ${manifestData.version}`);
+	if (clearLocalStorageOnUpdate) {
+		console.log("The storage structure has changed and local storage must be reset. Clearing...");
+		await chrome.storage.local.clear();
+	}
 
-			if (clearStorageOnUpdate) {
-				console.log("Variable indicates local storage should be cleared. Clearing...");
-				await chrome.storage.local.clear();
-			}
-
-			// Make sure the current extension version is always saved in local storage
-			setLocalStorage("extensionVersion", manifestData.version);
-		}
-	});
+	// Make sure the current extension version is always saved in local storage
+	setLocalStorage("extensionVersion", manifestData.version);
 
 	// If over 90% of the storage quota for playlists is used, remove playlists that have not been accessed in a long time
 	const utilizedStorage = await chrome.storage.local.getBytesInUse();
@@ -57,10 +74,7 @@ async function initializeExtension() {
 			chrome.storage.local.remove(playlistId);
 		}
 	}
-
 }
-
-initializeExtension();
 
 // ---------- Message handler ----------
 
