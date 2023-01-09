@@ -9,7 +9,7 @@ async function chooseRandomVideo() {
 
 	// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
 	let shouldUpdateDatabase = false;
-	
+
 	// User preferences
 	const databaseSharing = configSync.databaseSharingEnabledOption;
 
