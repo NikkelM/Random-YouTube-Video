@@ -6,7 +6,7 @@ let configSync = await fetchConfigSync();
 
 const domElements = {
 	useCustomApiKeyOptionToggle: document.getElementById("useCustomApiKeyOptionToggle"),
-	dbOptOutOptionToggle: document.getElementById("dbOptOutOptionToggle"),
+	dbSharingOptionToggle: document.getElementById("dbSharingOptionToggle"),
 	customApiKeyInputDiv: document.getElementById("customApiKeyInputDiv"),
 	customApiKeyInputField: customApiKeyInputDiv.children.namedItem("customApiKeyInputField"),
 	customApiKeySubmitButton: customApiKeyInputDiv.children.namedItem("customApiKeySubmitButton"),
@@ -19,7 +19,7 @@ const domElements = {
 function setDomElementDefaultsFromConfig() {
 	// If this option is checked is only dependent on the value in sync storage
 	domElements.useCustomApiKeyOptionToggle.checked = configSync.useCustomApiKeyOption;
-	// Determine if the dbOptOutOptionToggle should be checked and enabled
+	// Determine if the dbSharingOptionToggle should be checked and enabled
 	manageDbOptOutOption();
 	// Show the customAPIKeyInputDiv if the user has enabled the option
 	if (configSync.useCustomApiKeyOption) {
@@ -38,19 +38,20 @@ domElements.useCustomApiKeyOptionToggle.addEventListener("change", function () {
 	manageDependents(useCustomApiKeyOptionToggle, this.checked);
 });
 
-domElements.dbOptOutOptionToggle.addEventListener("change", function () {
-	setSyncStorageValue("databaseSharingEnabledOption", !this.checked);
-	manageDependents(dbOptOutOptionToggle, this.checked);
+domElements.dbSharingOptionToggle.addEventListener("change", function () {
+	setSyncStorageValue("databaseSharingEnabledOption", this.checked);
+	manageDependents(dbSharingOptionToggle, this.checked);
 });
 
 domElements.customApiKeySubmitButton.addEventListener("click", async function () {
 	// Make sure the passed API key is valid
 	const newApiKey = domElements.customApiKeyInputField.value;
-	if (!await validateApiKey(newApiKey)) {
-		setSyncStorageValue("customYoutubeApiKey", null);
-		domElements.customApiKeyInputField.value = "";
-	} else {
+	if (await validateApiKey(newApiKey)) {
 		setSyncStorageValue("customYoutubeApiKey", newApiKey);
+	} else {
+		setSyncStorageValue("customYoutubeApiKey", null);
+		setSyncStorageValue("databaseSharingEnabledOption", true);
+		domElements.customApiKeyInputField.value = "";
 	}
 	manageDbOptOutOption();
 });
@@ -66,8 +67,8 @@ function manageDependents(parent, checked) {
 
 				manageDbOptOutOption();
 			} else {
-				// The user may no longer opt to not use the database
-				domElements.dbOptOutOptionToggle.checked = false;
+				// The user must share data with the database
+				domElements.dbSharingOptionToggle.checked = true;
 				setSyncStorageValue("databaseSharingEnabledOption", true);
 				manageDbOptOutOption();
 
@@ -108,14 +109,19 @@ function checkDbOptOutOptionEligibility() {
 }
 
 function manageDbOptOutOption() {
-	// If useCustomApiKeyOption is not checked, the user may not opt to not use the database
+	// If useCustomApiKeyOption is not checked, the user must share data with the database
 	if (checkDbOptOutOptionEligibility()) {
-		domElements.dbOptOutOptionToggle.parentElement.classList.remove("disabled");
+		domElements.dbSharingOptionToggle.parentElement.classList.remove("disabled");
 	} else {
-		domElements.dbOptOutOptionToggle.parentElement.classList.add("disabled");
+		domElements.dbSharingOptionToggle.parentElement.classList.add("disabled");
 	}
-	// If this option is checked is dependent on the value of the customApiKeyOption and the value in sync storage 
-	domElements.dbOptOutOptionToggle.checked = checkDbOptOutOptionEligibility() && !configSync.databaseSharingEnabledOption;
+
+	// If the user may not opt out of database sharing but the latest record shows they would like to, make sure it's set correctly in sync storage
+	if (!checkDbOptOutOptionEligibility() && !configSync.databaseSharingEnabledOption) {
+		configSync.databaseSharingEnabledOption = true;
+		setSyncStorageValue("databaseSharingEnabledOption", configSync.databaseSharingEnabledOption);
+	}
+	domElements.dbSharingOptionToggle.checked = configSync.databaseSharingEnabledOption;
 }
 
 // Validates a YouTube API key by sending a short request
