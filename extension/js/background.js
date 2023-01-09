@@ -80,11 +80,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		case "getDefaultApiKey":
 			getApiKey(true).then(sendResponse);
 			break;
-		case "refreshConfigSync":
-			fetchConfigSync(true).then(sendResponse);
+		// A new configSync should be set
+		case "newConfigSync":
+			configSync = request.data;
+			sendResponse("New configSync set.");
 			break;
 		default:
 			console.log("Unknown command: " + request.command);
+			sendResponse("Unknown command: " + request.command);
 			break;
 	}
 	return true;
@@ -127,7 +130,7 @@ async function readDataOnce(key) {
 // ---------- Helpers ----------
 
 async function getApiKey(forceDefault) {
-	await fetchConfigSync(false);
+	await fetchConfigSync();
 
 	// If the user has opted to use a custom API key, use that instead of the default one
 	if (!forceDefault && configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
@@ -178,11 +181,7 @@ async function setLocalStorage(key, value) {
 
 // ---------- Sync storage ----------
 
-async function fetchConfigSync(forceRefresh) {
-	if (configSync && !forceRefresh) {
-		return configSync;
-	}
-
+async function fetchConfigSync() {
 	configSync = await chrome.storage.sync.get().then((result) => {
 		return result;
 	});
