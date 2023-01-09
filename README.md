@@ -2,15 +2,8 @@
 
 <p align="center">
 <a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
-  <img src="https://img.shields.io/badge/Get%20it%20on%20the-Chrome%20web%20store-brightgreen"
-    alt="Get it on the Chrome web store"></a>
-<br>
-<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
   <img src="https://img.shields.io/chrome-web-store/v/kijgnjhogkjodpakfmhgleobifempckf"
     alt="Chrome web store version"></a>
-<a href="https://github.com/NikkelM/Random-YouTube-Video">
-  <img src="https://img.shields.io/github/manifest-json/v/NikkelM/Random-YouTube-Video/main?filename=extension%2Fmanifest.json&label=dev"
-    alt="Development version"></a>
 <br>
 <a href="https://github.com/NikkelM/Random-YouTube-Video/tree/main/CHANGELOG.md">
   <img src="https://img.shields.io/badge/View-changelog-lightgrey"

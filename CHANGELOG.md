@@ -1,6 +1,12 @@
 # Changelog
 
+## v0.1.1
+
 <!--Releasenotes start-->
+- Added option to use custom API key
+- Added option to opt out of sharing video id's with other users (can be enabled if using a custom API key)
+- Smoother user experience in some places
+- Various bugfixes
 <!--Releasenotes end-->
 
 ## v0.1.0.2

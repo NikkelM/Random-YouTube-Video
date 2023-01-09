@@ -1,24 +1,28 @@
 // Background script for the extension, which is run on extension initialization
 // Handles communication between the extension and the content script as well as firebase
 
+let configSync = null;
+
 // ---------- Initialization ----------
 
 async function initializeExtension() {
 	const manifestData = chrome.runtime.getManifest();
-	console.log("The extension is running on version: " + manifestData.version);
+	console.log(`The extension is running on version ${manifestData.version}`);
 
 	// This variable indicates if the local storage should be cleared when updating to the newest version
 	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
-	const clearStorageOnUpdate = false;
+	// Provide reason for clearing if applicable
+	// Reason: Security enhancement regarding API key
+	const clearStorageOnUpdate = true;
 
 	// Check if the extension was updated
-	getFromLocalStorage("extensionVersion").then((result) => {
+	await getFromLocalStorage("extensionVersion").then(async (result) => {
 		if (result !== manifestData.version) {
-			console.log("Extension updated from version " + result + " to " + manifestData.version);
+			console.log(`Extension updated from version ${result} to ${manifestData.version}`);
 
 			if (clearStorageOnUpdate) {
 				console.log("Variable indicates local storage should be cleared. Clearing...");
-				chrome.storage.local.clear();
+				await chrome.storage.local.clear();
 			}
 
 			// Make sure the current extension version is always saved in local storage
@@ -30,7 +34,7 @@ async function initializeExtension() {
 	const utilizedStorage = await chrome.storage.local.getBytesInUse();
 	const maxLocalStorage = chrome.storage.local.QUOTA_BYTES;
 
-	console.log(((utilizedStorage / maxLocalStorage) * 100).toFixed(2) + "% of local storage is used. (" + utilizedStorage + "/" + maxLocalStorage + " bytes)");
+	console.log(`${((utilizedStorage / maxLocalStorage) * 100).toFixed(2)}% of local storage is used. (${utilizedStorage}/${maxLocalStorage} bytes)`);
 
 	if (maxLocalStorage * 0.9 < utilizedStorage) {
 		console.log("Local storage is over 90% utilized. Removing playlists that have not been accessed the longest...");
@@ -50,7 +54,7 @@ async function initializeExtension() {
 		// Remove the 20% of playlists that have not been accessed the longest
 		const playlistsToRemove = sortedPlaylists.slice(Math.floor(sortedPlaylists.length * 0.8));
 		for (const [playlistId, playlistInfo] of playlistsToRemove) {
-			console.log("Removing playlist " + playlistId + " from local storage...");
+			console.log(`Removing playlist ${playlistId} from local storage...`);
 			chrome.storage.local.remove(playlistId);
 		}
 		chrome.storage.local.get(console.log)
@@ -61,15 +65,33 @@ async function initializeExtension() {
 initializeExtension();
 
 // ---------- Message handler ----------
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-	if (request.command === "getPlaylistFromDB") {
-		readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
-	} else if (request.command === "postToDB") {
-		writeData(request.data.key, request.data.val).then(sendResponse);
-	} else if (request.command === "getAPIKey") {
-		getAPIKey().then(sendResponse);
-	}
 
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+	switch (request.command) {
+		case "getPlaylistFromDB":
+			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
+			break;
+		case "postToDB":
+			writeData(request.data.key, request.data.val).then(sendResponse);
+			break;
+		// Gets the API key depending on user setting
+		case "getApiKey":
+			getApiKey(false).then(sendResponse);
+			break;
+		// Gets the default API key saved in the database
+		case "getDefaultApiKey":
+			getApiKey(true).then(sendResponse);
+			break;
+		// A new configSync should be set
+		case "newConfigSync":
+			configSync = request.data;
+			sendResponse("New configSync set.");
+			break;
+		default:
+			console.log(`Unknown command: ${request.command}`);
+			sendResponse(`Unknown command: ${request.command}`);
+			break;
+	}
 	return true;
 });
 
@@ -99,7 +121,7 @@ async function writeData(key, val) {
 
 // Prefers to get cached data instead of sending a request to the database
 async function readDataOnce(key) {
-	console.log("Reading data from database...");
+	console.log(`Reading data for key ${key} from database...`);
 	const res = await db.ref(key).once("value").then((snapshot) => {
 		return snapshot.val();
 	});
@@ -109,15 +131,38 @@ async function readDataOnce(key) {
 
 // ---------- Helpers ----------
 
-async function getAPIKey() {
-	APIKey = await getFromLocalStorage("youtubeAPIKey");
-	// If the API key is not saved in local storage, get it from the database
-	if (!APIKey) {
-		APIKey = await readDataOnce("youtubeAPIKey");
-		setLocalStorage("youtubeAPIKey", APIKey);
+async function getApiKey(forceDefault) {
+	await fetchConfigSync();
+
+	// If the user has opted to use a custom API key, use that instead of the default one
+	if (!forceDefault && configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
+		APIKey = configSync.customYoutubeApiKey;
+		return APIKey;
+	} else {
+		APIKey = await getFromLocalStorage("youtubeAPIKey");
 	}
 
-	return APIKey;
+	// If the API key is not saved in local storage, get it from the database.
+	if (!APIKey) {
+		APIKey = await readDataOnce("youtubeAPIKey");
+		// The locally stored API key gets scrambled
+		setLocalStorage("youtubeAPIKey", rot13(APIKey, true));
+		return APIKey;
+	}
+
+	return rot13(APIKey, false);
+}
+
+// Very simple cipher to scramble a string
+function rot13(message, encrypt) {
+	const originalAlpha = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	const cipher = "nopqrstuvwxyzabcdefghijklmNOPQRSTUVWXYZ0123456789ABCDEFGHIJKLM";
+	// do a replace based off of indices
+	if (encrypt) {
+		return message.replace(/[a-z0-9]/gi, letter => cipher[originalAlpha.indexOf(letter)]);
+	} else {
+		return message.replace(/[a-z0-9]/gi, letter => originalAlpha[cipher.indexOf(letter)]);
+	}
 }
 
 // ---------- Local storage ----------
@@ -134,4 +179,14 @@ async function getFromLocalStorage(key) {
 async function setLocalStorage(key, value) {
 	await chrome.storage.local.set({ [key]: value });
 	return value;
+}
+
+// ---------- Sync storage ----------
+
+async function fetchConfigSync() {
+	configSync = await chrome.storage.sync.get().then((result) => {
+		return result;
+	});
+
+	return configSync;
 }

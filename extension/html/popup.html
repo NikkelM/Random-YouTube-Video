@@ -5,6 +5,7 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link id="RandomYoutubeVideoStyleSheet" rel="stylesheet" href="../css/popup.css" />
+	<link id="RandomYoutubeVideoStyleSheet" rel="stylesheet" href="../css/toggle.css" />
 </head>
 
 <body id="randomYoutubeVideoPopupBody">
@@ -12,14 +13,52 @@
 
 		<h1>Random YouTube Video</h1>
 
-		<p class="grey-text">Do you have any questions or feedback? Feel free to open an issue on the project's Github page linked below.</p>
+		<h2>Extension Options</h2>
+		<p class="grey-text">Customize your experience.<br>Hover over an option to view a more detailed explanation.</p>
+
+		<div class="optionsRow">
+			<div class="toggle optionsRow-item">
+				<label id="useCustomApiKeyOption"
+					title="Your custom API key will only be stored locally and not shared with anyone! Using your own YouTube API key gives you more control over the usage of the extension. Enter your API key in the corresponding field below after enabling this option. This also enables you to opt out of sharing video id's with other users through the database. Unsure how to get an API key? Follow the official documentation: https://developers.google.com/youtube/v3/getting-started">
+					Use custom API key
+					<input type="checkbox" id="useCustomApiKeyOptionToggle">
+					<span class="slider"></span>
+				</label>
+			</div>
+
+			<div class="toggle optionsRow-item">
+				<label id="dbSharingOption"
+					title="Can be disabled if a custom API key is provided. By opting out of database sharing, the video id's of channel's you visit will not be shared to the database. However, you will also not be able to access video id's uploaded to the database by other users. Video id's will still be stored locally. When opting back in to sharing, you will regain access to the database and locally stored video id's may be shared with other users.">
+					Database sharing
+					<input type="checkbox" id="dbSharingOptionToggle">
+					<span class="slider"></span>
+				</label>
+			</div>
+		</div>
+
+		<div id="customApiKeyInputDiv" class="optionTextInput hidden">
+			<p class="lowBottomMargin">Your custom API key:</p>
+			<input type="text" id="customApiKeyInputField" name="apiKeyInput" title="Enter your YouTube API key here. It will not be shared with anyone." placeholder="Enter API key here. It won't be shared with anyone.">
+			<br>
+			<button class="button" id="customApiKeySubmitButton" type="button">Submit</button>
+			<div id="customApiKeyInputErrorDiv" class="hidden">
+				<p id="customApiKeyInputErrorText">Placeholder</p>
+			</div>
+		</div>
 
 		<footer id="randomYoutubeVideoFooter">
-			<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf" target="_blank" rel="noopener">Chrome store</a>
+			<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
+				target="_blank" rel="noopener">Chrome store</a>
+			<a href="https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose" target="_blank"
+				rel="noopener">Feedback</a>
 			<a href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank" rel="noopener">GitHub</a>
+			<a href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener">Donate</a>
 		</footer>
 
 	</div>
+
+	<script src="../js/config.js" type="module"></script>
+	<script src="../js/popup.js" type="module"></script>
 </body>
 
 </html>
