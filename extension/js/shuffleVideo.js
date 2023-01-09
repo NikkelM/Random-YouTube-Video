@@ -108,6 +108,9 @@ async function chooseRandomVideo() {
 		};
 
 		chrome.runtime.sendMessage(msg);
+
+		// If we just updated the database, we automatically have the same version as it
+		playlistInfo["lastFetchedFromDB"] = playlistInfo["lastUpdatedDBAt"];
 	}
 
 	// Remember the last time the playlist was accessed locally (==now)
@@ -211,8 +214,17 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 		if (currVideo >= apiResponse["items"].length) {
 			// If another page exists, continue checking
 			if (apiResponse["nextPageToken"]) {
+				// Add the new videos to the localPlaylist
+				localPlaylist["videos"] = newVideos.concat(localPlaylist["videos"]);
+
+				// Save the intermediate result to local storage
+				savePlaylistToLocalStorage(playlistId, localPlaylist);
+
+				// Get the next snippet
 				apiResponse = await getPlaylistSnippetFromAPI(playlistId, apiResponse["nextPageToken"]);
+
 				currVideo = 0;
+				newVideos = [];
 				// Else, we have checked all videos
 			} else {
 				break;
