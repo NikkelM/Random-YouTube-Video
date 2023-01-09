@@ -123,7 +123,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 async function getPlaylistFromApi(playlistId) {
 	// Make sure an API key is available
-	await validateAPIKey();
+	await getAPIKey();
 
 	let playlistInfo = {
 		"lastVideoPublishedAt": null,
@@ -153,7 +153,7 @@ async function getPlaylistFromApi(playlistId) {
 // Get snippets from the API as long as new videos are being found
 async function updatePlaylistFromApi(localPlaylist, playlistId) {
 	// Make sure an API key is available
-	await validateAPIKey();
+	await getAPIKey();
 
 	// Update the lastUpdatedDBAt field
 	localPlaylist["lastUpdatedDBAt"] = new Date().toISOString();
@@ -235,18 +235,16 @@ function savePlaylistToLocalStorage(playlistInfo, playlistId) {
 }
 
 // Requests the API key from the background script
-async function validateAPIKey() {
+async function getAPIKey() {
+	console.log('Getting API key...');
+
+	const msg = {
+		command: "getApiKey"
+	};
+
+	APIKey = await chrome.runtime.sendMessage(msg);
+
 	if (!APIKey) {
-		console.log('Getting API key...');
-
-		const msg = {
-			command: "getApiKey"
-		};
-
-		APIKey = await chrome.runtime.sendMessage(msg);
-
-		if (!APIKey) {
-			throw new RandomYoutubeVideoError("No API key");
-		}
+		throw new RandomYoutubeVideoError("No API key! Please inform the developer if this keeps happening.");
 	}
 }
