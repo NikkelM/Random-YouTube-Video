@@ -74,22 +74,11 @@ function addShuffleButtonToPage() {
 	}
 }
 
-function setShuffleButtonTextWithDelay(newText, delayMS, changeToken) {
-	// Sets the text of the shuffle button after a delay, if something else hasn't changed it yet
-	// I.e. only one function can change the text among all functions that were passed the same changeToken
-	delay(delayMS).then(() => {
-		if (changeToken.value) {
-			shuffleButtonText.innerHTML = newText;
-			changeToken.value = false;
-		}
-	});
-
-}
-
 async function shuffleVideos() {
 	// Called when the randomize-button is clicked
 	let changeToken = new BooleanReference();
-	setShuffleButtonTextWithDelay(`&nbsp;Please wait...`, 500, changeToken);
+	setDOMTextWithDelay(shuffleButtonText, `&nbsp;Please wait...`, 500, changeToken);
+	setDOMTextWithDelay(shuffleButtonText, `&nbsp;Working on it...`, 3000, changeToken);
 
 	try {
 		await chooseRandomVideo();
@@ -108,7 +97,9 @@ async function shuffleVideos() {
 				displayText = `&nbsp;Unknown Error`;
 		}
 
-		setShuffleButtonTextWithDelay(displayText, 0, changeToken);
+		// Immediately display the error and stop other text changes
+		// TODO: Also add the error in more detail to the popup and/or logs?
+		setDOMTextWithDelay(shuffleButtonText, displayText, 0, changeToken, true);
 		return;
 	}
 }

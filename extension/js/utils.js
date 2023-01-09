@@ -1,6 +1,7 @@
 // Utility functions
 
 // ---------- Console extension ----------
+
 let log = console.log;
 
 console.log = function () {
@@ -38,6 +39,30 @@ function delay(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function setDOMTextWithDelay(textElement, newText, delayMS, changeToken, finalizes = false) {
+	// Sets the innerHTML of a (text) DOM element after a delay, if something else hasn't changed it yet
+	// i.e. only one function can change the text among all functions that were passed the same changeToken
+	delay(delayMS).then(() => {
+		if (!changeToken.isFinalized) {
+			textElement.innerHTML = newText;
+			// If the caller wants to stop others from setting the value to something else
+			changeToken.isFinalized = finalizes;
+		}
+	});
+}
+
+// Determines if an object is empty
+function isEmpty(obj) {
+	return Object.keys(obj).length === 0;
+}
+
+// Adds a number of hours to a date
+function addHours(date, hours) {
+	return new Date(date.getTime() + hours * 3600000);
+}
+
+// ---------- Message sending ----------
+
 // Wrapper around sendMessage to work with asynchronous responses
 function sendMessage(msg) {
 	return new Promise((resolve, reject) => {
@@ -52,22 +77,13 @@ function sendMessage(msg) {
 	})
 }
 
-// Determines if an object is empty
-function isEmpty(obj) {
-	return Object.keys(obj).length === 0;
-}
-
-// Adds a number of hours to a date
-function addHours(date, hours) {
-	return new Date(date.getTime() + hours * 3600000);
-}
-
 // ---------- Classes ----------
 
 // Used to pass a boolean by reference
 class BooleanReference {
 	constructor() {
-		this.value = true;
+		// true if the final value has been reached
+		this.isFinalized = false;
 	}
 }
 
