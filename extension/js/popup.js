@@ -1,6 +1,6 @@
 const defaultApiKey = await chrome.runtime.sendMessage({ command: "getDefaultApiKey" });
 
-let configSync = await fetchConfig();
+let configSync = await fetchConfigSync();
 
 // ---------- Get DOM elements ----------
 
@@ -88,13 +88,13 @@ async function setSyncStorageValue(key, value) {
 
 	await chrome.storage.sync.set({ [key]: value });
 
-	// Refresh the config in the background script
-	chrome.runtime.sendMessage({ command: "refreshConfigSync" });
+	// Refresh the config in the background script. Send it like this to avoid a request to the chrome storage API
+	chrome.runtime.sendMessage({ command: "newConfigSync", data: configSync });
 
 	console.log("Set " + key + " to " + value + " in sync storage.");
 }
 
-async function fetchConfig() {
+async function fetchConfigSync() {
 	return await chrome.storage.sync.get().then((result) => {
 		return result;
 	});
@@ -112,13 +112,13 @@ function manageDbOptOutOption() {
 	if (checkDbOptOutOptionEligibility()) {
 		domElements.dbOptOutOptionToggle.parentElement.classList.remove("disabled");
 	} else {
-		console.log("The user may not opt to not use the database.")
 		domElements.dbOptOutOptionToggle.parentElement.classList.add("disabled");
 	}
 	// If this option is checked is dependent on the value of the customApiKeyOption and the value in sync storage 
 	domElements.dbOptOutOptionToggle.checked = checkDbOptOutOptionEligibility() && configSync.dbOptOutOption;
 }
 
+// Validates a YouTube API key by sending a short request
 async function validateApiKey(key) {
 	const apiResponse = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=YouTube+Data+API&type=video&key=${key}`)
 		.then((response) => response.json());
