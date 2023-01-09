@@ -11,16 +11,18 @@ async function initializeExtension() {
 
 	// This variable indicates if the local storage should be cleared when updating to the newest version
 	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
+	// Provide reason for clearing if applicable
+	// Reason: Security enhancement regarding API key
 	const clearStorageOnUpdate = true;
 
 	// Check if the extension was updated
-	getFromLocalStorage("extensionVersion").then((result) => {
+	await getFromLocalStorage("extensionVersion").then(async (result) => {
 		if (result !== manifestData.version) {
 			console.log(`Extension updated from version ${result} to ${manifestData.version}`);
 
 			if (clearStorageOnUpdate) {
 				console.log("Variable indicates local storage should be cleared. Clearing...");
-				chrome.storage.local.clear();
+				await chrome.storage.local.clear();
 			}
 
 			// Make sure the current extension version is always saved in local storage
