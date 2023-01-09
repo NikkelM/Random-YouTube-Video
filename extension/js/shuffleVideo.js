@@ -29,7 +29,7 @@ async function chooseRandomVideo() {
 		// No information for this playlist is saved in local storage
 		// Try to get it from the database
 		console.log("Uploads playlist for this channel does not exist locally. Trying to get it from the database...");
-		playlistInfo = await tryGetPlaylistFromDB(uploadsPlaylistId);
+		playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId) : {};
 
 		// If the playlist does not exist in the database, get it from the API
 		if (isEmpty(playlistInfo)) {
@@ -44,10 +44,10 @@ async function chooseRandomVideo() {
 		// The playlist exists locally, but may be outdated. Update it from the database. If needed, update the database values as well.
 	} else if (playlistInfo["lastFetchedFromDB"] < addHours(new Date(), -48).toISOString()) {
 		console.log("Local uploads playlist for this channel may be outdated. Updating from the database...");
-		playlistInfo = await tryGetPlaylistFromDB(uploadsPlaylistId);
+		playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId) : {};
 
 		// The playlist does not exist in the database (==it was deleted since the user last fetched it). Get it from the API.
-		// With the current functionality and db rules, this shouldn't happen.
+		// With the current functionality and db rules, this shouldn't happen, except if the user has opted out of database sharing.
 		if (isEmpty(playlistInfo)) {
 			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
 			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
