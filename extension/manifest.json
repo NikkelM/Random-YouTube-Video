@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "Random YouTube Video",
 	"description": "Play a random video uploaded on the current YouTube channel.",
-	"version": "0.1.0.2",
+	"version": "0.1.1",
 	"icons": {
 		"16": "images/icon-16-red.png",
 		"32": "images/icon-32-red.png",
