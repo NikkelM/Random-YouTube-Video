@@ -224,7 +224,7 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 				// savePlaylistToLocalStorage(playlistId, localPlaylist);
 				// TODO: Make sure we know we need to continue fetching
 				// E.g.: Save the next pageToken to local storage as well and enable a flag saying we need to continue from there
-				// What to do if that pageToken gets invalidated because the user doesnt immediately try again, but after a few days etc...
+				// What to do if that pageToken gets invalidated because the user doesn't immediately try again, but after a few days etc...
 
 				// Get the next snippet
 				apiResponse = await getPlaylistSnippetFromAPI(playlistId, apiResponse["nextPageToken"]);
