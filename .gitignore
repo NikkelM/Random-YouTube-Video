@@ -1,6 +1,7 @@
 # Custom
 .vscode
 **.zip
+/dev
 
 # Logs
 logs

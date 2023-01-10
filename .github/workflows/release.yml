@@ -61,7 +61,9 @@ jobs:
           
           " > RELEASE_NOTES.md
           sed -n '/<!--Releasenotes start-->/,/<!--Releasenotes end-->/p' CHANGELOG.md >> RELEASE_NOTES.md
-          cat RELEASE_NOTES.md
+          echo "
+
+          **[Full Changelog](CHANGELOG.md)**" >> RELEASE_NOTES.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v1

@@ -59,12 +59,12 @@ async function handleExtensionUpdate(manifestData) {
 		// Get all playlists from local storage
 		const localStorageContents = await chrome.storage.local.get();
 
-		// We only need the keys that hold playlists
+		// We only need the keys that hold playlists, which is signified by the existence of the "videos" sub-key
 		const allPlaylists = Object.fromEntries(Object.entries(localStorageContents).filter(([k, v]) => v["videos"]));
 
 		// Sort the playlists by lastAccessedLocally value
 		const sortedPlaylists = Object.entries(allPlaylists).sort((a, b) => {
-			return new Date(b[1]["lastAccessedLocally"]) - new Date(a[1]["lastAccessedLocally"]);
+			return new Date(b[1]["lastAccessedLocally"] ?? 0) - new Date(a[1]["lastAccessedLocally"] ?? 0);
 		});
 
 		// Remove the 20% of playlists that have not been accessed the longest
