@@ -211,14 +211,11 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 		if (currVideo >= apiResponse["items"].length) {
 			// If another page exists, continue checking
 			if (apiResponse["nextPageToken"]) {
-				// Add the new videos to the localPlaylist
-				localPlaylist["videos"] = newVideos.concat(localPlaylist["videos"]);
 
 				// Get the next snippet
 				apiResponse = await getPlaylistSnippetFromAPI(playlistId, apiResponse["nextPageToken"]);
 
 				currVideo = 0;
-				newVideos = [];
 				// Else, we have checked all videos
 			} else {
 				break;
