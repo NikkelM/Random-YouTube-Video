@@ -160,12 +160,12 @@ async function getPlaylistFromApi(playlistId) {
 		"lastVideoPublishedAt": null,
 		"videos": []
 	};
-	let pageToken = "";
 
-	// We also want to get the uploadTime of the most recent video
+	let pageToken = "";
 	let apiResponse = await getPlaylistSnippetFromAPI(playlistId, pageToken);
 
 	playlistInfo["videos"] = apiResponse["items"].map((video) => video["contentDetails"]["videoId"]);
+	// We also want to get the uploadTime of the most recent video
 	playlistInfo["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
 	pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 
@@ -173,12 +173,6 @@ async function getPlaylistFromApi(playlistId) {
 		apiResponse = await getPlaylistSnippetFromAPI(playlistId, pageToken);
 
 		playlistInfo["videos"] = playlistInfo["videos"].concat(apiResponse["items"].map((video) => video["contentDetails"]["videoId"]));
-
-		// Save the intermediate result to local storage
-		// savePlaylistToLocalStorage(playlistId, playlistInfo);
-		// TODO: Make sure we know we need to continue fetching
-		// E.g.: Save the next pageToken to local storage as well and enable a flag saying we need to continue from there
-		// What to do if that pageToken gets invalidated because the user doesnt immediately try again, but after a few days etc...
 
 		pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 	}
@@ -219,12 +213,6 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 			if (apiResponse["nextPageToken"]) {
 				// Add the new videos to the localPlaylist
 				localPlaylist["videos"] = newVideos.concat(localPlaylist["videos"]);
-
-				// Save the intermediate result to local storage
-				// savePlaylistToLocalStorage(playlistId, localPlaylist);
-				// TODO: Make sure we know we need to continue fetching
-				// E.g.: Save the next pageToken to local storage as well and enable a flag saying we need to continue from there
-				// What to do if that pageToken gets invalidated because the user doesn't immediately try again, but after a few days etc...
 
 				// Get the next snippet
 				apiResponse = await getPlaylistSnippetFromAPI(playlistId, apiResponse["nextPageToken"]);
