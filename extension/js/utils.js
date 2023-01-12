@@ -20,12 +20,7 @@ console.error = function () {
 
 // ---------- Utility functions ----------
 
-function isChannelUrl(url) {
-	if (!url) return false;
-
-	const urlParts = url.split("/");
-	return urlParts[3].startsWith("@") || urlParts[3] == "c" || urlParts[3] == "channel" || urlParts[3] == "user";
-}
+// ----- URLs -----
 
 function isVideoUrl(url) {
 	if (!url) return false;
@@ -33,6 +28,42 @@ function isVideoUrl(url) {
 	const urlParts = url.split("/");
 	return urlParts[3].startsWith("watch?v=");
 }
+
+// Gets the name of the channel, or the channel id directly, from an url
+function getChannelFromUrl(url) {
+	const urlParts = url.split("/");
+
+	// We handle "channel", "c", "user" and "@Username" explicitly, as we can easily identify the URL format
+	if (urlParts[3].startsWith("@")) {
+		return {
+			"type": "username",
+			"value": urlParts[3]
+		};
+	} else if (urlParts[3] == "c") {
+		return {
+			"type": "username",
+			"value": "@" + urlParts[4]
+		};
+	} else if (urlParts[3] == "channel") {
+		return {
+			"type": "channelId",
+			"value": urlParts[4]
+		};
+	} else if (urlParts[3] == "user") {
+		return {
+			"type": "username",
+			"value": urlParts[4]
+		};
+	}
+
+	// The only other option is for the page to be in the format https://youtube.com/username, which we cannot identify otherwise
+	return {
+		"type": "username",
+		"value": urlParts[3]
+	};
+}
+
+// ----- DOM -----
 
 // Waits for a certain amount of milliseconds
 function delay(ms) {
@@ -50,6 +81,8 @@ function setDOMTextWithDelay(textElement, newText, delayMS, changeToken, finaliz
 		}
 	});
 }
+
+// ----- Objects -----
 
 // Determines if an object is empty
 function isEmpty(obj) {

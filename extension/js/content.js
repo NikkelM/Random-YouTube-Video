@@ -2,83 +2,53 @@
 
 // ---------- Initialization ----------
 
-let currUrl = getUrl(window.location.href);
 let shuffleButton = null;
-// Access the actual text using shuffleButtonText.innerHTML
-let shuffleButtonText = null;
+// Access the actual text using "shuffleButtonTextElement.innerHTML"!
+let shuffleButtonTextElement = null;
 
-// Whenever a YouTube navigation event fires, we need to check if we have entered a different channel page
-// as the corresponding html element we need doesn't get refreshed by default
-document.addEventListener("yt-navigate-start", handleNavigateStart);
+// Whenever a YouTube navigation event fires, we need to check if we need to add the "shuffle" button
+document.addEventListener("yt-navigate-start", startDOMObserver);
+startDOMObserver();
 
-var observer = new MutationObserver(function (mutations, me) {
-	let requiredElement = null;
-	if (isChannelUrl(currUrl)) {
-		requiredElement = document.getElementById("inner-header-container");
-	} else if (isVideoUrl(currUrl)) {
-		requiredElement = document.getElementById("above-the-fold");
-	}
+function startDOMObserver() {
+	var observer = new MutationObserver(function (mutations, me) {
+		const isVideoPage = isVideoUrl(window.location.href);
 
-	if (requiredElement) {
-		addShuffleButtonToPage();
-		me.disconnect(); // stop observing
-		return;
-	}
-});
+		// Find out if we are on a channel page that has completed loading the required element
+		const channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
+		// Find out if we are on a video page that has completed loading the required element
+		const videoPageRequiredElementLoadComplete = document.getElementById("player") && document.getElementById("above-the-fold");
 
-// start observing
-observer.observe(document, {
-	childList: true,
-	subtree: true
-});
+		// If we are NOT on a video page, we assume we are on a channel page
+		// If the required element has loaded, add a shuffle button
+		if(!isVideoPage && channelPageRequiredElementLoadComplete) {
+			buildShuffleButton("channel");
+			me.disconnect(); // stop observing
+			return;
+		}
 
+		// If we are on a channel page or video page, and the required element has loaded, add the shuffle button
+		if (isVideoPage && videoPageRequiredElementLoadComplete) {
+			buildShuffleButton("video");
+			me.disconnect(); // stop observing
+			return;
+		}
+	});
+
+	// start observing
+	observer.observe(document, {
+		childList: true,
+		subtree: true
+	});
+}
 
 // ---------- functions ----------
-
-function handleNavigateStart() {
-	const newUrl = getUrl(window.location.href);
-
-	if (newUrl && newUrl !== currUrl) {
-		currUrl = newUrl;
-		window.location.reload();
-	}
-}
-
-function getUrl(url) {
-	if (isVideoUrl(url)) {
-		return url;
-	} else if (isChannelUrl(url)) {
-		const urlParts = url.split("/");
-		// We handle "channel", "c", "user" and "@Username"
-		if (urlParts[3].startsWith("@")) {
-			return urlParts.slice(0, 4).join("/");
-		} else if (urlParts[3] == "c") {
-			return urlParts.slice(0, 3).join("/") + "/@" + urlParts[4];
-		} else if (urlParts[3] == "channel") {
-			return urlParts.slice(0, 5).join("/");
-		} else if (urlParts[3] == "user") {
-			return urlParts.slice(0, 5).join("/");
-		}
-	}
-
-	return null;
-}
-
-function addShuffleButtonToPage() {
-	console.log("Building shuffle button...");
-
-	if (isChannelUrl(currUrl)) {
-		buildShuffleButton("channel");
-	} else if (isVideoUrl(currUrl)) {
-		buildShuffleButton("video");
-	}
-}
 
 async function shuffleVideos() {
 	// Called when the randomize-button is clicked
 	let changeToken = new BooleanReference();
-	setDOMTextWithDelay(shuffleButtonText, `&nbsp;Please wait...`, 500, changeToken);
-	setDOMTextWithDelay(shuffleButtonText, `&nbsp;Working on it...`, 6000, changeToken);
+	setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Please wait...`, 500, changeToken);
+	setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Working on it...`, 6000, changeToken);
 
 	try {
 		await chooseRandomVideo();
@@ -99,7 +69,7 @@ async function shuffleVideos() {
 
 		// Immediately display the error and stop other text changes
 		// TODO: Also add the error in more detail to the popup and/or logs?
-		setDOMTextWithDelay(shuffleButtonText, displayText, 0, changeToken, true);
+		setDOMTextWithDelay(shuffleButtonTextElement, displayText, 0, changeToken, true);
 		return;
 	}
 }
