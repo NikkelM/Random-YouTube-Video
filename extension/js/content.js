@@ -2,7 +2,6 @@
 
 // ---------- Initialization ----------
 
-getUrl(window.location.href)
 startDOMObserver();
 
 let shuffleButton = null;
