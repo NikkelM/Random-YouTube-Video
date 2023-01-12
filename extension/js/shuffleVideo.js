@@ -6,6 +6,8 @@ let configSync = null;
 // Chooses a random video uploaded on the current YouTube channel
 async function chooseRandomVideo() {
 	await fetchConfigSync();
+	// Make sure an API key is available
+	await getAPIKey();
 
 	// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
 	let shouldUpdateDatabase = false;
@@ -14,7 +16,8 @@ async function chooseRandomVideo() {
 	const databaseSharing = configSync.databaseSharingEnabledOption;
 
 	// Get the id of the uploads playlist for this channel
-	const uploadsPlaylistId = document.querySelector("[itemprop=channelId]").getAttribute("content").replace("UC", "UU");
+	// const uploadsPlaylistId = document.querySelector("[itemprop=channelId]").getAttribute("content").replace("UC", "UU");
+	const uploadsPlaylistId = await getPlaylistIdFromUrl(window.location.href);
 	if (!uploadsPlaylistId) {
 		throw new RandomYoutubeVideoError("Could not find channel ID. Are you on a valid page?");
 	}
@@ -124,15 +127,7 @@ async function chooseRandomVideo() {
 	window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
 }
 
-// Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
-async function tryGetPlaylistFromLocalStorage(playlistId) {
-	return await chrome.storage.local.get([playlistId]).then((result) => {
-		if (result[playlistId]) {
-			return result[playlistId];
-		}
-		return {};
-	});
-}
+// ---------- Database ----------
 
 // Tries to get the playlist from the database. If it is not present, returns an empty dictionary
 async function tryGetPlaylistFromDB(playlistId) {
@@ -152,10 +147,9 @@ async function tryGetPlaylistFromDB(playlistId) {
 	return playlistInfo;
 }
 
-async function getPlaylistFromApi(playlistId) {
-	// Make sure an API key is available
-	await getAPIKey();
+// ---------- YouTube API ----------
 
+async function getPlaylistFromApi(playlistId) {
 	let playlistInfo = {
 		"lastVideoPublishedAt": null,
 		"videos": []
@@ -182,9 +176,6 @@ async function getPlaylistFromApi(playlistId) {
 
 // Get snippets from the API as long as new videos are being found
 async function updatePlaylistFromApi(localPlaylist, playlistId) {
-	// Make sure an API key is available
-	await getAPIKey();
-
 	let lastKnownUploadTime = localPlaylist["lastVideoPublishedAt"];
 	let apiResponse = await getPlaylistSnippetFromAPI(playlistId, "");
 
@@ -243,6 +234,8 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
 	return apiResponse;
 }
 
+// ---------- Utility ----------
+
 async function testVideoExistence(videoId) {
 	try {
 		await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`)
@@ -254,10 +247,6 @@ async function testVideoExistence(videoId) {
 	}
 
 	return true;
-}
-
-function savePlaylistToLocalStorage(playlistId, playlistInfo) {
-	chrome.storage.local.set({ [playlistId]: playlistInfo });
 }
 
 // Requests the API key from the background script
@@ -273,4 +262,54 @@ async function getAPIKey() {
 	if (!APIKey) {
 		throw new RandomYoutubeVideoError("No API key! Please inform the developer if this keeps happening.");
 	}
+}
+
+async function getPlaylistIdFromUrl(url) {
+	let userName = null;
+	let channelId = null;
+
+	// if it's a video, shorts or playlist url, we can use oembed to get the channel name in "@"-format without having to search for the video id using the API
+	if (isVideoUrl(url)) { // || isPlaylistUrl || isShortsUrl
+		await fetch(`https://www.youtube.com/oembed?url=${url}&format=json`)
+			.then((response) => response.json())
+			.then((data) => userName = '@' + data["author_url"].split('@')[1]);
+		// Otherwise, we will need to infer from the url
+	} else {
+		const channel = getChannelFromUrl(url);
+		// We already know the channel id
+		if (channel.type === "channelId") {
+			console.log(`A random video from channel with id "${channel.value}" will be played...`);
+			return channel.value.replace("UC", "UU");
+			// We need to get the channel id from the username
+		} else if (channel.type === "username") {
+			userName = channel.value;
+		} else {
+			throw new RandomYoutubeVideoError("Could not infer channel from url. You could try starting a video and using the shuffle button there. Please inform the developer if this keeps happening.");
+		}
+	}
+
+	console.log(`A random video from channel with name "${userName}" will be played...`);
+
+	// Send a request to the API to get the channel-id from the @Username
+	await fetch(`https://youtube.googleapis.com/youtube/v3/search?part=id&maxResults=1&q=${userName}&type=channel&key=${APIKey}`)
+		.then((response) => response.json())
+		.then((data) => channelId = data["items"][0]["id"]["channelId"]);
+
+	return channelId.replace("UC", "UU");
+}
+
+// ---------- Local storage ----------
+
+// Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
+async function tryGetPlaylistFromLocalStorage(playlistId) {
+	return await chrome.storage.local.get([playlistId]).then((result) => {
+		if (result[playlistId]) {
+			return result[playlistId];
+		}
+		return {};
+	});
+}
+
+function savePlaylistToLocalStorage(playlistId, playlistInfo) {
+	chrome.storage.local.set({ [playlistId]: playlistInfo });
 }

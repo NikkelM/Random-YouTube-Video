@@ -29,29 +29,38 @@ function isVideoUrl(url) {
 	return urlParts[3].startsWith("watch?v=");
 }
 
-// Gets either the name of the channel, or the id of the current video from an url
-function getVideoOrChannelFromUrl(url) {
+// Gets the name of the channel, or the channel id directly, from an url
+function getChannelFromUrl(url) {
 	const urlParts = url.split("/");
-
-	if (isVideoUrl(url)) {
-		// Return the url until the end of the video id, even if there are additional arguments
-		return urlParts.slice(0, 3).join("/") + "/" + urlParts[3].split("&")[0];
-	}
 
 	// We handle "channel", "c", "user" and "@Username" explicitly, as we can easily identify the URL format
 	if (urlParts[3].startsWith("@")) {
-		return urlParts.slice(0, 4).join("/");
+		return {
+			"type": "username",
+			"value": urlParts[3]
+		};
 	} else if (urlParts[3] == "c") {
-		return urlParts.slice(0, 3).join("/") + "/@" + urlParts[4];
+		return {
+			"type": "username",
+			"value": "@" + urlParts[4]
+		};
 	} else if (urlParts[3] == "channel") {
-		return urlParts.slice(0, 5).join("/");
+		return {
+			"type": "channelId",
+			"value": urlParts[4]
+		};
 	} else if (urlParts[3] == "user") {
-		return urlParts.slice(0, 5).join("/");
+		return {
+			"type": "username",
+			"value": urlParts[4]
+		};
 	}
 
 	// The only other option is for the page to be in the format https://youtube.com/username, which we cannot identify otherwise
-	// TODO: When introducing shorts, make sure they are handled before this!
-	return urlParts[3];
+	return {
+		"type": "username",
+		"value": urlParts[3]
+	};
 }
 
 // ----- DOM -----
