@@ -45,18 +45,21 @@ async function chooseRandomVideo() {
 		console.log("Uploads playlist for this channel successfully retrieved from database or API.");
 
 		// The playlist exists locally, but may be outdated. Update it from the database. If needed, update the database values as well.
-	} else if (playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString() < addHours(new Date(), -48).toISOString()) {
-		console.log(`Local uploads playlist for this channel may be outdated.${databaseSharing ? " Updating from the database..." : ""}`);
+	} else if ((databaseSharing && ((playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString())) ||
+		(!databaseSharing && ((playlistInfo["lastAccessedLocally"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()))) {
+
+		console.log(`Local uploads playlist for this channel may be outdated. ${databaseSharing ? "Updating from the database..." : ""}`);
+
 		playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId) : {};
 
 		// The playlist does not exist in the database (==it was deleted since the user last fetched it). Get it from the API.
 		// With the current functionality and db rules, this shouldn't happen, except if the user has opted out of database sharing.
 		if (isEmpty(playlistInfo)) {
-			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
+			console.log(`${databaseSharing ? "Uploads playlist for this channel does not exist in the database. " : "Fetching it from the YouTube API..."}`);
 			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
 
 			// If the playlist exists in the database but is outdated there as well, update it from the API.
-		} else if (playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString() < addHours(new Date(), -48).toISOString()) {
+		} else if ((playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
 			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
 			playlistInfo = await updatePlaylistFromApi(playlistInfo, uploadsPlaylistId);
 
@@ -119,8 +122,8 @@ async function chooseRandomVideo() {
 	// Remember the last time the playlist was accessed locally (==now)
 	playlistInfo["lastAccessedLocally"] = new Date().toISOString();
 
-	console.log("Saving playlist to local storage...");
 	// Update the playlist locally
+	console.log("Saving playlist to local storage...");
 	savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfo);
 
 	// Navigate to the random video
