@@ -1,10 +1,16 @@
 # Changelog
 
-## v0.1.2
+## v0.2.0
 
 <!--Releasenotes start-->
-- Fixed a bug preventing interaction with the database in some cases.
+- Eliminated previously necessary page reloads during normal YouTube navigation.
+- Added support for channel pages in the format "youtube.com/channelName".
+- Fixed a bug where users using a custom API key would need to re-fetch video ID's more often than would be necessary.
 <!--Releasenotes end-->
+
+## v0.1.2
+
+- Fixed a bug preventing interaction with the database in some cases.
 
 ## v0.1.1
 
