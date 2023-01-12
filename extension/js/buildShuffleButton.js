@@ -2,6 +2,7 @@
 
 // Channel page
 function buildShuffleButton(pageType) {
+	let buttonDivID = "youtube-random-video-shuffle-button";
 	let buttonDivExtraStyle = "";
 	let buttonDivOwner = null;
 	let buttonDivPrepend = true;
@@ -9,9 +10,11 @@ function buildShuffleButton(pageType) {
 	// Depending on the type of page we're on, we might need to change certain parts of the button
 	switch (pageType) {
 		case "channel":
+			buttonDivID = "youtube-random-video-shuffle-button-channel";
 			buttonDivOwner = document.getElementById("inner-header-container").children.namedItem("buttons");
 			break;
 		case "video":
+			buttonDivID = "youtube-random-video-shuffle-button-video";
 			buttonDivExtraStyle = "margin-left: 8px;";
 			buttonDivOwner = document.getElementById("above-the-fold").children.namedItem("top-row").children.namedItem("owner");
 			buttonDivPrepend = false;
@@ -21,6 +24,12 @@ function buildShuffleButton(pageType) {
 			return;
 	}
 
+	// If the button already exists, don't build it again
+	if (document.getElementById(buttonDivID)) {
+		console.log("Button already exists, not building again.");
+		return;
+	}
+
 	// Load the font used for the "shuffle" icon
 	let iconFont = `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0">`;
 	iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChild;
@@ -28,7 +37,7 @@ function buildShuffleButton(pageType) {
 
 	// Create the button div & renderer
 	let buttonDiv = `
-	<div id="shuffle-button" class="style-scope ytd-c4-tabbed-header-renderer" style="align-items: center; display: flex; flex-direction: row; ${buttonDivExtraStyle}">
+	<div id="${buttonDivID}" class="style-scope ytd-c4-tabbed-header-renderer" style="align-items: center; display: flex; flex-direction: row; ${buttonDivExtraStyle}">
 		<ytd-button-renderer class="style-scope ytd-c4-tabbed-header-renderer">
 		</ytd-button-renderer>
 	</div>`;
@@ -43,7 +52,7 @@ function buildShuffleButton(pageType) {
 
 	// Wait for the button renderer to get the child elements defined by the element type (YouTube thing...)
 	var observer = new MutationObserver(function (mutations, me) {
-		var shuffleButton = buttonDivOwner.children.namedItem("shuffle-button");
+		var shuffleButton = buttonDivOwner.children.namedItem(buttonDivID);
 		if (shuffleButton.children.length > 0) {
 			finalizeButton(pageType);
 			me.disconnect(); // stop observing
@@ -59,13 +68,16 @@ function buildShuffleButton(pageType) {
 }
 
 function finalizeButton(pageType) {
+	let buttonDivID = "youtube-random-video-shuffle-button";
 	let buttonDivOwner = null;
 
 	switch (pageType) {
 		case "channel":
+			buttonDivID = "youtube-random-video-shuffle-button-channel";
 			buttonDivOwner = document.getElementById("inner-header-container").children.namedItem("buttons");
 			break;
 		case "video":
+			buttonDivID = "youtube-random-video-shuffle-button-video";
 			buttonDivOwner = document.getElementById("above-the-fold").children.namedItem("top-row").children.namedItem("owner");
 			break;
 		default:
@@ -96,10 +108,10 @@ function finalizeButton(pageType) {
 	button = new DOMParser().parseFromString(button, "text/html").body.firstChild;
 
 	// Add the button to the page
-	buttonDivOwner.children.namedItem("shuffle-button").children[0].children[0].appendChild(button);
+	buttonDivOwner.children.namedItem(buttonDivID).children[0].children[0].appendChild(button);
 
 	// Set references to the button and the text inside the button
-	shuffleButton = buttonDivOwner.children.namedItem("shuffle-button");
+	shuffleButton = buttonDivOwner.children.namedItem(buttonDivID);
 	shuffleButtonText = shuffleButton.children[0].children[0].children[0].children[1].children[0];
 
 	// Add the event listener that shuffles the videos to the button
