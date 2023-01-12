@@ -2,15 +2,13 @@
 
 // ---------- Initialization ----------
 
-startDOMObserver();
-
 let shuffleButton = null;
-// Access the actual text using shuffleButtonText.innerHTML
-let shuffleButtonText = null;
+// Access the actual text using "shuffleButtonTextElement.innerHTML"!
+let shuffleButtonTextElement = null;
 
-// Whenever a YouTube navigation event fires, we need to check if we have entered a different channel page
-// as the corresponding html element we need doesn't get refreshed by default
+// Whenever a YouTube navigation event fires, we need to check if we need to add the "shuffle" button
 document.addEventListener("yt-navigate-start", startDOMObserver);
+startDOMObserver();
 
 function startDOMObserver() {
 	var observer = new MutationObserver(function (mutations, me) {
@@ -49,8 +47,8 @@ function startDOMObserver() {
 async function shuffleVideos() {
 	// Called when the randomize-button is clicked
 	let changeToken = new BooleanReference();
-	setDOMTextWithDelay(shuffleButtonText, `&nbsp;Please wait...`, 500, changeToken);
-	setDOMTextWithDelay(shuffleButtonText, `&nbsp;Working on it...`, 6000, changeToken);
+	setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Please wait...`, 500, changeToken);
+	setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Working on it...`, 6000, changeToken);
 
 	try {
 		await chooseRandomVideo();
@@ -71,7 +69,7 @@ async function shuffleVideos() {
 
 		// Immediately display the error and stop other text changes
 		// TODO: Also add the error in more detail to the popup and/or logs?
-		setDOMTextWithDelay(shuffleButtonText, displayText, 0, changeToken, true);
+		setDOMTextWithDelay(shuffleButtonTextElement, displayText, 0, changeToken, true);
 		return;
 	}
 }

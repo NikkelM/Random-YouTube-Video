@@ -112,7 +112,7 @@ function finalizeButton(pageType) {
 
 	// Set references to the button and the text inside the button
 	shuffleButton = buttonDivOwner.children.namedItem(buttonDivID);
-	shuffleButtonText = shuffleButton.children[0].children[0].children[0].children[1].children[0];
+	shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[1].children[0];
 
 	// Add the event listener that shuffles the videos to the button
 	shuffleButton.addEventListener("click", shuffleVideos);

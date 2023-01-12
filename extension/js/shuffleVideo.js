@@ -191,7 +191,7 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 	// Update the "last video published at" date (only for the most recent video)
 	// If the newest video isn't newer than what we already have, we don't need to update the local storage
 	if (lastKnownUploadTime < apiResponse["items"][0]["contentDetails"]["videoPublishedAt"]) {
-		console.log("At least one video has been published since the last check.");
+		console.log("At least one video has been published since the last check, updating known video ID's...");
 		localPlaylist["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
 	} else {
 		console.log("No new videos have been published since the last check.");
@@ -222,6 +222,8 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 			}
 		}
 	}
+	console.log(`Found ${newVideos.length} new video(s).`);
+
 	// Add the new videos to the localPlaylist
 	localPlaylist["videos"] = newVideos.concat(localPlaylist["videos"]);
 
