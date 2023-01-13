@@ -2,12 +2,18 @@
 
 // ---------- Initialization ----------
 
+// Load the font used for the "shuffle" icon
+// Do this at the very beginning to prevent a flash of unstyled text
+let iconFont = `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0">`;
+iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChild;
+document.head.appendChild(iconFont);
+
 let shuffleButton = null;
 // Access the actual text using "shuffleButtonTextElement.innerHTML"!
 let shuffleButtonTextElement = null;
 
 // Whenever a YouTube navigation event fires, we need to check if we need to add the "shuffle" button
-document.addEventListener("yt-navigate-start", startDOMObserver);
+document.addEventListener("yt-navigate-finish", startDOMObserver);
 startDOMObserver();
 
 function startDOMObserver() {
@@ -21,16 +27,16 @@ function startDOMObserver() {
 
 		// If we are NOT on a video page, we assume we are on a channel page
 		// If the required element has loaded, add a shuffle button
-		if(!isVideoPage && channelPageRequiredElementLoadComplete) {
-			buildShuffleButton("channel");
+		if (!isVideoPage && channelPageRequiredElementLoadComplete) {
 			me.disconnect(); // stop observing
+			buildShuffleButton("channel");
 			return;
 		}
 
 		// If we are on a channel page or video page, and the required element has loaded, add the shuffle button
 		if (isVideoPage && videoPageRequiredElementLoadComplete) {
-			buildShuffleButton("video");
 			me.disconnect(); // stop observing
+			buildShuffleButton("video");
 			return;
 		}
 	});

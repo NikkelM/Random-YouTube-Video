@@ -1,12 +1,17 @@
 # Changelog
 
-## v0.2.0
+## v0.2.1
 
 <!--Releasenotes start-->
+- Fixed increased API quota usage introduced by a previous update.
+- Prevented the icon on the 'Randomize' button from not loading in fast enough in some cases.
+<!--Releasenotes end-->
+
+## v0.2.0
+
 - Eliminated previously necessary page reloads during normal YouTube navigation.
 - Added support for channel pages in the format "youtube.com/channelName".
 - Fixed a bug where users using a custom API key would need to re-fetch video ID's more often than would be necessary.
-<!--Releasenotes end-->
 
 ## v0.1.2
 

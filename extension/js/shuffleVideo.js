@@ -268,37 +268,26 @@ async function getAPIKey() {
 }
 
 async function getPlaylistIdFromUrl(url) {
-	let userName = null;
-	let channelId = null;
+	let videoId = null;
 
-	// if it's a video, shorts or playlist url, we can use oembed to get the channel name in "@"-format without having to search for the video id using the API
+	// if it's a video url, we can get the id from the url
 	if (isVideoUrl(url)) { // || isPlaylistUrl || isShortsUrl
-		await fetch(`https://www.youtube.com/oembed?url=${url}&format=json`)
-			.then((response) => response.json())
-			.then((data) => userName = '@' + data["author_url"].split('@')[1]);
-		// Otherwise, we will need to infer from the url
+		videoId = url.split("v=")[1].split("&")[0];
+		// Otherwise, we need to get some video link from the DOM
 	} else {
-		const channel = getChannelFromUrl(url);
-		// We already know the channel id
-		if (channel.type === "channelId") {
-			console.log(`A random video from channel with id "${channel.value}" will be played...`);
-			return channel.value.replace("UC", "UU");
-			// We need to get the channel id from the username
-		} else if (channel.type === "username") {
-			userName = channel.value;
-		} else {
-			throw new RandomYoutubeVideoError("Could not infer channel from url. You could try starting a video and using the shuffle button there. Please inform the developer if this keeps happening.");
-		}
+		videoId = document.getElementById('youtube-random-video-shuffle-button-channel').children[0].children[0].children[0].children.namedItem('videoLink').innerHTML;
+	}
+	let apiResponse;
+
+	await fetch(`https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${APIKey}`)
+		.then((response) => response.json())
+		.then((data) => apiResponse = data);
+
+	if (apiResponse["error"]) {
+		throw new YoutubeAPIError(apiResponse["error"]["code"], apiResponse["error"]["message"]);
 	}
 
-	console.log(`A random video from channel with name "${userName}" will be played...`);
-
-	// Send a request to the API to get the channel-id from the @Username
-	await fetch(`https://youtube.googleapis.com/youtube/v3/search?part=id&maxResults=1&q=${userName}&type=channel&key=${APIKey}`)
-		.then((response) => response.json())
-		.then((data) => channelId = data["items"][0]["id"]["channelId"]);
-
-	return channelId.replace("UC", "UU");
+	return apiResponse.items[0].snippet.channelId.replace("UC", "UU");
 }
 
 // ---------- Local storage ----------
