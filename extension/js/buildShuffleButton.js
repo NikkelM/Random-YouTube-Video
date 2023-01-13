@@ -1,7 +1,44 @@
 // Builds the randomize-buttons that are used by the extension
 
-// Channel page
+// If we find a video URL, we can shuffle, as we can get the channel id from the video URL
+let videoId = null;
+let currentChannel = null;
+
+function updateShufflePrerequisites() {
+	const oldVideoId = videoId;
+	const thisChannel = document.getElementById('inner-header-container')?.querySelector('ytd-channel-name')?.querySelector('yt-formatted-string')?.innerHTML;
+
+	// Reset the video if if we are on a different channel
+	if (isVideoUrl(window.location.href)) {
+		// Just set it to something unique
+		currentChannel = window.location.href;
+
+		videoId = window.location.href.split("v=")[1].split("&")[0];
+
+		return oldVideoId !== videoId;
+	} else if (thisChannel) {
+		if (currentChannel !== thisChannel) {
+			videoId = null;
+			currentChannel = thisChannel;
+		}
+	} else {
+		currentChannel = null;
+		videoId = null;
+	}
+
+	// If we are on a channel page that has a link to a video, we can shuffle
+	// TODO: More ways of getting a video link
+	if (document.querySelector('ytd-grid-video-renderer')?.querySelector('a#video-title').href) {
+		videoId = document.querySelector('ytd-grid-video-renderer').querySelector('a#video-title').href.split("v=")[1].split("&")[0];
+	}
+
+	return oldVideoId !== videoId;
+}
+
 function buildShuffleButton(pageType) {
+	// Update videoId and currentChannel
+	const mustUpdateVideoId = updateShufflePrerequisites();
+
 	let buttonDivID = "youtube-random-video-shuffle-button";
 	let buttonDivExtraStyle = "";
 	let buttonDivOwner = null;
@@ -24,16 +61,29 @@ function buildShuffleButton(pageType) {
 			return;
 	}
 
-	// If the button already exists, don't build it again
-	if (document.getElementById(buttonDivID)) {
-		console.log("Button already exists, not building again.");
+	// If the button should not be visible but exists, hide it
+	if (document.getElementById(buttonDivID) && (!currentChannel || !videoId)) {
+		document.getElementById(buttonDivID).style.display = "none";
+		console.log('Button should not be visible, hiding it.');
 		return;
 	}
 
-	// Load the font used for the "shuffle" icon
-	let iconFont = `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0">`;
-	iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChild;
-	document.head.appendChild(iconFont);
+	// If the button already exists, don't build it again
+	if (document.getElementById(buttonDivID) && currentChannel && videoId) {
+		// Unhide the button if it was hidden
+		document.getElementById(buttonDivID).style.display = "flex";
+		console.log("Button already exists.");
+		if(mustUpdateVideoId) {
+			document.getElementById('youtube-random-video-shuffle-button-channel').children[0].children[0].children[0].children.namedItem('videoLink').innerHTML = videoId;
+		}
+
+		return;
+	}
+
+	if (!currentChannel || !videoId) {
+		console.log("Cannot build button: Not on a channel page, or no video ID to identify channel available.");
+		return;
+	}
 
 	// Create the button div & renderer
 	let buttonDiv = `
@@ -104,6 +154,7 @@ function finalizeButton(pageType) {
 					<div class="yt-spec-touch-feedback-shape__fill" style></div>
 				</div>
 			</yt-touch-feedback-shape>
+			<span id="videoLink" style="display: none">${videoId}</span>
 	</button>`;
 	button = new DOMParser().parseFromString(button, "text/html").body.firstChild;
 

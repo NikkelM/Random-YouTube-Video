@@ -275,9 +275,7 @@ async function getPlaylistIdFromUrl(url) {
 		videoId = url.split("v=")[1].split("&")[0];
 		// Otherwise, we need to get some video link from the DOM
 	} else {
-		let someVideo = document.querySelector('ytd-grid-video-renderer').querySelector('a#video-title').href;
-
-		videoId = someVideo.split("v=")[1].split("&")[0];
+		videoId = document.getElementById('youtube-random-video-shuffle-button-channel').children[0].children[0].children[0].children.namedItem('videoLink').innerHTML;
 	}
 	let apiResponse;
 
