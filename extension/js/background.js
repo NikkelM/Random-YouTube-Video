@@ -83,8 +83,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		case "getPlaylistFromDB":
 			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
 			break;
-		case "postToDB":
-			writeData(request.data.key, request.data.val).then(sendResponse);
+		case "updatePlaylistInfoInDB":
+			updatePlaylistInfoInDB(request.data.key, request.data.val).then(sendResponse);
 			break;
 		// Gets the API key depending on user setting
 		case "getApiKey":
@@ -125,9 +125,17 @@ const app = firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database(app);
 
-async function writeData(key, val) {
-	console.log("Writing data to database...");
-	db.ref(key).update(val);
+async function updatePlaylistInfoInDB(playlistId, playlistInfo) {
+	console.log("Updating playlistInfo in the database...");
+
+	// Contains all properties except the videos
+	const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([k, v]) => k !== "videos"));
+
+	db.ref(playlistId).update(playlistInfoWithoutVideos);
+
+	// Update the videos separately to not overwrite the existing videos
+	db.ref(playlistId + "/videos").update(playlistInfo.videos);
+
 	return "Update sent to database.";
 }
 
