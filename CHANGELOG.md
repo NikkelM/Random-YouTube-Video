@@ -1,11 +1,15 @@
 # Changelog
 
-## v0.2.1
+## v0.x.x
 
 <!--Releasenotes start-->
+- Changed the text of the button from "Random" to "Shuffle" to match YouTube's naming conventions.
+<!--Releasenotes end-->
+
+## v0.2.1
+
 - Fixed increased API quota usage introduced by a previous update.
 - Prevented the icon on the 'Randomize' button from not loading in fast enough in some cases.
-<!--Releasenotes end-->
 
 ## v0.2.0
 
