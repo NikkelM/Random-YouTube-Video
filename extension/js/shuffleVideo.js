@@ -16,7 +16,6 @@ async function chooseRandomVideo() {
 	const databaseSharing = configSync.databaseSharingEnabledOption;
 
 	// Get the id of the uploads playlist for this channel
-	// const uploadsPlaylistId = document.querySelector("[itemprop=channelId]").getAttribute("content").replace("UC", "UU");
 	const uploadsPlaylistId = await getPlaylistIdFromUrl(window.location.href);
 	if (!uploadsPlaylistId) {
 		throw new RandomYoutubeVideoError("Could not find channel ID. Are you on a valid page?");
@@ -38,6 +37,14 @@ async function chooseRandomVideo() {
 		if (isEmpty(playlistInfo)) {
 			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
 			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
+
+			shouldUpdateDatabase = true;
+		} else if (databaseSharing && (playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
+			// If the playlist exists in the database but is outdated, update it from the API.
+			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
+			playlistInfo = await updatePlaylistFromApi(playlistInfo, uploadsPlaylistId); // correct one!
+			// playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
+			// playlistInfo.videos = {"Hpt1OVpqw7I": true, "test2": true}; // test
 
 			shouldUpdateDatabase = true;
 		}
@@ -67,28 +74,27 @@ async function chooseRandomVideo() {
 		}
 	}
 
-	// Choose a random video from the playlist
-	let randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
+	// Choose a random video from the videos object, where the keys are the video IDs
+	let videoIds = Object.keys(playlistInfo["videos"]);
+	let randomVideo = videoIds[Math.floor(Math.random() * videoIds.length)];
 	console.log("A random video has been chosen: " + randomVideo);
 
-	// Test if video still exists
-	let videoExists = await testVideoExistence(randomVideo);
-
 	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
-	if (!videoExists) {
-		while (!videoExists) {
+	if (!await testVideoExistence(randomVideo)) {
+		do {
 			console.log("The chosen video does not exist anymore. Removing it from the database and choosing a new one...");
 
 			// Remove the video from the playlist
-			playlistInfo["videos"] = playlistInfo["videos"].filter(video => video !== randomVideo);
+			delete playlistInfo["videos"][randomVideo];
 
 			// Choose a new random video
-			randomVideo = playlistInfo["videos"][Math.floor(Math.random() * playlistInfo["videos"].length)];
+			videoIds = Object.keys(playlistInfo["videos"]);
+			randomVideo = videoIds[Math.floor(Math.random() * videoIds.length)];
 			console.log(`A new random video has been chosen: ${randomVideo}`);
+		} while (!await testVideoExistence(randomVideo))
 
-			videoExists = await testVideoExistence(randomVideo);
-		}
-
+		// Update the database by removing the deleted videos there as well
+		// TODO
 		shouldUpdateDatabase = true;
 	}
 
@@ -162,6 +168,7 @@ async function getPlaylistFromApi(playlistId) {
 	let apiResponse = await getPlaylistSnippetFromAPI(playlistId, pageToken);
 
 	playlistInfo["videos"] = apiResponse["items"].map((video) => video["contentDetails"]["videoId"]);
+
 	// We also want to get the uploadTime of the most recent video
 	playlistInfo["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
 	pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
@@ -173,6 +180,12 @@ async function getPlaylistFromApi(playlistId) {
 
 		pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 	}
+
+	// Turn the videos array into an object for easier handling in the database
+	playlistInfo["videos"] = playlistInfo["videos"].reduce((obj, videoId) => {
+		obj[videoId] = true;
+		return obj;
+	}, {});
 
 	return playlistInfo;
 }
@@ -218,8 +231,10 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 	}
 	console.log(`Found ${newVideos.length} new video(s).`);
 
-	// Add the new videos to the localPlaylist
-	localPlaylist["videos"] = newVideos.concat(localPlaylist["videos"]);
+	// Add the new videos to the localPlaylist videos object
+	newVideos.forEach((videoId) => {
+		localPlaylist["videos"][videoId] = true;
+	});
 
 	return localPlaylist;
 }
