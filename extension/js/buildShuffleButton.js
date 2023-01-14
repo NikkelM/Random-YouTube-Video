@@ -1,4 +1,4 @@
-// Builds the randomize-buttons that are used by the extension
+// Builds the shuffle-buttons that are used by the extension
 
 // If we find a video URL, we can shuffle, as we can get the channel id from the video URL
 let videoId = null;
@@ -135,7 +135,7 @@ function finalizeButton(pageType) {
 			return;
 	}
 
-	let buttonText = "&nbsp;Random";
+	let buttonText = "&nbsp;Shuffle";
 	let button = `
 	<button
 		class="yt-spec-button-shape-next yt-spec-button-shape-next--tonal yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-m"
