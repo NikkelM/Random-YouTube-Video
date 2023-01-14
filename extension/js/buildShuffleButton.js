@@ -72,7 +72,6 @@ function buildShuffleButton(pageType) {
 	if (document.getElementById(buttonDivID) && currentChannel && videoId) {
 		// Unhide the button if it was hidden
 		document.getElementById(buttonDivID).style.display = "flex";
-		console.log("Button already exists.");
 		if(mustUpdateVideoId) {
 			document.getElementById('youtube-random-video-shuffle-button-channel').children[0].children[0].children[0].children.namedItem('videoLink').innerHTML = videoId;
 		}
