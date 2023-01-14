@@ -4,6 +4,8 @@
 
 <!--Releasenotes start-->
 - Changed the text of the button from "Random" to "Shuffle" to match YouTube's naming conventions.
+- The backend database now uses a more efficient method of storing video ID's.
+- Fixed a bug where the newest videos would not be fetched in a certain case.
 <!--Releasenotes end-->
 
 ## v0.2.1
