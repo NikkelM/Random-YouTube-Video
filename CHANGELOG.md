@@ -1,8 +1,9 @@
 # Changelog
 
-## v0.x.x
+## v0.2.2
 
 <!--Releasenotes start-->
+- Fixed a bug where the extension would shuffle from videos of the wrong channel when navigating from the subscriptions to the channel page.
 - Changed the text of the button from "Random" to "Shuffle" to match YouTube's naming conventions.
 <!--Releasenotes end-->
 
