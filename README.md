@@ -10,7 +10,7 @@
     alt="View changelog"></a>
 </p>
 
-Do you have a favorite YouTube channel, but don't know what to watch? This extension is for you!
+Do you have a favourite YouTube channel, but don't know what to watch? This extension is for you!
 
 The *Random YouTube Video* extension adds a "Random" button to YouTube channel and video pages, which when clicked will play a random video from the corresponding channel.
 
