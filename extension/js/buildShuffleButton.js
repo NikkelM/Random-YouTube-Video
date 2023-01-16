@@ -25,11 +25,15 @@ function updateShufflePrerequisites() {
 		currentChannel = null;
 		videoId = null;
 	}
+	
+	const visibleVideoBrowser = document.querySelectorAll('ytd-browse');
+	const visibleVideoItem = Array.from(visibleVideoBrowser).filter(node => node.hidden === false)[0];
+	const channelPageVideoLink = visibleVideoItem?.querySelector('ytd-grid-video-renderer')?.querySelector('a#video-title').href;
 
 	// If we are on a channel page that has a link to a video, we can shuffle
 	// TODO: More ways of getting a video link
-	if (document.querySelector('ytd-grid-video-renderer')?.querySelector('a#video-title').href) {
-		videoId = document.querySelector('ytd-grid-video-renderer').querySelector('a#video-title').href.split("v=")[1].split("&")[0];
+	if (channelPageVideoLink) {
+		videoId = channelPageVideoLink.split("v=")[1].split("&")[0];
 	}
 
 	return oldVideoId !== videoId;

@@ -21,22 +21,31 @@ function startDOMObserver() {
 		const isVideoPage = isVideoUrl(window.location.href);
 
 		// Find out if we are on a channel page that has completed loading the required element
-		const channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
+		// When navigating between pages, YouTube does not replace the 'ytd-browse' element of the previous page, but simply sets it to 'hidden'
+		// So we need to find the visible 'ytd-browse' element
+		const visibleVideoBrowser = Array.from(document.querySelectorAll('ytd-browse')).filter(node => node.hidden === false)[0];
+
+		// This visible element must then have the correct child element, indicating a video link
+		const visibleVideoItem = visibleVideoBrowser?.querySelector('ytd-grid-video-renderer')?.querySelector('a#video-title').href;
+
+		// If such a video link exists, we can check if we should are ready to build the button
+		const channelPageRequiredElementLoadComplete = visibleVideoItem ? document.getElementById("channel-header") : null;
+
 		// Find out if we are on a video page that has completed loading the required element
 		const videoPageRequiredElementLoadComplete = document.getElementById("player") && document.getElementById("above-the-fold");
+
+		// If we are on a video page, and the required element has loaded, add the shuffle button
+		if (isVideoPage && videoPageRequiredElementLoadComplete) {
+			me.disconnect(); // stop observing
+			buildShuffleButton("video");
+			return;
+		}
 
 		// If we are NOT on a video page, we assume we are on a channel page
 		// If the required element has loaded, add a shuffle button
 		if (!isVideoPage && channelPageRequiredElementLoadComplete) {
 			me.disconnect(); // stop observing
 			buildShuffleButton("channel");
-			return;
-		}
-
-		// If we are on a channel page or video page, and the required element has loaded, add the shuffle button
-		if (isVideoPage && videoPageRequiredElementLoadComplete) {
-			me.disconnect(); // stop observing
-			buildShuffleButton("video");
 			return;
 		}
 	});
