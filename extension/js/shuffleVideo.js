@@ -104,7 +104,6 @@ async function chooseRandomVideo() {
 		} while (!await testVideoExistence(randomVideo))
 
 		// Update the database by removing the deleted videos there as well
-		// TODO: Have two different types of calls to the database, one for updating the playlist and one for updating with removing videos
 		shouldUpdateDatabase = true;
 	}
 
@@ -113,12 +112,24 @@ async function chooseRandomVideo() {
 
 		playlistInfo["lastUpdatedDBAt"] = new Date().toISOString();
 
+		// TODO: Test this
+		let videosToDatabase = {};
+		// If any videos need to be deleted, this should be the union of videos, newvideos, minus the videos to delete
+		if (videoIDsToRemoveFromDB.length > 0) {
+			videosToDatabase = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
+			videoIDsToRemoveFromDB.forEach(videoID => delete videosToDatabase[videoID]);
+		} else {
+			// Otherwise, we want to only upload new videos. If there are no new videos, we upload all videos, as this is the first time we are uploading the playlist
+			videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
+		}
+
+
 		// Only upload the wanted keys
 		playlistInfoForDatabase = {
 			"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
 			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
 			// if the newVideos key exists, it means that we updated the playlist, so we should upload only the new videos
-			"videos": playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {}
+			"videos": videosToDatabase
 		};
 
 		// Send the playlist info to the database

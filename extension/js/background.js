@@ -125,6 +125,15 @@ const app = firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database(app);
 
+// firebase.auth().signInAnonymously()
+// 	.then(() => {
+// 		console.log("Signed in to Firebase anonymously.");
+// 	})
+// 	.catch((error) => {
+// 		console.error(error.code);
+// 		console.error(error.message);
+// 	});
+
 async function updatePlaylistInfoInDB(playlistId, playlistInfo) {
 	console.log("Updating playlistInfo in the database...");
 
