@@ -131,7 +131,7 @@ async function chooseRandomVideo() {
 
 		// Send the playlist info to the database
 		const msg = {
-			command: 'updatePlaylistInfoInDB',
+			command: videoIDsToRemoveFromDB.length > 0 ? 'updatePlaylistInfoInDB' : 'overwritePlaylistInfoInDB',
 			data: {
 				key: 'uploadsPlaylists/' + uploadsPlaylistId,
 				val: playlistInfoForDatabase
