@@ -184,35 +184,6 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 	let playlistInfo = await chrome.runtime.sendMessage(msg);
 
-	// TODO: Remove this in a future version
-	// Backward compatibility for older format where videos = [id, id] instead of videos = {id: true, id: true}
-	if (playlistInfo && playlistInfo["videos"] && Array.isArray(playlistInfo["videos"])) {
-		console.log('The information for this playlist has an old format in the database. Updating it...');
-
-		let videos = {};
-		playlistInfo["videos"].forEach(video => videos[video] = true);
-		playlistInfo["videos"] = videos;
-
-		// Update the database entry with the new format
-		// Only upload the wanted keys
-		const playlistInfoForDatabase = {
-			"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
-			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
-			"videos": videos
-		};
-
-		// Send the playlist info to the database
-		const msg = {
-			command: 'overwritePlaylistInfoInDB',
-			data: {
-				key: 'uploadsPlaylists/' + playlistId,
-				val: playlistInfoForDatabase
-			}
-		};
-
-		chrome.runtime.sendMessage(msg);
-	}
-
 	if (!playlistInfo) {
 		return {};
 	}
