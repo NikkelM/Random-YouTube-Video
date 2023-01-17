@@ -80,12 +80,17 @@ async function handleExtensionUpdate(manifestData) {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	switch (request.command) {
+		// Tries to get the playlist from Firebase
 		case "getPlaylistFromDB":
 			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
 			break;
+		// Updates (without overwriting videos) the playlist in Firebase 
 		case "updatePlaylistInfoInDB":
-			updatePlaylistInfoInDB(request.data.key, request.data.val).then(sendResponse);
+			updatePlaylistInfoInDB(request.data.key, request.data.val, false).then(sendResponse);
 			break;
+		// Updates (with overwriting videos, as some were deleted and we do not grant 'delete' permissions) the playlist in Firebase
+		case "overwritePlaylistInfoInDB":
+			overwritePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
 		// Gets the API key depending on user setting
 		case "getApiKey":
 			getApiKey(false).then(sendResponse);
@@ -122,28 +127,24 @@ const firebaseConfig = {
 };
 
 const app = firebase.initializeApp(firebaseConfig);
-
 const db = firebase.database(app);
 
-// firebase.auth().signInAnonymously()
-// 	.then(() => {
-// 		console.log("Signed in to Firebase anonymously.");
-// 	})
-// 	.catch((error) => {
-// 		console.error(error.code);
-// 		console.error(error.message);
-// 	});
+async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos) {
+	console.log(`${overwriteVideos ? 'Setting ' : 'Updating '} playlistInfo in the database...`);
 
-async function updatePlaylistInfoInDB(playlistId, playlistInfo) {
-	console.log("Updating playlistInfo in the database...");
+	if (overwriteVideos) {
+		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested
+		db.ref(playlistId).update(playlistInfo);
+	} else {
+		// Contains all properties except the videos
+		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => key !== "videos"));
 
-	// Contains all properties except the videos
-	const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([k, v]) => k !== "videos"));
+		// Upload the 'metadata'
+		db.ref(playlistId).update(playlistInfoWithoutVideos);
 
-	db.ref(playlistId).update(playlistInfoWithoutVideos);
-
-	// Update the videos separately to not overwrite the existing videos
-	db.ref(playlistId + "/videos").update(playlistInfo.videos);
+		// Update the videos separately to not overwrite the existing videos
+		db.ref(playlistId + "/videos").update(playlistInfo.videos);
+	}
 
 	return "Update sent to database.";
 }
