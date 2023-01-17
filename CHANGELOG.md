@@ -1,9 +1,9 @@
 # Changelog
 
-## v0.3.0
+## v0.x.x
 
 <!--Releasenotes start-->
-- The backend database now uses a more efficient method of storing video ID's.
+- The backend database now uses a more efficient method of storing and communicating video ID's.
 - Fixed a bug where the newest videos would not be fetched from the YouTube API in a certain case.
 <!--Releasenotes end-->
 
