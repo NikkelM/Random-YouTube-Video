@@ -181,6 +181,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 	let playlistInfo = await chrome.runtime.sendMessage(msg);
 
+	// TODO: Remove this in a future version
 	// Backward compatibility for older format where videos = [id, id] instead of videos = {id: true, id: true}
 	if (playlistInfo && playlistInfo["videos"] && Array.isArray(playlistInfo["videos"])) {
 		console.log('The information for this playlist has an old format in the database. Updating it...');
