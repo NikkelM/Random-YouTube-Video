@@ -3,6 +3,8 @@
 ## v0.x.x
 
 <!--Releasenotes start-->
+- Added a new option: Open the shuffled video in a new tab.
+- Added a new option: Open the shuffled video within the uploads playlist of the channel.
 - The backend database now uses a more efficient method of storing and communicating video ID's.
 - Fixed a bug where the newest videos would not be fetched from the YouTube API in a certain case.
 <!--Releasenotes end-->
