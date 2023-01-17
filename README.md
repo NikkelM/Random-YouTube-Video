@@ -15,6 +15,8 @@ Do you have a favourite YouTube channel, but don't know what to watch? This exte
 The *Random YouTube Video* extension adds a "Shuffle" button to YouTube channel and video pages, which when clicked will play a random video from the corresponding channel.
 
 NOTE:<br>
+Are you on a channel page but cannot see the "Shuffle" button? Simply navigate to the "Home" tab and the button will appear. This is due to a limitation of the YouTube API.
+
 If the chosen channel has uploaded a lot of videos and you are the first user to use the extension with that channel, the loading time until the first video is chosen may be longer, depending on the amount of videos uploaded to the channel - rest assured that the extension is doing the work in the background.
 After this, the channel data is stored in your browser's local storage as well as in our database, and subsequent uses are much faster.
 
