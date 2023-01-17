@@ -1,10 +1,14 @@
 # Changelog
 
-## v0.x.x
+## v1.0.0
 
 <!--Releasenotes start-->
-- The backend database now uses a more efficient method of storing and communicating video ID's.
+- Added a new option: Open the shuffled video in a new tab.
+- Added a new option: Open the shuffled video within the uploads playlist of the channel.
+- Added a new option: Only shuffle from the last x% of videos uploaded on the channel - use this to exclude older videos from the shuffle.
+- The backend database now uses a more efficient method of storing and communicating video IDs.
 - Fixed a bug where the newest videos would not be fetched from the YouTube API in a certain case.
+- Fixed a bug where the extension was attempting to access a non-existent version of the shuffle-button.
 <!--Releasenotes end-->
 
 ## v0.2.2

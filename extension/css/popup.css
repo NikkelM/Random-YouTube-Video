@@ -42,8 +42,18 @@
 	text-align: center;
 }
 
+#randomYoutubeVideoPopup p {
+	margin-top: 2px;
+	margin-bottom: 2px;
+}
+
+#randomYoutubeVideoPopup h3 {
+	margin-top: 8px;
+	margin-bottom: 4px;
+}
+
 body {
-	margin: 4px;
+	margin: 2px;
 	width: 400px;
 	max-width: 100%;
 	/* NOTE: Ensures content doesn't exceed restricted popup widths in Firefox */
@@ -55,19 +65,11 @@ body {
 }
 
 /*
- * Texts
- */
-
-.lowBottomMargin {
-	margin-bottom: 2px;
-}
-
-/*
  * Options Row
  */
 .optionsRow {
-	margin: 16px;
-	margin-top: 6px;
+	margin: 0px;
+	margin-top: 0px;
 	border-radius: 8px;
 	justify-content: space-evenly;
 	overflow: hidden;
@@ -83,7 +85,7 @@ body {
 	user-select: none;
 	border: none;
 	flex: 1;
-	padding: 10px 15px;
+	padding: 5px 5px;
 }
 
 /*
@@ -129,6 +131,17 @@ body {
 	background-color: #333;
 	text-align: center;
 	width: 80%;
+}
+
+.optionTextInput input.numberInput{
+	width: 25px;
+}
+
+/* Remove the up and down arrows from the number input */
+.optionTextInput input.numberInput::-webkit-outer-spin-button,
+.optionTextInput input.numberInput::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
 }
 
 .optionTextInput input:focus {

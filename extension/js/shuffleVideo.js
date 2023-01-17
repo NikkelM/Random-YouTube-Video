@@ -3,6 +3,9 @@
 let APIKey = null;
 let configSync = null;
 
+// TEMPORARY due to database format change
+let mustOverwriteDatabase = false;
+
 // Chooses a random video uploaded on the current YouTube channel
 async function chooseRandomVideo() {
 	await fetchConfigSync();
@@ -73,31 +76,34 @@ async function chooseRandomVideo() {
 		}
 	}
 
-	// Choose a random video from the videos object, where the keys are the video IDs
-	let videoIds = Object.keys(playlistInfo["videos"]) ?? [];
-	// Append the new videos to the list of videos
-	videoIds = videoIds.concat(Object.keys(playlistInfo["newVideos"] ?? {}));
+	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
+	let videosByDate = Object.keys(allVideos).sort((a, b) => {
+		return new Date(allVideos[b]) - new Date(allVideos[a]);
+	});
+	let videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (configSync.shuffleLastXVideosPercentage / 100))));
 
-	let randomVideo = videoIds[Math.floor(Math.random() * videoIds.length)];
+	let randomVideo = chooseRandomVideoFromList(videosToShuffle);
 	console.log("A random video has been chosen: " + randomVideo);
 
-	let videoIDsToRemoveFromDB = [];
+	let encounteredDeletedVideos = false;
 	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
 	if (!await testVideoExistence(randomVideo)) {
+		encounteredDeletedVideos = true;
 		do {
 			console.log("The chosen video does not exist anymore. Removing it from the database and choosing a new one...");
-			videoIDsToRemoveFromDB.push(randomVideo);
 
 			// Remove the video from the local playlist object
 			// It will always be in the "videos" object, as we have just fetched the "newVideos" from the YouTube API
 			delete playlistInfo["videos"][randomVideo];
 
 			// Choose a new random video
-			videoIds = Object.keys(playlistInfo["videos"]) ?? [];
-			// Append the new videos to the list of videos
-			videoIds = videoIds.concat(Object.keys(playlistInfo["newVideos"] ?? {}));
+			allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
+			videosByDate = Object.keys(allVideos).sort((a, b) => {
+				return new Date(allVideos[b]) - new Date(allVideos[a]);
+			});
+			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (configSync.shuffleLastXVideosPercentage / 100))));
 
-			randomVideo = videoIds[Math.floor(Math.random() * videoIds.length)];
+			randomVideo = chooseRandomVideoFromList(videosToShuffle);
 
 			console.log(`A new random video has been chosen: ${randomVideo}`);
 		} while (!await testVideoExistence(randomVideo))
@@ -111,10 +117,9 @@ async function chooseRandomVideo() {
 
 		let videosToDatabase = {};
 		// If any videos need to be deleted, this should be the union of videos, newvideos, minus the videos to delete
-		if (videoIDsToRemoveFromDB.length > 0) {
+		if (encounteredDeletedVideos) {
 			console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
-			videosToDatabase = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
-			videoIDsToRemoveFromDB.forEach(videoID => delete videosToDatabase[videoID]);
+			videosToDatabase = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
 		} else {
 			// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
 			console.log("Uploading new video IDs to the database...");
@@ -130,7 +135,8 @@ async function chooseRandomVideo() {
 
 		// Send the playlist info to the database
 		const msg = {
-			command: videoIDsToRemoveFromDB.length > 0 ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
+			// TEMPORARY due to database format change
+			command: (encounteredDeletedVideos || mustOverwriteDatabase) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
 			data: {
 				key: 'uploadsPlaylists/' + uploadsPlaylistId,
 				val: playlistInfoForDatabase
@@ -146,14 +152,8 @@ async function chooseRandomVideo() {
 	// Update the playlist locally
 	console.log("Saving playlist to local storage...");
 
-	// If applicable, add all new videos to the videos object
-	if (playlistInfo["newVideos"]) {
-		for (const videoId in playlistInfo["newVideos"]) {
-			playlistInfo["videos"][videoId] = true;
-		}
-		// remove the newVideos key
-		delete playlistInfo["newVideos"];
-	}
+	// We can now join the new videos with the old ones
+	playlistInfo["videos"] = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
 
 	// Only save the wanted keys
 	playlistInfoForLocalStorage = {
@@ -166,8 +166,11 @@ async function chooseRandomVideo() {
 
 	await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
-	// Navigate to the random video
-	window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
+	// Get the correct URL format
+	let randomVideoURL = configSync.shuffleOpenAsPlaylistOption ? `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}` : `https://www.youtube.com/watch?v=${randomVideo}`;
+
+	// Open the video in a new tab or in the current tab, depending on the user's settings
+	configSync.shuffleOpenInNewTabOption ? window.open(randomVideoURL, '_blank').focus() : window.location.href = randomVideoURL;
 }
 
 // ---------- Database ----------
@@ -181,33 +184,11 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 	let playlistInfo = await chrome.runtime.sendMessage(msg);
 
-	// TODO: Remove this in a future version
-	// Backward compatibility for older format where videos = [id, id] instead of videos = {id: true, id: true}
+	// TEMPORARY due to database format change
 	if (playlistInfo && playlistInfo["videos"] && Array.isArray(playlistInfo["videos"])) {
-		console.log('The information for this playlist has an old format in the database. Updating it...');
-
-		let videos = {};
-		playlistInfo["videos"].forEach(video => videos[video] = true);
-		playlistInfo["videos"] = videos;
-
-		// Update the database entry with the new format
-		// Only upload the wanted keys
-		const playlistInfoForDatabase = {
-			"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
-			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
-			"videos": videos
-		};
-
-		// Send the playlist info to the database
-		const msg = {
-			command: 'overwritePlaylistInfoInDB',
-			data: {
-				key: 'uploadsPlaylists/' + playlistId,
-				val: playlistInfoForDatabase
-			}
-		};
-
-		chrome.runtime.sendMessage(msg);
+		console.log("The playlist was found in the database, but it is in the old format. Updating format...");
+		mustOverwriteDatabase = true;
+		return {};
 	}
 
 	if (!playlistInfo) {
@@ -227,7 +208,8 @@ async function getPlaylistFromApi(playlistId) {
 	let pageToken = "";
 	let apiResponse = await getPlaylistSnippetFromAPI(playlistId, pageToken);
 
-	playlistInfo["videos"] = apiResponse["items"].map((video) => video["contentDetails"]["videoId"]);
+	// For each video, add an entry in the form of videoId: uploadTime
+	playlistInfo["videos"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"]]));
 
 	// We also want to get the uploadTime of the most recent video
 	playlistInfo["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
@@ -236,16 +218,11 @@ async function getPlaylistFromApi(playlistId) {
 	while (pageToken !== null) {
 		apiResponse = await getPlaylistSnippetFromAPI(playlistId, pageToken);
 
-		playlistInfo["videos"] = playlistInfo["videos"].concat(apiResponse["items"].map((video) => video["contentDetails"]["videoId"]));
+		// For each video, add an entry in the form of videoId: uploadTime
+		playlistInfo["videos"] = Object.assign(playlistInfo["videos"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"]])));
 
 		pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 	}
-
-	// Turn the videos array into an object for easier handling in the database
-	playlistInfo["videos"] = playlistInfo["videos"].reduce((obj, videoId) => {
-		obj[videoId] = true;
-		return obj;
-	}, {});
 
 	return playlistInfo;
 }
@@ -266,11 +243,12 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 	}
 
 	let currVideo = 0;
-	let newVideos = [];
+	let newVideos = {};
 
 	// While the currently saved last video is older then the currently checked video from the API response, we need to add videos to local storage
 	while (lastKnownUploadTime < apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"]) {
-		newVideos.push(apiResponse["items"][currVideo]["contentDetails"]["videoId"]);
+		// Add the video to the newVideos object
+		newVideos[apiResponse["items"][currVideo]["contentDetails"]["videoId"]] = apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"];
 
 		currVideo++;
 
@@ -289,13 +267,10 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 			}
 		}
 	}
-	console.log(`Found ${newVideos.length} new video(s).`);
+	console.log(`Found ${Object.keys(newVideos).length} new video(s).`);
 
-	// Add the new videos to a new object within the localPlaylist
-	localPlaylist["newVideos"] = newVideos.reduce((obj, videoId) => {
-		obj[videoId] = true;
-		return obj;
-	}, {});
+	// Add the new videos to a new key within the localPlaylist
+	localPlaylist["newVideos"] = newVideos;
 
 	return localPlaylist;
 }
@@ -330,8 +305,6 @@ async function testVideoExistence(videoId) {
 
 // Requests the API key from the background script
 async function getAPIKey() {
-	console.log('Getting API key...');
-
 	const msg = {
 		command: "getApiKey"
 	};
@@ -364,6 +337,11 @@ async function getPlaylistIdFromUrl(url) {
 	}
 
 	return apiResponse.items[0].snippet.channelId.replace("UC", "UU");
+}
+
+function chooseRandomVideoFromList(videoIds) {
+	let randomVideo = videoIds[Math.floor(Math.random() * videoIds.length)];
+	return randomVideo;
 }
 
 // ---------- Local storage ----------

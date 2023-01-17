@@ -14,29 +14,42 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 	} else if (details.reason == "update" && details.previousVersion !== manifestData.version) {
 		await handleExtensionUpdate(manifestData);
 	}
+
+	// Check if all config values are set in sync storage
+	// If not, set them to their default values
+	const configDefaults = {
+		"useCustomApiKeyOption": false,
+		"customYoutubeApiKey": null,
+		"databaseSharingEnabledOption": true,
+		"shuffleOpenInNewTabOption": false,
+		"shuffleOpenAsPlaylistOption": true,
+		"shuffleLastXVideosPercentage": 100
+	};
+
+	const configSyncValues = await chrome.storage.sync.get();
+	for (const [key, value] of Object.entries(configDefaults)) {
+		if (configSyncValues[key] === undefined) {
+			console.log(`Config value ${key} does not exist in sync storage. Setting default (${value})...`);
+			await chrome.storage.sync.set({ [key]: value });
+		}
+	}
 });
 
 async function handleExtensionFirstInstall(manifestData) {
 	console.log("Extension was newly installed. Initializing settings...");
-
-	// Set default settings
-	await chrome.storage.sync.set({
-		"useCustomApiKeyOption": false,
-		"customYoutubeApiKey": null,
-		"databaseSharingEnabledOption": true
-	});
 
 	// Make sure the current extension version is always saved in local storage
 	setLocalStorage("extensionVersion", manifestData.version);
 }
 
 async function handleExtensionUpdate(manifestData) {
-	console.log(`Extension updated to version v${manifestData.version}`);
+	console.log(`Extension was updated to version v${manifestData.version}`);
 
 	// This variable indicates if the local storage should be cleared when updating to the newest version
 	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
 	// Provide reason for clearing if applicable
 	// Reason: The storage structure has been changed to allow more performant updates to the DB, which means that the old data structure is now incompatible
+	// Version before change: v0.2.2 (is this not the version before the current one? Then this should be changed to false!)
 	const clearLocalStorageOnUpdate = true;
 
 	if (clearLocalStorageOnUpdate) {
