@@ -59,13 +59,13 @@ setDomElementDefaultsFromConfig();
 // Custom API key: Option toggle
 domElements.useCustomApiKeyOptionToggle.addEventListener("change", function () {
 	setSyncStorageValue("useCustomApiKeyOption", this.checked);
-	manageDependents(useCustomApiKeyOptionToggle, this.checked);
+	manageDependents(domElements.useCustomApiKeyOptionToggle, this.checked);
 });
 
 // Database sharing: Option toggle
 domElements.dbSharingOptionToggle.addEventListener("change", function () {
 	setSyncStorageValue("databaseSharingEnabledOption", this.checked);
-	manageDependents(dbSharingOptionToggle, this.checked);
+	manageDependents(domElements.dbSharingOptionToggle, this.checked);
 });
 
 // Custom API key: Input
@@ -85,23 +85,26 @@ domElements.customApiKeySubmitButton.addEventListener("click", async function ()
 // Shuffling: Open in new tab option toggle
 domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", function () {
 	setSyncStorageValue("shuffleOpenInNewTabOption", this.checked);
-	manageDependents(shuffleOpenInNewTabOptionToggle, this.checked);
+	manageDependents(domElements.shuffleOpenInNewTabOptionToggle, this.checked);
 });
 
 // Shuffling: Open as playlist option toggle
 domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", function () {
 	setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked);
-	manageDependents(shuffleOpenAsPlaylistOptionToggle, this.checked);
+	manageDependents(domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
 });
 
 // Shuffling: Shuffle from last x% of videos input
 domElements.shuffleLastXVideosInputField.addEventListener("focusout", function () {
 	// Clamp the value to the range [1, 100]
+	if (this.value === "") {
+		this.value = 100;
+	}
 	const value = Math.min(Math.max(this.value, 1), 100);
 	setSyncStorageValue("shuffleLastXVideosPercentage", value);
 	// Set the value of the input field to the clamped value
 	this.value = value;
-	manageDependents(shuffleLastXVideosInputField, value);
+	manageDependents(domElements.shuffleLastXVideosInputField, value);
 });
 
 // ----- Dependency management -----
