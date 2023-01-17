@@ -53,7 +53,6 @@ async function chooseRandomVideo() {
 		// The playlist exists locally, but may be outdated. Update it from the database. If needed, update the database values as well.
 	} else if ((databaseSharing && ((playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString())) ||
 		(!databaseSharing && ((playlistInfo["lastAccessedLocally"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()))) {
-		console.log(playlistInfo["lastFetchedFromDB"])
 		console.log(`Local uploads playlist for this channel may be outdated. ${databaseSharing ? "Updating from the database..." : ""}`);
 
 		playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId) : {};
@@ -108,18 +107,17 @@ async function chooseRandomVideo() {
 	}
 
 	if (shouldUpdateDatabase && databaseSharing) {
-		console.log("Uploading the playlist to the database...");
-
 		playlistInfo["lastUpdatedDBAt"] = new Date().toISOString();
 
-		// TODO: Test this
 		let videosToDatabase = {};
 		// If any videos need to be deleted, this should be the union of videos, newvideos, minus the videos to delete
 		if (videoIDsToRemoveFromDB.length > 0) {
+			console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
 			videosToDatabase = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
 			videoIDsToRemoveFromDB.forEach(videoID => delete videosToDatabase[videoID]);
 		} else {
-			// Otherwise, we want to only upload new videos. If there are no new videos, we upload all videos, as this is the first time we are uploading the playlist
+			// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
+			console.log("Uploading new video IDs to the database...");
 			videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
 		}
 
@@ -128,7 +126,6 @@ async function chooseRandomVideo() {
 		playlistInfoForDatabase = {
 			"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
 			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
-			// if the newVideos key exists, it means that we updated the playlist, so we should upload only the new videos
 			"videos": videosToDatabase
 		};
 
