@@ -49,7 +49,7 @@ function setDomElementDefaultsFromConfig() {
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
 
 	// ----- Shuffling: Shuffle from last x% of videos input -----
-	domElements.shuffleLastXVideosInputField.value = configSync.shuffleLastXVideos;
+	domElements.shuffleLastXVideosInputField.value = configSync.shuffleLastXVideosPercentage;
 }
 
 setDomElementDefaultsFromConfig();
@@ -98,7 +98,7 @@ domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", functio
 domElements.shuffleLastXVideosInputField.addEventListener("focusout", function () {
 	// Clamp the value to the range [1, 100]
 	const value = Math.min(Math.max(this.value, 1), 100);
-	setSyncStorageValue("shuffleLastXVideos", value);
+	setSyncStorageValue("shuffleLastXVideosPercentage", value);
 	// Set the value of the input field to the clamped value
 	this.value = value;
 	manageDependents(shuffleLastXVideosInputField, value);
