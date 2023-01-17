@@ -36,8 +36,8 @@ async function handleExtensionUpdate(manifestData) {
 	// This variable indicates if the local storage should be cleared when updating to the newest version
 	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
 	// Provide reason for clearing if applicable
-	// Reason: N/A
-	const clearLocalStorageOnUpdate = false;
+	// Reason: The storage structure has been changed to allow more performant updates to the DB, which means that the old data structure is now incompatible
+	const clearLocalStorageOnUpdate = true;
 
 	if (clearLocalStorageOnUpdate) {
 		console.log("The storage structure has changed and local storage must be reset. Clearing...");
