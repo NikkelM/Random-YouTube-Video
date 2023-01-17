@@ -36,8 +36,8 @@ async function handleExtensionUpdate(manifestData) {
 	// This variable indicates if the local storage should be cleared when updating to the newest version
 	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
 	// Provide reason for clearing if applicable
-	// Reason: N/A
-	const clearLocalStorageOnUpdate = false;
+	// Reason: The storage structure has been changed to allow more performant updates to the DB, which means that the old data structure is now incompatible
+	const clearLocalStorageOnUpdate = true;
 
 	if (clearLocalStorageOnUpdate) {
 		console.log("The storage structure has changed and local storage must be reset. Clearing...");
@@ -80,12 +80,17 @@ async function handleExtensionUpdate(manifestData) {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	switch (request.command) {
+		// Tries to get the playlist from Firebase
 		case "getPlaylistFromDB":
 			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
 			break;
-		case "postToDB":
-			writeData(request.data.key, request.data.val).then(sendResponse);
+		// Updates (without overwriting videos) the playlist in Firebase 
+		case "updatePlaylistInfoInDB":
+			updatePlaylistInfoInDB(request.data.key, request.data.val, false).then(sendResponse);
 			break;
+		// Updates (with overwriting videos, as some were deleted and we do not grant 'delete' permissions) the playlist in Firebase
+		case "overwritePlaylistInfoInDB":
+			updatePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
 		// Gets the API key depending on user setting
 		case "getApiKey":
 			getApiKey(false).then(sendResponse);
@@ -122,13 +127,26 @@ const firebaseConfig = {
 };
 
 const app = firebase.initializeApp(firebaseConfig);
-
 const db = firebase.database(app);
 
-async function writeData(key, val) {
-	console.log("Writing data to database...");
-	db.ref(key).update(val);
-	return "Update sent to database.";
+async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos) {
+	if (overwriteVideos) {
+		console.log("Setting playlistInfo in the database...");
+		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested within the playlist
+		db.ref(playlistId).update(playlistInfo);
+	} else {
+		console.log("Updating playlistInfo in the database...");
+		// Contains all properties except the videos
+		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => key !== "videos"));
+
+		// Upload the 'metadata'
+		db.ref(playlistId).update(playlistInfoWithoutVideos);
+
+		// Update the videos separately to not overwrite the existing videos
+		db.ref(playlistId + "/videos").update(playlistInfo.videos);
+	}
+
+	return "PlaylistInfo was sent to database.";
 }
 
 // Prefers to get cached data instead of sending a request to the database

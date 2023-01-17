@@ -1,11 +1,16 @@
 # Changelog
 
-## v0.2.2
+## v0.x.x
 
 <!--Releasenotes start-->
+- The backend database now uses a more efficient method of storing and communicating video ID's.
+- Fixed a bug where the newest videos would not be fetched from the YouTube API in a certain case.
+<!--Releasenotes end-->
+
+## v0.2.2
+
 - Fixed a bug where the extension would shuffle from videos of the wrong channel when navigating from the subscriptions to the channel page.
 - Changed the text of the button from "Random" to "Shuffle" to match YouTube's naming conventions.
-<!--Releasenotes end-->
 
 ## v0.2.1
 
