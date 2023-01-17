@@ -121,7 +121,6 @@ async function chooseRandomVideo() {
 			videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
 		}
 
-
 		// Only upload the wanted keys
 		playlistInfoForDatabase = {
 			"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
@@ -131,7 +130,7 @@ async function chooseRandomVideo() {
 
 		// Send the playlist info to the database
 		const msg = {
-			command: videoIDsToRemoveFromDB.length > 0 ? 'updatePlaylistInfoInDB' : 'overwritePlaylistInfoInDB',
+			command: videoIDsToRemoveFromDB.length > 0 ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
 			data: {
 				key: 'uploadsPlaylists/' + uploadsPlaylistId,
 				val: playlistInfoForDatabase
@@ -168,7 +167,7 @@ async function chooseRandomVideo() {
 	await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
 	// Navigate to the random video
-	// window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
+	window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
 }
 
 // ---------- Database ----------
@@ -268,8 +267,6 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 		obj[videoId] = true;
 		return obj;
 	}, {});
-	console.log("in update")
-	console.log(localPlaylist)
 
 	return localPlaylist;
 }

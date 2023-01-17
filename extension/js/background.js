@@ -90,7 +90,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			break;
 		// Updates (with overwriting videos, as some were deleted and we do not grant 'delete' permissions) the playlist in Firebase
 		case "overwritePlaylistInfoInDB":
-			overwritePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
+			updatePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
 		// Gets the API key depending on user setting
 		case "getApiKey":
 			getApiKey(false).then(sendResponse);
@@ -130,12 +130,12 @@ const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.database(app);
 
 async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos) {
-	console.log(`${overwriteVideos ? 'Setting ' : 'Updating '} playlistInfo in the database...`);
-
 	if (overwriteVideos) {
-		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested
+		console.log("Setting playlistInfo in the database...");
+		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested within the playlist
 		db.ref(playlistId).update(playlistInfo);
 	} else {
+		console.log("Updating playlistInfo in the database...");
 		// Contains all properties except the videos
 		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => key !== "videos"));
 
@@ -146,7 +146,7 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 		db.ref(playlistId + "/videos").update(playlistInfo.videos);
 	}
 
-	return "Update sent to database.";
+	return "PlaylistInfo was sent to database.";
 }
 
 // Prefers to get cached data instead of sending a request to the database
