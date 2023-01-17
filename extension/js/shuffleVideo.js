@@ -117,7 +117,6 @@ async function chooseRandomVideo() {
 		if (encounteredDeletedVideos) {
 			console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
 			videosToDatabase = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
-			console.log(videosToDatabase);
 		} else {
 			// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
 			console.log("Uploading new video IDs to the database...");
