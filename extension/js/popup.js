@@ -191,7 +191,3 @@ async function validateApiKey(key) {
 	domElements.customApiKeyInputErrorDiv.classList.add("hidden");
 	return true;
 }
-
-
-// xxx
-let shuffleLastXVideosField = document.getElementById('shuffleLastXVideosInputField');
