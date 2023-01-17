@@ -77,7 +77,7 @@ function buildShuffleButton(pageType) {
 		// Unhide the button if it was hidden
 		document.getElementById(buttonDivID).style.display = "flex";
 		if(mustUpdateVideoId) {
-			document.getElementById('youtube-random-video-shuffle-button-channel').children[0].children[0].children[0].children.namedItem('videoLink').innerHTML = videoId;
+			document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('videoLink').innerHTML = videoId;
 		}
 
 		return;
