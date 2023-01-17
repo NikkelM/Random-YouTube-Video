@@ -84,7 +84,7 @@ function buildShuffleButton(pageType) {
 	}
 
 	if (!currentChannel || !videoId) {
-		console.log("Cannot build button: Not on a channel page, or no video ID to identify channel available.");
+		console.log("Cannot build button: Not on a channel page, or no video ID to identify channel.");
 		return;
 	}
 

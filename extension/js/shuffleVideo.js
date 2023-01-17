@@ -305,8 +305,6 @@ async function testVideoExistence(videoId) {
 
 // Requests the API key from the background script
 async function getAPIKey() {
-	console.log('Getting API key...');
-
 	const msg = {
 		command: "getApiKey"
 	};

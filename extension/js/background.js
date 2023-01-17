@@ -29,7 +29,7 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 	const configSyncValues = await chrome.storage.sync.get();
 	for (const [key, value] of Object.entries(configDefaults)) {
 		if (configSyncValues[key] === undefined) {
-			console.log(`Config value ${key} does not exist in sync storage. Setting to default value...`);
+			console.log(`Config value ${key} does not exist in sync storage. Setting default (${value})...`);
 			await chrome.storage.sync.set({ [key]: value });
 		}
 	}
@@ -43,7 +43,7 @@ async function handleExtensionFirstInstall(manifestData) {
 }
 
 async function handleExtensionUpdate(manifestData) {
-	console.log(`Extension updated to version v${manifestData.version}`);
+	console.log(`Extension was updated to version v${manifestData.version}`);
 
 	// This variable indicates if the local storage should be cleared when updating to the newest version
 	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
