@@ -18,7 +18,9 @@ const domElements = {
 	// Shuffling: Open in new tab option toggle
 	shuffleOpenInNewTabOptionToggle: document.getElementById("shuffleOpenInNewTabOptionToggle"),
 	// Shuffling: Open as playlist option toggle
-	shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle")
+	shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle"),
+	// Shuffling: Shuffle from last x% of videos input
+	shuffleLastXVideosInputField: document.getElementById("shuffleLastXVideosInputField"),
 }
 
 // ---------- Set default values from config ----------
@@ -45,6 +47,9 @@ function setDomElementDefaultsFromConfig() {
 
 	// ----- Shuffling: Open as playlist option toggle -----
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
+
+	// ----- Shuffling: Shuffle from last x% of videos input -----
+	domElements.shuffleLastXVideosInputField.value = configSync.shuffleLastXVideos;
 }
 
 setDomElementDefaultsFromConfig();
@@ -87,6 +92,16 @@ domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", function 
 domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", function () {
 	setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked);
 	manageDependents(shuffleOpenAsPlaylistOptionToggle, this.checked);
+});
+
+// Shuffling: Shuffle from last x% of videos input
+domElements.shuffleLastXVideosInputField.addEventListener("focusout", function () {
+	// Clamp the value to the range [1, 100]
+	const value = Math.min(Math.max(this.value, 1), 100);
+	setSyncStorageValue("shuffleLastXVideos", value);
+	// Set the value of the input field to the clamped value
+	this.value = value;
+	manageDependents(shuffleLastXVideosInputField, value);
 });
 
 // ----- Dependency management -----
@@ -173,3 +188,7 @@ async function validateApiKey(key) {
 	domElements.customApiKeyInputErrorDiv.classList.add("hidden");
 	return true;
 }
+
+
+// xxx
+let shuffleLastXVideosField = document.getElementById('shuffleLastXVideosInputField');

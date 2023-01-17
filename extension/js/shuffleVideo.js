@@ -78,7 +78,7 @@ async function chooseRandomVideo() {
 	// Append the new videos to the list of videos
 	videoIds = videoIds.concat(Object.keys(playlistInfo["newVideos"] ?? {}));
 
-	let randomVideo = videoIds[Math.floor(Math.random() * videoIds.length)];
+	let randomVideo = chooseRandomVideoFromList(videoIds);
 	console.log("A random video has been chosen: " + randomVideo);
 
 	let videoIDsToRemoveFromDB = [];
@@ -97,7 +97,7 @@ async function chooseRandomVideo() {
 			// Append the new videos to the list of videos
 			videoIds = videoIds.concat(Object.keys(playlistInfo["newVideos"] ?? {}));
 
-			randomVideo = videoIds[Math.floor(Math.random() * videoIds.length)];
+			randomVideo = chooseRandomVideoFromList(videoIds);
 
 			console.log(`A new random video has been chosen: ${randomVideo}`);
 		} while (!await testVideoExistence(randomVideo))
@@ -367,6 +367,11 @@ async function getPlaylistIdFromUrl(url) {
 	}
 
 	return apiResponse.items[0].snippet.channelId.replace("UC", "UU");
+}
+
+function chooseRandomVideoFromList(videoIds) {
+	let randomVideo = videoIds[Math.floor(Math.random() * videoIds.length)];
+	return randomVideo;
 }
 
 // ---------- Local storage ----------

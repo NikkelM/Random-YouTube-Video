@@ -133,6 +133,17 @@ body {
 	width: 80%;
 }
 
+.optionTextInput input.numberInput{
+	width: 25px;
+}
+
+/* Remove the up and down arrows from the number input */
+.optionTextInput input.numberInput::-webkit-outer-spin-button,
+.optionTextInput input.numberInput::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
 .optionTextInput input:focus {
 	outline: none;
 }

@@ -30,7 +30,7 @@
 				</label>
 			</div>
 
-		<!-- Shuffling: Open as playlist option toggle -->
+			<!-- Shuffling: Open as playlist option toggle -->
 			<div class="toggle optionsRow-item">
 				<label id="shuffleOpenAsPlaylistOption"
 					title="If this is enabled, the channel's uploads playlist will be started when shuffling videos. This activates YouTube's SPA (Single Page Application) mode, which you may want to avoid.">
@@ -41,9 +41,19 @@
 			</div>
 		</div>
 		<!-- Row 1 end -->
+		<!-- Row 2 start -->
+		<!-- Shuffling: Shuffle between last x videos -->
+		<div id="shuffleLastXVideosDiv" class="optionTextInput"
+			title="Only the most recent x% of videos uploaded to the channel will be shuffled from.">
+			<p style="display:inline">Shuffling from most recent&nbsp;</p>
+			<input type="number" inputmode="numeric" max="100" min="1" class="numberInput" style="display:inline"
+				id="shuffleLastXVideosInputField" name="apiKeyInput" value="100">
+			<p style="display:inline">% of videos.</p>
+		</div>
+		<!-- Row 2 end -->
 
 		<h3>API</h3>
-		<!-- Row 2 start -->
+		<!-- Row 1 start -->
 		<!-- Custom API key: Option toggle -->
 		<div class="optionsRow">
 			<div class="toggle optionsRow-item">
@@ -55,7 +65,7 @@
 				</label>
 			</div>
 
-		<!-- Database sharing: Option toggle -->
+			<!-- Database sharing: Option toggle -->
 			<div class="toggle optionsRow-item">
 				<label id="dbSharingOption"
 					title="Can be disabled if a custom API key is provided. By opting out of database sharing, the video id's of channel's you visit will not be shared to the database. However, you will also not be able to access video id's uploaded to the database by other users. Video id's will still be stored locally. When opting back in to sharing, you will regain access to the database and locally stored video id's may be shared with other users.">
@@ -65,12 +75,14 @@
 				</label>
 			</div>
 		</div>
-		<!-- Row 2 end -->
+		<!-- Row 1 end -->
 
 		<!-- Custom API key: Input -->
 		<div id="customApiKeyInputDiv" class="optionTextInput hidden">
 			<p>Your custom API key:</p>
-			<input type="text" id="customApiKeyInputField" name="apiKeyInput" title="Enter your YouTube API key here. It will not be shared with anyone." placeholder="Enter API key here. It won't be shared with anyone.">
+			<input type="text" id="customApiKeyInputField" name="apiKeyInput"
+				title="Enter your YouTube API key here. It will not be shared with anyone."
+				placeholder="Enter API key here. It won't be shared with anyone.">
 			<br>
 			<button class="button" id="customApiKeySubmitButton" type="button">Submit</button>
 			<div id="customApiKeyInputErrorDiv" class="hidden">

@@ -22,7 +22,8 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 		"customYoutubeApiKey": null,
 		"databaseSharingEnabledOption": true,
 		"shuffleOpenInNewTabOption": false,
-		"shuffleOpenAsPlaylistOption": true
+		"shuffleOpenAsPlaylistOption": true,
+		"shuffleLastXVideos": 100
 	};
 
 	const configSyncValues = await chrome.storage.sync.get();
@@ -36,15 +37,6 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 
 async function handleExtensionFirstInstall(manifestData) {
 	console.log("Extension was newly installed. Initializing settings...");
-
-	// Set default settings
-	// await chrome.storage.sync.set({
-	// 	"useCustomApiKeyOption": false,
-	// 	"customYoutubeApiKey": null,
-	// 	"databaseSharingEnabledOption": true,
-	// 	"shuffleOpenInNewTabOption": false,
-	// 	"shuffleOpenAsPlaylistOption": true
-	// });
 
 	// Make sure the current extension version is always saved in local storage
 	setLocalStorage("extensionVersion", manifestData.version);
