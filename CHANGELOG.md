@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.x.x
+## v1.0.0
 
 <!--Releasenotes start-->
 - Added a new option: Open the shuffled video in a new tab.
