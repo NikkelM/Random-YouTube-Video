@@ -13,9 +13,36 @@
 
 		<h1>Random YouTube Video</h1>
 
+		<!-- OPTIONS START -->
 		<h2>Extension Options</h2>
 		<p class="grey-text">Customize your experience.<br>Hover over an option to view a more detailed explanation.</p>
 
+		<!-- Row 1 start -->
+		<!-- Shuffling: Open in new tab option toggle -->
+		<div class="optionsRow">
+			<div class="toggle optionsRow-item">
+				<label id="shuffleOpenInNewTabOption"
+					title="If this is enabled, shuffled videos will open in a new tab instead of the current one.">
+					Open in new tab
+					<input type="checkbox" id="shuffleOpenInNewTabOptionToggle">
+					<span class="slider"></span>
+				</label>
+			</div>
+
+		<!-- Shuffling: Open as playlist option toggle -->
+			<div class="toggle optionsRow-item">
+				<label id="shuffleOpenAsPlaylistOption"
+					title="If this is enabled, the channel's uploads playlist will be started when shuffling videos. This activates YouTube's SPA (Single Page Application) mode, which you may want to avoid.">
+					Open in playlist
+					<input type="checkbox" id="shuffleOpenAsPlaylistOptionToggle">
+					<span class="slider"></span>
+				</label>
+			</div>
+		</div>
+		<!-- Row 1 end -->
+
+		<!-- Row 2 start -->
+		<!-- Custom API key: Option toggle -->
 		<div class="optionsRow">
 			<div class="toggle optionsRow-item">
 				<label id="useCustomApiKeyOption"
@@ -26,6 +53,7 @@
 				</label>
 			</div>
 
+		<!-- Database sharing: Option toggle -->
 			<div class="toggle optionsRow-item">
 				<label id="dbSharingOption"
 					title="Can be disabled if a custom API key is provided. By opting out of database sharing, the video id's of channel's you visit will not be shared to the database. However, you will also not be able to access video id's uploaded to the database by other users. Video id's will still be stored locally. When opting back in to sharing, you will regain access to the database and locally stored video id's may be shared with other users.">
@@ -35,7 +63,9 @@
 				</label>
 			</div>
 		</div>
+		<!-- Row 2 end -->
 
+		<!-- Custom API key: Input -->
 		<div id="customApiKeyInputDiv" class="optionTextInput hidden">
 			<p class="lowBottomMargin">Your custom API key:</p>
 			<input type="text" id="customApiKeyInputField" name="apiKeyInput" title="Enter your YouTube API key here. It will not be shared with anyone." placeholder="Enter API key here. It won't be shared with anyone.">
@@ -45,6 +75,7 @@
 				<p id="customApiKeyInputErrorText">Placeholder</p>
 			</div>
 		</div>
+		<!-- OPTIONS END -->
 
 		<footer id="randomYoutubeVideoFooter">
 			<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"

@@ -67,6 +67,8 @@ async function shuffleVideos() {
 
 	try {
 		await chooseRandomVideo();
+		// Reset the button text in case we opened the video in a new tab
+		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Shuffle`, 0, changeToken, true);
 	} catch (error) {
 		console.error(error.stack);
 		console.error(error.message);

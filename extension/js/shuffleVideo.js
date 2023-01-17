@@ -166,8 +166,11 @@ async function chooseRandomVideo() {
 
 	await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
-	// Navigate to the random video
-	window.location.href = `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`;
+	// Get the correct URL format
+	let randomVideoURL = configSync.shuffleOpenAsPlaylistOption ? `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}` : `https://www.youtube.com/watch?v=${randomVideo}`;
+
+	// Open the video in a new tab or in the current tab, depending on the user's settings
+	configSync.shuffleOpenInNewTabOption ? window.open(randomVideoURL, '_blank').focus() : window.location.href = randomVideoURL;
 }
 
 // ---------- Database ----------

@@ -2,47 +2,68 @@ const defaultApiKey = await chrome.runtime.sendMessage({ command: "getDefaultApi
 
 let configSync = await fetchConfigSync();
 
-// ---------- Get DOM elements ----------
+// ---------- Get relevant DOM elements ----------
 
 const domElements = {
+	// Custom API key: Option toggle
 	useCustomApiKeyOptionToggle: document.getElementById("useCustomApiKeyOptionToggle"),
-	dbSharingOptionToggle: document.getElementById("dbSharingOptionToggle"),
+	// Custom API key: Input
 	customApiKeyInputDiv: document.getElementById("customApiKeyInputDiv"),
 	customApiKeyInputField: customApiKeyInputDiv.children.namedItem("customApiKeyInputField"),
 	customApiKeySubmitButton: customApiKeyInputDiv.children.namedItem("customApiKeySubmitButton"),
 	customApiKeyInputErrorDiv: customApiKeyInputDiv.children.namedItem("customApiKeyInputErrorDiv"),
 	customApiKeyInputErrorText: customApiKeyInputErrorDiv.children.namedItem("customApiKeyInputErrorText"),
+	// Database sharing: Option toggle
+	dbSharingOptionToggle: document.getElementById("dbSharingOptionToggle"),
+	// Shuffling: Open in new tab option toggle
+	shuffleOpenInNewTabOptionToggle: document.getElementById("shuffleOpenInNewTabOptionToggle"),
+	// Shuffling: Open as playlist option toggle
+	shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle")
 }
 
 // ---------- Set default values from config ----------
 
 function setDomElementDefaultsFromConfig() {
+	// ----- Custom API key: Option toggle -----
 	// If this option is checked is only dependent on the value in sync storage
 	domElements.useCustomApiKeyOptionToggle.checked = configSync.useCustomApiKeyOption;
+
+	// ----- Database sharing: Option toggle -----
 	// Determine if the dbSharingOptionToggle should be checked and enabled
 	manageDbOptOutOption();
+
+	// ----- Custom API key: Input -----
 	// Show the customAPIKeyInputDiv if the user has enabled the option
 	if (configSync.useCustomApiKeyOption) {
 		domElements.customApiKeyInputDiv.classList.remove("hidden");
 	}
 	// Set the value of the custom API key input field to the value in sync storage
 	domElements.customApiKeyInputField.value = configSync.customYoutubeApiKey ? configSync.customYoutubeApiKey : "";
+
+	// ----- Shuffling: Open in new tab option toggle -----
+	domElements.shuffleOpenInNewTabOptionToggle.checked = configSync.shuffleOpenInNewTabOption;
+
+	// ----- Shuffling: Open as playlist option toggle -----
+	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
 }
 
 setDomElementDefaultsFromConfig();
 
 // ---------- Event listeners ----------
 
+// Custom API key: Option toggle
 domElements.useCustomApiKeyOptionToggle.addEventListener("change", function () {
 	setSyncStorageValue("useCustomApiKeyOption", this.checked);
 	manageDependents(useCustomApiKeyOptionToggle, this.checked);
 });
 
+// Database sharing: Option toggle
 domElements.dbSharingOptionToggle.addEventListener("change", function () {
 	setSyncStorageValue("databaseSharingEnabledOption", this.checked);
 	manageDependents(dbSharingOptionToggle, this.checked);
 });
 
+// Custom API key: Input
 domElements.customApiKeySubmitButton.addEventListener("click", async function () {
 	// Make sure the passed API key is valid
 	const newApiKey = domElements.customApiKeyInputField.value;
@@ -56,8 +77,23 @@ domElements.customApiKeySubmitButton.addEventListener("click", async function ()
 	manageDbOptOutOption();
 });
 
+// Shuffling: Open in new tab option toggle
+domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", function () {
+	setSyncStorageValue("shuffleOpenInNewTabOption", this.checked);
+	manageDependents(shuffleOpenInNewTabOptionToggle, this.checked);
+});
+
+// Shuffling: Open as playlist option toggle
+domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", function () {
+	setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked);
+	manageDependents(shuffleOpenAsPlaylistOptionToggle, this.checked);
+});
+
+// ----- Dependency management -----
+
 function manageDependents(parent, checked) {
 	switch (parent) {
+		// Custom API key: Option toggle
 		case domElements.useCustomApiKeyOptionToggle:
 			if (checked) {
 				// Show input field for custom API key
