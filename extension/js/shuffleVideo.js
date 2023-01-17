@@ -73,31 +73,34 @@ async function chooseRandomVideo() {
 		}
 	}
 
-	// Choose a random video from the videos object, where the keys are the video IDs
-	let videoIds = Object.keys(playlistInfo["videos"]) ?? [];
-	// Append the new videos to the list of videos
-	videoIds = videoIds.concat(Object.keys(playlistInfo["newVideos"] ?? {}));
+	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
+	let videosByDate = Object.keys(allVideos).sort((a, b) => {
+		return new Date(allVideos[b]) - new Date(allVideos[a]);
+	});
+	let videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (configSync.shuffleLastXVideosPercentage / 100))));
 
-	let randomVideo = chooseRandomVideoFromList(videoIds);
+	let randomVideo = chooseRandomVideoFromList(videosToShuffle);
 	console.log("A random video has been chosen: " + randomVideo);
 
-	let videoIDsToRemoveFromDB = [];
+	let encounteredDeletedVideos = false;
 	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
 	if (!await testVideoExistence(randomVideo)) {
+		encounteredDeletedVideos = true;
 		do {
 			console.log("The chosen video does not exist anymore. Removing it from the database and choosing a new one...");
-			videoIDsToRemoveFromDB.push(randomVideo);
 
 			// Remove the video from the local playlist object
 			// It will always be in the "videos" object, as we have just fetched the "newVideos" from the YouTube API
 			delete playlistInfo["videos"][randomVideo];
 
 			// Choose a new random video
-			videoIds = Object.keys(playlistInfo["videos"]) ?? [];
-			// Append the new videos to the list of videos
-			videoIds = videoIds.concat(Object.keys(playlistInfo["newVideos"] ?? {}));
+			allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
+			videosByDate = Object.keys(allVideos).sort((a, b) => {
+				return new Date(allVideos[b]) - new Date(allVideos[a]);
+			});
+			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (configSync.shuffleLastXVideosPercentage / 100))));
 
-			randomVideo = chooseRandomVideoFromList(videoIds);
+			randomVideo = chooseRandomVideoFromList(videosToShuffle);
 
 			console.log(`A new random video has been chosen: ${randomVideo}`);
 		} while (!await testVideoExistence(randomVideo))
@@ -111,10 +114,10 @@ async function chooseRandomVideo() {
 
 		let videosToDatabase = {};
 		// If any videos need to be deleted, this should be the union of videos, newvideos, minus the videos to delete
-		if (videoIDsToRemoveFromDB.length > 0) {
+		if (encounteredDeletedVideos) {
 			console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
-			videosToDatabase = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
-			videoIDsToRemoveFromDB.forEach(videoID => delete videosToDatabase[videoID]);
+			videosToDatabase = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
+			console.log(videosToDatabase);
 		} else {
 			// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
 			console.log("Uploading new video IDs to the database...");
@@ -130,7 +133,7 @@ async function chooseRandomVideo() {
 
 		// Send the playlist info to the database
 		const msg = {
-			command: videoIDsToRemoveFromDB.length > 0 ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
+			command: encounteredDeletedVideos ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
 			data: {
 				key: 'uploadsPlaylists/' + uploadsPlaylistId,
 				val: playlistInfoForDatabase
@@ -146,14 +149,8 @@ async function chooseRandomVideo() {
 	// Update the playlist locally
 	console.log("Saving playlist to local storage...");
 
-	// If applicable, add all new videos to the videos object
-	if (playlistInfo["newVideos"]) {
-		for (const videoId in playlistInfo["newVideos"]) {
-			playlistInfo["videos"][videoId] = true;
-		}
-		// remove the newVideos key
-		delete playlistInfo["newVideos"];
-	}
+	// We can now join the new videos with the old ones
+	playlistInfo["videos"] = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
 
 	// Only save the wanted keys
 	playlistInfoForLocalStorage = {
