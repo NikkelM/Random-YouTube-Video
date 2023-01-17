@@ -3,6 +3,9 @@
 let APIKey = null;
 let configSync = null;
 
+// TEMPORARY due to database format change
+let mustOverwriteDatabase = false;
+
 // Chooses a random video uploaded on the current YouTube channel
 async function chooseRandomVideo() {
 	await fetchConfigSync();
@@ -132,7 +135,8 @@ async function chooseRandomVideo() {
 
 		// Send the playlist info to the database
 		const msg = {
-			command: encounteredDeletedVideos ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
+			// TEMPORARY due to database format change
+			command: (encounteredDeletedVideos || mustOverwriteDatabase) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
 			data: {
 				key: 'uploadsPlaylists/' + uploadsPlaylistId,
 				val: playlistInfoForDatabase
@@ -179,6 +183,13 @@ async function tryGetPlaylistFromDB(playlistId) {
 	};
 
 	let playlistInfo = await chrome.runtime.sendMessage(msg);
+
+	// TEMPORARY due to database format change
+	if (playlistInfo && playlistInfo["videos"] && Array.isArray(playlistInfo["videos"])) {
+		console.log("The playlist was found in the database, but it is in the old format. Updating format...");
+		mustOverwriteDatabase = true;
+		return {};
+	}
 
 	if (!playlistInfo) {
 		return {};
