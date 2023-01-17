@@ -201,7 +201,8 @@ async function getPlaylistFromApi(playlistId) {
 	let pageToken = "";
 	let apiResponse = await getPlaylistSnippetFromAPI(playlistId, pageToken);
 
-	playlistInfo["videos"] = apiResponse["items"].map((video) => video["contentDetails"]["videoId"]);
+	// For each video, add an entry in the form of videoId: uploadTime
+	playlistInfo["videos"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"]]));
 
 	// We also want to get the uploadTime of the most recent video
 	playlistInfo["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
@@ -210,16 +211,11 @@ async function getPlaylistFromApi(playlistId) {
 	while (pageToken !== null) {
 		apiResponse = await getPlaylistSnippetFromAPI(playlistId, pageToken);
 
-		playlistInfo["videos"] = playlistInfo["videos"].concat(apiResponse["items"].map((video) => video["contentDetails"]["videoId"]));
+		// For each video, add an entry in the form of videoId: uploadTime
+		playlistInfo["videos"] = Object.assign(playlistInfo["videos"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"]])));
 
 		pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 	}
-
-	// Turn the videos array into an object for easier handling in the database
-	playlistInfo["videos"] = playlistInfo["videos"].reduce((obj, videoId) => {
-		obj[videoId] = true;
-		return obj;
-	}, {});
 
 	return playlistInfo;
 }
@@ -240,11 +236,12 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 	}
 
 	let currVideo = 0;
-	let newVideos = [];
+	let newVideos = {};
 
 	// While the currently saved last video is older then the currently checked video from the API response, we need to add videos to local storage
 	while (lastKnownUploadTime < apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"]) {
-		newVideos.push(apiResponse["items"][currVideo]["contentDetails"]["videoId"]);
+		// Add the video to the newVideos object
+		newVideos[apiResponse["items"][currVideo]["contentDetails"]["videoId"]] = apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"];
 
 		currVideo++;
 
@@ -263,13 +260,10 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 			}
 		}
 	}
-	console.log(`Found ${newVideos.length} new video(s).`);
+	console.log(`Found ${Object.keys(newVideos).length} new video(s).`);
 
-	// Add the new videos to a new object within the localPlaylist
-	localPlaylist["newVideos"] = newVideos.reduce((obj, videoId) => {
-		obj[videoId] = true;
-		return obj;
-	}, {});
+	// Add the new videos to a new key within the localPlaylist
+	localPlaylist["newVideos"] = newVideos;
 
 	return localPlaylist;
 }
