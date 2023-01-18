@@ -348,15 +348,20 @@ function playVideo(randomVideo, uploadsPlaylistId) {
 	if (configSync.shuffleOpenInNewTabOption) {
 		// Video page: Pause the current video if it is playing
 		if (isVideoUrl(window.location.href)) {
-			const player = document.querySelector('ytd-player#ytd-player').children[0].children[0];
+			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
 			if (player.classList.contains('playing-mode')) {
 				player.children[0].click();
 			}
-			// Channel page: Pause the featured video if it exists and is playing
 		} else {
-			const player = document.querySelector('ytd-player#player');
-			if (player && player.children[0].children[0].classList.contains('playing-mode')) {
-				player.children[0].children[0].children[0].click();
+			// Channel page: Pause the featured video if it exists and is playing
+			const featuredPlayer = document.querySelector('ytd-player#player')?.children[0]?.children[0];
+			if (featuredPlayer && featuredPlayer.classList.contains('playing-mode')) {
+				featuredPlayer.children[0].click();
+			}
+			// Channel page: Pause the miniplayer if it exists and is playing
+			const miniPlayer = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
+			if (miniPlayer && miniPlayer.classList.contains('playing-mode')) {
+				miniPlayer.children[0].click();
 			}
 		}
 
