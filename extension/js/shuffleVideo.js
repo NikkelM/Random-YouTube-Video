@@ -166,29 +166,7 @@ async function chooseRandomVideo() {
 
 	await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
-	// Get the correct URL format
-	let randomVideoURL = configSync.shuffleOpenAsPlaylistOption ? `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}` : `https://www.youtube.com/watch?v=${randomVideo}`;
-
-	// Open the video in a new tab or in the current tab, depending on the user's settings
-	if (configSync.shuffleOpenInNewTabOption) {
-		// Video page: Pause the current video if it is playing
-		if (isVideoUrl(window.location.href)) {
-			const player = document.querySelector('ytd-player#ytd-player').children[0].children[0];
-			if(player.classList.contains('playing-mode')) {
-				player.children[0].click();
-			}
-			// Channel page: Pause the featured video if it exists and is playing
-		} else {
-			const player = document.querySelector('ytd-player#player');
-			if (player && player.children[0].children[0].classList.contains('playing-mode')) {
-				player.children[0].children[0].children[0].click();
-			}
-		}
-
-		window.open(randomVideoURL, '_blank').focus();
-	} else {
-		window.location.href = randomVideoURL;
-	}
+	playVideo(randomVideo, uploadsPlaylistId);
 }
 
 // ---------- Database ----------
@@ -360,6 +338,32 @@ async function getPlaylistIdFromUrl(url) {
 function chooseRandomVideoFromList(videoIds) {
 	let randomVideo = videoIds[Math.floor(Math.random() * videoIds.length)];
 	return randomVideo;
+}
+
+function playVideo(randomVideo, uploadsPlaylistId) {
+	// Get the correct URL format
+	let randomVideoURL = configSync.shuffleOpenAsPlaylistOption ? `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}` : `https://www.youtube.com/watch?v=${randomVideo}`;
+
+	// Open the video in a new tab or in the current tab, depending on the user's settings
+	if (configSync.shuffleOpenInNewTabOption) {
+		// Video page: Pause the current video if it is playing
+		if (isVideoUrl(window.location.href)) {
+			const player = document.querySelector('ytd-player#ytd-player').children[0].children[0];
+			if (player.classList.contains('playing-mode')) {
+				player.children[0].click();
+			}
+			// Channel page: Pause the featured video if it exists and is playing
+		} else {
+			const player = document.querySelector('ytd-player#player');
+			if (player && player.children[0].children[0].classList.contains('playing-mode')) {
+				player.children[0].children[0].children[0].click();
+			}
+		}
+
+		window.open(randomVideoURL, '_blank').focus();
+	} else {
+		window.location.href = randomVideoURL;
+	}
 }
 
 // ---------- Local storage ----------
