@@ -1,10 +1,14 @@
 # Changelog
 
-## v1.0.1
+## v1.1.0
 
 <!--Releasenotes start-->
-- When opening shuffled videos in a new tab, the currently playing video will be paused.
+- The extension now uses a faster & more reliable method of getting the channel ID for the current page.
 <!--Releasenotes end-->
+
+## v1.0.1
+
+- When opening shuffled videos in a new tab, the currently playing video will be paused.
 
 ## v1.0.0
 

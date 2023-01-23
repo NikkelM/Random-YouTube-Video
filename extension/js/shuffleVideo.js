@@ -7,7 +7,7 @@ let configSync = null;
 let mustOverwriteDatabase = false;
 
 // Chooses a random video uploaded on the current YouTube channel
-async function chooseRandomVideo() {
+async function chooseRandomVideo(channelId) {
 	await fetchConfigSync();
 	// Make sure an API key is available
 	await getAPIKey();
@@ -19,7 +19,7 @@ async function chooseRandomVideo() {
 	const databaseSharing = configSync.databaseSharingEnabledOption;
 
 	// Get the id of the uploads playlist for this channel
-	const uploadsPlaylistId = await getPlaylistIdFromUrl(window.location.href);
+	const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : await getPlaylistIdFromUrl(window.location.href);
 	if (!uploadsPlaylistId) {
 		throw new RandomYoutubeVideoError("Could not find channel ID. Are you on a valid page?");
 	}
@@ -315,15 +315,18 @@ async function getAPIKey() {
 async function getPlaylistIdFromUrl(url) {
 	let videoId = null;
 
-	// if it's a video url, we can get the id from the url
+	// If it's a video URL, we can get the ID from the URL
 	if (isVideoUrl(url)) { // || isPlaylistUrl || isShortsUrl
 		videoId = url.split("v=")[1].split("&")[0];
-		// Otherwise, we need to get some video link from the DOM
+		// Otherwise, we need to get the video link from the shuffleButton saved in the DOM
 	} else {
-		videoId = document.getElementById('youtube-random-video-shuffle-button-channel').children[0].children[0].children[0].children.namedItem('videoLink').innerHTML;
+		videoId = shuffleButton.children[0].children[0].children[0].children.namedItem('videoLink').innerHTML;
 	}
-	let apiResponse;
+	if (!videoId) {
+		throw new RandomYoutubeVideoError("Couldn't get video ID from URL.");
+	}
 
+	let apiResponse;
 	await fetch(`https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${APIKey}`)
 		.then((response) => response.json())
 		.then((data) => apiResponse = data);

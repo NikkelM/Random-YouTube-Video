@@ -81,9 +81,9 @@ function buildShuffleButton(pageType, channelId) {
 		// Unhide the button if it was hidden
 		document.getElementById(buttonDivID).style.display = "flex";
 		if (mustUpdateVideoId) {
-			document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('videoLink').innerHTML = videoId;
+			document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('videoLink').innerHTML = videoId ?? "";
 		}
-		document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('channelId').innerHTML = channelId;
+		document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('channelId').innerHTML = channelId ?? "";
 
 		return;
 	}
@@ -162,8 +162,8 @@ function finalizeButton(pageType, channelId) {
 					<div class="yt-spec-touch-feedback-shape__fill" style></div>
 				</div>
 			</yt-touch-feedback-shape>
-			<span id="videoLink" style="display: none">${videoId}</span>
-			<span id="channelId" style="display: none">${channelId}</span>
+			<span id="videoLink" style="display: none">${videoId ?? ""}</span>
+			<span id="channelId" style="display: none">${channelId ?? ""}</span>
 	</button>`;
 	button = new DOMParser().parseFromString(button, "text/html").body.firstChild;
 
