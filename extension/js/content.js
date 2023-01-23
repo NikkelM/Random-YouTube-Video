@@ -9,10 +9,12 @@ iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChil
 document.head.appendChild(iconFont);
 
 let shuffleButton = null;
-// Access the actual text using "shuffleButtonTextElement.innerHTML"!
+// Access the actual text using "shuffleButtonTextElement.innerHTML"
 let shuffleButtonTextElement = null;
 
 // Whenever a YouTube navigation event fires, we need to add/update the shuffle button
+// We use a boolean reference to make sure we only add the button once per navigation event. Otherwise, we might access children of undefined later on
+let gotChannelIdFromStartEvent = new BooleanReference();
 // The "yt-navigate-finish" event does not always fire, e.g. when clicking on a channel link from the search page, which is why we also listen to "yt-navigate-start"
 document.addEventListener("yt-navigate-start", startDOMObserver);
 document.addEventListener("yt-navigate-finish", startDOMObserver);
@@ -25,9 +27,19 @@ function startDOMObserver(event) {
 	if (isVideoPage && event.type === "yt-navigate-finish") {
 		channelId = event?.detail?.response?.playerResponse?.videoDetails?.channelId;
 	} else if (event.type === "yt-navigate-finish") {
-		channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
+		// For channel pages, it is possible that we already got a channelId from the "yt-navigate-start" event
+		if (!gotChannelIdFromStartEvent.isFinalized) {
+			channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
+		}
+		gotChannelIdFromStartEvent.isFinalized = false;
 	} else if (event.type === "yt-navigate-start") {
 		channelId = event?.detail?.endpoint?.browseEndpoint?.browseId;
+		// If we got a channelId here, we don't want to build the button again when we get the "yt-navigate-finish" event later on 
+		if (channelId) {
+			gotChannelIdFromStartEvent.isFinalized = true;
+		} else {
+			gotChannelIdFromStartEvent.isFinalized = false;
+		}
 	}
 
 	if (!channelId) {
