@@ -3,6 +3,7 @@
 ## v1.1.0
 
 <!--Releasenotes start-->
+- The shuffle button is now displayed on all sub-pages of a channel page no matter the entry page.
 - The extension now uses a faster & more reliable method of getting the channel ID for the current page.
 <!--Releasenotes end-->
 
