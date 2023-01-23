@@ -7,7 +7,7 @@ let configSync = null;
 let mustOverwriteDatabase = false;
 
 // Chooses a random video uploaded on the current YouTube channel
-async function chooseRandomVideo(channelId, videoId) {
+async function chooseRandomVideo(channelId) {
 	await fetchConfigSync();
 	// Make sure an API key is available
 	await getAPIKey();
@@ -19,7 +19,7 @@ async function chooseRandomVideo(channelId, videoId) {
 	const databaseSharing = configSync.databaseSharingEnabledOption;
 
 	// Get the id of the uploads playlist for this channel
-	const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : await getPlaylistIdFromVideoId(videoId);
+	const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : null;
 	if (!uploadsPlaylistId) {
 		throw new RandomYoutubeVideoError("Could not find channel ID. Are you on a valid page?");
 	}
@@ -310,19 +310,6 @@ async function getAPIKey() {
 	if (!APIKey) {
 		throw new RandomYoutubeVideoError("No API key! Please inform the developer if this keeps happening.");
 	}
-}
-
-async function getPlaylistIdFromVideoId(videoId) {
-	let apiResponse;
-	await fetch(`https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${APIKey}`)
-		.then((response) => response.json())
-		.then((data) => apiResponse = data);
-
-	if (apiResponse["error"]) {
-		throw new YoutubeAPIError(apiResponse["error"]["code"], apiResponse["error"]["message"]);
-	}
-
-	return apiResponse.items[0].snippet.channelId.replace("UC", "UU");
 }
 
 function chooseRandomVideoFromList(videoIds) {

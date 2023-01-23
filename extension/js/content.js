@@ -53,7 +53,7 @@ function startDOMObserver(event) {
 
 		// If we are on a video page, and the required element has loaded, add the shuffle button
 		if (isVideoPage && videoPageRequiredElementLoadComplete) {
-			me.disconnect(); // stop observing
+			me.disconnect(); // Stop observing
 			buildShuffleButton("video", channelId);
 			return;
 		}
@@ -61,7 +61,7 @@ function startDOMObserver(event) {
 		// If we are NOT on a video page, we assume we are on a channel page
 		// If the required element has loaded, add a shuffle button
 		if (!isVideoPage && channelPageRequiredElementLoadComplete) {
-			me.disconnect(); // stop observing
+			me.disconnect(); // Stop observing
 			buildShuffleButton("channel", channelId);
 			return;
 		}
@@ -82,12 +82,11 @@ async function shuffleVideos() {
 	setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Please wait...`, 500, changeToken);
 	setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Working on it...`, 6000, changeToken);
 
-	// Get the saved channel id and video id from the button
+	// Get the saved channelId from the button
 	const channelId = shuffleButton.children[0].children[0].children[0].children.namedItem('channelId').innerHTML;
-	const videoId = shuffleButton.children[0].children[0].children[0].children.namedItem('videoId').innerHTML;
 
 	try {
-		await chooseRandomVideo(channelId, videoId);
+		await chooseRandomVideo(channelId);
 		// Reset the button text in case we opened the video in a new tab
 		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Shuffle`, 0, changeToken, true);
 	} catch (error) {
