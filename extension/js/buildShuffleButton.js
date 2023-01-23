@@ -28,12 +28,12 @@ function updateShufflePrerequisites() {
 
 	const visibleVideoBrowser = document.querySelectorAll('ytd-browse');
 	const visibleVideoItem = Array.from(visibleVideoBrowser).filter(node => node.hidden === false)[0];
-	const channelPageVideoLink = visibleVideoItem?.querySelector('ytd-grid-video-renderer')?.querySelector('a#video-title').href;
+	const channelPageVideoId = visibleVideoItem?.querySelector('ytd-grid-video-renderer')?.querySelector('a#video-title').href;
 
 	// If we are on a channel page that has a link to a video, we can shuffle
 	// TODO: More ways of getting a video link
-	if (channelPageVideoLink) {
-		videoId = channelPageVideoLink.split("v=")[1].split("&")[0];
+	if (channelPageVideoId) {
+		videoId = channelPageVideoId.split("v=")[1].split("&")[0];
 	}
 
 	return oldVideoId !== videoId;
@@ -81,7 +81,7 @@ function buildShuffleButton(pageType, channelId) {
 		// Unhide the button if it was hidden
 		document.getElementById(buttonDivID).style.display = "flex";
 		if (mustUpdateVideoId) {
-			document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('videoLink').innerHTML = videoId ?? "";
+			document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('videoId').innerHTML = videoId ?? "";
 		}
 		document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('channelId').innerHTML = channelId ?? "";
 
@@ -162,7 +162,7 @@ function finalizeButton(pageType, channelId) {
 					<div class="yt-spec-touch-feedback-shape__fill" style></div>
 				</div>
 			</yt-touch-feedback-shape>
-			<span id="videoLink" style="display: none">${videoId ?? ""}</span>
+			<span id="videoId" style="display: none">${videoId ?? ""}</span>
 			<span id="channelId" style="display: none">${channelId ?? ""}</span>
 	</button>`;
 	button = new DOMParser().parseFromString(button, "text/html").body.firstChild;
