@@ -21,7 +21,7 @@ async function chooseRandomVideo(channelId) {
 	// Get the id of the uploads playlist for this channel
 	const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : null;
 	if (!uploadsPlaylistId) {
-		throw new RandomYoutubeVideoError("Could not find channel ID. Are you on a valid page?");
+		throw new RandomYoutubeVideoError("No channelID. Reload and try again!");
 	}
 
 	console.log(`Choosing a random video from playlist/channel: ${uploadsPlaylistId}`);
