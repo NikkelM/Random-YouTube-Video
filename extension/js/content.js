@@ -12,7 +12,9 @@ let shuffleButton = null;
 // Access the actual text using "shuffleButtonTextElement.innerHTML"!
 let shuffleButtonTextElement = null;
 
-// Whenever a YouTube navigation event fires, we need to check if we need to add the "shuffle" button
+// Whenever a YouTube navigation event fires, we need to add/update the shuffle button
+// The "yt-navigate-finish" event does not always fire, e.g. when clicking on a channel link from the search page, which is why we also listen to "yt-navigate-start"
+document.addEventListener("yt-navigate-start", startDOMObserver);
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
 function startDOMObserver(event) {
@@ -20,30 +22,24 @@ function startDOMObserver(event) {
 
 	// Get the channel id from the event data
 	let channelId = null;
-	if (isVideoPage) {
+	if (isVideoPage && event.type === "yt-navigate-finish") {
 		channelId = event?.detail?.response?.playerResponse?.videoDetails?.channelId;
-	} else {
+	} else if (event.type === "yt-navigate-finish") {
 		channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
+	} else if (event.type === "yt-navigate-start") {
+		channelId = event?.detail?.endpoint?.browseEndpoint?.browseId;
 	}
 
+	if (!channelId) {
+		// If no channelId was provided in the event, we won't be able to add the button
+		return;
+	}
+
+	// Wait until the required DOM element we add the button to is loaded
 	var observer = new MutationObserver(function (mutations, me) {
 		// ----- Channel page -----
-		let channelPageRequiredElementLoadComplete = null;
-
-		// The case where no channelId was provided in the event. Our fallback is getting a videoId from the page
-		if (!channelId && !isVideoPage) {
-			// If no channelId was provided and we are on a channel page, we need to find a video link
-			// When navigating between pages, YouTube does not replace the 'ytd-browse' element of the previous page, but simply sets it to 'hidden'
-			// So we need to find the one visible 'ytd-browse' element
-			const visibleVideoBrowser = Array.from(document.querySelectorAll('ytd-browse')).filter(node => node.hidden === false)[0];
-
-			// This visible element must then have the correct child element, indicating a video link
-			const visibleVideoItem = visibleVideoBrowser?.querySelector('ytd-grid-video-renderer')?.querySelector('a#video-title').href;
-
-			// If such a video link exists, we can check if we are ready to build the button
-			channelPageRequiredElementLoadComplete = visibleVideoItem ? document.getElementById("channel-header") : null;
-		} else if (channelId && !isVideoPage) {
-			channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
+		if (!isVideoPage) {
+			var channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
 
 			// ----- Video page -----
 		} else if (isVideoPage) {
