@@ -25,7 +25,7 @@ function updateShufflePrerequisites() {
 		currentChannel = null;
 		videoId = null;
 	}
-	
+
 	const visibleVideoBrowser = document.querySelectorAll('ytd-browse');
 	const visibleVideoItem = Array.from(visibleVideoBrowser).filter(node => node.hidden === false)[0];
 	const channelPageVideoLink = visibleVideoItem?.querySelector('ytd-grid-video-renderer')?.querySelector('a#video-title').href;
@@ -39,9 +39,13 @@ function updateShufflePrerequisites() {
 	return oldVideoId !== videoId;
 }
 
-function buildShuffleButton(pageType) {
+function buildShuffleButton(pageType, channelId) {
 	// Update videoId and currentChannel
-	const mustUpdateVideoId = updateShufflePrerequisites();
+	let mustUpdateVideoId = false;
+	if (channelId === null) {
+		console.log("No channelId, using fallback method!");
+		mustUpdateVideoId = updateShufflePrerequisites();
+	}
 
 	let buttonDivID = "youtube-random-video-shuffle-button";
 	let buttonDivExtraStyle = "";
@@ -66,25 +70,26 @@ function buildShuffleButton(pageType) {
 	}
 
 	// If the button should not be visible but exists, hide it
-	if (document.getElementById(buttonDivID) && (!currentChannel || !videoId)) {
+	if (document.getElementById(buttonDivID) && !channelId && (!currentChannel || !videoId)) {
 		document.getElementById(buttonDivID).style.display = "none";
 		console.log('Button should not be visible, hiding it.');
 		return;
 	}
 
 	// If the button already exists, don't build it again
-	if (document.getElementById(buttonDivID) && currentChannel && videoId) {
+	if (document.getElementById(buttonDivID) && (channelId || (currentChannel && videoId))) {
 		// Unhide the button if it was hidden
 		document.getElementById(buttonDivID).style.display = "flex";
-		if(mustUpdateVideoId) {
+		if (mustUpdateVideoId) {
 			document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('videoLink').innerHTML = videoId;
 		}
+		document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('channelId').innerHTML = channelId;
 
 		return;
 	}
 
-	if (!currentChannel || !videoId) {
-		console.log("Cannot build button: Not on a channel page, or no video ID to identify channel.");
+	if (!channelId && (!currentChannel || !videoId)) {
+		console.log("Cannot build button: No channelId, not on a channel page, or no video ID to identify channel.");
 		return;
 	}
 
@@ -107,7 +112,7 @@ function buildShuffleButton(pageType) {
 	var observer = new MutationObserver(function (mutations, me) {
 		var shuffleButton = buttonDivOwner.children.namedItem(buttonDivID);
 		if (shuffleButton.children.length > 0) {
-			finalizeButton(pageType);
+			finalizeButton(pageType, channelId);
 			me.disconnect(); // stop observing
 			return;
 		}
@@ -120,7 +125,7 @@ function buildShuffleButton(pageType) {
 	});
 }
 
-function finalizeButton(pageType) {
+function finalizeButton(pageType, channelId) {
 	let buttonDivID = "youtube-random-video-shuffle-button";
 	let buttonDivOwner = null;
 
@@ -158,6 +163,7 @@ function finalizeButton(pageType) {
 				</div>
 			</yt-touch-feedback-shape>
 			<span id="videoLink" style="display: none">${videoId}</span>
+			<span id="channelId" style="display: none">${channelId}</span>
 	</button>`;
 	button = new DOMParser().parseFromString(button, "text/html").body.firstChild;
 
