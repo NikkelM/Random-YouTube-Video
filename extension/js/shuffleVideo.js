@@ -7,7 +7,7 @@ let configSync = null;
 let mustOverwriteDatabase = false;
 
 // Chooses a random video uploaded on the current YouTube channel
-async function chooseRandomVideo() {
+async function chooseRandomVideo(channelId) {
 	await fetchConfigSync();
 	// Make sure an API key is available
 	await getAPIKey();
@@ -19,9 +19,9 @@ async function chooseRandomVideo() {
 	const databaseSharing = configSync.databaseSharingEnabledOption;
 
 	// Get the id of the uploads playlist for this channel
-	const uploadsPlaylistId = await getPlaylistIdFromUrl(window.location.href);
+	const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : null;
 	if (!uploadsPlaylistId) {
-		throw new RandomYoutubeVideoError("Could not find channel ID. Are you on a valid page?");
+		throw new RandomYoutubeVideoError("No channelID. Reload and try again!");
 	}
 
 	console.log(`Choosing a random video from playlist/channel: ${uploadsPlaylistId}`);
@@ -310,29 +310,6 @@ async function getAPIKey() {
 	if (!APIKey) {
 		throw new RandomYoutubeVideoError("No API key! Please inform the developer if this keeps happening.");
 	}
-}
-
-async function getPlaylistIdFromUrl(url) {
-	let videoId = null;
-
-	// if it's a video url, we can get the id from the url
-	if (isVideoUrl(url)) { // || isPlaylistUrl || isShortsUrl
-		videoId = url.split("v=")[1].split("&")[0];
-		// Otherwise, we need to get some video link from the DOM
-	} else {
-		videoId = document.getElementById('youtube-random-video-shuffle-button-channel').children[0].children[0].children[0].children.namedItem('videoLink').innerHTML;
-	}
-	let apiResponse;
-
-	await fetch(`https://youtube.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${APIKey}`)
-		.then((response) => response.json())
-		.then((data) => apiResponse = data);
-
-	if (apiResponse["error"]) {
-		throw new YoutubeAPIError(apiResponse["error"]["code"], apiResponse["error"]["message"]);
-	}
-
-	return apiResponse.items[0].snippet.channelId.replace("UC", "UU");
 }
 
 function chooseRandomVideoFromList(videoIds) {

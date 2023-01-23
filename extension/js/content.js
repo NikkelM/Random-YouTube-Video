@@ -9,43 +9,68 @@ iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChil
 document.head.appendChild(iconFont);
 
 let shuffleButton = null;
-// Access the actual text using "shuffleButtonTextElement.innerHTML"!
+// Access the actual text using "shuffleButtonTextElement.innerHTML"
 let shuffleButtonTextElement = null;
 
-// Whenever a YouTube navigation event fires, we need to check if we need to add the "shuffle" button
+// Whenever a YouTube navigation event fires, we need to add/update the shuffle button
+// We use a boolean reference to make sure we only add the button once per navigation event. Otherwise, we might access children of undefined later on
+let gotChannelIdFromStartEvent = new BooleanReference();
+// The "yt-navigate-finish" event does not always fire, e.g. when clicking on a channel link from the search page, which is why we also listen to "yt-navigate-start"
+document.addEventListener("yt-navigate-start", startDOMObserver);
 document.addEventListener("yt-navigate-finish", startDOMObserver);
-startDOMObserver();
 
-function startDOMObserver() {
+function startDOMObserver(event) {
+	const isVideoPage = isVideoUrl(window.location.href);
+
+	// Get the channel id from the event data
+	let channelId = null;
+	if (isVideoPage && event.type === "yt-navigate-finish") {
+		channelId = event?.detail?.response?.playerResponse?.videoDetails?.channelId;
+	} else if (event.type === "yt-navigate-finish") {
+		// For channel pages, it is possible that we already got a channelId from the "yt-navigate-start" event
+		if (!gotChannelIdFromStartEvent.isFinalized) {
+			channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
+		}
+		gotChannelIdFromStartEvent.isFinalized = false;
+	} else if (event.type === "yt-navigate-start") {
+		channelId = event?.detail?.endpoint?.browseEndpoint?.browseId;
+		// If we got a channelId here, we don't want to build the button again when we get the "yt-navigate-finish" event later on 
+		if (channelId) {
+			gotChannelIdFromStartEvent.isFinalized = true;
+		} else {
+			gotChannelIdFromStartEvent.isFinalized = false;
+		}
+	}
+
+	if (!channelId) {
+		// If no channelId was provided in the event, we won't be able to add the button
+		return;
+	}
+
+	// Wait until the required DOM element we add the button to is loaded
 	var observer = new MutationObserver(function (mutations, me) {
-		const isVideoPage = isVideoUrl(window.location.href);
+		// ----- Channel page -----
+		if (!isVideoPage) {
+			var channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
 
-		// Find out if we are on a channel page that has completed loading the required element
-		// When navigating between pages, YouTube does not replace the 'ytd-browse' element of the previous page, but simply sets it to 'hidden'
-		// So we need to find the visible 'ytd-browse' element
-		const visibleVideoBrowser = Array.from(document.querySelectorAll('ytd-browse')).filter(node => node.hidden === false)[0];
-
-		// This visible element must then have the correct child element, indicating a video link
-		const visibleVideoItem = visibleVideoBrowser?.querySelector('ytd-grid-video-renderer')?.querySelector('a#video-title').href;
-
-		// If such a video link exists, we can check if we should are ready to build the button
-		const channelPageRequiredElementLoadComplete = visibleVideoItem ? document.getElementById("channel-header") : null;
-
-		// Find out if we are on a video page that has completed loading the required element
-		const videoPageRequiredElementLoadComplete = document.getElementById("player") && document.getElementById("above-the-fold");
+			// ----- Video page -----
+		} else if (isVideoPage) {
+			// Find out if we are on a video page that has completed loading the required element
+			var videoPageRequiredElementLoadComplete = document.getElementById("player") && document.getElementById("above-the-fold");
+		}
 
 		// If we are on a video page, and the required element has loaded, add the shuffle button
 		if (isVideoPage && videoPageRequiredElementLoadComplete) {
-			me.disconnect(); // stop observing
-			buildShuffleButton("video");
+			me.disconnect(); // Stop observing
+			buildShuffleButton("video", channelId);
 			return;
 		}
 
 		// If we are NOT on a video page, we assume we are on a channel page
 		// If the required element has loaded, add a shuffle button
 		if (!isVideoPage && channelPageRequiredElementLoadComplete) {
-			me.disconnect(); // stop observing
-			buildShuffleButton("channel");
+			me.disconnect(); // Stop observing
+			buildShuffleButton("channel", channelId);
 			return;
 		}
 	});
@@ -65,8 +90,11 @@ async function shuffleVideos() {
 	setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Please wait...`, 500, changeToken);
 	setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Working on it...`, 6000, changeToken);
 
+	// Get the saved channelId from the button
+	const channelId = shuffleButton.children[0].children[0].children[0].children.namedItem('channelId').innerHTML;
+
 	try {
-		await chooseRandomVideo();
+		await chooseRandomVideo(channelId);
 		// Reset the button text in case we opened the video in a new tab
 		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Shuffle`, 0, changeToken, true);
 	} catch (error) {
