@@ -20,6 +20,7 @@ document.addEventListener("yt-navigate-start", startDOMObserver);
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
 function startDOMObserver(event) {
+	console.log(event)
 	const isVideoPage = isVideoUrl(window.location.href);
 
 	// Get the channel id from the event data
@@ -34,15 +35,15 @@ function startDOMObserver(event) {
 		gotChannelIdFromStartEvent.isFinalized = false;
 	} else if (event.type === "yt-navigate-start") {
 		channelId = event?.detail?.endpoint?.browseEndpoint?.browseId;
-		// If we got a channelId here, we don't want to build the button again when we get the "yt-navigate-finish" event later on 
-		if (channelId) {
+		// If we got a channelId here, we don't want to build the button again when we get the "yt-navigate-finish" event after this
+		if (channelId?.startsWith("UC")) {
 			gotChannelIdFromStartEvent.isFinalized = true;
 		} else {
 			gotChannelIdFromStartEvent.isFinalized = false;
 		}
 	}
 
-	if (!channelId) {
+	if (!channelId?.startsWith("UC")) {
 		// If no channelId was provided in the event, we won't be able to add the button
 		return;
 	}
