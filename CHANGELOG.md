@@ -1,11 +1,15 @@
 # Changelog
 
-## v1.1.0
+## v1.1.1
 
 <!--Releasenotes start-->
+- Fixed a bug where the extension would throw an API error when navigating from the subscriptions to a channel page and clicking the shuffle button.
+<!--Releasenotes end-->
+
+## v1.1.0
+
 - The shuffle button is now displayed on all sub-pages of a channel page no matter the entry page.
 - The extension now uses a faster & more reliable method of getting the channel ID for the current page.
-<!--Releasenotes end-->
 
 ## v1.0.1
 
