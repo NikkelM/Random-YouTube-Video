@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Is something not working as expected? Let us know and we'll see what we can do!
+about: Is something not working as expected? Fill out the template and I'll see what I can do!
 title: "[BUG]"
 labels: Bug
 assignees: NikkelM
