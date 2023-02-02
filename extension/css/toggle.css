@@ -5,6 +5,10 @@
   height: 3.5em;
 }
 
+.toggle label.wide {
+	width: 18.6em;
+}
+
 .toggle input {
   clip: rect(0 0 0 0);
   clip-path: inset(50%);
@@ -18,13 +22,17 @@
 .toggle .slider {
   position: absolute;
   cursor: pointer;
-  top: 1.5em; 
-  left: 3em;
+  top: 1.5em;
+	left: 2.9em;
   width: 3.5em;
   height: 1.5em;
   background-color: #c32e04; 
   border-radius: 1em; 
   transition: all .3s ease-in-out;
+}
+
+.toggle .slider.wide {
+	left: 7.55em;
 }
 
 .toggle .disabled {
