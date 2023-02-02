@@ -20,7 +20,6 @@ document.addEventListener("yt-navigate-start", startDOMObserver);
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
 function startDOMObserver(event) {
-	console.log(event)
 	const isVideoPage = isVideoUrl(window.location.href);
 
 	// Get the channel id from the event data
