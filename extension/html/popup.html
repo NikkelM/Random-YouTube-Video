@@ -18,7 +18,6 @@
 		<p class="grey-text">Customize your experience.<br>Hover over an option to view a more detailed explanation.</p>
 
 		<h3>Video</h3>
-		<!-- Row 1 start -->
 		<!-- Shuffling: Open in new tab option toggle -->
 		<div class="optionsRow">
 			<div class="toggle optionsRow-item">
@@ -40,20 +39,44 @@
 				</label>
 			</div>
 		</div>
-		<!-- Row 1 end -->
-		<!-- Row 2 start -->
+
+		<h3>Global</h3>
+		<p class="grey-text">These settings will be applied to all channels without the override enabled.</p>
 		<!-- Shuffling: Shuffle between last x videos -->
 		<div id="shuffleLastXVideosDiv" class="optionTextInput"
 			title="Only the most recent x% of videos uploaded to the channel will be considered when shuffling.">
-			<p style="display:inline">Shuffling from most recent&nbsp;</p>
+			<p style="display:inline">Shuffling from the most recent&nbsp;</p>
 			<input type="number" inputmode="numeric" max="100" min="1" class="numberInput" style="display:inline"
 				id="shuffleLastXVideosInputField" name="apiKeyInput" value="100">
 			<p style="display:inline">% of videos.</p>
 		</div>
-		<!-- Row 2 end -->
+
+		<br>
+		
+		<!-- Override global settings -->
+		<div class="toggle optionsRow-item">
+			<label id="overrideGlobalSettingsOption" class="wide"
+				title="If this is enabled, the settings below will override the globally set ones.">
+				Override global settings
+				<input type="checkbox" id="overrideGlobalSettingsOptionToggle">
+				<span class="slider wide"></span>
+			</label>
+		</div>
+
+		<div id="randomYoutubeVideoChannelCustomOptions" class="hidden">
+			<h3>For this channel</h3>
+			<p class="grey-text">These settings are applied when shuffling from the current channel's videos.</p>
+			<!-- Shuffling: Shuffle between last x videos -->
+			<div id="shuffleLastXVideosChannelCustomDiv" class="optionTextInput"
+				title="Only the most recent x% of videos uploaded to the channel will be considered when shuffling.">
+				<p style="display:inline">Shuffling from the most recent&nbsp;</p>
+				<input type="number" inputmode="numeric" max="100" min="1" class="numberInput" style="display:inline"
+					id="shuffleLastXVideosChannelCustomInputField" name="apiKeyInput" value="100">
+				<p style="display:inline">% of videos.</p>
+			</div>
+		</div>
 
 		<h3>API</h3>
-		<!-- Row 1 start -->
 		<!-- Custom API key: Option toggle -->
 		<div class="optionsRow">
 			<div class="toggle optionsRow-item">
@@ -75,7 +98,6 @@
 				</label>
 			</div>
 		</div>
-		<!-- Row 1 end -->
 
 		<!-- Custom API key: Input -->
 		<div id="customApiKeyInputDiv" class="optionTextInput hidden">
