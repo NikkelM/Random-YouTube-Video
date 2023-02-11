@@ -23,7 +23,7 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 		"databaseSharingEnabledOption": true,
 		"shuffleOpenInNewTabOption": false,
 		"shuffleOpenAsPlaylistOption": true,
-		"shuffleLastXVideosPercentage": 100,
+		"shuffleLastXVideosChannelCustomPercentage": 100,
 	};
 
 	const configSyncValues = await chrome.storage.sync.get();

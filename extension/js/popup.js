@@ -54,14 +54,9 @@ function setDomElementDefaultsFromConfig() {
 	// ----- Shuffling: Open as playlist option toggle -----
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
 
-	// ----- Shuffling: Shuffle from last x% of videos input -----
-	domElements.shuffleLastXVideosInputField.value = configSync.shuffleLastXVideosPercentage;
-
-	// ----- Override global settings: Option toggle -----
-	domElements.overrideGlobalSettingsOptionToggle.checked = configSync.overrideGlobalSettingsOption;
-
 	// ----- Custom options per channel div -----
-	if (configSync.overrideGlobalSettingsOption) {
+	// TODO: Should only be visible when a channel is found
+	if (true) {
 		domElements.channelCustomOptionsDiv.classList.remove("hidden");
 	}
 
@@ -111,24 +106,6 @@ domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", functio
 	manageDependents(domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
 });
 
-// Shuffling: Shuffle from last x% of videos input
-domElements.shuffleLastXVideosInputField.addEventListener("focusout", function () {
-	// Clamp the value to the range [1, 100]
-	if (this.value === "") {
-		this.value = 100;
-	}
-	const value = Math.min(Math.max(this.value, 1), 100);
-	setSyncStorageValue("shuffleLastXVideosPercentage", value);
-	// Set the value of the input field to the clamped value
-	this.value = value;
-	manageDependents(domElements.shuffleLastXVideosInputField, value);
-});
-
-// Override global settings: Option toggle
-domElements.overrideGlobalSettingsOptionToggle.addEventListener("change", function () {
-	setSyncStorageValue("overrideGlobalSettingsOption", this.checked);
-	manageDependents(domElements.overrideGlobalSettingsOptionToggle, this.checked);
-});
 
 // Custom options per channel: Shuffling: Shuffle from last x% of videos input
 domElements.shuffleLastXVideosChannelCustomInputField.addEventListener("focusout", function () {
