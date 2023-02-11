@@ -21,6 +21,12 @@ const domElements = {
 	shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle"),
 	// Shuffling: Shuffle from last x% of videos input
 	shuffleLastXVideosInputField: document.getElementById("shuffleLastXVideosInputField"),
+	// Override global settings: Option toggle
+	overrideGlobalSettingsOptionToggle: document.getElementById("overrideGlobalSettingsOptionToggle"),
+	// Custom options per channel div
+	channelCustomOptionsDiv: document.getElementById("channelCustomOptionsDiv"),
+	// Custom options per channel: Shuffling: Shuffle from last x% of videos input
+	shuffleLastXVideosChannelCustomInputField: document.getElementById("shuffleLastXVideosChannelCustomInputField"),
 }
 
 // ---------- Set default values from config ----------
@@ -50,6 +56,17 @@ function setDomElementDefaultsFromConfig() {
 
 	// ----- Shuffling: Shuffle from last x% of videos input -----
 	domElements.shuffleLastXVideosInputField.value = configSync.shuffleLastXVideosPercentage;
+
+	// ----- Override global settings: Option toggle -----
+	domElements.overrideGlobalSettingsOptionToggle.checked = configSync.overrideGlobalSettingsOption;
+
+	// ----- Custom options per channel div -----
+	if (configSync.overrideGlobalSettingsOption) {
+		domElements.channelCustomOptionsDiv.classList.remove("hidden");
+	}
+
+	// ----- Custom options per channel: Shuffling: Shuffle from last x% of videos input -----
+	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.shuffleLastXVideosChannelCustomPercentage;
 }
 
 setDomElementDefaultsFromConfig();
@@ -107,6 +124,25 @@ domElements.shuffleLastXVideosInputField.addEventListener("focusout", function (
 	manageDependents(domElements.shuffleLastXVideosInputField, value);
 });
 
+// Override global settings: Option toggle
+domElements.overrideGlobalSettingsOptionToggle.addEventListener("change", function () {
+	setSyncStorageValue("overrideGlobalSettingsOption", this.checked);
+	manageDependents(domElements.overrideGlobalSettingsOptionToggle, this.checked);
+});
+
+// Custom options per channel: Shuffling: Shuffle from last x% of videos input
+domElements.shuffleLastXVideosChannelCustomInputField.addEventListener("focusout", function () {
+	// Clamp the value to the range [1, 100]
+	if (this.value === "") {
+		this.value = 100;
+	}
+	const value = Math.min(Math.max(this.value, 1), 100);
+	setSyncStorageValue("shuffleLastXVideosChannelCustomPercentage", value);
+	// Set the value of the input field to the clamped value
+	this.value = value;
+	manageDependents(domElements.shuffleLastXVideosChannelCustomInputField, value);
+});
+
 // ----- Dependency management -----
 
 function manageDependents(parent, checked) {
@@ -130,6 +166,14 @@ function manageDependents(parent, checked) {
 				domElements.customApiKeyInputDiv.classList.add("hidden");
 			}
 			break;
+		case domElements.overrideGlobalSettingsOptionToggle:
+			if (checked) {
+				// Show custom options per channel
+				domElements.channelCustomOptionsDiv.classList.remove("hidden");
+			} else {
+				// Hide custom options per channel
+				domElements.channelCustomOptionsDiv.classList.add("hidden");
+			}
 		default:
 			console.log(`No dependents to manage for element: ${parent.id}`);
 			break;
