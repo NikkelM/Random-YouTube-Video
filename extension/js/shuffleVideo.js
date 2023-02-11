@@ -83,6 +83,7 @@ async function chooseRandomVideo(channelId) {
 	let videosByDate = Object.keys(allVideos).sort((a, b) => {
 		return new Date(allVideos[b]) - new Date(allVideos[a]);
 	});
+
 	let videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
 
 	let randomVideo = chooseRandomVideoFromList(videosToShuffle);
@@ -104,6 +105,7 @@ async function chooseRandomVideo(channelId) {
 			videosByDate = Object.keys(allVideos).sort((a, b) => {
 				return new Date(allVideos[b]) - new Date(allVideos[a]);
 			});
+			
 			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
 
 			randomVideo = chooseRandomVideoFromList(videosToShuffle);
