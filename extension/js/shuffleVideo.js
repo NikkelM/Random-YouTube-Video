@@ -76,11 +76,14 @@ async function chooseRandomVideo(channelId) {
 		}
 	}
 
+	// TODO: This is a temporary solution
+	const videoShufflePercentage = 100;
+
 	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
 	let videosByDate = Object.keys(allVideos).sort((a, b) => {
 		return new Date(allVideos[b]) - new Date(allVideos[a]);
 	});
-	let videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (configSync.shuffleLastXVideosPercentage / 100))));
+	let videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
 
 	let randomVideo = chooseRandomVideoFromList(videosToShuffle);
 	console.log("A random video has been chosen: " + randomVideo);
@@ -101,7 +104,7 @@ async function chooseRandomVideo(channelId) {
 			videosByDate = Object.keys(allVideos).sort((a, b) => {
 				return new Date(allVideos[b]) - new Date(allVideos[a]);
 			});
-			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (configSync.shuffleLastXVideosPercentage / 100))));
+			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
 
 			randomVideo = chooseRandomVideoFromList(videosToShuffle);
 
