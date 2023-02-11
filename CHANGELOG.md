@@ -1,10 +1,14 @@
 # Changelog
 
-## v1.1.1
+## v1.1.2
 
 <!--Releasenotes start-->
-- Fixed a bug where the extension would throw an API error when navigating from the subscriptions to a channel page and clicking the shuffle button.
+- Removed unnecessary logging.
 <!--Releasenotes end-->
+
+## v1.1.1
+
+- Fixed a bug where the extension would throw an API error when navigating from the subscriptions to a channel page and clicking the shuffle button.
 
 ## v1.1.0
 
