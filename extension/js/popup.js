@@ -21,8 +21,6 @@ const domElements = {
 	shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle"),
 	// Shuffling: Shuffle from last x% of videos input
 	shuffleLastXVideosInputField: document.getElementById("shuffleLastXVideosInputField"),
-	// Override global settings: Option toggle
-	overrideGlobalSettingsOptionToggle: document.getElementById("overrideGlobalSettingsOptionToggle"),
 	// Custom options per channel div
 	channelCustomOptionsDiv: document.getElementById("channelCustomOptionsDiv"),
 	// Custom options per channel: Channel name and description
@@ -33,7 +31,7 @@ const domElements = {
 
 // ---------- Set default values from config ----------
 
-async function setDomElementDefaultsFromConfig() {
+function setDomElementDefaultsFromConfig() {
 	// ----- Custom API key: Option toggle -----
 	// If this option is checked is only dependent on the value in sync storage
 	domElements.useCustomApiKeyOptionToggle.checked = configSync.useCustomApiKeyOption;
@@ -68,7 +66,7 @@ async function setDomElementDefaultsFromConfig() {
 	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.customShufflePercentages[configSync.currentChannelId] ?? 100;
 }
 
-await setDomElementDefaultsFromConfig();
+setDomElementDefaultsFromConfig();
 
 // ---------- Event listeners ----------
 
@@ -155,14 +153,6 @@ function manageDependents(parent, checked) {
 				domElements.customApiKeyInputDiv.classList.add("hidden");
 			}
 			break;
-		case domElements.overrideGlobalSettingsOptionToggle:
-			if (checked) {
-				// Show custom options per channel
-				domElements.channelCustomOptionsDiv.classList.remove("hidden");
-			} else {
-				// Hide custom options per channel
-				domElements.channelCustomOptionsDiv.classList.add("hidden");
-			}
 		default:
 			console.log(`No dependents to manage for element: ${parent.id}`);
 			break;
