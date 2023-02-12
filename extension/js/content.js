@@ -24,16 +24,21 @@ function startDOMObserver(event) {
 
 	// Get the channel id from the event data
 	let channelId = null;
+	let channelName = null;
+
 	if (isVideoPage && event.type === "yt-navigate-finish") {
 		channelId = event?.detail?.response?.playerResponse?.videoDetails?.channelId;
+		channelName = event?.detail?.response?.playerResponse?.videoDetails?.author;
 	} else if (event.type === "yt-navigate-finish") {
 		// For channel pages, it is possible that we already got a channelId from the "yt-navigate-start" event
 		if (!gotChannelIdFromStartEvent.isFinalized) {
 			channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
+			channelName = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.title;
 		}
 		gotChannelIdFromStartEvent.isFinalized = false;
 	} else if (event.type === "yt-navigate-start") {
 		channelId = event?.detail?.endpoint?.browseEndpoint?.browseId;
+		channelName = event?.detail?.url?.split("/")[1];
 		// If we got a channelId here, we don't want to build the button again when we get the "yt-navigate-finish" event after this
 		if (channelId?.startsWith("UC")) {
 			gotChannelIdFromStartEvent.isFinalized = true;
@@ -62,7 +67,7 @@ function startDOMObserver(event) {
 		// If we are on a video page, and the required element has loaded, add the shuffle button
 		if (isVideoPage && videoPageRequiredElementLoadComplete) {
 			me.disconnect(); // Stop observing
-			buildShuffleButton("video", channelId);
+			channelDetectedAction("video", channelId, channelName);
 			return;
 		}
 
@@ -70,7 +75,7 @@ function startDOMObserver(event) {
 		// If the required element has loaded, add a shuffle button
 		if (!isVideoPage && channelPageRequiredElementLoadComplete) {
 			me.disconnect(); // Stop observing
-			buildShuffleButton("channel", channelId);
+			channelDetectedAction("channel", channelId, channelName);
 			return;
 		}
 	});
@@ -82,7 +87,19 @@ function startDOMObserver(event) {
 	});
 }
 
-// ---------- functions ----------
+async function channelDetectedAction(pageType, channelId, channelName) {
+	await fetchConfigSync();
+
+	// Save the current channelID and channelName in the extension's storage to be accessible by the popup
+	configSync.currentChannelId = channelId;
+	await setSyncStorageValue("currentChannelId", channelId);
+	configSync.currentChannelName = channelName;
+	await setSyncStorageValue("currentChannelName", channelName);
+
+	buildShuffleButton(pageType, channelId);
+}
+
+// ---------- Shuffle ----------
 
 async function shuffleVideos() {
 	// Called when the randomize-button is clicked
@@ -117,4 +134,15 @@ async function shuffleVideos() {
 		setDOMTextWithDelay(shuffleButtonTextElement, displayText, 0, changeToken, true);
 		return;
 	}
+}
+
+// ---------- Sync storage interaction ----------
+
+async function setSyncStorageValue(key, value) {
+	configSync[key] = value;
+
+	await chrome.storage.sync.set({ [key]: value });
+
+	// Refresh the config in the background script. Send it like this to avoid a request to the chrome storage API
+	chrome.runtime.sendMessage({ command: "newConfigSync", data: configSync });
 }

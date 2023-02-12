@@ -25,13 +25,15 @@ const domElements = {
 	overrideGlobalSettingsOptionToggle: document.getElementById("overrideGlobalSettingsOptionToggle"),
 	// Custom options per channel div
 	channelCustomOptionsDiv: document.getElementById("channelCustomOptionsDiv"),
+	// Custom options per channel: Channel name and description
+	channelCustomOptionsHeader: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsHeader"),
 	// Custom options per channel: Shuffling: Shuffle from last x% of videos input
 	shuffleLastXVideosChannelCustomInputField: document.getElementById("shuffleLastXVideosChannelCustomInputField"),
 }
 
 // ---------- Set default values from config ----------
 
-function setDomElementDefaultsFromConfig() {
+async function setDomElementDefaultsFromConfig() {
 	// ----- Custom API key: Option toggle -----
 	// If this option is checked is only dependent on the value in sync storage
 	domElements.useCustomApiKeyOptionToggle.checked = configSync.useCustomApiKeyOption;
@@ -55,16 +57,18 @@ function setDomElementDefaultsFromConfig() {
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
 
 	// ----- Custom options per channel div -----
-	// TODO: Should only be visible when a channel is found
-	if (true) {
+	if (configSync.currentChannelId) {
 		domElements.channelCustomOptionsDiv.classList.remove("hidden");
 	}
+
+	// ----- Custom options per channel: Channel name and description -----
+	domElements.channelCustomOptionsHeader.innerText = `Settings for "${configSync.currentChannelName}"`;
 
 	// ----- Custom options per channel: Shuffling: Shuffle from last x% of videos input -----
 	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.shuffleLastXVideosChannelCustomPercentage;
 }
 
-setDomElementDefaultsFromConfig();
+await setDomElementDefaultsFromConfig();
 
 // ---------- Event listeners ----------
 
@@ -105,7 +109,6 @@ domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", functio
 	setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked);
 	manageDependents(domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
 });
-
 
 // Custom options per channel: Shuffling: Shuffle from last x% of videos input
 domElements.shuffleLastXVideosChannelCustomInputField.addEventListener("focusout", function () {

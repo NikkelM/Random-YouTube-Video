@@ -24,6 +24,8 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 		"shuffleOpenInNewTabOption": false,
 		"shuffleOpenAsPlaylistOption": true,
 		"shuffleLastXVideosChannelCustomPercentage": 100,
+		"currentChannelId": null,
+		"currentChannelName": null,
 	};
 
 	const configSyncValues = await chrome.storage.sync.get();
