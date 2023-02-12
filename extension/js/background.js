@@ -23,16 +23,27 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 		"databaseSharingEnabledOption": true,
 		"shuffleOpenInNewTabOption": false,
 		"shuffleOpenAsPlaylistOption": true,
+		// Dictionary of channelID -> percentage pairs
 		"customShufflePercentages": {},
 		"currentChannelId": null,
 		"currentChannelName": null,
 	};
 
 	const configSyncValues = await chrome.storage.sync.get();
+
+	// Set default values for config values that do not exist in sync storage
 	for (const [key, value] of Object.entries(configDefaults)) {
 		if (configSyncValues[key] === undefined) {
 			console.log(`Config value ${key} does not exist in sync storage. Setting default (${value})...`);
 			await chrome.storage.sync.set({ [key]: value });
+		}
+	}
+
+	// Remove old config values from sync storage
+	for (const [key, value] of Object.entries(configSyncValues)) {
+		if (configDefaults[key] === undefined) {
+			console.log(`Config value ${key} is not used anymore. Removing...`);
+			await chrome.storage.sync.remove(key);
 		}
 	}
 });
