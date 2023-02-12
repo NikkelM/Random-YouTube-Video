@@ -15,8 +15,7 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 		await handleExtensionUpdate(manifestData);
 	}
 
-	// Check if all config values are set in sync storage
-	// If not, set them to their default values
+	// All keys regarding user settings and their defaults
 	const configDefaults = {
 		"useCustomApiKeyOption": false,
 		"customYoutubeApiKey": null,

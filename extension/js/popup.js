@@ -118,10 +118,13 @@ domElements.shuffleLastXVideosChannelCustomInputField.addEventListener("focusout
 	}
 	const value = Math.min(Math.max(this.value, 1), 100);
 
-	let customShufflePercentages = configSync.customShufflePercentages;
-	customShufflePercentages[configSync.currentChannelId] = value;
+	// We only need to save the value if it's not the default of 100
+	if (value !== 100) {
+		let customShufflePercentages = configSync.customShufflePercentages;
+		customShufflePercentages[configSync.currentChannelId] = value;
 
-	setSyncStorageValue("customShufflePercentages", customShufflePercentages);
+		setSyncStorageValue("customShufflePercentages", customShufflePercentages);
+	}
 
 	// Set the value of the input field to the clamped value
 	this.value = value;

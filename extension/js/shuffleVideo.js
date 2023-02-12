@@ -76,8 +76,7 @@ async function chooseRandomVideo(channelId) {
 		}
 	}
 
-	// TODO: This is a temporary solution
-	const videoShufflePercentage = 100;
+	const videoShufflePercentage = configSync.customShufflePercentages[channelId] ?? 100;
 
 	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
 	let videosByDate = Object.keys(allVideos).sort((a, b) => {
