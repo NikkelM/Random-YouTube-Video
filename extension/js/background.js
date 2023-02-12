@@ -23,7 +23,7 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 		"databaseSharingEnabledOption": true,
 		"shuffleOpenInNewTabOption": false,
 		"shuffleOpenAsPlaylistOption": true,
-		"shuffleLastXVideosChannelCustomPercentage": 100,
+		"customShufflePercentages": {},
 		"currentChannelId": null,
 		"currentChannelName": null,
 	};
