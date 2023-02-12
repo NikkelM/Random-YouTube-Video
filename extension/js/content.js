@@ -12,43 +12,26 @@ let shuffleButton = null;
 // Access the actual text using "shuffleButtonTextElement.innerHTML"
 let shuffleButtonTextElement = null;
 
-// Whenever a YouTube navigation event fires, we need to add/update the shuffle button
-// We use a boolean reference to make sure we only add the button once per navigation event. Otherwise, we might access children of undefined later on
-let gotChannelIdFromStartEvent = new BooleanReference();
-// The "yt-navigate-finish" event does not always fire, e.g. when clicking on a channel link from the search page, which is why we also listen to "yt-navigate-start"
-document.addEventListener("yt-navigate-start", startDOMObserver);
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
-function startDOMObserver(event) {
+async function startDOMObserver(event) {
 	const isVideoPage = isVideoUrl(window.location.href);
 
 	// Get the channel id from the event data
 	let channelId = null;
 	let channelName = null;
 
-	if (isVideoPage && event.type === "yt-navigate-finish") {
+	if (isVideoPage) {
 		channelId = event?.detail?.response?.playerResponse?.videoDetails?.channelId;
 		channelName = event?.detail?.response?.playerResponse?.videoDetails?.author;
-	} else if (event.type === "yt-navigate-finish") {
+	} else{
 		// For channel pages, it is possible that we already got a channelId from the "yt-navigate-start" event
-		if (!gotChannelIdFromStartEvent.isFinalized) {
-			channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
-			channelName = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.title;
-		}
-		gotChannelIdFromStartEvent.isFinalized = false;
-	} else if (event.type === "yt-navigate-start") {
-		channelId = event?.detail?.endpoint?.browseEndpoint?.browseId;
-		channelName = event?.detail?.url?.split("/")[1];
-		// If we got a channelId here, we don't want to build the button again when we get the "yt-navigate-finish" event after this
-		if (channelId?.startsWith("UC")) {
-			gotChannelIdFromStartEvent.isFinalized = true;
-		} else {
-			gotChannelIdFromStartEvent.isFinalized = false;
-		}
+		channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
+		channelName = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.title;
 	}
 
 	if (!channelId?.startsWith("UC")) {
-		// If no channelId was provided in the event, we won't be able to add the button
+		// If no valid channelId was provided in the event, we won't be able to add the button
 		return;
 	}
 
@@ -59,7 +42,7 @@ function startDOMObserver(event) {
 			var channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
 
 			// ----- Video page -----
-		} else if (isVideoPage) {
+		} else {
 			// Find out if we are on a video page that has completed loading the required element
 			var videoPageRequiredElementLoadComplete = document.getElementById("player") && document.getElementById("above-the-fold");
 		}
