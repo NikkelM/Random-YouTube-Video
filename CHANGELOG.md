@@ -1,10 +1,14 @@
 # Changelog
 
-## v1.1.2
+## v1.2.0
 
 <!--Releasenotes start-->
-- Removed unnecessary logging.
+- You are now able to set the percentage of videos that are shuffled for each individual channel instead of one global value. Simply visit a channel or video page and open the extension popup.
 <!--Releasenotes end-->
+
+## v1.1.2
+
+- Removed unnecessary logging.
 
 ## v1.1.1
 

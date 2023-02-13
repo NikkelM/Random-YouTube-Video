@@ -17,8 +17,7 @@
 		<h2>Extension Options</h2>
 		<p class="grey-text">Customize your experience.<br>Hover over an option to view a more detailed explanation.</p>
 
-		<h3>Video</h3>
-		<!-- Row 1 start -->
+		<h3>General video settings</h3>
 		<!-- Shuffling: Open in new tab option toggle -->
 		<div class="optionsRow">
 			<div class="toggle optionsRow-item">
@@ -40,20 +39,24 @@
 				</label>
 			</div>
 		</div>
-		<!-- Row 1 end -->
-		<!-- Row 2 start -->
-		<!-- Shuffling: Shuffle between last x videos -->
-		<div id="shuffleLastXVideosDiv" class="optionTextInput"
-			title="Only the most recent x% of videos uploaded to the channel will be considered when shuffling.">
-			<p style="display:inline">Shuffling from most recent&nbsp;</p>
-			<input type="number" inputmode="numeric" max="100" min="1" class="numberInput" style="display:inline"
-				id="shuffleLastXVideosInputField" name="apiKeyInput" value="100">
-			<p style="display:inline">% of videos.</p>
+
+		<!-- This is only shown on pages with a shuffle button -->
+		<div id="channel">
+			<div id="channelCustomOptionsDiv" class="hidden">
+				<h3 id="channelCustomOptionsHeader">Settings for the current channel</h3>
+				<p class="grey-text">Settings for the most recent channel you visited.</p>
+				<!-- Custom options per channel: Shuffling: Shuffle between last x videos -->
+				<div id="shuffleLastXVideosChannelCustomDiv" class="optionTextInput"
+					title="Only the most recent x% of videos uploaded to the channel will be considered when shuffling.">
+					<p style="display:inline">Shuffle from the most recent&nbsp;</p>
+					<input type="number" inputmode="numeric" max="100" min="1" class="numberInput" style="display:inline"
+						id="shuffleLastXVideosChannelCustomInputField" name="apiKeyInput" value="100">
+					<p style="display:inline">% of videos.</p>
+				</div>
+			</div>
 		</div>
-		<!-- Row 2 end -->
 
 		<h3>API</h3>
-		<!-- Row 1 start -->
 		<!-- Custom API key: Option toggle -->
 		<div class="optionsRow">
 			<div class="toggle optionsRow-item">
@@ -75,7 +78,6 @@
 				</label>
 			</div>
 		</div>
-		<!-- Row 1 end -->
 
 		<!-- Custom API key: Input -->
 		<div id="customApiKeyInputDiv" class="optionTextInput hidden">

@@ -19,7 +19,7 @@ function buildShuffleButton(pageType, channelId) {
 			buttonDivPrepend = false;
 			break;
 		default:
-			console.warn("Cannot build button: Unknown page type: " + pageType);
+			console.warn(`Cannot build button: Unknown page type: ${pageType}`);
 			return;
 	}
 

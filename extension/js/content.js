@@ -12,38 +12,26 @@ let shuffleButton = null;
 // Access the actual text using "shuffleButtonTextElement.innerHTML"
 let shuffleButtonTextElement = null;
 
-// Whenever a YouTube navigation event fires, we need to add/update the shuffle button
-// We use a boolean reference to make sure we only add the button once per navigation event. Otherwise, we might access children of undefined later on
-let gotChannelIdFromStartEvent = new BooleanReference();
-// The "yt-navigate-finish" event does not always fire, e.g. when clicking on a channel link from the search page, which is why we also listen to "yt-navigate-start"
-document.addEventListener("yt-navigate-start", startDOMObserver);
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
-function startDOMObserver(event) {
+async function startDOMObserver(event) {
 	const isVideoPage = isVideoUrl(window.location.href);
 
 	// Get the channel id from the event data
 	let channelId = null;
-	if (isVideoPage && event.type === "yt-navigate-finish") {
+	let channelName = null;
+
+	if (isVideoPage) {
 		channelId = event?.detail?.response?.playerResponse?.videoDetails?.channelId;
-	} else if (event.type === "yt-navigate-finish") {
+		channelName = event?.detail?.response?.playerResponse?.videoDetails?.author;
+	} else{
 		// For channel pages, it is possible that we already got a channelId from the "yt-navigate-start" event
-		if (!gotChannelIdFromStartEvent.isFinalized) {
-			channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
-		}
-		gotChannelIdFromStartEvent.isFinalized = false;
-	} else if (event.type === "yt-navigate-start") {
-		channelId = event?.detail?.endpoint?.browseEndpoint?.browseId;
-		// If we got a channelId here, we don't want to build the button again when we get the "yt-navigate-finish" event after this
-		if (channelId?.startsWith("UC")) {
-			gotChannelIdFromStartEvent.isFinalized = true;
-		} else {
-			gotChannelIdFromStartEvent.isFinalized = false;
-		}
+		channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
+		channelName = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.title;
 	}
 
 	if (!channelId?.startsWith("UC")) {
-		// If no channelId was provided in the event, we won't be able to add the button
+		// If no valid channelId was provided in the event, we won't be able to add the button
 		return;
 	}
 
@@ -54,7 +42,7 @@ function startDOMObserver(event) {
 			var channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
 
 			// ----- Video page -----
-		} else if (isVideoPage) {
+		} else {
 			// Find out if we are on a video page that has completed loading the required element
 			var videoPageRequiredElementLoadComplete = document.getElementById("player") && document.getElementById("above-the-fold");
 		}
@@ -62,7 +50,7 @@ function startDOMObserver(event) {
 		// If we are on a video page, and the required element has loaded, add the shuffle button
 		if (isVideoPage && videoPageRequiredElementLoadComplete) {
 			me.disconnect(); // Stop observing
-			buildShuffleButton("video", channelId);
+			channelDetectedAction("video", channelId, channelName);
 			return;
 		}
 
@@ -70,7 +58,7 @@ function startDOMObserver(event) {
 		// If the required element has loaded, add a shuffle button
 		if (!isVideoPage && channelPageRequiredElementLoadComplete) {
 			me.disconnect(); // Stop observing
-			buildShuffleButton("channel", channelId);
+			channelDetectedAction("channel", channelId, channelName);
 			return;
 		}
 	});
@@ -82,7 +70,19 @@ function startDOMObserver(event) {
 	});
 }
 
-// ---------- functions ----------
+async function channelDetectedAction(pageType, channelId, channelName) {
+	await fetchConfigSync();
+
+	// Save the current channelID and channelName in the extension's storage to be accessible by the popup
+	configSync.currentChannelId = channelId;
+	await setSyncStorageValue("currentChannelId", channelId);
+	configSync.currentChannelName = channelName;
+	await setSyncStorageValue("currentChannelName", channelName);
+
+	buildShuffleButton(pageType, channelId);
+}
+
+// ---------- Shuffle ----------
 
 async function shuffleVideos() {
 	// Called when the randomize-button is clicked
@@ -117,4 +117,15 @@ async function shuffleVideos() {
 		setDOMTextWithDelay(shuffleButtonTextElement, displayText, 0, changeToken, true);
 		return;
 	}
+}
+
+// ---------- Sync storage interaction ----------
+
+async function setSyncStorageValue(key, value) {
+	configSync[key] = value;
+
+	await chrome.storage.sync.set({ [key]: value });
+
+	// Refresh the config in the background script. Send it like this to avoid a request to the chrome storage API
+	chrome.runtime.sendMessage({ command: "newConfigSync", data: configSync });
 }

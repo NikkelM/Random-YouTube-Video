@@ -7,6 +7,19 @@
 }
 
 /*
+ * Scrollbar
+ */
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: #666;
+	border-radius: 4px;
+}
+
+/*
  * Generic utilities
  */
 .grey-text {
@@ -133,7 +146,7 @@ body {
 	width: 80%;
 }
 
-.optionTextInput input.numberInput{
+.optionTextInput input.numberInput {
 	width: 25px;
 }
 

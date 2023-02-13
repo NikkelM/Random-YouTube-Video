@@ -15,22 +15,34 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 		await handleExtensionUpdate(manifestData);
 	}
 
-	// Check if all config values are set in sync storage
-	// If not, set them to their default values
+	// All keys regarding user settings and their defaults
 	const configDefaults = {
 		"useCustomApiKeyOption": false,
 		"customYoutubeApiKey": null,
 		"databaseSharingEnabledOption": true,
 		"shuffleOpenInNewTabOption": false,
 		"shuffleOpenAsPlaylistOption": true,
-		"shuffleLastXVideosPercentage": 100
+		// Dictionary of channelID -> percentage pairs
+		"channelSettings": {},
+		"currentChannelId": null,
+		"currentChannelName": null,
 	};
 
 	const configSyncValues = await chrome.storage.sync.get();
+
+	// Set default values for config values that do not exist in sync storage
 	for (const [key, value] of Object.entries(configDefaults)) {
 		if (configSyncValues[key] === undefined) {
 			console.log(`Config value ${key} does not exist in sync storage. Setting default (${value})...`);
 			await chrome.storage.sync.set({ [key]: value });
+		}
+	}
+
+	// Remove old config values from sync storage
+	for (const [key, value] of Object.entries(configSyncValues)) {
+		if (configDefaults[key] === undefined) {
+			console.log(`Config value ${key} is not used anymore. Removing...`);
+			await chrome.storage.sync.remove(key);
 		}
 	}
 });

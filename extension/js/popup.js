@@ -21,6 +21,12 @@ const domElements = {
 	shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle"),
 	// Shuffling: Shuffle from last x% of videos input
 	shuffleLastXVideosInputField: document.getElementById("shuffleLastXVideosInputField"),
+	// Custom options per channel div
+	channelCustomOptionsDiv: document.getElementById("channelCustomOptionsDiv"),
+	// Custom options per channel: Channel name and description
+	channelCustomOptionsHeader: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsHeader"),
+	// Custom options per channel: Shuffling: Shuffle from last x% of videos input
+	shuffleLastXVideosChannelCustomInputField: document.getElementById("shuffleLastXVideosChannelCustomInputField"),
 }
 
 // ---------- Set default values from config ----------
@@ -48,8 +54,16 @@ function setDomElementDefaultsFromConfig() {
 	// ----- Shuffling: Open as playlist option toggle -----
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
 
-	// ----- Shuffling: Shuffle from last x% of videos input -----
-	domElements.shuffleLastXVideosInputField.value = configSync.shuffleLastXVideosPercentage;
+	// ----- Custom options per channel div -----
+	if (configSync.currentChannelId) {
+		domElements.channelCustomOptionsDiv.classList.remove("hidden");
+	}
+
+	// ----- Custom options per channel: Channel name and description -----
+	domElements.channelCustomOptionsHeader.innerText = `Settings for: ${configSync.currentChannelName}`;
+
+	// ----- Custom options per channel: Shuffling: Shuffle from last x% of videos input -----
+	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.channelSettings[configSync.currentChannelId]?.shufflePercentage ?? 100;
 }
 
 setDomElementDefaultsFromConfig();
@@ -94,17 +108,23 @@ domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", functio
 	manageDependents(domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
 });
 
-// Shuffling: Shuffle from last x% of videos input
-domElements.shuffleLastXVideosInputField.addEventListener("focusout", function () {
+// Custom options per channel: Shuffling: Shuffle from last x% of videos input
+domElements.shuffleLastXVideosChannelCustomInputField.addEventListener("focusout", function () {
 	// Clamp the value to the range [1, 100]
 	if (this.value === "") {
 		this.value = 100;
 	}
 	const value = Math.min(Math.max(this.value, 1), 100);
-	setSyncStorageValue("shuffleLastXVideosPercentage", value);
+
+	// We only need to save the value if it's not the default of 100
+	if (value !== 100) {
+		setChannelSetting(configSync.currentChannelId, "shufflePercentage", value);
+	}
+
 	// Set the value of the input field to the clamped value
 	this.value = value;
-	manageDependents(domElements.shuffleLastXVideosInputField, value);
+
+	manageDependents(domElements.shuffleLastXVideosChannelCustomInputField, value);
 });
 
 // ----- Dependency management -----
@@ -190,4 +210,14 @@ async function validateApiKey(key) {
 	}
 	domElements.customApiKeyInputErrorDiv.classList.add("hidden");
 	return true;
+}
+
+function setChannelSetting(channelId, setting, value) {
+	let channelSettings = configSync.channelSettings;
+	if(!channelSettings[channelId]) {
+		channelSettings[channelId] = {};
+	}
+	channelSettings[channelId][setting] = value;
+
+	setSyncStorageValue("channelSettings", channelSettings);
 }
