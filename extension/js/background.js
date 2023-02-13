@@ -23,7 +23,7 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 		"shuffleOpenInNewTabOption": false,
 		"shuffleOpenAsPlaylistOption": true,
 		// Dictionary of channelID -> percentage pairs
-		"customShufflePercentages": {},
+		"channelSettings": {},
 		"currentChannelId": null,
 		"currentChannelName": null,
 	};

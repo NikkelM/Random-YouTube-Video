@@ -63,7 +63,7 @@ function setDomElementDefaultsFromConfig() {
 	domElements.channelCustomOptionsHeader.innerText = `Settings for: ${configSync.currentChannelName}`;
 
 	// ----- Custom options per channel: Shuffling: Shuffle from last x% of videos input -----
-	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.customShufflePercentages[configSync.currentChannelId] ?? 100;
+	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.channelSettings[configSync.currentChannelId]?.shufflePercentage ?? 100;
 }
 
 setDomElementDefaultsFromConfig();
@@ -118,10 +118,7 @@ domElements.shuffleLastXVideosChannelCustomInputField.addEventListener("focusout
 
 	// We only need to save the value if it's not the default of 100
 	if (value !== 100) {
-		let customShufflePercentages = configSync.customShufflePercentages;
-		customShufflePercentages[configSync.currentChannelId] = value;
-
-		setSyncStorageValue("customShufflePercentages", customShufflePercentages);
+		setChannelSetting(configSync.currentChannelId, "shufflePercentage", value);
 	}
 
 	// Set the value of the input field to the clamped value
@@ -213,4 +210,14 @@ async function validateApiKey(key) {
 	}
 	domElements.customApiKeyInputErrorDiv.classList.add("hidden");
 	return true;
+}
+
+function setChannelSetting(channelId, setting, value) {
+	let channelSettings = configSync.channelSettings;
+	if(!channelSettings[channelId]) {
+		channelSettings[channelId] = {};
+	}
+	channelSettings[channelId][setting] = value;
+
+	setSyncStorageValue("channelSettings", channelSettings);
 }
