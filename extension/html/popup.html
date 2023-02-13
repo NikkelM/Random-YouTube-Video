@@ -56,6 +56,31 @@
 			</div>
 		</div>
 
+		<!-- This is only shown on pages with a shuffle button -->
+		<div id="channel2">
+			<div id="channelCustomOptionsDiv2" class="">
+				<h3 id="channelCustomOptionsHeader2">Settings for the current channel</h3>
+				<p class="grey-text">Settings for the most recent channel you visited.</p>
+				<!-- Custom options per channel: Shuffling: Shuffle between last x videos -->
+				<div id="shuffleLastXVideosChannelCustomDiv2" class="optionTextInput">
+					<label for="shuffleRule" style="display:inline"></label>
+					<select name="shuffleRuleOptions" id="shuffleRuleOptions" style="display:inline">
+						<option value="percentageOption"
+							title="Only the most recent X% of videos uploaded to the channel will be considered when shuffling.">
+							Shuffle from the most recent X% of videos</option>
+						<option value="dateOption"
+							title="Only videos uploaded after the chosen date will be considered when shuffling.">
+							Shuffle from videos uploaded after date</option>
+						<option value="IdOption"
+							title="Only videos uploaded after the video with the given ID will be considered when shuffling.">
+							Shuffle from videos after video with ID</option>
+					</select>
+					<input type="number" inputmode="numeric" max="100" min="1" class="numberInput" style="display:inline"
+						id="shuffleLastXVideosChannelCustomInputField" name="apiKeyInput" value="100">
+				</div>
+			</div>
+		</div>
+
 		<h3>API</h3>
 		<!-- Custom API key: Option toggle -->
 		<div class="optionsRow">
