@@ -1,10 +1,14 @@
 # Changelog
 
-## v1.2.0
+## v1.2.1
 
 <!--Releasenotes start-->
-- You are now able to set the percentage of videos that are shuffled for each individual channel instead of one global value. Simply visit a channel or video page and open the extension popup.
+- Fixed an issue with the API
 <!--Releasenotes end-->
+
+## v1.2.0
+
+- You are now able to set the percentage of videos that are shuffled for each individual channel instead of one global value. Simply visit a channel or video page and open the extension popup.
 
 ## v1.1.2
 

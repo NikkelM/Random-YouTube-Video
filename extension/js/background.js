@@ -57,6 +57,13 @@ async function handleExtensionFirstInstall(manifestData) {
 async function handleExtensionUpdate(manifestData) {
 	console.log(`Extension was updated to version v${manifestData.version}`);
 
+	// Only for the 1.2.1 update
+	// Delete the youtubeAPIKey from local storage if it exists
+	const localStorageContents = await chrome.storage.local.get();
+	if (localStorageContents["youtubeAPIKey"]) {
+		await chrome.storage.local.remove("youtubeAPIKey");
+	}
+
 	// This variable indicates if the local storage should be cleared when updating to the newest version
 	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
 	// Provide reason for clearing if applicable
