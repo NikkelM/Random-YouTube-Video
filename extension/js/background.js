@@ -12,7 +12,7 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 	if (details.reason == "install") {
 		await handleExtensionFirstInstall(manifestData);
 	} else if (details.reason == "update" && details.previousVersion !== manifestData.version) {
-		await handleExtensionUpdate(manifestData);
+		await handleExtensionUpdate(manifestData, details.previousVersion);
 	}
 
 	// All keys regarding user settings and their defaults
@@ -54,14 +54,16 @@ async function handleExtensionFirstInstall(manifestData) {
 	setLocalStorage("extensionVersion", manifestData.version);
 }
 
-async function handleExtensionUpdate(manifestData) {
+async function handleExtensionUpdate(manifestData, previousVersion) {
 	console.log(`Extension was updated to version v${manifestData.version}`);
 
-	// Only for the 1.2.1 update
-	// Delete the youtubeAPIKey from local storage if it exists
-	const localStorageContents = await chrome.storage.local.get();
-	if (localStorageContents["youtubeAPIKey"]) {
-		await chrome.storage.local.remove("youtubeAPIKey");
+	if (previousVersion < "1.2.1") {
+		// v1.2.1 first had this code snippet, so we don't need to run it again if the user updated from a version after that
+		const localStorageContents = await chrome.storage.local.get();
+		// Delete the youtubeAPIKey from local storage if it exists
+		if (localStorageContents["youtubeAPIKey"]) {
+			await chrome.storage.local.remove("youtubeAPIKey");
+		}
 	}
 
 	// This variable indicates if the local storage should be cleared when updating to the newest version
