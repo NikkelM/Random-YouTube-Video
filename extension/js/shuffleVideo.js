@@ -3,11 +3,12 @@
 let APIKey = null;
 let configSync = null;
 
-// TEMPORARY due to database format change
+// For cases in which the playlist in the database has the old Array format, we need to overwrite it
 let mustOverwriteDatabase = false;
 
 // Chooses a random video uploaded on the current YouTube channel
 async function chooseRandomVideo(channelId) {
+	// Make sure we have the latest config
 	await fetchConfigSync();
 	// Make sure an API key is available
 	await getAPIKey();
@@ -139,7 +140,7 @@ async function chooseRandomVideo(channelId) {
 
 		// Send the playlist info to the database
 		const msg = {
-			// TEMPORARY due to database format change
+			// mustOverwriteDatabae: In case the data is still in the old format, we need to overwrite it
 			command: (encounteredDeletedVideos || mustOverwriteDatabase) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
 			data: {
 				key: 'uploadsPlaylists/' + uploadsPlaylistId,
@@ -184,7 +185,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 	let playlistInfo = await chrome.runtime.sendMessage(msg);
 
-	// TEMPORARY due to database format change
+	// In case the playlist is still in the old Array format in the database, convert it to the new format
 	if (playlistInfo && playlistInfo["videos"] && Array.isArray(playlistInfo["videos"])) {
 		console.log("The playlist was found in the database, but it is in the old format. Updating format...");
 		mustOverwriteDatabase = true;
