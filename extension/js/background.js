@@ -1,76 +1,12 @@
-// Background script for the extension, which is run on extension initialization
+// Background script for the extension, which is run ("started") on extension initialization
 // Handles communication between the extension and the content script as well as firebase
 
 let configSync = null;
 
-// ---------- Initialization ----------
+// ---------- Initialization/Chrome event listeners ----------
 
-// Check whether new version is installed
-chrome.runtime.onInstalled.addListener(async function (details) {
-	const manifestData = chrome.runtime.getManifest();
-
-  if (details.reason == "update" && details.previousVersion !== manifestData.version) {
-		await handleExtensionUpdate(manifestData, details.previousVersion);
-	}
-
-	// All keys regarding user settings and their defaults
-	const configDefaults = {
-		"useCustomApiKeyOption": false,
-		"customYoutubeApiKey": null,
-		"databaseSharingEnabledOption": true,
-		"shuffleOpenInNewTabOption": false,
-		"shuffleOpenAsPlaylistOption": true,
-		// Dictionary of channelID -> percentage pairs
-		"channelSettings": {},
-		"currentChannelId": null,
-		"currentChannelName": null,
-	};
-
-	const configSyncValues = await chrome.storage.sync.get();
-
-	// Set default values for config values that do not exist in sync storage
-	for (const [key, value] of Object.entries(configDefaults)) {
-		if (configSyncValues[key] === undefined) {
-			console.log(`Config value (setting) "${key}" does not exist in sync storage. Setting default:`);
-			console.log(value);
-			await chrome.storage.sync.set({ [key]: value });
-		}
-	}
-
-	// Remove old config values from sync storage
-	for (const [key, value] of Object.entries(configSyncValues)) {
-		if (configDefaults[key] === undefined) {
-			console.log(`Config value (setting) "${key}" is not used anymore (was removed with the most recent update). Removing it from sync storage...`);
-			await chrome.storage.sync.remove(key);
-		}
-	}
-});
-
-async function handleExtensionUpdate(manifestData, previousVersion) {
-	console.log(`Extension was updated to version v${manifestData.version}`);
-
-	// v1.2.1 introduced a new YouTube API key, so we need to remove the old one from local storage
-	if (previousVersion < "1.2.1") {
-		// v1.2.1 first had this code snippet, so we don't need to run it again if the user updated from a version after that
-		const localStorageContents = await chrome.storage.local.get();
-		// Delete the youtubeAPIKey from local storage if it exists
-		if (localStorageContents["youtubeAPIKey"]) {
-			await chrome.storage.local.remove("youtubeAPIKey");
-		}
-	}
-
-	// This variable indicates if the local storage should be cleared when updating to the newest version
-	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
-	// Provide reason for clearing if applicable
-	// Reason: N/A
-	// Version before change: N/A
-	const clearLocalStorageOnUpdate = false;
-
-	if (clearLocalStorageOnUpdate) {
-		console.log("The storage structure has changed and local storage must be reset. Clearing...");
-		await chrome.storage.local.clear();
-	}
-
+// On Chrome startup, we make sure we are not using too much local storage
+chrome.runtime.onStartup.addListener(async function () {
 	// If over 90% of the storage quota for playlists is used, remove playlists that have not been accessed in a long time
 	const utilizedStorage = await chrome.storage.local.getBytesInUse();
 	const maxLocalStorage = chrome.storage.local.QUOTA_BYTES;
@@ -96,6 +32,82 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 		for (const [playlistId, playlistInfo] of playlistsToRemove) {
 			console.log(`Removing playlist ${playlistId} from local storage...`);
 			chrome.storage.local.remove(playlistId);
+		}
+	}
+});
+
+// Check whether new version is installed
+chrome.runtime.onInstalled.addListener(async function (details) {
+	const manifestData = chrome.runtime.getManifest();
+
+	if (details.reason == "update" && details.previousVersion !== manifestData.version) {
+		await handleExtensionUpdate(manifestData, details.previousVersion);
+	}
+
+	// Validate the config in sync storage
+	await validateConfigSync();
+});
+
+async function handleExtensionUpdate(manifestData, previousVersion) {
+	console.log(`Extension was updated to version v${manifestData.version}`);
+
+	// Handle changes that may be specific to a certain version change
+	await handleVersionSpecificUpdates(previousVersion);
+
+	// This variable indicates if the local storage should be cleared when updating to the newest version
+	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
+	// Provide reason for clearing if applicable
+	// Reason: N/A
+	// Version before change: N/A
+	const clearLocalStorageOnUpdate = false;
+
+	if (clearLocalStorageOnUpdate) {
+		console.log("The storage structure has changed and local storage must be reset. Clearing...");
+		await chrome.storage.local.clear();
+	}
+}
+
+async function handleVersionSpecificUpdates(previousVersion) {
+	// vx.x.x removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
+	if(previousVersion < "x.x.x") {
+		const localStorageContents = await chrome.storage.local.get();
+		// Delete the youtubeAPIKey from local storage if it exists
+		if(localStorageContents["youtubeAPIKey"]) {
+			await chrome.storage.local.remove("youtubeAPIKey");
+		}
+	}
+}
+
+async function validateConfigSync() {
+	// All keys regarding user settings and their defaults
+	const configSyncDefaults = {
+		"useCustomApiKeyOption": false,
+		"customYoutubeApiKey": null,
+		"databaseSharingEnabledOption": true,
+		"shuffleOpenInNewTabOption": false,
+		"shuffleOpenAsPlaylistOption": true,
+		// Dictionary of channelID -> percentage pairs
+		"channelSettings": {},
+		"currentChannelId": null,
+		"currentChannelName": null,
+	};
+
+	const configSyncValues = await chrome.storage.sync.get();
+
+	// Set default values for config values that do not exist in sync storage
+	for (const [key, value] of Object.entries(configSyncDefaults)) {
+		if (configSyncValues[key] === undefined) {
+			console.log(`Config value (setting) "${key}" does not exist in sync storage. Setting default:`);
+			console.log(value);
+			await chrome.storage.sync.set({ [key]: value });
+		}
+	}
+
+	// Remove old config values from sync storage
+	for (const [key, value] of Object.entries(configSyncValues)) {
+		if (configSyncDefaults[key] === undefined) {
+			console.log(`Config value (setting) "${key}" is not used anymore (was removed with the most recent update). Removing it from sync storage...`);
+			await chrome.storage.sync.remove(key);
 		}
 	}
 }
