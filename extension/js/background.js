@@ -9,9 +9,7 @@ let configSync = null;
 chrome.runtime.onInstalled.addListener(async function (details) {
 	const manifestData = chrome.runtime.getManifest();
 
-	if (details.reason == "install") {
-		await handleExtensionFirstInstall(manifestData);
-	} else if (details.reason == "update" && details.previousVersion !== manifestData.version) {
+  if (details.reason == "update" && details.previousVersion !== manifestData.version) {
 		await handleExtensionUpdate(manifestData, details.previousVersion);
 	}
 
@@ -48,13 +46,6 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 	}
 });
 
-async function handleExtensionFirstInstall(manifestData) {
-	console.log("Extension was newly installed. Initializing settings...");
-
-	// Make sure the current extension version is always saved in local storage
-	setLocalStorage("extensionVersion", manifestData.version);
-}
-
 async function handleExtensionUpdate(manifestData, previousVersion) {
 	console.log(`Extension was updated to version v${manifestData.version}`);
 
@@ -79,9 +70,6 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 		console.log("The storage structure has changed and local storage must be reset. Clearing...");
 		await chrome.storage.local.clear();
 	}
-
-	// Make sure the current extension version is always saved in local storage
-	setLocalStorage("extensionVersion", manifestData.version);
 
 	// If over 90% of the storage quota for playlists is used, remove playlists that have not been accessed in a long time
 	const utilizedStorage = await chrome.storage.local.getBytesInUse();
