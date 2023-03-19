@@ -1,10 +1,14 @@
 # Changelog
 
-## v1.2.1
+## vx.x.x
 
 <!--Releasenotes start-->
-- Fixed an issue with the API
+- Improvements to the reliability of API requests.
 <!--Releasenotes end-->
+
+## v1.2.1
+
+- Fixed an issue with the API.
 
 ## v1.2.0
 

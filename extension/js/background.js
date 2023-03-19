@@ -33,7 +33,8 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 	// Set default values for config values that do not exist in sync storage
 	for (const [key, value] of Object.entries(configDefaults)) {
 		if (configSyncValues[key] === undefined) {
-			console.log(`Config value ${key} does not exist in sync storage. Setting default (${value})...`);
+			console.log(`Config value (setting) "${key}" does not exist in sync storage. Setting default:`);
+			console.log(value);
 			await chrome.storage.sync.set({ [key]: value });
 		}
 	}
@@ -41,7 +42,7 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 	// Remove old config values from sync storage
 	for (const [key, value] of Object.entries(configSyncValues)) {
 		if (configDefaults[key] === undefined) {
-			console.log(`Config value ${key} is not used anymore. Removing...`);
+			console.log(`Config value (setting) "${key}" is not used anymore (was removed with the most recent update). Removing it from sync storage...`);
 			await chrome.storage.sync.remove(key);
 		}
 	}
@@ -57,6 +58,7 @@ async function handleExtensionFirstInstall(manifestData) {
 async function handleExtensionUpdate(manifestData, previousVersion) {
 	console.log(`Extension was updated to version v${manifestData.version}`);
 
+	// v1.2.1 introduced a new YouTube API key, so we need to remove the old one from local storage
 	if (previousVersion < "1.2.1") {
 		// v1.2.1 first had this code snippet, so we don't need to run it again if the user updated from a version after that
 		const localStorageContents = await chrome.storage.local.get();
@@ -198,23 +200,28 @@ async function readDataOnce(key) {
 async function getApiKey(forceDefault) {
 	await fetchConfigSync();
 
+	// The API keys we have available
+	let availableAPIKeys = null;
+
 	// If the user has opted to use a custom API key, use that instead of the default one
 	if (!forceDefault && configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
-		APIKey = configSync.customYoutubeApiKey;
-		return APIKey;
+		return configSync.customYoutubeApiKey;
 	} else {
-		APIKey = await getFromLocalStorage("youtubeAPIKey");
+		availableAPIKeys = await getFromLocalStorage("youtubeAPIKeys");
 	}
 
-	// If the API key is not saved in local storage, get it from the database.
-	if (!APIKey) {
-		APIKey = await readDataOnce("youtubeAPIKey");
-		// The locally stored API key gets scrambled
-		setLocalStorage("youtubeAPIKey", rot13(APIKey, true));
-		return APIKey;
+	// If there are no API keys saved in local storage, get them from the database.
+	// The database provides a number of API keys, of which a random one should be used each time, so that we do not exceed the quota
+	if (!availableAPIKeys) {
+		availableAPIKeys = await readDataOnce("youtubeAPIKeys");
+		// The API keys get scrambled and stored locally
+		setLocalStorage("youtubeAPIKeys", availableAPIKeys.map(key => rot13(key, true)));
 	}
 
-	return rot13(APIKey, false);
+	// Choose a random one of the available API keys to evenly distribute the quotas
+	let chosenAPIKey = availableAPIKeys[Math.floor(Math.random() * availableAPIKeys.length)];
+
+	return rot13(chosenAPIKey, false);
 }
 
 // Very simple cipher to scramble a string
