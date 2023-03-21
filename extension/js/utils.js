@@ -141,10 +141,11 @@ class RandomYoutubeVideoError extends Error {
 }
 
 class YoutubeAPIError extends RandomYoutubeVideoError {
-	constructor(code, message) {
+	constructor(code=-1, message="", reason="") {
 		super(message);
 		this.code = code;
 		this.message = message;
+		this.reason = reason;
 		this.name = "YoutubeAPIError";
 	}
 }
