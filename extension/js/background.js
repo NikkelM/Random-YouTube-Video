@@ -1,86 +1,12 @@
-// Background script for the extension, which is run on extension initialization
+// Background script for the extension, which is run ("started") on extension initialization
 // Handles communication between the extension and the content script as well as firebase
 
 let configSync = null;
 
-// ---------- Initialization ----------
+// ---------- Initialization/Chrome event listeners ----------
 
-// Check whether new version is installed
-chrome.runtime.onInstalled.addListener(async function (details) {
-	const manifestData = chrome.runtime.getManifest();
-
-	if (details.reason == "install") {
-		await handleExtensionFirstInstall(manifestData);
-	} else if (details.reason == "update" && details.previousVersion !== manifestData.version) {
-		await handleExtensionUpdate(manifestData, details.previousVersion);
-	}
-
-	// All keys regarding user settings and their defaults
-	const configDefaults = {
-		"useCustomApiKeyOption": false,
-		"customYoutubeApiKey": null,
-		"databaseSharingEnabledOption": true,
-		"shuffleOpenInNewTabOption": false,
-		"shuffleOpenAsPlaylistOption": true,
-		// Dictionary of channelID -> percentage pairs
-		"channelSettings": {},
-		"currentChannelId": null,
-		"currentChannelName": null,
-	};
-
-	const configSyncValues = await chrome.storage.sync.get();
-
-	// Set default values for config values that do not exist in sync storage
-	for (const [key, value] of Object.entries(configDefaults)) {
-		if (configSyncValues[key] === undefined) {
-			console.log(`Config value ${key} does not exist in sync storage. Setting default (${value})...`);
-			await chrome.storage.sync.set({ [key]: value });
-		}
-	}
-
-	// Remove old config values from sync storage
-	for (const [key, value] of Object.entries(configSyncValues)) {
-		if (configDefaults[key] === undefined) {
-			console.log(`Config value ${key} is not used anymore. Removing...`);
-			await chrome.storage.sync.remove(key);
-		}
-	}
-});
-
-async function handleExtensionFirstInstall(manifestData) {
-	console.log("Extension was newly installed. Initializing settings...");
-
-	// Make sure the current extension version is always saved in local storage
-	setLocalStorage("extensionVersion", manifestData.version);
-}
-
-async function handleExtensionUpdate(manifestData, previousVersion) {
-	console.log(`Extension was updated to version v${manifestData.version}`);
-
-	if (previousVersion < "1.2.1") {
-		// v1.2.1 first had this code snippet, so we don't need to run it again if the user updated from a version after that
-		const localStorageContents = await chrome.storage.local.get();
-		// Delete the youtubeAPIKey from local storage if it exists
-		if (localStorageContents["youtubeAPIKey"]) {
-			await chrome.storage.local.remove("youtubeAPIKey");
-		}
-	}
-
-	// This variable indicates if the local storage should be cleared when updating to the newest version
-	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
-	// Provide reason for clearing if applicable
-	// Reason: N/A
-	// Version before change: N/A
-	const clearLocalStorageOnUpdate = false;
-
-	if (clearLocalStorageOnUpdate) {
-		console.log("The storage structure has changed and local storage must be reset. Clearing...");
-		await chrome.storage.local.clear();
-	}
-
-	// Make sure the current extension version is always saved in local storage
-	setLocalStorage("extensionVersion", manifestData.version);
-
+// On Chrome startup, we make sure we are not using too much local storage
+chrome.runtime.onStartup.addListener(async function () {
 	// If over 90% of the storage quota for playlists is used, remove playlists that have not been accessed in a long time
 	const utilizedStorage = await chrome.storage.local.getBytesInUse();
 	const maxLocalStorage = chrome.storage.local.QUOTA_BYTES;
@@ -108,6 +34,82 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 			chrome.storage.local.remove(playlistId);
 		}
 	}
+});
+
+// Check whether new version is installed
+chrome.runtime.onInstalled.addListener(async function (details) {
+	const manifestData = chrome.runtime.getManifest();
+
+	if (details.reason == "update" && details.previousVersion !== manifestData.version) {
+		await handleExtensionUpdate(manifestData, details.previousVersion);
+	}
+
+	// Validate the config in sync storage
+	await validateConfigSync();
+});
+
+async function handleExtensionUpdate(manifestData, previousVersion) {
+	console.log(`Extension was updated to version v${manifestData.version}`);
+
+	// Handle changes that may be specific to a certain version change
+	await handleVersionSpecificUpdates(previousVersion);
+
+	// This variable indicates if the local storage should be cleared when updating to the newest version
+	// Should only be true if changes were made to the data structure, requiring users to get the new data format from the database
+	// Provide reason for clearing if applicable
+	// Reason: N/A
+	// Version before change: N/A
+	const clearLocalStorageOnUpdate = false;
+
+	if (clearLocalStorageOnUpdate) {
+		console.log("The storage structure has changed and local storage must be reset. Clearing...");
+		await chrome.storage.local.clear();
+	}
+}
+
+async function handleVersionSpecificUpdates(previousVersion) {
+	// v1.2.2 removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
+	if (previousVersion < "1.2.2") {
+		const localStorageContents = await chrome.storage.local.get();
+		// Delete the youtubeAPIKey from local storage if it exists
+		if (localStorageContents["youtubeAPIKey"]) {
+			await chrome.storage.local.remove("youtubeAPIKey");
+		}
+	}
+}
+
+async function validateConfigSync() {
+	// All keys regarding user settings and their defaults
+	const configSyncDefaults = {
+		"useCustomApiKeyOption": false,
+		"customYoutubeApiKey": null,
+		"databaseSharingEnabledOption": true,
+		"shuffleOpenInNewTabOption": false,
+		"shuffleOpenAsPlaylistOption": true,
+		// Dictionary of channelID -> percentage pairs
+		"channelSettings": {},
+		"currentChannelId": null,
+		"currentChannelName": null,
+	};
+
+	const configSyncValues = await chrome.storage.sync.get();
+
+	// Set default values for config values that do not exist in sync storage
+	for (const [key, value] of Object.entries(configSyncDefaults)) {
+		if (configSyncValues[key] === undefined) {
+			console.log(`Config value (setting) "${key}" does not exist in sync storage. Setting default:`);
+			console.log(value);
+			await chrome.storage.sync.set({ [key]: value });
+		}
+	}
+
+	// Remove old config values from sync storage
+	for (const [key, value] of Object.entries(configSyncValues)) {
+		if (configSyncDefaults[key] === undefined) {
+			console.log(`Config value (setting) "${key}" is not used anymore (was removed with the most recent update). Removing it from sync storage...`);
+			await chrome.storage.sync.remove(key);
+		}
+	}
 }
 
 // ---------- Message handler ----------
@@ -125,13 +127,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		// Updates (with overwriting videos, as some were deleted and we do not grant 'delete' permissions) the playlist in Firebase
 		case "overwritePlaylistInfoInDB":
 			updatePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
-		// Gets the API key depending on user setting
-		case "getApiKey":
-			getApiKey(false).then(sendResponse);
+		// Gets an API key depending on user settings
+		case "getAPIKey":
+			getAPIKey(false, request.data.useAPIKeyAtIndex).then(sendResponse);
 			break;
-		// Gets the default API key saved in the database
-		case "getDefaultApiKey":
-			getApiKey(true).then(sendResponse);
+		// Gets the default API keys saved in the database
+		case "getDefaultAPIKeys":
+			getAPIKey(true, null).then(sendResponse);
 			break;
 		// A new configSync should be set
 		case "newConfigSync":
@@ -195,26 +197,55 @@ async function readDataOnce(key) {
 
 // ---------- Helpers ----------
 
-async function getApiKey(forceDefault) {
+async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 	await fetchConfigSync();
+
+	// List of API keys that are stored in the database/locally
+	let availableAPIKeys = null;
 
 	// If the user has opted to use a custom API key, use that instead of the default one
 	if (!forceDefault && configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
-		APIKey = configSync.customYoutubeApiKey;
-		return APIKey;
+		return {
+			APIKey: configSync.customYoutubeApiKey,
+			isCustomKey: true,
+			keyIndex: null
+		};
 	} else {
-		APIKey = await getFromLocalStorage("youtubeAPIKey");
+		availableAPIKeys = await getFromLocalStorage("youtubeAPIKeys");
 	}
 
-	// If the API key is not saved in local storage, get it from the database.
-	if (!APIKey) {
-		APIKey = await readDataOnce("youtubeAPIKey");
-		// The locally stored API key gets scrambled
-		setLocalStorage("youtubeAPIKey", rot13(APIKey, true));
-		return APIKey;
+	// If there are no API keys saved in local storage, get them from the database.
+	if (!availableAPIKeys) {
+		availableAPIKeys = await readDataOnce("youtubeAPIKeys");
+		// The API keys get scrambled and stored locally
+		availableAPIKeys = availableAPIKeys.map(key => rot13(key, true));
+		setLocalStorage("youtubeAPIKeys", availableAPIKeys);
 	}
 
-	return rot13(APIKey, false);
+	if (forceDefault) {
+		// Return a list of all API keys
+		return availableAPIKeys.map(key => rot13(key, false));
+	}
+
+	let usedIndex = null;
+	let chosenAPIKey = null;
+	if (useAPIKeyAtIndex === null) {
+		// Choose a random one of the available API keys to evenly distribute the quotas
+		usedIndex = Math.floor(Math.random() * availableAPIKeys.length);
+		chosenAPIKey = availableAPIKeys[usedIndex];
+	} else {
+		// Use the API key at the specified index, using the first one if the index is out of bounds
+		// This variable is set when a previously chosen key already exceeded its quota
+		usedIndex = availableAPIKeys[useAPIKeyAtIndex] ? useAPIKeyAtIndex : 0;
+		chosenAPIKey = availableAPIKeys[usedIndex];
+	}
+
+	// Return the API key, whether or not it is a custom one, and the index of the API key that was used
+	return {
+		APIKey: rot13(chosenAPIKey, false),
+		isCustomKey: false,
+		keyIndex: usedIndex
+	};
 }
 
 // Very simple cipher to scramble a string

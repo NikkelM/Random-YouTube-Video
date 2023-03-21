@@ -1,10 +1,16 @@
 # Changelog
 
-## v1.2.1
+## v1.2.2
 
 <!--Releasenotes start-->
-- Fixed an issue with the API
+- Improvements to the reliability of API requests.
+- Th extension now provides more information when setting a custom YouTube API key.
+- Various improvements to storage management.
 <!--Releasenotes end-->
+
+## v1.2.1
+
+- Fixed an issue with the API.
 
 ## v1.2.0
 
