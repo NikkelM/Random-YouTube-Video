@@ -212,7 +212,7 @@ async function validateApiKey(APIKey) {
 		.then((response) => response.json());
 
 	if (apiResponse["error"]) {
-		domElements.customApiKeyInputInfoText.innerText = apiResponse["error"]["message"];
+		domElements.customApiKeyInputInfoText.innerText = "Error: " + apiResponse["error"]["message"];
 		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 		return false;
 	}
