@@ -200,9 +200,9 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 // ---------- YouTube API ----------
 
-async function getPlaylistFromAPI(playlistId, useAPIKeyIndex = null) {
+async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex = null) {
 	// Get an API key
-	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyIndex);
+	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyAtIndex);
 	// We need to keep track of the original key's index, so we know when we have tried all keys
 	const originalKeyIndex = keyIndex;
 
@@ -233,9 +233,9 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyIndex = null) {
 }
 
 // Get snippets from the API as long as new videos are being found
-async function updatePlaylistFromAPI(localPlaylist, playlistId, useAPIKeyIndex = null) {
+async function updatePlaylistFromAPI(localPlaylist, playlistId, useAPIKeyAtIndex = null) {
 	// Get an API key
-	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyIndex);
+	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyAtIndex);
 	// We need to keep track of the original key's index, so we know when we have tried all keys
 	const originalKeyIndex = keyIndex;
 
@@ -343,11 +343,11 @@ async function testVideoExistence(videoId) {
 }
 
 // Requests the API key from the background script
-async function getAPIKey(useAPIKeyIndex = null) {
+async function getAPIKey(useAPIKeyAtIndex = null) {
 	const msg = {
 		command: "getAPIKey",
 		data: {
-			useAPIKeyIndex: useAPIKeyIndex
+			useAPIKeyAtIndex: useAPIKeyAtIndex
 		}
 	};
 

@@ -129,7 +129,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			updatePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
 		// Gets an API key depending on user settings
 		case "getAPIKey":
-			getAPIKey(false, request.data.useAPIKeyIndex).then(sendResponse);
+			getAPIKey(false, request.data.useAPIKeyAtIndex).then(sendResponse);
 			break;
 		// Gets the default API keys saved in the database
 		case "getDefaultAPIKeys":
@@ -197,7 +197,7 @@ async function readDataOnce(key) {
 
 // ---------- Helpers ----------
 
-async function getAPIKey(forceDefault, useAPIKeyIndex) {
+async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 	await fetchConfigSync();
 
 	// List of API keys that are stored in the database/locally
@@ -222,21 +222,21 @@ async function getAPIKey(forceDefault, useAPIKeyIndex) {
 		setLocalStorage("youtubeAPIKeys", availableAPIKeys);
 	}
 
-	if(forceDefault) {
+	if (forceDefault) {
 		// Return a list of all API keys
 		return availableAPIKeys.map(key => rot13(key, false));
 	}
 
 	let usedIndex = null;
 	let chosenAPIKey = null;
-	if (useAPIKeyIndex === null) {
+	if (useAPIKeyAtIndex === null) {
 		// Choose a random one of the available API keys to evenly distribute the quotas
 		usedIndex = Math.floor(Math.random() * availableAPIKeys.length);
 		chosenAPIKey = availableAPIKeys[usedIndex];
 	} else {
 		// Use the API key at the specified index, using the first one if the index is out of bounds
 		// This variable is set when a previously chosen key already exceeded its quota
-		usedIndex = availableAPIKeys[useAPIKeyIndex] ? useAPIKeyIndex : 0;
+		usedIndex = availableAPIKeys[useAPIKeyAtIndex] ? useAPIKeyAtIndex : 0;
 		chosenAPIKey = availableAPIKeys[usedIndex];
 	}
 
