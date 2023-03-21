@@ -1,4 +1,4 @@
-const defaultApiKey = await chrome.runtime.sendMessage({ command: "getDefaultApiKey" });
+const defaultAPIKeys = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
 
 let configSync = await fetchConfigSync();
 
@@ -11,8 +11,8 @@ const domElements = {
 	customApiKeyInputDiv: document.getElementById("customApiKeyInputDiv"),
 	customApiKeyInputField: customApiKeyInputDiv.children.namedItem("customApiKeyInputField"),
 	customApiKeySubmitButton: customApiKeyInputDiv.children.namedItem("customApiKeySubmitButton"),
-	customApiKeyInputErrorDiv: customApiKeyInputDiv.children.namedItem("customApiKeyInputErrorDiv"),
-	customApiKeyInputErrorText: customApiKeyInputErrorDiv.children.namedItem("customApiKeyInputErrorText"),
+	customApiKeyInputInfoDiv: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoDiv"),
+	customApiKeyInputInfoText: customApiKeyInputInfoDiv.children.namedItem("customApiKeyInputInfoText"),
 	// Database sharing: Option toggle
 	dbSharingOptionToggle: document.getElementById("dbSharingOptionToggle"),
 	// Shuffling: Open in new tab option toggle
@@ -85,9 +85,9 @@ domElements.dbSharingOptionToggle.addEventListener("change", function () {
 // Custom API key: Input
 domElements.customApiKeySubmitButton.addEventListener("click", async function () {
 	// Make sure the passed API key is valid
-	const newApiKey = domElements.customApiKeyInputField.value;
-	if (await validateApiKey(newApiKey)) {
-		setSyncStorageValue("customYoutubeApiKey", newApiKey);
+	const newAPIKey = domElements.customApiKeyInputField.value;
+	if (await validateApiKey(newAPIKey)) {
+		setSyncStorageValue("customYoutubeApiKey", newAPIKey);
 	} else {
 		setSyncStorageValue("customYoutubeApiKey", null);
 		setSyncStorageValue("databaseSharingEnabledOption", true);
@@ -179,7 +179,7 @@ async function fetchConfigSync() {
 
 function checkDbOptOutOptionEligibility() {
 	// This option may only be enabled if the user has provided a valid custom Youtube API key
-	return (configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey && configSync.customYoutubeApiKey !== defaultApiKey);
+	return (configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey && !defaultAPIKeys.includes(configSync.customYoutubeApiKey));
 }
 
 function manageDbOptOutOption() {
@@ -199,22 +199,32 @@ function manageDbOptOutOption() {
 }
 
 // Validates a YouTube API key by sending a short request
-async function validateApiKey(key) {
-	const apiResponse = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=YouTube+Data+API&type=video&key=${key}`)
+async function validateApiKey(APIKey) {
+	// Users should not add default API keys
+	if (defaultAPIKeys.includes(APIKey)) {
+		domElements.customApiKeyInputInfoText.innerText = "This is a default API key. Please enter your own.";
+		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
+		return false;
+	}
+
+	// Send a request to get the uploads of the "YouTube" channel
+	const apiResponse = await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=UUBR8-60-B28hp2BmDPdntcQ&key=${APIKey}`)
 		.then((response) => response.json());
 
 	if (apiResponse["error"]) {
-		domElements.customApiKeyInputErrorDiv.classList.remove("hidden");
-		domElements.customApiKeyInputErrorText.innerText = apiResponse["error"]["message"];
+		domElements.customApiKeyInputInfoText.innerText = "Error: " + apiResponse["error"]["message"];
+		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 		return false;
 	}
-	domElements.customApiKeyInputErrorDiv.classList.add("hidden");
+
+	domElements.customApiKeyInputInfoText.innerText = "Custom API key is valid and was successfully set.";
+	domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 	return true;
 }
 
 function setChannelSetting(channelId, setting, value) {
 	let channelSettings = configSync.channelSettings;
-	if(!channelSettings[channelId]) {
+	if (!channelSettings[channelId]) {
 		channelSettings[channelId] = {};
 	}
 	channelSettings[channelId][setting] = value;
