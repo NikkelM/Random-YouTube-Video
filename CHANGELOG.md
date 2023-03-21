@@ -1,6 +1,6 @@
 # Changelog
 
-## vx.x.x
+## v1.2.2
 
 <!--Releasenotes start-->
 - Improvements to the reliability of API requests.
