@@ -106,7 +106,7 @@ async function shuffleVideos() {
 
 		switch (error.name) {
 			case "RandomYoutubeVideoError":
-				displayText = `&nbsp;${error.message}`;
+				displayText = `&nbsp;Extension Error ${error.code}`;
 				break;
 			case "YoutubeAPIError":
 				displayText = `&nbsp;API Error (${error.code})`;
