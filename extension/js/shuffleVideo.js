@@ -37,14 +37,14 @@ async function chooseRandomVideo(channelId) {
 		// If the playlist does not exist in the database, get it from the API
 		if (isEmpty(playlistInfo)) {
 			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
-			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
+			playlistInfo = await getPlaylistFromAPI(uploadsPlaylistId);
 
 			shouldUpdateDatabase = true;
 		} else if (databaseSharing && (playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
 			// If the playlist exists in the database but is outdated, update it from the API.
 			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
 
-			playlistInfo = await updatePlaylistFromApi(playlistInfo, uploadsPlaylistId);
+			playlistInfo = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId);
 
 			shouldUpdateDatabase = true;
 		}
@@ -62,13 +62,13 @@ async function chooseRandomVideo(channelId) {
 		// With the current functionality and db rules, this shouldn't happen, except if the user has opted out of database sharing.
 		if (isEmpty(playlistInfo)) {
 			console.log(`${databaseSharing ? "Uploads playlist for this channel does not exist in the database. " : "Fetching it from the YouTube API..."}`);
-			playlistInfo = await getPlaylistFromApi(uploadsPlaylistId);
+			playlistInfo = await getPlaylistFromAPI(uploadsPlaylistId);
 
 			shouldUpdateDatabase = true;
 			// If the playlist exists in the database but is outdated there as well, update it from the API.
 		} else if ((playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
 			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
-			playlistInfo = await updatePlaylistFromApi(playlistInfo, uploadsPlaylistId);
+			playlistInfo = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId);
 
 			shouldUpdateDatabase = true;
 		}
@@ -200,7 +200,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 // ---------- YouTube API ----------
 
-async function getPlaylistFromApi(playlistId, useAPIKeyIndex = null) {
+async function getPlaylistFromAPI(playlistId, useAPIKeyIndex = null) {
 	// Get an API key
 	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyIndex);
 	// We need to keep track of the original key's index, so we know when we have tried all keys
@@ -233,7 +233,7 @@ async function getPlaylistFromApi(playlistId, useAPIKeyIndex = null) {
 }
 
 // Get snippets from the API as long as new videos are being found
-async function updatePlaylistFromApi(localPlaylist, playlistId, useAPIKeyIndex = null) {
+async function updatePlaylistFromAPI(localPlaylist, playlistId, useAPIKeyIndex = null) {
 	// Get an API key
 	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyIndex);
 	// We need to keep track of the original key's index, so we know when we have tried all keys
