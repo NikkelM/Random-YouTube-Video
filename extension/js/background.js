@@ -68,11 +68,11 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 }
 
 async function handleVersionSpecificUpdates(previousVersion) {
-	// vx.x.x removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
-	if(previousVersion < "x.x.x") {
+	// v1.2.2 removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
+	if (previousVersion < "1.2.2") {
 		const localStorageContents = await chrome.storage.local.get();
 		// Delete the youtubeAPIKey from local storage if it exists
-		if(localStorageContents["youtubeAPIKey"]) {
+		if (localStorageContents["youtubeAPIKey"]) {
 			await chrome.storage.local.remove("youtubeAPIKey");
 		}
 	}
@@ -127,13 +127,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		// Updates (with overwriting videos, as some were deleted and we do not grant 'delete' permissions) the playlist in Firebase
 		case "overwritePlaylistInfoInDB":
 			updatePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
-		// Gets the API key depending on user setting
-		case "getApiKey":
-			getApiKey(false).then(sendResponse);
+		// Gets an API key depending on user settings
+		case "getAPIKey":
+			getAPIKey(false, request.data.useAPIKeyIndex).then(sendResponse);
 			break;
-		// Gets the default API key saved in the database
-		case "getDefaultApiKey":
-			getApiKey(true).then(sendResponse);
+		// Gets the default API keys saved in the database
+		case "getDefaultAPIKeys":
+			getAPIKey(true, null).then(sendResponse);
 			break;
 		// A new configSync should be set
 		case "newConfigSync":
@@ -197,31 +197,55 @@ async function readDataOnce(key) {
 
 // ---------- Helpers ----------
 
-async function getApiKey(forceDefault) {
+async function getAPIKey(forceDefault, useAPIKeyIndex) {
 	await fetchConfigSync();
 
-	// The API keys we have available
+	// List of API keys that are stored in the database/locally
 	let availableAPIKeys = null;
 
 	// If the user has opted to use a custom API key, use that instead of the default one
 	if (!forceDefault && configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
-		return configSync.customYoutubeApiKey;
+		return {
+			APIKey: configSync.customYoutubeApiKey,
+			isCustomKey: true,
+			keyIndex: null
+		};
 	} else {
 		availableAPIKeys = await getFromLocalStorage("youtubeAPIKeys");
 	}
 
 	// If there are no API keys saved in local storage, get them from the database.
-	// The database provides a number of API keys, of which a random one should be used each time, so that we do not exceed the quota
 	if (!availableAPIKeys) {
 		availableAPIKeys = await readDataOnce("youtubeAPIKeys");
 		// The API keys get scrambled and stored locally
-		setLocalStorage("youtubeAPIKeys", availableAPIKeys.map(key => rot13(key, true)));
+		availableAPIKeys = availableAPIKeys.map(key => rot13(key, true));
+		setLocalStorage("youtubeAPIKeys", availableAPIKeys);
 	}
 
-	// Choose a random one of the available API keys to evenly distribute the quotas
-	let chosenAPIKey = availableAPIKeys[Math.floor(Math.random() * availableAPIKeys.length)];
+	if(forceDefault) {
+		// Return a list of all API keys
+		return availableAPIKeys.map(key => rot13(key, false));
+	}
 
-	return rot13(chosenAPIKey, false);
+	let usedIndex = null;
+	let chosenAPIKey = null;
+	if (useAPIKeyIndex === null) {
+		// Choose a random one of the available API keys to evenly distribute the quotas
+		usedIndex = Math.floor(Math.random() * availableAPIKeys.length);
+		chosenAPIKey = availableAPIKeys[usedIndex];
+	} else {
+		// Use the API key at the specified index, using the first one if the index is out of bounds
+		// This variable is set when a previously chosen key already exceeded its quota
+		usedIndex = availableAPIKeys[useAPIKeyIndex] ? useAPIKeyIndex : 0;
+		chosenAPIKey = availableAPIKeys[usedIndex];
+	}
+
+	// Return the API key, whether or not it is a custom one, and the index of the API key that was used
+	return {
+		APIKey: rot13(chosenAPIKey, false),
+		isCustomKey: false,
+		keyIndex: usedIndex
+	};
 }
 
 // Very simple cipher to scramble a string
