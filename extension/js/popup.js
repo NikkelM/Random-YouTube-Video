@@ -202,8 +202,8 @@ function manageDbOptOutOption() {
 async function validateApiKey(APIKey) {
 	// Users should not add default API keys
 	if (defaultAPIKeys.includes(APIKey)) {
-		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 		domElements.customApiKeyInputInfoText.innerText = "This is a default API key. Please enter your own.";
+		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 		return false;
 	}
 
@@ -212,13 +212,13 @@ async function validateApiKey(APIKey) {
 		.then((response) => response.json());
 
 	if (apiResponse["error"]) {
-		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 		domElements.customApiKeyInputInfoText.innerText = apiResponse["error"]["message"];
+		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 		return false;
 	}
 
-	domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 	domElements.customApiKeyInputInfoText.innerText = "Custom API key is valid and was successfully set.";
+	domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 	return true;
 }
 
