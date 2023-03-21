@@ -81,15 +81,24 @@ async function handleVersionSpecificUpdates(previousVersion) {
 async function validateConfigSync() {
 	// All keys regarding user settings and their defaults
 	const configSyncDefaults = {
+		// If the user has enabled the custom API key option
 		"useCustomApiKeyOption": false,
+		// The custom API key the user has provided. This key is already validated.
 		"customYoutubeApiKey": null,
+		// If the user has enabled sharing video ID's with the database
 		"databaseSharingEnabledOption": true,
+		// These two properties influence the behavior of the "shuffle" button
 		"shuffleOpenInNewTabOption": false,
 		"shuffleOpenAsPlaylistOption": true,
-		// Dictionary of channelID -> percentage pairs
+		// channelSettings is a dictionary of channelID -> percentage pairs
 		"channelSettings": {},
+		// These two properties are used by the popup to determine which channel's settings to show
 		"currentChannelId": null,
 		"currentChannelName": null,
+		// These two properties determine the amount of quota remaining today, and the time at which the quota will next reset (daily resets at midnight)
+		"quotaRemaining": 200,
+		// The default reset time is midnight of the next day
+		"quotaResetTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(),
 	};
 
 	const configSyncValues = await chrome.storage.sync.get();
