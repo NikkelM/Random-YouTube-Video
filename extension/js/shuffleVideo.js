@@ -1,17 +1,14 @@
 // Handles everything concerning the shuffling of videos, including sending messages to the backend database and the YouTube API
 
-let APIKey = null;
 let configSync = null;
 
-// For cases in which the playlist in the database has the old Array format, we need to overwrite it
+// For cases in which the playlist in the database has the old Array format (before v1.0.0), we need to overwrite it
 let mustOverwriteDatabase = false;
 
 // Chooses a random video uploaded on the current YouTube channel
 async function chooseRandomVideo(channelId) {
 	// Make sure we have the latest config
 	await fetchConfigSync();
-	// Make sure an API key is available
-	await getAPIKey();
 
 	// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
 	let shouldUpdateDatabase = false;
@@ -22,7 +19,7 @@ async function chooseRandomVideo(channelId) {
 	// Get the id of the uploads playlist for this channel
 	const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : null;
 	if (!uploadsPlaylistId) {
-		throw new RandomYoutubeVideoError("No channelID. Reload and try again!");
+		throw new RandomYoutubeVideoError(code="RYV-1", message="No channelID. Please reload page.");
 	}
 
 	console.log(`Choosing a random video from playlist/channel: ${uploadsPlaylistId}`);
@@ -105,7 +102,7 @@ async function chooseRandomVideo(channelId) {
 			videosByDate = Object.keys(allVideos).sort((a, b) => {
 				return new Date(allVideos[b]) - new Date(allVideos[a]);
 			});
-			
+
 			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
 
 			randomVideo = chooseRandomVideoFromList(videosToShuffle);
@@ -203,11 +200,18 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 // ---------- YouTube API ----------
 
-async function getPlaylistFromApi(playlistId) {
+async function getPlaylistFromApi(playlistId, useAPIKeyIndex = null) {
+	// Get an API key
+	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyIndex);
+	// We need to keep track of the original key's index, so we know when we have tried all keys
+	const originalKeyIndex = keyIndex;
+
 	let playlistInfo = {};
 
 	let pageToken = "";
-	let apiResponse = await getPlaylistSnippetFromAPI(playlistId, pageToken);
+
+	let apiResponse = null;
+	({ apiResponse, APIKey, isCustomKey, keyIndex } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex));
 
 	// For each video, add an entry in the form of videoId: uploadTime
 	playlistInfo["videos"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"]]));
@@ -217,7 +221,7 @@ async function getPlaylistFromApi(playlistId) {
 	pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 
 	while (pageToken !== null) {
-		apiResponse = await getPlaylistSnippetFromAPI(playlistId, pageToken);
+		({ apiResponse, APIKey, isCustomKey, keyIndex } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex));
 
 		// For each video, add an entry in the form of videoId: uploadTime
 		playlistInfo["videos"] = Object.assign(playlistInfo["videos"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"]])));
@@ -229,9 +233,16 @@ async function getPlaylistFromApi(playlistId) {
 }
 
 // Get snippets from the API as long as new videos are being found
-async function updatePlaylistFromApi(localPlaylist, playlistId) {
+async function updatePlaylistFromApi(localPlaylist, playlistId, useAPIKeyIndex = null) {
+	// Get an API key
+	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyIndex);
+	// We need to keep track of the original key's index, so we know when we have tried all keys
+	const originalKeyIndex = keyIndex;
+
 	let lastKnownUploadTime = localPlaylist["lastVideoPublishedAt"];
-	let apiResponse = await getPlaylistSnippetFromAPI(playlistId, "");
+
+	let apiResponse = null;
+	({ apiResponse, APIKey, isCustomKey, keyIndex } = await getPlaylistSnippetFromAPI(playlistId, "", APIKey, isCustomKey, keyIndex, originalKeyIndex));
 
 	// Update the "last video published at" date (only for the most recent video)
 	// If the newest video isn't newer than what we already have, we don't need to update the local storage
@@ -258,8 +269,8 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 			// If another page exists, continue checking
 			if (apiResponse["nextPageToken"]) {
 
-				// Get the next snippet
-				apiResponse = await getPlaylistSnippetFromAPI(playlistId, apiResponse["nextPageToken"]);
+				// Get the next snippet	
+				({ apiResponse, APIKey, isCustomKey, keyIndex } = await getPlaylistSnippetFromAPI(playlistId, apiResponse["nextPageToken"], APIKey, isCustomKey, keyIndex, originalKeyIndex));
 
 				currVideo = 0;
 				// Else, we have checked all videos
@@ -276,17 +287,44 @@ async function updatePlaylistFromApi(localPlaylist, playlistId) {
 	return localPlaylist;
 }
 
-// Sends a request to the Youtube API to get the snippet of a playlist
-async function getPlaylistSnippetFromAPI(playlistId, pageToken) {
-	console.log("Getting snippet from YouTube API...");
-	await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${APIKey}`)
-		.then((response) => response.json())
-		.then((data) => apiResponse = data);
+// Send a request to the Youtube API to get a snippet of a playlist
+async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex) {
+	let apiResponse = null;
 
-	if (apiResponse["error"]) {
-		throw new YoutubeAPIError(apiResponse["error"]["code"], apiResponse["error"]["message"]);
+	// We wrap this in a while block to simulate a retry mechanism until we get a valid response
+	while (true) {
+		try {
+			console.log("Getting snippet from YouTube API...");
+
+			await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${APIKey}`)
+				.then((response) => response.json())
+				.then((data) => apiResponse = data);
+
+			if (apiResponse["error"]) {
+				throw new YoutubeAPIError(code=apiResponse["error"]["code"], message=apiResponse["error"]["message"], reason=apiResponse["error"]["errors"][0]["reason"]);
+			}
+
+			break;
+		} catch (error) {
+			// We handle the case where an API key's quota was exceeded
+			if (error instanceof YoutubeAPIError && error.code === 403 && error.reason === "quotaExceeded") {
+				// We need to get another API key
+				if (!isCustomKey) {
+					console.log("Quota for this key was exceeded, trying another API key...");
+					({ APIKey, isCustomKey, keyIndex } = await getAPIKey(keyIndex + 1));
+					if (keyIndex === originalKeyIndex) {
+						console.log("All API keys have exceeded the allocated quota. Please inform the developer.");
+						throw new RandomYoutubeVideoError(code="RYV-2", message="All API keys have exceeded the allocated quota. Please inform the developer.");
+					}
+				} else {
+					console.log("You have exceeded the quota of your custom API key. You need to wait until the quota is reset, or use a different API key.");
+					throw error;
+				}
+			}
+		}
 	}
-	return apiResponse;
+
+	return { apiResponse, APIKey, isCustomKey, keyIndex };
 }
 
 // ---------- Utility ----------
@@ -305,16 +343,22 @@ async function testVideoExistence(videoId) {
 }
 
 // Requests the API key from the background script
-async function getAPIKey() {
+async function getAPIKey(useAPIKeyIndex = null) {
 	const msg = {
-		command: "getApiKey"
+		command: "getAPIKey",
+		data: {
+			useAPIKeyIndex: useAPIKeyIndex
+		}
 	};
 
-	APIKey = await chrome.runtime.sendMessage(msg);
+	// The response includes three parts: the API key, whether or not it is a custom key, and if it is not, at which index of the list of API keys the current key is
+	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage(msg);
 
 	if (!APIKey) {
-		throw new RandomYoutubeVideoError("No API key! Please inform the developer if this keeps happening.");
+		throw new RandomYoutubeVideoError(code="RYV-3", message="No API key available! Please inform the developer.");
 	}
+
+	return { APIKey, isCustomKey, keyIndex };
 }
 
 function chooseRandomVideoFromList(videoIds) {
