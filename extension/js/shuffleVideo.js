@@ -13,7 +13,6 @@ async function chooseRandomVideo(channelId) {
 	// Each user has a set amount of quota they can use per day.
 	// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.
 	let userQuotaRemainingToday = await getUserQuotaRemainingToday(configSync);
-	console.log(`Remaining quota for the YouTube API today: ${userQuotaRemainingToday}`);
 
 	// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
 	let shouldUpdateDatabase = false;
