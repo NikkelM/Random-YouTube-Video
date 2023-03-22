@@ -121,14 +121,3 @@ async function shuffleVideos() {
 		return;
 	}
 }
-
-// ---------- Sync storage interaction ----------
-
-async function setSyncStorageValue(key, value) {
-	configSync[key] = value;
-
-	await chrome.storage.sync.set({ [key]: value });
-
-	// Refresh the config in the background script. Send it like this to avoid a request to the chrome storage API
-	chrome.runtime.sendMessage({ command: "newConfigSync", data: configSync });
-}
