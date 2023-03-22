@@ -216,8 +216,8 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 
 	// If the user does not use a custom API key and has no quota remaining, we cannot continue
 	if (!isCustomKey && userQuotaRemainingToday <= 0) {
-		console.log("You have exceeded your daily quota allocation. You can try again tomorrow.");
-		throw new RandomYoutubeVideoError(code = "RYV-DailyQuota", message = "You have exceeded your daily quota allocation. You can try again tomorrow.");
+		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
+		throw new RandomYoutubeVideoError(code = "RYV-DailyQuota", message = "You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
 	}
 
 	let playlistInfo = {};
@@ -255,8 +255,8 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 	// If the user does not use a custom API key and has no quota remaining, we cannot continue
 	if (!isCustomKey && userQuotaRemainingToday <= 0) {
-		console.log("You have exceeded your daily quota allocation. You can try again tomorrow.");
-		throw new RandomYoutubeVideoError(code = "RYV-DailyQuota", message = "You have exceeded your daily quota allocation. You can try again tomorrow.");
+		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
+		throw new RandomYoutubeVideoError(code = "RYV-DailyQuota", message = "You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
 	}
 
 	let lastKnownUploadTime = playlistInfo["lastVideoPublishedAt"];
