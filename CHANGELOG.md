@@ -5,6 +5,7 @@
 <!--Releasenotes start-->
 - Improvements to the reliability of API requests.
 - Th extension now provides more information when setting a custom YouTube API key.
+- Limited the amount of daily requests a user may make to the YouTube API. This should not affect users with normal usage patterns. If you are affected by this, you may make use of the custom API key option to remove this limitation.
 - Various improvements to storage management.
 <!--Releasenotes end-->
 
