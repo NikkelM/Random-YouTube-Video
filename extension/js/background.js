@@ -96,9 +96,9 @@ async function validateConfigSync() {
 		"currentChannelId": null,
 		"currentChannelName": null,
 		// These two properties determine the amount of quota remaining today, and the time at which the quota will next reset (daily resets at midnight)
-		"quotaRemaining": 200,
+		"userQuotaRemainingToday": 200,
 		// The default reset time is midnight of the next day
-		"quotaResetTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(),
+		"userQuotaResetTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(),
 	};
 
 	const configSyncValues = await chrome.storage.sync.get();
