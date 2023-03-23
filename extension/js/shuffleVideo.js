@@ -228,7 +228,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 	// For each video, add an entry in the form of videoId: uploadTime
-	playlistInfo["videos"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"]]));
+	playlistInfo["videos"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)]));
 
 	// We also want to get the uploadTime of the most recent video
 	playlistInfo["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
@@ -238,7 +238,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 		({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 		// For each video, add an entry in the form of videoId: uploadTime
-		playlistInfo["videos"] = Object.assign(playlistInfo["videos"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"]])));
+		playlistInfo["videos"] = Object.assign(playlistInfo["videos"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)])));
 
 		pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 	}
@@ -267,7 +267,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	// Update the "last video published at" date (only for the most recent video)
 	// If the newest video isn't newer than what we already have, we don't need to update the local storage
 	if (lastKnownUploadTime < apiResponse["items"][0]["contentDetails"]["videoPublishedAt"]) {
-		console.log("At least one video has been published since the last check, updating known video ID's...");
+		console.log("At least one video has been published since the last check, updating video ID's...");
 		playlistInfo["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
 	} else {
 		console.log("No new videos have been published since the last check.");
@@ -279,8 +279,8 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 	// While the currently saved last video is older then the currently checked video from the API response, we need to add videos to local storage
 	while (lastKnownUploadTime < apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"]) {
-		// Add the video to the newVideos object
-		newVideos[apiResponse["items"][currVideo]["contentDetails"]["videoId"]] = apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"];
+		// Add the video to the newVideos object, with the videoId as key and the upload date (without time) as value
+		newVideos[apiResponse["items"][currVideo]["contentDetails"]["videoId"]] = apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"].substring(0, 10);
 
 		currVideo++;
 
