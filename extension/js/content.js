@@ -24,7 +24,7 @@ async function startDOMObserver(event) {
 	if (isVideoPage) {
 		channelId = event?.detail?.response?.playerResponse?.videoDetails?.channelId;
 		channelName = event?.detail?.response?.playerResponse?.videoDetails?.author;
-	} else{
+	} else {
 		// For channel pages, it is possible that we already got a channelId from the "yt-navigate-start" event
 		channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
 		channelName = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.title;
