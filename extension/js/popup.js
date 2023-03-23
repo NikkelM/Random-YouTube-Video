@@ -5,6 +5,7 @@ let configSync = await fetchConfigSync();
 // ---------- Get relevant DOM elements ----------
 
 const domElements = {
+	// GLOBAL SETTINGS
 	// Custom API key: Option toggle
 	useCustomApiKeyOptionToggle: document.getElementById("useCustomApiKeyOptionToggle"),
 	// Custom API key: Input
@@ -21,17 +22,28 @@ const domElements = {
 	shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle"),
 	// Shuffling: Shuffle from last x% of videos input
 	shuffleLastXVideosInputField: document.getElementById("shuffleLastXVideosInputField"),
+
+	// PER CHANNEL SETTINGS
 	// Custom options per channel div
 	channelCustomOptionsDiv: document.getElementById("channelCustomOptionsDiv"),
 	// Custom options per channel: Channel name and description
 	channelCustomOptionsHeader: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsHeader"),
 	// Custom options per channel: Shuffling: Shuffle from last x% of videos input
 	shuffleLastXVideosChannelCustomInputField: document.getElementById("shuffleLastXVideosChannelCustomInputField"),
+
+	// FYI - FOR YOUR INFORMATION
+	// FYI div
+	forYourInformationDiv: document.getElementById("forYourInformationDiv"),
+	// FYI: Daily quota notice div
+	dailyQuotaNoticeDiv: forYourInformationDiv.children.namedItem("dailyQuotaNoticeDiv"),
+	// Daily quota notice: Text
+	dailyQuotaNoticeText: dailyQuotaNoticeDiv.children.namedItem("dailyQuotaNoticeText"),
 }
 
 // ---------- Set default values from config ----------
 
-function setDomElementDefaultsFromConfig() {
+// The cofigSync contains all values the various sliders and text inputs should have
+function setDomElementValuesFromConfig() {
 	// ----- Custom API key: Option toggle -----
 	// If this option is checked is only dependent on the value in sync storage
 	domElements.useCustomApiKeyOptionToggle.checked = configSync.useCustomApiKeyOption;
@@ -64,9 +76,12 @@ function setDomElementDefaultsFromConfig() {
 
 	// ----- Custom options per channel: Shuffling: Shuffle from last x% of videos input -----
 	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.channelSettings[configSync.currentChannelId]?.shufflePercentage ?? 100;
+
+	// Contains logic for all the "For your information" div content
+	updateFYIDiv();
 }
 
-setDomElementDefaultsFromConfig();
+setDomElementValuesFromConfig();
 
 // ---------- Event listeners ----------
 
@@ -94,6 +109,7 @@ domElements.customApiKeySubmitButton.addEventListener("click", async function ()
 		domElements.customApiKeyInputField.value = "";
 	}
 	manageDbOptOutOption();
+	manageDependents(domElements.customApiKeySubmitButton, null);
 });
 
 // Shuffling: Open in new tab option toggle
@@ -129,11 +145,12 @@ domElements.shuffleLastXVideosChannelCustomInputField.addEventListener("focusout
 
 // ----- Dependency management -----
 
-function manageDependents(parent, checked) {
+function manageDependents(parent, value) {
 	switch (parent) {
 		// Custom API key: Option toggle
 		case domElements.useCustomApiKeyOptionToggle:
-			if (checked) {
+			// For this option, the value is the same as the checked state
+			if (value) {
 				// Show input field for custom API key
 				domElements.customApiKeyInputDiv.classList.remove("hidden");
 				// Set the value of the custom API key input field to the value in sync storage
@@ -149,7 +166,12 @@ function manageDependents(parent, checked) {
 				// Hide input field for custom API key
 				domElements.customApiKeyInputDiv.classList.add("hidden");
 			}
+			updateFYIDiv();
 			break;
+		case domElements.customApiKeySubmitButton:
+			// This is called after validation of a provided API key
+			// Depending on whether or not it is valid, we need to update the FYI div
+			updateFYIDiv();
 		default:
 			console.log(`No dependents to manage for element: ${parent.id}`);
 			break;
@@ -158,12 +180,13 @@ function manageDependents(parent, checked) {
 
 // ---------- Sync storage interaction ----------
 
+// This function also exists in utils.js
 async function setSyncStorageValue(key, value) {
 	configSync[key] = value;
 
 	await chrome.storage.sync.set({ [key]: value });
 
-	// Refresh the config in the background script. Send it like this to avoid a request to the chrome storage API
+	// Refresh the config in the background script. Send it like this to avoid a request to the chrome storage API.
 	chrome.runtime.sendMessage({ command: "newConfigSync", data: configSync });
 
 	console.log(`Set ${key} to ${value} in sync storage.`);
@@ -230,4 +253,29 @@ function setChannelSetting(channelId, setting, value) {
 	channelSettings[channelId][setting] = value;
 
 	setSyncStorageValue("channelSettings", channelSettings);
+}
+
+function updateFYIDiv() {
+	let numFYIElements = 0;
+	// ----- Daily quota notice -----
+	// ----- Daily quota notice: Text -----
+	// We set the value first to prevent the default value from being displayed for a split second
+	domElements.dailyQuotaNoticeText.innerText = configSync.userQuotaRemainingToday;
+
+	// ----- FYI: Daily quota notice div -----
+	// If the user has a custom API key, the daily quota notice is not relevant. So we only display it if the user is not providing a custom API key
+	if (!configSync.customYoutubeApiKey || !configSync.useCustomApiKeyOption) {
+		domElements.dailyQuotaNoticeDiv.classList.remove("hidden");
+		numFYIElements++;
+	} else {
+		domElements.dailyQuotaNoticeDiv.classList.add("hidden");
+	}
+
+	// ----- FYI div -----
+	// We need to do this after handling all above elements to decide if we even need to show the FYI div
+	if (numFYIElements > 0) {
+		domElements.forYourInformationDiv.classList.remove("hidden");
+	} else {
+		domElements.forYourInformationDiv.classList.add("hidden");
+	}
 }

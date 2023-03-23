@@ -24,7 +24,7 @@ async function startDOMObserver(event) {
 	if (isVideoPage) {
 		channelId = event?.detail?.response?.playerResponse?.videoDetails?.channelId;
 		channelName = event?.detail?.response?.playerResponse?.videoDetails?.author;
-	} else{
+	} else {
 		// For channel pages, it is possible that we already got a channelId from the "yt-navigate-start" event
 		channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
 		channelName = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.title;
@@ -120,15 +120,4 @@ async function shuffleVideos() {
 		setDOMTextWithDelay(shuffleButtonTextElement, displayText, 0, changeToken, true);
 		return;
 	}
-}
-
-// ---------- Sync storage interaction ----------
-
-async function setSyncStorageValue(key, value) {
-	configSync[key] = value;
-
-	await chrome.storage.sync.set({ [key]: value });
-
-	// Refresh the config in the background script. Send it like this to avoid a request to the chrome storage API
-	chrome.runtime.sendMessage({ command: "newConfigSync", data: configSync });
 }

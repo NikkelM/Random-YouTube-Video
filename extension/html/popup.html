@@ -14,10 +14,10 @@
 		<h1>Random YouTube Video</h1>
 
 		<!-- OPTIONS START -->
-		<h2>Extension Options</h2>
-		<p class="grey-text">Customize your experience.<br>Hover over an option to view a more detailed explanation.</p>
+		<h2>Extension Settings</h2>
+		<p class="grey-text">Hover over an option to view a more detailed explanation.</p>
 
-		<h3>General video settings</h3>
+		<h3>General Video Settings</h3>
 		<!-- Shuffling: Open in new tab option toggle -->
 		<div class="optionsRow">
 			<div class="toggle optionsRow-item">
@@ -48,7 +48,7 @@
 				<!-- Custom options per channel: Shuffling: Shuffle between last x videos -->
 				<div id="shuffleLastXVideosChannelCustomDiv" class="optionTextInput"
 					title="Only the most recent x% of videos uploaded to the channel will be considered when shuffling.">
-					<p style="display:inline">Shuffle from the most recent&nbsp;</p>
+					<p style="display:inline">Shuffle from the most recent</p>
 					<input type="number" inputmode="numeric" max="100" min="1" class="numberInput" style="display:inline"
 						id="shuffleLastXVideosChannelCustomInputField" name="apiKeyInput" value="100">
 					<p style="display:inline">% of videos.</p>
@@ -56,7 +56,7 @@
 			</div>
 		</div>
 
-		<h3>API</h3>
+		<h3>API Settings</h3>
 		<!-- Custom API key: Option toggle -->
 		<div class="optionsRow">
 			<div class="toggle optionsRow-item">
@@ -93,6 +93,21 @@
 		</div>
 		<!-- OPTIONS END -->
 
+		<!-- FYI -->
+		<div id="forYourInformationDiv" class="hidden">
+			<h2>For Your Information</h2>
+			<!-- Daily quota notice -->
+			<div id="dailyQuotaNoticeDiv" class="hidden"
+				title="To protect the userbase against abuse, each user has a limited amount of requests to the YouTube API per day. This quota only ticks down if you are the first to shuffle from a channel, and should not effect users with normal usage patterns. If you are affected by this, you may make use of the custom API key option to remove this limitation.">
+				<p style="display:inline">You have</p>
+				<p style="display:inline" id="dailyQuotaNoticeText">200</p>
+				<p style="display:inline">requests to the YouTube API remaining today.<br>Use a custom API key to remove this
+					limit.</p>
+			</div>
+			<!-- Daily quota notice end -->
+		</div>
+		<!-- FYI end -->
+
 		<br>
 		<footer id="randomYoutubeVideoFooter">
 			<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
@@ -105,7 +120,6 @@
 
 	</div>
 
-	<script src="../js/config.js" type="module"></script>
 	<script src="../js/popup.js" type="module"></script>
 </body>
 

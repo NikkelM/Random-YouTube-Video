@@ -94,6 +94,38 @@ function addHours(date, hours) {
 	return new Date(date.getTime() + hours * 3600000);
 }
 
+// ----- Storage -----
+
+async function fetchConfigSync() {
+	configSync = await chrome.storage.sync.get().then((result) => {
+		return result;
+	});
+
+	return configSync;
+}
+
+// This function also exists in popup.js
+async function setSyncStorageValue(key, value) {
+	configSync[key] = value;
+
+	await chrome.storage.sync.set({ [key]: value });
+
+	// Refresh the config in the background script. Send it like this to avoid a request to the chrome storage API
+	chrome.runtime.sendMessage({ command: "newConfigSync", data: configSync });
+}
+
+// Returns the number of requests the user can still make to the Youtube API today
+async function getUserQuotaRemainingToday(configSync) {
+	// The quota gets reset at midnight
+	if (configSync.userQuotaResetTime < Date.now()) {
+		configSync.userQuotaRemainingToday = 200;
+		configSync.userQuotaResetTime = new Date(new Date().setHours(24, 0, 0, 0)).getTime();
+		await setSyncStorageValue("userQuotaRemainingToday", configSync.userQuotaRemainingToday);
+		await setSyncStorageValue("userQuotaResetTime", configSync.userQuotaResetTime);
+	}
+	return configSync.userQuotaRemainingToday;
+}
+
 // ---------- Message sending ----------
 
 // Wrapper around sendMessage to work with asynchronous responses
@@ -110,16 +142,6 @@ function sendMessage(msg) {
 	})
 }
 
-// ---------- Sync storage ----------
-
-async function fetchConfigSync() {
-	configSync = await chrome.storage.sync.get().then((result) => {
-		return result;
-	});
-
-	return configSync;
-}
-
 // ---------- Custom classes ----------
 
 // Used to pass a boolean by reference
@@ -133,7 +155,7 @@ class BooleanReference {
 // ----- Errors -----
 
 class RandomYoutubeVideoError extends Error {
-	constructor(code="RYV-0", message="") {
+	constructor(code = "RYV-0", message = "") {
 		super(message);
 		this.code = code;
 		this.message = message;
@@ -142,7 +164,7 @@ class RandomYoutubeVideoError extends Error {
 }
 
 class YoutubeAPIError extends RandomYoutubeVideoError {
-	constructor(code="YAPI-0", message="", reason="") {
+	constructor(code = "YAPI-0", message = "", reason = "") {
 		super(message);
 		this.code = code;
 		this.message = message;

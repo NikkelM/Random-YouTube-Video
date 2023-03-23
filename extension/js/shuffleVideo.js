@@ -10,6 +10,10 @@ async function chooseRandomVideo(channelId) {
 	// Make sure we have the latest config
 	await fetchConfigSync();
 
+	// Each user has a set amount of quota they can use per day.
+	// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.
+	let userQuotaRemainingToday = await getUserQuotaRemainingToday(configSync);
+
 	// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
 	let shouldUpdateDatabase = false;
 
@@ -19,7 +23,7 @@ async function chooseRandomVideo(channelId) {
 	// Get the id of the uploads playlist for this channel
 	const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : null;
 	if (!uploadsPlaylistId) {
-		throw new RandomYoutubeVideoError(code="RYV-1", message="No channelID. Please reload page.");
+		throw new RandomYoutubeVideoError(code = "RYV-1", message = "No channelID. Please reload page.");
 	}
 
 	console.log(`Choosing a random video from playlist/channel: ${uploadsPlaylistId}`);
@@ -37,14 +41,14 @@ async function chooseRandomVideo(channelId) {
 		// If the playlist does not exist in the database, get it from the API
 		if (isEmpty(playlistInfo)) {
 			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
-			playlistInfo = await getPlaylistFromAPI(uploadsPlaylistId);
+			({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday));
 
 			shouldUpdateDatabase = true;
 		} else if (databaseSharing && (playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
 			// If the playlist exists in the database but is outdated, update it from the API.
 			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
 
-			playlistInfo = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId);
+			({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday));
 
 			shouldUpdateDatabase = true;
 		}
@@ -62,18 +66,22 @@ async function chooseRandomVideo(channelId) {
 		// With the current functionality and db rules, this shouldn't happen, except if the user has opted out of database sharing.
 		if (isEmpty(playlistInfo)) {
 			console.log(`${databaseSharing ? "Uploads playlist for this channel does not exist in the database. " : "Fetching it from the YouTube API..."}`);
-			playlistInfo = await getPlaylistFromAPI(uploadsPlaylistId);
+			({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday));
 
 			shouldUpdateDatabase = true;
 			// If the playlist exists in the database but is outdated there as well, update it from the API.
 		} else if ((playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
 			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
-			playlistInfo = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId);
+			({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday));
 
 			shouldUpdateDatabase = true;
 		}
 	}
 
+	// Update the remaining user quota in the configSync
+	await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
+
+	// TODO: Maybe move this logic to a new function
 	const videoShufflePercentage = configSync.channelSettings[channelId]?.shufflePercentage ?? 100;
 
 	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
@@ -137,7 +145,7 @@ async function chooseRandomVideo(channelId) {
 
 		// Send the playlist info to the database
 		const msg = {
-			// mustOverwriteDatabae: In case the data is still in the old format, we need to overwrite it
+			// mustOverwriteDatabase: In case the data is still in the old format, we need to overwrite it
 			command: (encounteredDeletedVideos || mustOverwriteDatabase) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
 			data: {
 				key: 'uploadsPlaylists/' + uploadsPlaylistId,
@@ -173,7 +181,7 @@ async function chooseRandomVideo(channelId) {
 
 // ---------- Database ----------
 
-// Tries to get the playlist from the database. If it is not present, returns an empty dictionary
+// Try to get the playlist from the database. If it does not exist, return an empty dictionary.
 async function tryGetPlaylistFromDB(playlistId) {
 	const msg = {
 		command: "getPlaylistFromDB",
@@ -182,9 +190,9 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 	let playlistInfo = await chrome.runtime.sendMessage(msg);
 
-	// In case the playlist is still in the old Array format in the database, convert it to the new format
+	// In case the playlist is still in the old Array format (before v1.0.0) in the database, convert it to the new format
 	if (playlistInfo && playlistInfo["videos"] && Array.isArray(playlistInfo["videos"])) {
-		console.log("The playlist was found in the database, but it is in the old format. Updating format...");
+		console.log("The playlist was found in the database, but it is in an old format (before v1.0.0). Updating format...");
 		mustOverwriteDatabase = true;
 		return {};
 	}
@@ -200,18 +208,24 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 // ---------- YouTube API ----------
 
-async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex = null) {
+async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemainingToday) {
 	// Get an API key
 	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyAtIndex);
 	// We need to keep track of the original key's index, so we know when we have tried all keys
 	const originalKeyIndex = keyIndex;
+
+	// If the user does not use a custom API key and has no quota remaining, we cannot continue
+	if (!isCustomKey && userQuotaRemainingToday <= 0) {
+		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
+		throw new RandomYoutubeVideoError(code = "RYV-DailyQuota", message = "You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
+	}
 
 	let playlistInfo = {};
 
 	let pageToken = "";
 
 	let apiResponse = null;
-	({ apiResponse, APIKey, isCustomKey, keyIndex } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex));
+	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 	// For each video, add an entry in the form of videoId: uploadTime
 	playlistInfo["videos"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"]]));
@@ -221,7 +235,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex = null) {
 	pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 
 	while (pageToken !== null) {
-		({ apiResponse, APIKey, isCustomKey, keyIndex } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex));
+		({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 		// For each video, add an entry in the form of videoId: uploadTime
 		playlistInfo["videos"] = Object.assign(playlistInfo["videos"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"]])));
@@ -229,29 +243,35 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex = null) {
 		pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 	}
 
-	return playlistInfo;
+	return { playlistInfo, userQuotaRemainingToday };
 }
 
 // Get snippets from the API as long as new videos are being found
-async function updatePlaylistFromAPI(localPlaylist, playlistId, useAPIKeyAtIndex = null) {
+async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex, userQuotaRemainingToday) {
 	// Get an API key
 	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyAtIndex);
 	// We need to keep track of the original key's index, so we know when we have tried all keys
 	const originalKeyIndex = keyIndex;
 
-	let lastKnownUploadTime = localPlaylist["lastVideoPublishedAt"];
+	// If the user does not use a custom API key and has no quota remaining, we cannot continue
+	if (!isCustomKey && userQuotaRemainingToday <= 0) {
+		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
+		throw new RandomYoutubeVideoError(code = "RYV-DailyQuota", message = "You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
+	}
+
+	let lastKnownUploadTime = playlistInfo["lastVideoPublishedAt"];
 
 	let apiResponse = null;
-	({ apiResponse, APIKey, isCustomKey, keyIndex } = await getPlaylistSnippetFromAPI(playlistId, "", APIKey, isCustomKey, keyIndex, originalKeyIndex));
+	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, "", APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 	// Update the "last video published at" date (only for the most recent video)
 	// If the newest video isn't newer than what we already have, we don't need to update the local storage
 	if (lastKnownUploadTime < apiResponse["items"][0]["contentDetails"]["videoPublishedAt"]) {
 		console.log("At least one video has been published since the last check, updating known video ID's...");
-		localPlaylist["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
+		playlistInfo["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
 	} else {
 		console.log("No new videos have been published since the last check.");
-		return localPlaylist;
+		return { playlistInfo, userQuotaRemainingToday };
 	}
 
 	let currVideo = 0;
@@ -270,7 +290,7 @@ async function updatePlaylistFromAPI(localPlaylist, playlistId, useAPIKeyAtIndex
 			if (apiResponse["nextPageToken"]) {
 
 				// Get the next snippet	
-				({ apiResponse, APIKey, isCustomKey, keyIndex } = await getPlaylistSnippetFromAPI(playlistId, apiResponse["nextPageToken"], APIKey, isCustomKey, keyIndex, originalKeyIndex));
+				({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, apiResponse["nextPageToken"], APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 				currVideo = 0;
 				// Else, we have checked all videos
@@ -281,14 +301,15 @@ async function updatePlaylistFromAPI(localPlaylist, playlistId, useAPIKeyAtIndex
 	}
 	console.log(`Found ${Object.keys(newVideos).length} new video(s).`);
 
-	// Add the new videos to a new key within the localPlaylist
-	localPlaylist["newVideos"] = newVideos;
+	// Add the new videos to a new key within the playlistInfo
+	playlistInfo["newVideos"] = newVideos;
 
-	return localPlaylist;
+	return { playlistInfo, userQuotaRemainingToday };
 }
 
 // Send a request to the Youtube API to get a snippet of a playlist
-async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex) {
+async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday) {
+	const originalUserQuotaRemainingToday = userQuotaRemainingToday;
 	let apiResponse = null;
 
 	// We wrap this in a while block to simulate a retry mechanism until we get a valid response
@@ -296,12 +317,14 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 		try {
 			console.log("Getting snippet from YouTube API...");
 
+			userQuotaRemainingToday--;
+
 			await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${APIKey}`)
 				.then((response) => response.json())
 				.then((data) => apiResponse = data);
 
 			if (apiResponse["error"]) {
-				throw new YoutubeAPIError(code=apiResponse["error"]["code"], message=apiResponse["error"]["message"], reason=apiResponse["error"]["errors"][0]["reason"]);
+				throw new YoutubeAPIError(code = apiResponse["error"]["code"], message = apiResponse["error"]["message"], reason = apiResponse["error"]["errors"][0]["reason"]);
 			}
 
 			break;
@@ -314,7 +337,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 					({ APIKey, isCustomKey, keyIndex } = await getAPIKey(keyIndex + 1));
 					if (keyIndex === originalKeyIndex) {
 						console.log("All API keys have exceeded the allocated quota. Please inform the developer.");
-						throw new RandomYoutubeVideoError(code="RYV-2", message="All API keys have exceeded the allocated quota. Please inform the developer.");
+						throw new RandomYoutubeVideoError(code = "RYV-2", message = "All API keys have exceeded the allocated quota. Please inform the developer.");
 					}
 				} else {
 					console.log("You have exceeded the quota of your custom API key. You need to wait until the quota is reset, or use a different API key.");
@@ -324,7 +347,10 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 		}
 	}
 
-	return { apiResponse, APIKey, isCustomKey, keyIndex };
+	// If the user is using a custom key, we do not want to update the quota
+	userQuotaRemainingToday = isCustomKey ? originalUserQuotaRemainingToday : userQuotaRemainingToday;
+
+	return { apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday };
 }
 
 // ---------- Utility ----------
@@ -355,7 +381,7 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage(msg);
 
 	if (!APIKey) {
-		throw new RandomYoutubeVideoError(code="RYV-3", message="No API key available! Please inform the developer.");
+		throw new RandomYoutubeVideoError(code = "RYV-3", message = "No API key available! Please inform the developer.");
 	}
 
 	return { APIKey, isCustomKey, keyIndex };
