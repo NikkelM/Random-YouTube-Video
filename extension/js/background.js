@@ -68,8 +68,8 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 }
 
 async function handleVersionSpecificUpdates(previousVersion) {
-	// v1.2.2 removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
-	if (previousVersion < "1.2.2") {
+	// v1.3.0 removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
+	if (previousVersion < "1.3.0") {
 		const localStorageContents = await chrome.storage.local.get();
 		// Delete the youtubeAPIKey from local storage if it exists
 		if (localStorageContents["youtubeAPIKey"]) {

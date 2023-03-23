@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.2.2
+## v1.3.0
 
 <!--Releasenotes start-->
 - Limited the amount of daily requests a user may make to the YouTube API to protect the userbase against abuse. This should not affect users with normal usage patterns. If you are affected by this, you may make use of the custom API key option to remove this limitation.
