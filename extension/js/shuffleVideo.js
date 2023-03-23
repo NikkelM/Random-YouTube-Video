@@ -309,6 +309,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 // Send a request to the Youtube API to get a snippet of a playlist
 async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday) {
+	const originalUserQuotaRemainingToday = userQuotaRemainingToday;
 	let apiResponse = null;
 
 	// We wrap this in a while block to simulate a retry mechanism until we get a valid response
@@ -316,9 +317,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 		try {
 			console.log("Getting snippet from YouTube API...");
 
-			if (!isCustomKey) {
-				userQuotaRemainingToday--;
-			}
+			userQuotaRemainingToday--;
 
 			await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${APIKey}`)
 				.then((response) => response.json())
@@ -347,6 +346,9 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 			}
 		}
 	}
+
+	// If the user is using a custom key, we do not want to update the quota
+	userQuotaRemainingToday = isCustomKey ? originalUserQuotaRemainingToday : userQuotaRemainingToday;
 
 	return { apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday };
 }
