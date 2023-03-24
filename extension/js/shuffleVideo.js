@@ -468,3 +468,19 @@ async function tryGetPlaylistFromLocalStorage(playlistId) {
 async function savePlaylistToLocalStorage(playlistId, playlistInfo) {
 	await chrome.storage.local.set({ [playlistId]: playlistInfo });
 }
+
+// ---------- Message handler ----------
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+	switch (request.command) {
+		// The popup sends this message when the user clicks the "Shuffle" button in the popup
+		case "shuffleFromChannel":
+			chooseRandomVideo(request.data)
+			break;
+		default:
+			console.log(`Unknown command: ${request.command}`);
+			sendResponse(`Unknown command: ${request.command}`);
+			break;
+	}
+	return true;
+});

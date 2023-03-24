@@ -40,7 +40,7 @@
 }
 
 #randomYoutubeVideoPopupBody {
-	margin: 10px;
+	margin: 20px;
 	width: 400px;
 	max-width: 100%;
 	/* NOTE: Ensures content doesn't exceed restricted popup widths in Firefox */
@@ -66,7 +66,7 @@
 }
 
 #randomYoutubeVideoPopup h3 {
-	margin-top: 8px;
+	margin-top: 12px;
 	margin-bottom: 4px;
 }
 
@@ -109,10 +109,9 @@ body {
 /*
  * Buttons
  */
-.optionTextInput button {
+.randomYoutubeVideoButton {
 	color: var(--randomYoutubeVideo-fg-color);
 	font-family: var(--randomYoutubeVideo-font-family);
-	display: inline-block;
 	text-decoration: none;
 	border: none;
 	border-radius: 3px;
@@ -124,15 +123,22 @@ body {
 	margin: 2px 1px;
 }
 
-.optionTextInput button:hover {
+/* For the shuffle button, we want some more space around it */
+.shuffleButton {
+	margin-top: 8px;
+	margin-bottom: 8px;
+	font-size: 15px
+}
+
+.randomYoutubeVideoButton:hover {
 	background-color: #444;
 }
 
-.optionTextInput button:active {
+.randomYoutubeVideoButton:active {
 	background-color: #555;
 }
 
-.optionTextInput button:disabled {
+.randomYoutubeVideoButton:disabled {
 	background-color: #444;
 	cursor: default;
 	color: var(--randomYoutubeVideo-grey-fg-color);
@@ -179,7 +185,7 @@ body {
 	padding: 10px 0;
 }
 
-#randomYoutubeVideoFooter a {
+.randomYoutubeVideoLink {
 	color: var(--randomYoutubeVideo-fg-color);
 	display: inline-block;
 	text-decoration: none;
@@ -190,6 +196,6 @@ body {
 	margin: 2px 1px;
 }
 
-#randomYoutubeVideoFooter a:hover {
+.randomYoutubeVideoLink:hover {
 	background-color: #444;
 }
