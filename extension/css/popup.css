@@ -109,7 +109,7 @@ body {
 /*
  * Buttons
  */
-.optionTextInput button {
+.randomYoutubeVideoButton {
 	color: var(--randomYoutubeVideo-fg-color);
 	font-family: var(--randomYoutubeVideo-font-family);
 	display: inline-block;
@@ -124,15 +124,15 @@ body {
 	margin: 2px 1px;
 }
 
-.optionTextInput button:hover {
+.randomYoutubeVideoButton:hover {
 	background-color: #444;
 }
 
-.optionTextInput button:active {
+.randomYoutubeVideoButton:active {
 	background-color: #555;
 }
 
-.optionTextInput button:disabled {
+.randomYoutubeVideoButton:disabled {
 	background-color: #444;
 	cursor: default;
 	color: var(--randomYoutubeVideo-grey-fg-color);
@@ -179,7 +179,7 @@ body {
 	padding: 10px 0;
 }
 
-#randomYoutubeVideoFooter a {
+.randomYoutubeVideoLink {
 	color: var(--randomYoutubeVideo-fg-color);
 	display: inline-block;
 	text-decoration: none;
@@ -190,6 +190,6 @@ body {
 	margin: 2px 1px;
 }
 
-#randomYoutubeVideoFooter a:hover {
+.randomYoutubeVideoLink:hover {
 	background-color: #444;
 }
