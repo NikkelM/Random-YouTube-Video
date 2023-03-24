@@ -31,6 +31,11 @@ const domElements = {
 	// Custom options per channel: Shuffling: Shuffle from last x% of videos input
 	shuffleLastXVideosChannelCustomInputField: document.getElementById("shuffleLastXVideosChannelCustomInputField"),
 
+	// Popup shuffle button notice
+	popupShuffleButtonNotice: document.getElementById("popupShuffleButtonNotice"),
+	// Popup shuffle button
+	popupShuffleButton: document.getElementById("popupShuffleButton"),
+
 	// FYI - FOR YOUR INFORMATION
 	// FYI div
 	forYourInformationDiv: document.getElementById("forYourInformationDiv"),
@@ -43,7 +48,7 @@ const domElements = {
 // ---------- Set default values from config ----------
 
 // The cofigSync contains all values the various sliders and text inputs should have
-function setDomElementValuesFromConfig() {
+async function setDomElementValuesFromConfig() {
 	// ----- Custom API key: Option toggle -----
 	// If this option is checked is only dependent on the value in sync storage
 	domElements.useCustomApiKeyOptionToggle.checked = configSync.useCustomApiKeyOption;
@@ -72,16 +77,24 @@ function setDomElementValuesFromConfig() {
 	}
 
 	// ----- Custom options per channel: Channel name and description -----
-	domElements.channelCustomOptionsHeader.innerText = `Settings for: ${configSync.currentChannelName}`;
+	domElements.channelCustomOptionsHeader.innerText = configSync.currentChannelName;
 
 	// ----- Custom options per channel: Shuffling: Shuffle from last x% of videos input -----
 	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.channelSettings[configSync.currentChannelId]?.shufflePercentage ?? 100;
+
+	// Popup shuffle button
+	// Show it only if we are on a youtube.com page
+	if(await getActiveTab().then(tab => tab.url.includes("youtube.com"))) {
+		domElements.popupShuffleButton.innerHTML = `Shuffle from: ${configSync.currentChannelName}`;
+		domElements.popupShuffleButton.classList.remove("hidden");
+		domElements.popupShuffleButtonNotice.classList.add("hidden");
+	}
 
 	// Contains logic for all the "For your information" div content
 	updateFYIDiv();
 }
 
-setDomElementValuesFromConfig();
+await setDomElementValuesFromConfig();
 
 // ---------- Event listeners ----------
 
@@ -141,6 +154,13 @@ domElements.shuffleLastXVideosChannelCustomInputField.addEventListener("focusout
 	this.value = value;
 
 	manageDependents(domElements.shuffleLastXVideosChannelCustomInputField, value);
+});
+
+// Popup shuffle button
+domElements.popupShuffleButton.addEventListener("click", async function () {
+	const activeTab = await getActiveTab();
+	// Shuffle from the most recent channel
+	await chrome.tabs.sendMessage(activeTab.id, { command: "shuffleFromChannel", data: configSync.currentChannelId });
 });
 
 // ----- Dependency management -----
@@ -293,4 +313,10 @@ async function getUserQuotaRemainingToday() {
 		await setSyncStorageValue("userQuotaResetTime", configSync.userQuotaResetTime);
 	}
 	return configSync.userQuotaRemainingToday;
+}
+
+async function getActiveTab() {
+	return await chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+		return tabs[0];
+	});
 }
