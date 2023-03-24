@@ -77,7 +77,7 @@ async function setDomElementValuesFromConfig() {
 	}
 
 	// ----- Custom options per channel: Channel name and description -----
-	domElements.channelCustomOptionsHeader.innerText = configSync.currentChannelName;
+	domElements.channelCustomOptionsHeader.innerText = `Channel Settings: ${configSync.currentChannelName}`;
 
 	// ----- Custom options per channel: Shuffling: Shuffle from last x% of videos input -----
 	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.channelSettings[configSync.currentChannelId]?.shufflePercentage ?? 100;
