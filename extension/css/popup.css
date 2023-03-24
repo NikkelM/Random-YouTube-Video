@@ -123,6 +123,13 @@ body {
 	margin: 2px 1px;
 }
 
+/* For the shuffle button, we want some more space around it */
+.shuffleButton {
+	margin-top: 8px;
+	margin-bottom: 8px;
+	font-size: 15px
+}
+
 .randomYoutubeVideoButton:hover {
 	background-color: #444;
 }
