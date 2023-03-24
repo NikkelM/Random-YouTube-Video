@@ -33,7 +33,8 @@
 		}
 	},
 	"permissions": [
-		"storage"
+		"storage",
+		"tabs"
 	],
 	"background": {
 		"service_worker": "js/background.js"
