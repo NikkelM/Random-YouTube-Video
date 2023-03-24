@@ -145,7 +145,7 @@ async function chooseRandomVideo(channelId) {
 
 		// Send the playlist info to the database
 		const msg = {
-			// mustOverwriteDatabase: In case the data is still in the old format, we need to overwrite it
+			// mustOverwriteDatabase: In case the data is still in an old format, we need to overwrite it instead of updating
 			command: (encounteredDeletedVideos || mustOverwriteDatabase) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
 			data: {
 				key: 'uploadsPlaylists/' + uploadsPlaylistId,
@@ -197,6 +197,36 @@ async function tryGetPlaylistFromDB(playlistId) {
 		return {};
 	}
 
+	// In case the videos have the upload date AND time in the database (before v1.3.0), convert it to only the date
+	if (playlistInfo && playlistInfo["videos"] && playlistInfo["videos"][Object.keys(playlistInfo["videos"])[0]].length > 10) {
+		console.log("The playlist was found in the database, but it is in an old format (before v1.3.0). Updating format...");
+
+		// Convert the videos to contain only the date
+		for (const videoId in playlistInfo["videos"]) {
+			playlistInfo["videos"][videoId] = playlistInfo["videos"][videoId].substring(0, 10);
+		}
+
+		// TODO: This is duplicated code with some smaller changes from the actual update code. We should merge them
+		// Only upload the wanted keys
+		const playlistInfoForDatabase = {
+			"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
+			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
+			"videos": playlistInfo["videos"]
+		};
+
+		// Send the playlist info to the database
+		const msg = {
+			// We need to overwrite the data in the database
+			command: 'overwritePlaylistInfoInDB',
+			data: {
+				key: 'uploadsPlaylists/' + playlistId,
+				val: playlistInfoForDatabase
+			}
+		};
+
+		chrome.runtime.sendMessage(msg);
+	}
+
 	if (!playlistInfo) {
 		return {};
 	}
@@ -228,7 +258,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 	// For each video, add an entry in the form of videoId: uploadTime
-	playlistInfo["videos"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"]]));
+	playlistInfo["videos"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)]));
 
 	// We also want to get the uploadTime of the most recent video
 	playlistInfo["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
@@ -238,7 +268,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 		({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 		// For each video, add an entry in the form of videoId: uploadTime
-		playlistInfo["videos"] = Object.assign(playlistInfo["videos"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"]])));
+		playlistInfo["videos"] = Object.assign(playlistInfo["videos"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)])));
 
 		pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 	}
@@ -267,7 +297,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	// Update the "last video published at" date (only for the most recent video)
 	// If the newest video isn't newer than what we already have, we don't need to update the local storage
 	if (lastKnownUploadTime < apiResponse["items"][0]["contentDetails"]["videoPublishedAt"]) {
-		console.log("At least one video has been published since the last check, updating known video ID's...");
+		console.log("At least one video has been published since the last check, updating video ID's...");
 		playlistInfo["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
 	} else {
 		console.log("No new videos have been published since the last check.");
@@ -279,8 +309,8 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 	// While the currently saved last video is older then the currently checked video from the API response, we need to add videos to local storage
 	while (lastKnownUploadTime < apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"]) {
-		// Add the video to the newVideos object
-		newVideos[apiResponse["items"][currVideo]["contentDetails"]["videoId"]] = apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"];
+		// Add the video to the newVideos object, with the videoId as key and the upload date (without time) as value
+		newVideos[apiResponse["items"][currVideo]["contentDetails"]["videoId"]] = apiResponse["items"][currVideo]["contentDetails"]["videoPublishedAt"].substring(0, 10);
 
 		currVideo++;
 
