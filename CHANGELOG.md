@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.3.1
+## v1.x.x
 
 <!--Releasenotes start-->
 - Added a shuffle button to the extension popup. This button will shuffle from the most recently visited channel and will be visible when you are on a YouTube page.
