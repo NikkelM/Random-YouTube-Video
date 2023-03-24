@@ -114,6 +114,7 @@ async function setSyncStorageValue(key, value) {
 	chrome.runtime.sendMessage({ command: "newConfigSync", data: configSync });
 }
 
+// This function also exists in popup.js
 // Returns the number of requests the user can still make to the Youtube API today
 async function getUserQuotaRemainingToday(configSync) {
 	// The quota gets reset at midnight
