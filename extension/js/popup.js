@@ -257,7 +257,9 @@ function setChannelSetting(channelId, setting, value) {
 
 function updateFYIDiv() {
 	let numFYIElements = 0;
+
 	// ----- Daily quota notice -----
+	getUserQuotaRemainingToday();
 	// ----- Daily quota notice: Text -----
 	// We set the value first to prevent the default value from being displayed for a split second
 	domElements.dailyQuotaNoticeText.innerText = configSync.userQuotaRemainingToday;
@@ -278,4 +280,17 @@ function updateFYIDiv() {
 	} else {
 		domElements.forYourInformationDiv.classList.add("hidden");
 	}
+}
+
+// This function also exists in utils.js
+// Returns the number of requests the user can still make to the Youtube API today
+async function getUserQuotaRemainingToday() {
+	// The quota gets reset at midnight
+	if (configSync.userQuotaResetTime < Date.now()) {
+		configSync.userQuotaRemainingToday = 200;
+		configSync.userQuotaResetTime = new Date(new Date().setHours(24, 0, 0, 0)).getTime();
+		await setSyncStorageValue("userQuotaRemainingToday", configSync.userQuotaRemainingToday);
+		await setSyncStorageValue("userQuotaResetTime", configSync.userQuotaResetTime);
+	}
+	return configSync.userQuotaRemainingToday;
 }
