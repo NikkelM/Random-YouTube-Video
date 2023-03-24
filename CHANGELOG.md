@@ -4,6 +4,7 @@
 
 <!--Releasenotes start-->
 - Added a shuffle button to the extension popup. This button will shuffle from the most recently visited channel and will be visible when you are on a YouTube page.
+- Some updates to the internal handling of API keys.
 <!--Releasenotes end-->
 
 
