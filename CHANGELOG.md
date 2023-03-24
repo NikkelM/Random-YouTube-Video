@@ -4,9 +4,10 @@
 
 <!--Releasenotes start-->
 - Limited the amount of daily requests a user may make to the YouTube API to protect the userbase against abuse. This should not affect users with normal usage patterns. If you are affected by this, you may make use of the custom API key option to remove this limitation.
-- Th extension now provides more information when setting a custom YouTube API key.
+- The extension now provides more information when setting a custom YouTube API key.
 - Improvements to the reliability of API requests.
 - Various improvements to storage management both locally and in the remote database.
+- Reduced the size of stored video data.
 <!--Releasenotes end-->
 
 ## v1.2.1
