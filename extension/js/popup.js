@@ -84,7 +84,7 @@ async function setDomElementValuesFromConfig() {
 
 	// Popup shuffle button
 	// Show it only if we are on a youtube.com page
-	if(await getActiveTab().then(tab => tab.url.includes("youtube.com"))) {
+	if (await getActiveTab().then(tab => tab.url.includes("youtube.com"))) {
 		domElements.popupShuffleButton.innerHTML = `Shuffle from: ${configSync.currentChannelName}`;
 		domElements.popupShuffleButton.classList.remove("hidden");
 		domElements.popupShuffleButtonNotice.classList.add("hidden");
