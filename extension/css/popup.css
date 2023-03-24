@@ -40,7 +40,7 @@
 }
 
 #randomYoutubeVideoPopupBody {
-	margin: 10px;
+	margin: 20px;
 	width: 400px;
 	max-width: 100%;
 	/* NOTE: Ensures content doesn't exceed restricted popup widths in Firefox */
@@ -66,7 +66,7 @@
 }
 
 #randomYoutubeVideoPopup h3 {
-	margin-top: 8px;
+	margin-top: 12px;
 	margin-bottom: 4px;
 }
 
@@ -112,7 +112,6 @@ body {
 .randomYoutubeVideoButton {
 	color: var(--randomYoutubeVideo-fg-color);
 	font-family: var(--randomYoutubeVideo-font-family);
-	display: inline-block;
 	text-decoration: none;
 	border: none;
 	border-radius: 3px;
