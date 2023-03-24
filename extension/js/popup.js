@@ -200,7 +200,7 @@ function manageDependents(parent, value) {
 
 // ---------- Sync storage interaction ----------
 
-// This function also exists in utils.js
+// This function also exists in utils.js and background.js
 async function setSyncStorageValue(key, value) {
 	configSync[key] = value;
 

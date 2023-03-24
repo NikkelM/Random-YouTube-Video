@@ -104,7 +104,7 @@ async function fetchConfigSync() {
 	return configSync;
 }
 
-// This function also exists in popup.js
+// This function also exists in popup.js and background.js
 async function setSyncStorageValue(key, value) {
 	configSync[key] = value;
 
