@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html id="randomYoutubeVideoHTML">
+<html id="randomYoutubeVideoHTML" lang="en">
 
 <head>
+	<title>Random YouTube Video</title>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link id="RandomYoutubeVideoStyleSheet" rel="stylesheet" href="../css/popup.css" />
@@ -40,7 +41,7 @@
 			</div>
 		</div>
 
-		<!-- This is only shown on pages with a shuffle button -->
+		<!-- Settings for the most recently visited channel -->
 		<div id="channel">
 			<div id="channelCustomOptionsDiv" class="hidden">
 				<h3 id="channelCustomOptionsHeader">Settings for the current channel</h3>
@@ -53,6 +54,8 @@
 						id="shuffleLastXVideosChannelCustomInputField" name="apiKeyInput" value="100">
 					<p style="display:inline">% of videos.</p>
 				</div>
+				<p id="popupShuffleButtonNotice" class="grey-text">Open YouTube to shuffle from this channel.</p>
+				<button id="popupShuffleButton" class="randomYoutubeVideoButton hidden" style="margin-top:8px; margin-bottom:8px; font-size:15px">Shuffle from this channel</button>
 			</div>
 		</div>
 
@@ -86,7 +89,7 @@
 				title="Enter your YouTube API key here. It will not be shared with anyone."
 				placeholder="Enter API key here. It won't be shared with anyone.">
 			<br>
-			<button class="button" id="customApiKeySubmitButton" type="button">Submit</button>
+			<button class="randomYoutubeVideoButton" id="customApiKeySubmitButton" type="button">Submit</button>
 			<div id="customApiKeyInputInfoDiv" class="hidden">
 				<p id="customApiKeyInputInfoText"></p>
 			</div>
@@ -110,12 +113,12 @@
 
 		<br>
 		<footer id="randomYoutubeVideoFooter">
-			<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
+			<a class="randomYoutubeVideoLink" href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
 				target="_blank" rel="noopener">Chrome store</a>
-			<a href="https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose" target="_blank"
+			<a class="randomYoutubeVideoLink" href="https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose" target="_blank"
 				rel="noopener">Feedback</a>
-			<a href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank" rel="noopener">GitHub</a>
-			<a href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener">Donate</a>
+			<a class="randomYoutubeVideoLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank" rel="noopener">GitHub</a>
+			<a class="randomYoutubeVideoLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener">Donate</a>
 		</footer>
 
 	</div>
