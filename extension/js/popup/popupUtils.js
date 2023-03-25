@@ -1,6 +1,5 @@
 // This file contains helper functions for the popup
 
-
 // ----- Dependency management -----
 
 function manageDependents(domElements, parent, value) {
