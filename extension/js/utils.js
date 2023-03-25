@@ -82,6 +82,13 @@ function setDOMTextWithDelay(textElement, newText, delayMS, changeToken, finaliz
 	});
 }
 
+// Gets the active tab (applies to the tab under the popup if it is open)
+async function getActiveTab() {
+	return await chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+		return tabs[0];
+	});
+}
+
 // ----- Objects -----
 
 // Determines if an object is empty
@@ -119,7 +126,6 @@ async function setSyncStorageValue(key, value, passedConfigSync = null) {
 	chrome.runtime.sendMessage({ command: "newConfigSync", data: passedConfigSync ?? configSync });
 }
 
-// This function also exists in popup.js
 // Returns the number of requests the user can still make to the Youtube API today
 async function getUserQuotaRemainingToday(configSync) {
 	// The quota gets reset at midnight
