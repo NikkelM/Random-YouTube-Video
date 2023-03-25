@@ -3,7 +3,7 @@
 // ---------- Initialization ----------
 
 // Load the font used for the "shuffle" icon
-// Do this at the very beginning to prevent a flash of unstyled text
+// Do this before building the button to prevent a flash of unstyled text
 let iconFont = `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0">`;
 iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChild;
 document.head.appendChild(iconFont);
@@ -25,7 +25,6 @@ async function startDOMObserver(event) {
 		channelId = event?.detail?.response?.playerResponse?.videoDetails?.channelId;
 		channelName = event?.detail?.response?.playerResponse?.videoDetails?.author;
 	} else {
-		// For channel pages, it is possible that we already got a channelId from the "yt-navigate-start" event
 		channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
 		channelName = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.title;
 	}
