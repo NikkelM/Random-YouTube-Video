@@ -9,7 +9,7 @@ iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChil
 document.head.appendChild(iconFont);
 
 let shuffleButton = null;
-// Access the actual text using "shuffleButtonTextElement.innerHTML"
+// We can access the actual text using "shuffleButtonTextElement.innerHTML"
 let shuffleButtonTextElement = null;
 
 document.addEventListener("yt-navigate-finish", startDOMObserver);
