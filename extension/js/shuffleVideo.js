@@ -97,24 +97,7 @@ async function chooseRandomVideo(channelId) {
 			videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
 		}
 
-		// Only upload the wanted keys
-		const playlistInfoForDatabase = {
-			"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
-			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
-			"videos": videosToDatabase
-		};
-
-		// Send the playlist info to the database
-		const msg = {
-			// mustOverwriteDatabase: In case the data is still in an old format, we need to overwrite it instead of updating
-			command: (encounteredDeletedVideos || mustOverwriteDatabase) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
-			data: {
-				key: 'uploadsPlaylists/' + uploadsPlaylistId,
-				val: playlistInfoForDatabase
-			}
-		};
-
-		chrome.runtime.sendMessage(msg);
+		uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos);
 
 		// If we just updated the database, we automatically have the same version as it
 		playlistInfo["lastFetchedFromDB"] = playlistInfo["lastUpdatedDBAt"];
@@ -167,25 +150,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 			playlistInfo["videos"][videoId] = playlistInfo["videos"][videoId].substring(0, 10);
 		}
 
-		// TODO: This is duplicated code with some smaller changes from the actual update code. We should merge them
-		// Only upload the wanted keys
-		const playlistInfoForDatabase = {
-			"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
-			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
-			"videos": playlistInfo["videos"]
-		};
-
-		// Send the playlist info to the database
-		const msg = {
-			// We need to overwrite the data in the database
-			command: 'overwritePlaylistInfoInDB',
-			data: {
-				key: 'uploadsPlaylists/' + playlistId,
-				val: playlistInfoForDatabase
-			}
-		};
-
-		chrome.runtime.sendMessage(msg);
+		uploadPlaylistToDatabase(playlistInfo, playlistInfo["videos"], playlistId, true, false);
 	}
 
 	if (!playlistInfo) {
@@ -195,6 +160,28 @@ async function tryGetPlaylistFromDB(playlistId) {
 	playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 
 	return playlistInfo;
+}
+
+// Upload a playlist to the database
+function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos) {
+	// Only upload the wanted keys
+	const playlistInfoForDatabase = {
+		"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
+		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
+		"videos": videosToDatabase
+	};
+
+	// Send the playlist info to the database
+	const msg = {
+		// mustOverwriteDatabase: In case the data is still in an old format, we need to overwrite it instead of updating
+		command: (mustOverwriteDatabase || encounteredDeletedVideos) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
+		data: {
+			key: 'uploadsPlaylists/' + uploadsPlaylistId,
+			val: playlistInfoForDatabase
+		}
+	};
+
+	chrome.runtime.sendMessage(msg);
 }
 
 // ---------- YouTube API ----------
