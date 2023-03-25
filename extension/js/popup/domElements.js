@@ -1,5 +1,7 @@
 // This file contains functions that are related to the DOM elements of the popup
 
+// ---------- Setup ----------
+
 // Get relevant DOM elements
 function getDomElements() {
 	return {
@@ -92,34 +94,6 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	updateFYIDiv(domElements, configSync);
 }
 
-async function updateFYIDiv(domElements, configSync) {
-	let numFYIElements = 0;
-
-	// ----- Daily quota notice -----
-	await getUserQuotaRemainingToday(configSync);
-
-	// ----- Daily quota notice: Text -----
-	// We set the value first to prevent the default value from being displayed for a split second
-	domElements.dailyQuotaNoticeText.innerText = configSync.userQuotaRemainingToday;
-
-	// ----- FYI: Daily quota notice div -----
-	// If the user has a custom API key, the daily quota notice is not relevant. So we only display it if the user is not providing a custom API key
-	if (!configSync.customYoutubeApiKey || !configSync.useCustomApiKeyOption) {
-		domElements.dailyQuotaNoticeDiv.classList.remove("hidden");
-		numFYIElements++;
-	} else {
-		domElements.dailyQuotaNoticeDiv.classList.add("hidden");
-	}
-
-	// ----- FYI div -----
-	// We need to do this after handling all above elements to decide if we even need to show the FYI div
-	if (numFYIElements > 0) {
-		domElements.forYourInformationDiv.classList.remove("hidden");
-	} else {
-		domElements.forYourInformationDiv.classList.add("hidden");
-	}
-}
-
 // Set event listeners for DOM elements
 async function setDomElemenEventListeners(domElements, configSync) {
 	// Custom API key: Option toggle
@@ -193,4 +167,33 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		// Shuffle from the most recent channel
 		await chrome.tabs.sendMessage(activeTab.id, { command: "shuffleFromChannel", data: configSync.currentChannelId });
 	});
+}
+
+// Sometimes we change the content of the FYI div, or even if it should be displayed at all
+async function updateFYIDiv(domElements, configSync) {
+	let numFYIElements = 0;
+
+	// ----- Daily quota notice -----
+	await getUserQuotaRemainingToday(configSync);
+
+	// ----- Daily quota notice: Text -----
+	// We set the value first to prevent the default value from being displayed for a split second
+	domElements.dailyQuotaNoticeText.innerText = configSync.userQuotaRemainingToday;
+
+	// ----- FYI: Daily quota notice div -----
+	// If the user has a custom API key, the daily quota notice is not relevant. So we only display it if the user is not providing a custom API key
+	if (!configSync.customYoutubeApiKey || !configSync.useCustomApiKeyOption) {
+		domElements.dailyQuotaNoticeDiv.classList.remove("hidden");
+		numFYIElements++;
+	} else {
+		domElements.dailyQuotaNoticeDiv.classList.add("hidden");
+	}
+
+	// ----- FYI div -----
+	// We need to do this after handling all above elements to decide if we even need to show the FYI div
+	if (numFYIElements > 0) {
+		domElements.forYourInformationDiv.classList.remove("hidden");
+	} else {
+		domElements.forYourInformationDiv.classList.add("hidden");
+	}
 }
