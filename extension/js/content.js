@@ -116,7 +116,7 @@ async function shuffleVideos() {
 		}
 
 		// Immediately display the error and stop other text changes
-		// TODO: Also add the error in more detail to the popup and/or logs?
+		// TODO: Also add the error in more detail to the popup?
 		setDOMTextWithDelay(shuffleButtonTextElement, displayText, 0, changeToken, true);
 		return;
 	}
