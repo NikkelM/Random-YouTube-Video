@@ -100,13 +100,15 @@ await setDomElementValuesFromConfig();
 
 // Custom API key: Option toggle
 domElements.useCustomApiKeyOptionToggle.addEventListener("change", function () {
-	setSyncStorageValue("useCustomApiKeyOption", this.checked);
+	configSync.useCustomApiKeyOption = this.checked;
+	setSyncStorageValue("useCustomApiKeyOption", this.checked, configSync);
 	manageDependents(domElements.useCustomApiKeyOptionToggle, this.checked);
 });
 
 // Database sharing: Option toggle
 domElements.dbSharingOptionToggle.addEventListener("change", function () {
-	setSyncStorageValue("databaseSharingEnabledOption", this.checked);
+	configSync.databaseSharingEnabledOption = this.checked;
+	setSyncStorageValue("databaseSharingEnabledOption", this.checked, configSync);
 	manageDependents(domElements.dbSharingOptionToggle, this.checked);
 });
 
@@ -115,10 +117,13 @@ domElements.customApiKeySubmitButton.addEventListener("click", async function ()
 	// Make sure the passed API key is valid
 	const newAPIKey = domElements.customApiKeyInputField.value;
 	if (await validateApiKey(newAPIKey)) {
-		setSyncStorageValue("customYoutubeApiKey", newAPIKey);
+		configSync.customYoutubeApiKey = newAPIKey;
+		await setSyncStorageValue("customYoutubeApiKey", newAPIKey, configSync);
 	} else {
-		setSyncStorageValue("customYoutubeApiKey", null);
-		setSyncStorageValue("databaseSharingEnabledOption", true);
+		configSync.customYoutubeApiKey = null;
+		configSync.databaseSharingEnabledOption = true;
+		await setSyncStorageValue("customYoutubeApiKey", null, configSync);
+		await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
 		domElements.customApiKeyInputField.value = "";
 	}
 	manageDbOptOutOption();
@@ -127,13 +132,15 @@ domElements.customApiKeySubmitButton.addEventListener("click", async function ()
 
 // Shuffling: Open in new tab option toggle
 domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", function () {
-	setSyncStorageValue("shuffleOpenInNewTabOption", this.checked);
+	configSync.shuffleOpenInNewTabOption = this.checked;
+	setSyncStorageValue("shuffleOpenInNewTabOption", this.checked, configSync);
 	manageDependents(domElements.shuffleOpenInNewTabOptionToggle, this.checked);
 });
 
 // Shuffling: Open as playlist option toggle
 domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", function () {
-	setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked);
+	configSync.shuffleOpenAsPlaylistOption = this.checked;
+	setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked, configSync);
 	manageDependents(domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
 });
 
@@ -180,7 +187,9 @@ function manageDependents(parent, value) {
 			} else {
 				// The user must share data with the database
 				domElements.dbSharingOptionToggle.checked = true;
-				setSyncStorageValue("databaseSharingEnabledOption", true);
+				configSync.databaseSharingEnabledOption = true;
+				setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
+
 				manageDbOptOutOption();
 
 				// Hide input field for custom API key
@@ -196,26 +205,6 @@ function manageDependents(parent, value) {
 			console.log(`No dependents to manage for element: ${parent.id}`);
 			break;
 	}
-}
-
-// ---------- Sync storage interaction ----------
-
-// This function also exists in utils.js
-async function setSyncStorageValue(key, value) {
-	configSync[key] = value;
-
-	await chrome.storage.sync.set({ [key]: value });
-
-	// Refresh the config in the background script. Send it like this to avoid a request to the chrome storage API.
-	chrome.runtime.sendMessage({ command: "newConfigSync", data: configSync });
-
-	console.log(`Set ${key} to ${value} in sync storage.`);
-}
-
-async function fetchConfigSync() {
-	return await chrome.storage.sync.get().then((result) => {
-		return result;
-	});
 }
 
 // ---------- Helper functions ----------
@@ -236,7 +225,7 @@ function manageDbOptOutOption() {
 	// If the user may not opt out of database sharing but the latest record shows they would like to, make sure it's set correctly in sync storage
 	if (!checkDbOptOutOptionEligibility() && !configSync.databaseSharingEnabledOption) {
 		configSync.databaseSharingEnabledOption = true;
-		setSyncStorageValue("databaseSharingEnabledOption", configSync.databaseSharingEnabledOption);
+		setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
 	}
 	domElements.dbSharingOptionToggle.checked = configSync.databaseSharingEnabledOption;
 }
@@ -272,14 +261,15 @@ function setChannelSetting(channelId, setting, value) {
 	}
 	channelSettings[channelId][setting] = value;
 
-	setSyncStorageValue("channelSettings", channelSettings);
+	configSync.channelSettings = channelSettings;
+	setSyncStorageValue("channelSettings", channelSettings, configSync);
 }
 
-function updateFYIDiv() {
+async function updateFYIDiv() {
 	let numFYIElements = 0;
 
 	// ----- Daily quota notice -----
-	getUserQuotaRemainingToday();
+	await getUserQuotaRemainingToday(configSync);
 	// ----- Daily quota notice: Text -----
 	// We set the value first to prevent the default value from being displayed for a split second
 	domElements.dailyQuotaNoticeText.innerText = configSync.userQuotaRemainingToday;
@@ -300,23 +290,4 @@ function updateFYIDiv() {
 	} else {
 		domElements.forYourInformationDiv.classList.add("hidden");
 	}
-}
-
-// This function also exists in utils.js
-// Returns the number of requests the user can still make to the Youtube API today
-async function getUserQuotaRemainingToday() {
-	// The quota gets reset at midnight
-	if (configSync.userQuotaResetTime < Date.now()) {
-		configSync.userQuotaRemainingToday = 200;
-		configSync.userQuotaResetTime = new Date(new Date().setHours(24, 0, 0, 0)).getTime();
-		await setSyncStorageValue("userQuotaRemainingToday", configSync.userQuotaRemainingToday);
-		await setSyncStorageValue("userQuotaResetTime", configSync.userQuotaResetTime);
-	}
-	return configSync.userQuotaRemainingToday;
-}
-
-async function getActiveTab() {
-	return await chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-		return tabs[0];
-	});
 }

@@ -99,6 +99,8 @@ async function validateConfigSync() {
 		"userQuotaRemainingToday": 200,
 		// The default reset time is midnight of the next day
 		"userQuotaResetTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(),
+		// We want to regularly check if there are new API keys available (weekly)
+		"nextAPIKeysCheckTime": new Date(new Date().setHours(168, 0, 0, 0)).getTime(),
 	};
 
 	const configSyncValues = await chrome.storage.sync.get();
@@ -223,12 +225,17 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 		availableAPIKeys = await getFromLocalStorage("youtubeAPIKeys");
 	}
 
-	// If there are no API keys saved in local storage, get them from the database.
-	if (!availableAPIKeys) {
+	// If there are no API keys saved in local storage or if we need to perform a periodic check, get them from the database.
+	if (!availableAPIKeys || configSync.nextAPIKeysCheckTime < Date.now()) {
 		availableAPIKeys = await readDataOnce("youtubeAPIKeys");
 		// The API keys get scrambled and stored locally
 		availableAPIKeys = availableAPIKeys.map(key => rot13(key, true));
 		setLocalStorage("youtubeAPIKeys", availableAPIKeys);
+
+		console.log("API keys were fetched. Next check will be in one week.");
+		// Set the next time to check for API keys to one week from now
+		configSync.nextAPIKeysCheckTime = new Date(new Date().setHours(168, 0, 0, 0)).getTime();
+		setSyncStorageValue("nextAPIKeysCheckTime", configSync.nextAPIKeysCheckTime);
 	}
 
 	if (forceDefault) {
@@ -293,4 +300,11 @@ async function fetchConfigSync() {
 	});
 
 	return configSync;
+}
+
+// This function also exists in utils.js
+async function setSyncStorageValue(key, value) {
+	configSync[key] = value;
+
+	await chrome.storage.sync.set({ [key]: value });
 }
