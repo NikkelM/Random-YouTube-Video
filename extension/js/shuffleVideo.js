@@ -81,7 +81,6 @@ async function chooseRandomVideo(channelId) {
 	// Update the remaining user quota in the configSync
 	await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
 
-	// TODO: Maybe move this logic to a new function
 	({ randomVideo, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
 
 	if (shouldUpdateDatabase && databaseSharing) {
