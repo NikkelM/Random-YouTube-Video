@@ -82,45 +82,7 @@ async function chooseRandomVideo(channelId) {
 	await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
 
 	// TODO: Maybe move this logic to a new function
-	const videoShufflePercentage = configSync.channelSettings[channelId]?.shufflePercentage ?? 100;
-
-	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
-	let videosByDate = Object.keys(allVideos).sort((a, b) => {
-		return new Date(allVideos[b]) - new Date(allVideos[a]);
-	});
-
-	let videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
-
-	let randomVideo = chooseRandomVideoFromList(videosToShuffle);
-	console.log("A random video has been chosen: " + randomVideo);
-
-	let encounteredDeletedVideos = false;
-	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
-	if (!await testVideoExistence(randomVideo)) {
-		encounteredDeletedVideos = true;
-		do {
-			console.log("The chosen video does not exist anymore. Removing it from the database and choosing a new one...");
-
-			// Remove the video from the local playlist object
-			// It will always be in the "videos" object, as we have just fetched the "newVideos" from the YouTube API
-			delete playlistInfo["videos"][randomVideo];
-
-			// Choose a new random video
-			allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
-			videosByDate = Object.keys(allVideos).sort((a, b) => {
-				return new Date(allVideos[b]) - new Date(allVideos[a]);
-			});
-
-			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
-
-			randomVideo = chooseRandomVideoFromList(videosToShuffle);
-
-			console.log(`A new random video has been chosen: ${randomVideo}`);
-		} while (!await testVideoExistence(randomVideo))
-
-		// Update the database by removing the deleted videos there as well
-		shouldUpdateDatabase = true;
-	}
+	({ randomVideo, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
 
 	if (shouldUpdateDatabase && databaseSharing) {
 		playlistInfo["lastUpdatedDBAt"] = new Date().toISOString();
@@ -422,9 +384,48 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 	return { APIKey, isCustomKey, keyIndex };
 }
 
-function chooseRandomVideoFromList(videoIds) {
-	let randomVideo = videoIds[Math.floor(Math.random() * videoIds.length)];
-	return randomVideo;
+async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase) {
+	const videoShufflePercentage = configSync.channelSettings[channelId]?.shufflePercentage ?? 100;
+
+	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
+	let videosByDate = Object.keys(allVideos).sort((a, b) => {
+		return new Date(allVideos[b]) - new Date(allVideos[a]);
+	});
+
+	let videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
+
+	let randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
+	console.log(`A random video has been chosen: ${randomVideo}`);
+
+	let encounteredDeletedVideos = false;
+	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
+	if (!await testVideoExistence(randomVideo)) {
+		encounteredDeletedVideos = true;
+		do {
+			console.log("The chosen video does not exist anymore. Removing it from the database and choosing a new one...");
+
+			// Remove the video from the local playlist object
+			// It will always be in the "videos" object, as we have just fetched the "newVideos" from the YouTube API
+			delete playlistInfo["videos"][randomVideo];
+
+			// Choose a new random video
+			allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
+			videosByDate = Object.keys(allVideos).sort((a, b) => {
+				return new Date(allVideos[b]) - new Date(allVideos[a]);
+			});
+
+			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
+
+			randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
+
+			console.log(`A new random video has been chosen: ${randomVideo}`);
+		} while (!await testVideoExistence(randomVideo))
+
+		// Update the database by removing the deleted videos there as well
+		shouldUpdateDatabase = true;
+	}
+
+	return { randomVideo, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
 }
 
 function playVideo(randomVideo, uploadsPlaylistId) {
