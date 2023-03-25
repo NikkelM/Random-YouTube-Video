@@ -374,7 +374,7 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 		}
 	};
 
-	// The response includes three parts: the API key, whether or not it is a custom key, and if it is not, at which index of the list of API keys the current key is
+	// The response includes three parts: the API key, whether or not it is a custom key, and at which index of the list of API keys the current key is
 	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage(msg);
 
 	if (!APIKey) {
