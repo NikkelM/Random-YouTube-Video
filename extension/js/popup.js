@@ -207,14 +207,6 @@ function manageDependents(parent, value) {
 	}
 }
 
-// ---------- Sync storage interaction ----------
-
-async function fetchConfigSync() {
-	return await chrome.storage.sync.get().then((result) => {
-		return result;
-	});
-}
-
 // ---------- Helper functions ----------
 
 function checkDbOptOutOptionEligibility() {
