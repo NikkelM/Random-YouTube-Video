@@ -302,7 +302,7 @@ async function fetchConfigSync() {
 	return configSync;
 }
 
-// This function also exists in popup.js and utils.js
+// This function also exists in utils.js
 async function setSyncStorageValue(key, value) {
 	configSync[key] = value;
 

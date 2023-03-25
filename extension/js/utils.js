@@ -104,14 +104,19 @@ async function fetchConfigSync() {
 	return configSync;
 }
 
-// This function also exists in popup.js and background.js
-async function setSyncStorageValue(key, value) {
-	configSync[key] = value;
+// This function also exists in background.js
+async function setSyncStorageValue(key, value, passedConfigSync = null) {
+	// passedConfigSync is true if this is called from the popup, as for the others the config is a global variable
+	if (passedConfigSync) {
+		passedConfigSync[key] = value;
+	} else {
+		configSync[key] = value;
+	}
 
 	await chrome.storage.sync.set({ [key]: value });
 
 	// Refresh the config in the background script. Send it like this to avoid a request to the chrome storage API
-	chrome.runtime.sendMessage({ command: "newConfigSync", data: configSync });
+	chrome.runtime.sendMessage({ command: "newConfigSync", data: passedConfigSync ?? configSync });
 }
 
 // This function also exists in popup.js
