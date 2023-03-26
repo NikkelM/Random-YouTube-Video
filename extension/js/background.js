@@ -123,6 +123,16 @@ async function validateConfigSync() {
 	}
 }
 
+// The shuffling page will open a port when it is started
+chrome.runtime.onConnect.addListener(function (port) {
+	if (port.name === "shufflingPage") {
+		port.onDisconnect.addListener(function () {
+			// Reload the service worker to resolve the freeze bug caused by closing the shuffling page before the shuffle was completed
+			chrome.runtime.reload();
+		});
+	}
+});
+
 // ---------- Message handler ----------
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
