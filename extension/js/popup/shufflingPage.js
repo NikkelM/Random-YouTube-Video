@@ -1,5 +1,5 @@
 let configSync = await fetchConfigSync();
-
+chrome.runtime.connect({ name: "shufflingPage" });
 const domElements = getDomElements();
 
 // If this page is open, it means the user has clicked the shuffle button
