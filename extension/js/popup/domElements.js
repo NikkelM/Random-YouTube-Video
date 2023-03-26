@@ -157,38 +157,15 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	});
 
 	// Popup shuffle button
-	domElements.popupShuffleButton.addEventListener("click", async function () {
-		// Disable the button to prevent multiple requests
-		domElements.popupShuffleButton.disabled = true;
-		// Show the "Do not close the popup" notice
-		popupShuffleButtonNotice.classList.remove("hidden");
+	domElements.popupShuffleButton.addEventListener("click", function () {
+		// Open the shuffling page in a new tab
+		window.open(
+			chrome.runtime.getURL("html/shuffling.html"),
+			"Random YouTube Video - Shuffling..."
+		);
 
-		// Called when the randomize-button is clicked
-		let changeToken = new BooleanReference();
-		setDOMTextWithDelay(domElements.popupShuffleButton, `&nbsp;Please wait...`, 500, changeToken);
-		setDOMTextWithDelay(domElements.popupShuffleButton, `&nbsp;Working on it...`, 6000, changeToken);
-
-		try {
-			await chooseRandomVideo(configSync.currentChannelId, true, domElements.popupShuffleButton);
-		} catch (error) {
-			console.error(error.stack);
-			console.error(error.message);
-
-			switch (error.name) {
-				case "RandomYoutubeVideoError":
-					displayText = `&nbsp;Error ${error.code}`;
-					break;
-				case "YoutubeAPIError":
-					displayText = `&nbsp;API Error ${error.code}`;
-					break;
-				default:
-					displayText = `&nbsp;Unknown Error`;
-			}
-
-			// Immediately display the error and stop other text changes
-			setDOMTextWithDelay(domElements.popupShuffleButton, displayText, 0, changeToken, true);
-			return;
-		}
+		// Close the popup window
+		window.close();
 	});
 }
 
