@@ -160,7 +160,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	domElements.popupShuffleButton.addEventListener("click", function () {
 		// Open the shuffling page in a new tab
 		window.open(
-			chrome.runtime.getURL("html/shuffling.html"),
+			chrome.runtime.getURL("html/shufflingPage.html"),
 			"Random YouTube Video - Shuffling..."
 		);
 
