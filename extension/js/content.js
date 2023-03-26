@@ -103,6 +103,7 @@ async function shuffleVideos() {
 		console.error(error.stack);
 		console.error(error.message);
 
+		let displayText = "";
 		switch (error.name) {
 			case "RandomYoutubeVideoError":
 				displayText = `&nbsp;Error ${error.code}`;
