@@ -305,6 +305,9 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 				throw new YoutubeAPIError(code = apiResponse["error"]["code"], message = apiResponse["error"]["message"], reason = apiResponse["error"]["errors"][0]["reason"]);
 			}
 
+			// Update the remaining user quota in the configSync
+			setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
+
 			break;
 		} catch (error) {
 			// We handle the case where an API key's quota was exceeded
@@ -419,9 +422,8 @@ async function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
 	let randomVideoURL = configSync.shuffleOpenAsPlaylistOption ? `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}` : `https://www.youtube.com/watch?v=${randomVideo}`;
 
 	// Open the video in a new tab or in the current tab, depending on the user's settings
-	// We always need to open in a new tab if the shuffle button in the popup was clicked
-	// (As we can't play the video in the popup and don't want to possibly overwrite the current tab without the user realizing this is the behaviour)
-	if (configSync.shuffleOpenInNewTabOption || firedFromPopup) {
+	// If the shuffle button from the popup was used, we always open the video in the same tab (==the shuffling page)
+	if (configSync.shuffleOpenInNewTabOption && !firedFromPopup) {
 		// Video page: Pause the current video if it is playing
 		if (isVideoUrl(window.location.href)) {
 			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
