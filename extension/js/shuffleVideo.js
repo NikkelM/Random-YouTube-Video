@@ -6,7 +6,7 @@ let configSync = null;
 let mustOverwriteDatabase = false;
 
 // Chooses a random video uploaded on the current YouTube channel
-async function chooseRandomVideo(channelId) {
+async function chooseRandomVideo(channelId, firedFromPopup = false) {
 	// Make sure we have the latest config
 	await fetchConfigSync();
 
@@ -120,7 +120,7 @@ async function chooseRandomVideo(channelId) {
 
 	await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
-	playVideo(randomVideo, uploadsPlaylistId);
+	playVideo(randomVideo, uploadsPlaylistId, firedFromPopup);
 }
 
 // ---------- Database ----------
@@ -414,12 +414,14 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 	return { randomVideo, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
 }
 
-function playVideo(randomVideo, uploadsPlaylistId) {
+async function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
 	// Get the correct URL format
 	let randomVideoURL = configSync.shuffleOpenAsPlaylistOption ? `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}` : `https://www.youtube.com/watch?v=${randomVideo}`;
 
 	// Open the video in a new tab or in the current tab, depending on the user's settings
-	if (configSync.shuffleOpenInNewTabOption) {
+	// We always need to open in a new tab if the shuffle button in the popup was clicked
+	// (As we can't play the video in the popup and don't want to possibly overwrite the current tab without the user realizing this is the behaviour)
+	if (configSync.shuffleOpenInNewTabOption || firedFromPopup) {
 		// Video page: Pause the current video if it is playing
 		if (isVideoUrl(window.location.href)) {
 			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
@@ -432,7 +434,7 @@ function playVideo(randomVideo, uploadsPlaylistId) {
 			if (featuredPlayer && featuredPlayer.classList.contains('playing-mode')) {
 				featuredPlayer.children[0].click();
 			}
-			// Channel page: Pause the miniplayer if it exists and is playing
+			// Any page: Pause the miniplayer if it exists and is playing
 			const miniPlayer = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
 			if (miniPlayer && miniPlayer.classList.contains('playing-mode')) {
 				miniPlayer.children[0].click();
@@ -460,19 +462,3 @@ async function tryGetPlaylistFromLocalStorage(playlistId) {
 async function savePlaylistToLocalStorage(playlistId, playlistInfo) {
 	await chrome.storage.local.set({ [playlistId]: playlistInfo });
 }
-
-// ---------- Message handler ----------
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-	switch (request.command) {
-		// The popup sends this message when the user clicks the "Shuffle" button in the popup
-		case "shuffleFromChannel":
-			chooseRandomVideo(request.data)
-			break;
-		default:
-			console.log(`Unknown command: ${request.command}`);
-			sendResponse(`Unknown command: ${request.command}`);
-			break;
-	}
-	return true;
-});

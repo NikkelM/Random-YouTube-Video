@@ -23,7 +23,7 @@
 		<div class="optionsRow">
 			<div class="toggle optionsRow-item">
 				<label id="shuffleOpenInNewTabOption"
-					title="If this is enabled, shuffled videos will open in a new tab instead of the current one.">
+					title="If this is enabled, shuffled videos will open in a new tab instead of the current one. This setting has no effect when using the shuffle button displayed in the popup.">
 					Open in new tab
 					<input type="checkbox" id="shuffleOpenInNewTabOptionToggle">
 					<span class="slider"></span>
@@ -54,11 +54,11 @@
 						id="shuffleLastXVideosChannelCustomInputField" name="apiKeyInput" value="100">
 					<p style="display:inline">% of videos.</p>
 				</div>
-				<p id="popupShuffleButtonNotice" class="grey-text"
-					title="A shuffle button will be displayed here when your active tab is a YouTube.com page. This is due to browser limitations.">
-					Open YouTube to shuffle from this channel.</p>
-				<button id="popupShuffleButton" class="randomYoutubeVideoButton shuffleButton hidden">
+				<button id="popupShuffleButton" class="randomYoutubeVideoButton shuffleButton">
 					Shuffle from this channel</button>
+				<p id="popupShuffleButtonNotice" class="grey-text hidden"
+					title="The extension is fetching data from the YouTube API. Closing the popup will sever the connection and stop the shuffle process.">
+					Do not close the popup, this will cancel the shuffle!</p>
 			</div>
 		</div>
 
@@ -129,6 +129,7 @@
 	</div>
 
 	<script src="../js/utils.js" type="text/javascript"></script>
+	<script src="../js/shuffleVideo.js" type="text/javascript"></script>
 	<script src="../js/popup/popupUtils.js" type="text/javascript"></script>
 	<script src="../js/popup/domElements.js" type="text/javascript"></script>
 	<script src="../js/popup/popup.js" type="module"></script>

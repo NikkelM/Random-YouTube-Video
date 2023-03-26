@@ -31,10 +31,10 @@ function getDomElements() {
 		// Custom options per channel: Shuffling: Shuffle from last x% of videos input
 		shuffleLastXVideosChannelCustomInputField: document.getElementById("shuffleLastXVideosChannelCustomInputField"),
 
-		// Popup shuffle button notice
-		popupShuffleButtonNotice: document.getElementById("popupShuffleButtonNotice"),
 		// Popup shuffle button
 		popupShuffleButton: document.getElementById("popupShuffleButton"),
+		// Popup shuffle button notice
+		popupShuffleButtonNotice: document.getElementById("popupShuffleButtonNotice"),
 
 		// FYI - FOR YOUR INFORMATION
 		// FYI div
@@ -83,12 +83,7 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.channelSettings[configSync.currentChannelId]?.shufflePercentage ?? 100;
 
 	// Popup shuffle button
-	// Show it only if we are on a youtube.com page
-	if (await getActiveTab().then(tab => tab.url.includes("youtube.com"))) {
-		domElements.popupShuffleButton.innerHTML = `Shuffle from: ${configSync.currentChannelName}`;
-		domElements.popupShuffleButton.classList.remove("hidden");
-		domElements.popupShuffleButtonNotice.classList.add("hidden");
-	}
+	domElements.popupShuffleButton.innerHTML = `Shuffle from: ${configSync.currentChannelName}`;
 
 	// Contains logic for all the "For your information" div content
 	updateFYIDiv(domElements, configSync);
@@ -163,9 +158,37 @@ async function setDomElemenEventListeners(domElements, configSync) {
 
 	// Popup shuffle button
 	domElements.popupShuffleButton.addEventListener("click", async function () {
-		const activeTab = await getActiveTab();
-		// Shuffle from the most recent channel
-		await chrome.tabs.sendMessage(activeTab.id, { command: "shuffleFromChannel", data: configSync.currentChannelId });
+		// Disable the button to prevent multiple requests
+		domElements.popupShuffleButton.disabled = true;
+		// Show the "Do not close the popup" notice
+		popupShuffleButtonNotice.classList.remove("hidden");
+
+		// Called when the randomize-button is clicked
+		let changeToken = new BooleanReference();
+		setDOMTextWithDelay(domElements.popupShuffleButton, `&nbsp;Please wait...`, 500, changeToken);
+		setDOMTextWithDelay(domElements.popupShuffleButton, `&nbsp;Working on it...`, 6000, changeToken);
+
+		try {
+			await chooseRandomVideo(configSync.currentChannelId, true, domElements.popupShuffleButton);
+		} catch (error) {
+			console.error(error.stack);
+			console.error(error.message);
+
+			switch (error.name) {
+				case "RandomYoutubeVideoError":
+					displayText = `&nbsp;Error ${error.code}`;
+					break;
+				case "YoutubeAPIError":
+					displayText = `&nbsp;API Error ${error.code}`;
+					break;
+				default:
+					displayText = `&nbsp;Unknown Error`;
+			}
+
+			// Immediately display the error and stop other text changes
+			setDOMTextWithDelay(domElements.popupShuffleButton, displayText, 0, changeToken, true);
+			return;
+		}
 	});
 }
 
