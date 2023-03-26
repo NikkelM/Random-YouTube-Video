@@ -295,7 +295,9 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 		try {
 			console.log("Getting snippet from YouTube API...");
 
+			// Update the remaining user quota in the configSync
 			userQuotaRemainingToday--;
+			setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
 
 			await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${APIKey}`)
 				.then((response) => response.json())
@@ -304,9 +306,6 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 			if (apiResponse["error"]) {
 				throw new YoutubeAPIError(code = apiResponse["error"]["code"], message = apiResponse["error"]["message"], reason = apiResponse["error"]["errors"][0]["reason"]);
 			}
-
-			// Update the remaining user quota in the configSync
-			setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
 
 			break;
 		} catch (error) {
