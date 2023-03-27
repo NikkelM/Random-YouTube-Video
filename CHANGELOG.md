@@ -3,7 +3,7 @@
 ## v1.x.x
 
 <!--Releasenotes start-->
-- Added a shuffle button to the extension popup that will shuffle from your most recently visited channel.
+- Added a shuffle button to the extension popup that will shuffle from your most recently visited channel. When shuffling using this button, a new tab will open that must remain open while the shuffle is being prepared.
 - Some updates to the internal handling of API keys.
 - Improved maintainability of the codebase.
 <!--Releasenotes end-->
