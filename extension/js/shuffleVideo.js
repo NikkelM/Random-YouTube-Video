@@ -416,9 +416,11 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 	return { randomVideo, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
 }
 
-async function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
+function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
 	// Get the correct URL format
-	let randomVideoURL = configSync.shuffleOpenAsPlaylistOption ? `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}` : `https://www.youtube.com/watch?v=${randomVideo}`;
+	let randomVideoURL = configSync.shuffleOpenAsPlaylistOption
+		? `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`
+		: `https://www.youtube.com/watch?v=${randomVideo}`;
 
 	// Open the video in a new tab or in the current tab, depending on the user's settings
 	// If the shuffle button from the popup was used, we always open the video in the same tab (==the shuffling page)
