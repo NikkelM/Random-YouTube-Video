@@ -33,8 +33,6 @@ function getDomElements() {
 
 		// Popup shuffle button
 		popupShuffleButton: document.getElementById("popupShuffleButton"),
-		// Popup shuffle button notice
-		popupShuffleButtonNotice: document.getElementById("popupShuffleButtonNotice"),
 
 		// FYI - FOR YOUR INFORMATION
 		// FYI div
@@ -158,11 +156,8 @@ async function setDomElemenEventListeners(domElements, configSync) {
 
 	// Popup shuffle button
 	domElements.popupShuffleButton.addEventListener("click", function () {
-		// Open the shuffling page in a new tab
-		window.open(
-			chrome.runtime.getURL("html/shufflingPage.html"),
-			"Random YouTube Video - Shuffling..."
-		);
+		// Open the shuffling page in a new tab, which will automatically start the shuffle
+		window.open(chrome.runtime.getURL("html/shufflingPage.html"), "Random YouTube Video - Shuffling...");
 	});
 }
 
