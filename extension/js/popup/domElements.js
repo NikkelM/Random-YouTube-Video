@@ -163,9 +163,6 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			chrome.runtime.getURL("html/shufflingPage.html"),
 			"Random YouTube Video - Shuffling..."
 		);
-
-		// Close the popup window
-		window.close();
 	});
 }
 
