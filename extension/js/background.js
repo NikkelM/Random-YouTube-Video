@@ -124,6 +124,7 @@ async function validateConfigSync() {
 }
 
 // The shuffling page will open a port when it is started
+// By default, the port closing will cause the service worker to be reloaded, as this will fix a freezing issue
 chrome.runtime.onConnect.addListener(function (port) {
 	if (port.name === "shufflingPage") {
 		port.onDisconnect.addListener(reloadServiceWorker);
