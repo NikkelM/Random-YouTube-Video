@@ -48,13 +48,6 @@ function setDOMTextWithDelay(textElement, newText, delayMS, changeToken, finaliz
 	});
 }
 
-// Gets the active tab (applies to the tab under the popup if it is open)
-async function getActiveTab() {
-	return await chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-		return tabs[0];
-	});
-}
-
 // ----- Objects -----
 
 // Determines if an object is empty
