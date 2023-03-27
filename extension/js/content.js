@@ -83,19 +83,19 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 
 // ---------- Shuffle ----------
 
+// Called when the randomize-button is clicked
 async function shuffleVideos() {
-	// Make sure we have the latest config
-	await fetchConfigSync();
-
-	// Called when the randomize-button is clicked
-	let changeToken = new BooleanReference();
-	setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Please wait...`, 500, changeToken);
-	setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Working on it...`, 6000, changeToken);
-
-	// Get the saved channelId from the button. If for some reason it is not there, use the channelId from the config
-	const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerHTML ?? configSync.currentChannelId;
-
 	try {
+		var changeToken = new BooleanReference();
+		// Make sure we have the latest config
+		await fetchConfigSync();
+
+		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Please wait...`, 500, changeToken);
+		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Working on it...`, 6000, changeToken);
+
+		// Get the saved channelId from the button. If for some reason it is not there, use the channelId from the config
+		const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerHTML ?? configSync.currentChannelId;
+
 		await chooseRandomVideo(channelId);
 		// Reset the button text in case we opened the video in a new tab
 		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Shuffle`, 0, changeToken, true);
@@ -113,6 +113,18 @@ async function shuffleVideos() {
 				break;
 			default:
 				displayText = `&nbsp;Unknown Error`;
+		}
+
+		// Special case: If the extension's background worker was reloaded, we need to reload the page to get the correct reference to the shuffle function again
+		if (error.message === 'Extension context invalidated.') {
+			// We don't want the button text to quickly change before the page is reloaded
+			displayText = `&nbsp;Shuffle`;
+			
+			// Inform the user about what has happened
+			alert("Random YouTube Video:\nThe extension's background worker was reloaded. This happens either when the extension is updated, or you interrupted a shuffle that was started from the popup.\n\nThe page will reload and you can try again.")
+			
+			// Reload the page
+			window.location.reload();
 		}
 
 		// Immediately display the error and stop other text changes
