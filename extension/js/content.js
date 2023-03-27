@@ -119,10 +119,10 @@ async function shuffleVideos() {
 		if (error.message === 'Extension context invalidated.') {
 			// We don't want the button text to quickly change before the page is reloaded
 			displayText = `&nbsp;Shuffle`;
-			
+
 			// Inform the user about what has happened
 			alert("Random YouTube Video:\nThe extension's background worker was reloaded. This happens either when the extension is updated, or you interrupted a shuffle that was started from the popup.\n\nThe page will reload and you can try again.")
-			
+
 			// Reload the page
 			window.location.reload();
 		}
