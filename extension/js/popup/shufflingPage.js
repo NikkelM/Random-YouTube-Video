@@ -1,5 +1,11 @@
-let configSync = await fetchConfigSync();
+// Contains logic for the "shufflingPage" that is opened when the user clicks the "Shuffle" button from the popup
+
+// Open a port to the background script which will close when the tab is closed, thereby notifying the background script to reload
+// This fixes a freezing bug caused when closing this tab before the shuffle is completed
 chrome.runtime.connect({ name: "shufflingPage" });
+
+let configSync = await fetchConfigSync();
+
 const domElements = getDomElements();
 
 // If this page is open, it means the user has clicked the shuffle button
