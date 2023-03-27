@@ -1,8 +1,9 @@
 // Contains logic for the "shufflingPage" that is opened when the user clicks the "Shuffle" button from the popup
 
-// Open a port to the background script which will close when the tab is closed, thereby notifying the background script to reload
-// This fixes a freezing bug caused when closing this tab before the shuffle is completed
-chrome.runtime.connect({ name: "shufflingPage" });
+// Open a port to the background script
+// By default, the port will cause the background script to reload when it is closed (== when this page is closed/URL changes)
+// However, if the shuffle completes successfully, this script will send a message to the port that will disconnect that listener
+const port = await chrome.runtime.connect({ name: "shufflingPage" });
 
 const domElements = getDomElements();
 
@@ -44,6 +45,8 @@ async function shuffleButtonClicked() {
 
 	try {
 		await chooseRandomVideo(configSync.currentChannelId, true);
+		// Remove the port's onDisconnect listener, as we have successfully opened the video and the service worker won't freeze
+		port.postMessage({ command: "shuffleComplete" });
 	} catch (error) {
 		console.error(error.stack);
 		console.error(error.message);
