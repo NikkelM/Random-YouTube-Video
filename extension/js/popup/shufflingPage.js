@@ -4,8 +4,6 @@
 // This fixes a freezing bug caused when closing this tab before the shuffle is completed
 chrome.runtime.connect({ name: "shufflingPage" });
 
-let configSync = await fetchConfigSync();
-
 const domElements = getDomElements();
 
 // If this page is open, it means the user has clicked the shuffle button
@@ -35,6 +33,8 @@ function getDomElements() {
 }
 
 async function shuffleButtonClicked() {
+	let configSync = await fetchConfigSync();
+
 	domElements.shufflingFromChannelHeading.innerHTML = configSync.currentChannelName;
 
 	// Called when the randomize-button is clicked
@@ -66,7 +66,7 @@ async function shuffleButtonClicked() {
 		setDOMTextWithDelay(domElements.pleaseWaitNotice, displayText, 0, changeToken, true);
 		domElements.shuffleErrorText.innerHTML = errorMessage;
 		domElements.shuffleErrorText.classList.remove("hidden");
-		
+
 		// Stop displaying the elements that are only shown while shuffling
 		domElements.shufflingInProgressElements.classList.add("hidden");
 
