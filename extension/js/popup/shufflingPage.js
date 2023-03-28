@@ -63,7 +63,7 @@ async function shuffleButtonClicked() {
 				displayText = `Unknown Error`;
 		}
 
-		const errorMessage = (error.message && error.message.length > 0) ? error.message : "This error has no message.";
+		const errorMessage = `${error.message ?? ""}${error.reason ? "<br>" + error.reason : ""}${error.solveHint ? "<br>" + error.solveHint : ""}`;
 
 		// Immediately display the error and stop other text changes
 		setDOMTextWithDelay(domElements.pleaseWaitNotice, displayText, 0, changeToken, true);
