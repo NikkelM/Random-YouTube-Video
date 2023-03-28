@@ -157,7 +157,24 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	// Popup shuffle button
 	domElements.popupShuffleButton.addEventListener("click", function () {
 		// Open the shuffling page in a new tab, which will automatically start the shuffle
-		window.open(chrome.runtime.getURL("html/shufflingPage.html"), "Random YouTube Video - Shuffling...");
+		// Don't open it if an instance of the shuffling page already exists
+		chrome.tabs.query({}, function (tabs) {
+			let mustOpenShufflingPage = true;
+			for (let i = 0; i <= tabs.length - 1; i++) {
+				if (tabs[i].url === "chrome-extension://kijgnjhogkjodpakfmhgleobifempckf/html/shufflingPage.html") {
+					// An instance of the shufflingPage already exists, so don't create a new one
+					mustOpenShufflingPage = false;
+					// Focus the existing shufflingPage
+					chrome.tabs.update(tabs[i].id, { active: true });
+					// Close the popup
+					window.close();
+					break;
+				}
+			}
+			if (mustOpenShufflingPage) {
+				window.open(chrome.runtime.getURL("html/shufflingPage.html"), "Random YouTube Video - Shuffling...");
+			}
+		});
 	});
 }
 
