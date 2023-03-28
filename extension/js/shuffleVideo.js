@@ -140,7 +140,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 	// In case the playlist is still in the old Array format (before v1.0.0) in the database, convert it to the new format
 	if (playlistInfo && playlistInfo["videos"] && Array.isArray(playlistInfo["videos"])) {
-		console.log("The playlist was found in the database, but it is in an old format (before v1.0.0). Updating format...");
+		console.log("The playlist was found in the database, but it is in an old format (before v1.0.0). Removing...");
 		mustOverwriteDatabase = true;
 		return {};
 	}
