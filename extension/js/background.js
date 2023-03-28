@@ -123,6 +123,26 @@ async function validateConfigSync() {
 	}
 }
 
+// The shuffling page will open a port when it is started
+// By default, the port closing will cause the service worker to be reloaded, as this will fix a freezing issue
+chrome.runtime.onConnect.addListener(function (port) {
+	if (port.name === "shufflingPage") {
+		port.onDisconnect.addListener(reloadServiceWorker);
+
+		port.onMessage.addListener(function (msg) {
+			if (msg.command === "shuffleComplete") {
+				port.onDisconnect.removeListener(reloadServiceWorker);
+			}
+		});
+	}
+});
+
+// This will reload the service orker, which will invalidate the extension context for all YouTube tabs
+function reloadServiceWorker() {
+	console.log("Shuffling page was closed before the shuffle was completed. Reloading service worker to prevent freezing...");
+	chrome.runtime.reload();
+}
+
 // ---------- Message handler ----------
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

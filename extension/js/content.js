@@ -3,13 +3,13 @@
 // ---------- Initialization ----------
 
 // Load the font used for the "shuffle" icon
-// Do this at the very beginning to prevent a flash of unstyled text
+// Do this before building the button to prevent a flash of unstyled text
 let iconFont = `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0">`;
 iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChild;
 document.head.appendChild(iconFont);
 
 let shuffleButton = null;
-// Access the actual text using "shuffleButtonTextElement.innerHTML"
+// We can access the actual text using "shuffleButtonTextElement.innerHTML"
 let shuffleButtonTextElement = null;
 
 document.addEventListener("yt-navigate-finish", startDOMObserver);
@@ -25,7 +25,6 @@ async function startDOMObserver(event) {
 		channelId = event?.detail?.response?.playerResponse?.videoDetails?.channelId;
 		channelName = event?.detail?.response?.playerResponse?.videoDetails?.author;
 	} else {
-		// For channel pages, it is possible that we already got a channelId from the "yt-navigate-start" event
 		channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
 		channelName = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.title;
 	}
@@ -71,7 +70,15 @@ async function startDOMObserver(event) {
 }
 
 async function channelDetectedAction(pageType, channelId, channelName) {
-	await fetchConfigSync();
+	// We can get an error here if the extension context was invalidated and the user navigates without reloading the page
+	try {
+		await fetchConfigSync();
+	} catch (error) {
+		// If the extension's background worker was reloaded, we need to reload the page to re-connect to the background worker
+		if (error.message === 'Extension context invalidated.') {
+			window.location.reload();
+		}
+	}
 
 	// Save the current channelID and channelName in the extension's storage to be accessible by the popup
 	configSync.currentChannelId = channelId;
@@ -84,19 +91,22 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 
 // ---------- Shuffle ----------
 
+// Called when the randomize-button is clicked
 async function shuffleVideos() {
-	// Make sure we have the latest config
-	await fetchConfigSync();
-
-	// Called when the randomize-button is clicked
-	let changeToken = new BooleanReference();
-	setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Please wait...`, 500, changeToken);
-	setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Working on it...`, 6000, changeToken);
-
-	// Get the saved channelId from the button. If for some reason it is not there, use the channelId from the config
-	const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerHTML ?? configSync.currentChannelId;
-
 	try {
+		// This needs to be on top, as we still need it even if the extension context is invalidated, which will cause an error when fetching the config
+		var changeToken = new BooleanReference();
+
+		// Make sure we have the latest config
+		await fetchConfigSync();
+
+		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Please wait...`, 500, changeToken);
+		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Working on it...`, 6000, changeToken);
+		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Might be a while...`, 15000, changeToken);
+
+		// Get the saved channelId from the button. If for some reason it is not there, use the channelId from the config
+		const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerHTML ?? configSync.currentChannelId;
+
 		await chooseRandomVideo(channelId);
 		// Reset the button text in case we opened the video in a new tab
 		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Shuffle`, 0, changeToken, true);
@@ -104,20 +114,46 @@ async function shuffleVideos() {
 		console.error(error.stack);
 		console.error(error.message);
 
+		let displayText = "";
 		switch (error.name) {
 			case "RandomYoutubeVideoError":
-				displayText = `&nbsp;Error ${error.code}`;
+				displayText = `Error ${error.code}`;
 				break;
 			case "YoutubeAPIError":
-				displayText = `&nbsp;API Error ${error.code}`;
+				displayText = `API Error ${error.code}`;
 				break;
 			default:
-				displayText = `&nbsp;Unknown Error`;
+				displayText = `Unknown Error`;
 		}
 
+		// Special case: If the extension's background worker was reloaded, we need to reload the page to get the correct reference to the shuffle function again
+		if (error.message === 'Extension context invalidated.') {
+			// We don't want the button text to quickly change before the page is reloaded
+			displayText = `Shuffle`;
+
+			// Inform the user about what has happened
+			alert(`Random YouTube Video:
+
+The extension's background worker was reloaded. This happens after an extension update, or after you interrupted a shuffle that was started from the popup.
+
+The page will reload and you can try again.`)
+
+			// Reload the page
+			window.location.reload();
+			return;
+		}
+
+		// Alert the user about the error
+		alert(`Random YouTube Video:
+
+${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}
+
+${error.stack}`
+		);
+
 		// Immediately display the error and stop other text changes
-		// TODO: Also add the error in more detail to the popup?
-		setDOMTextWithDelay(shuffleButtonTextElement, displayText, 0, changeToken, true);
+		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;${displayText}`, 0, changeToken, true);
+
 		return;
 	}
 }

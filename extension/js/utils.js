@@ -29,40 +29,6 @@ function isVideoUrl(url) {
 	return urlParts[3].startsWith("watch?v=");
 }
 
-// Gets the name of the channel, or the channel id directly, from an url
-function getChannelFromUrl(url) {
-	const urlParts = url.split("/");
-
-	// We handle "channel", "c", "user" and "@Username" explicitly, as we can easily identify the URL format
-	if (urlParts[3].startsWith("@")) {
-		return {
-			"type": "username",
-			"value": urlParts[3]
-		};
-	} else if (urlParts[3] == "c") {
-		return {
-			"type": "username",
-			"value": "@" + urlParts[4]
-		};
-	} else if (urlParts[3] == "channel") {
-		return {
-			"type": "channelId",
-			"value": urlParts[4]
-		};
-	} else if (urlParts[3] == "user") {
-		return {
-			"type": "username",
-			"value": urlParts[4]
-		};
-	}
-
-	// The only other option is for the page to be in the format https://youtube.com/username, which we cannot identify otherwise
-	return {
-		"type": "username",
-		"value": urlParts[3]
-	};
-}
-
 // ----- DOM -----
 
 // Waits for a certain amount of milliseconds
@@ -79,13 +45,6 @@ function setDOMTextWithDelay(textElement, newText, delayMS, changeToken, finaliz
 			// If the caller wants to stop others from setting the value to something else
 			changeToken.isFinalized = finalizes;
 		}
-	});
-}
-
-// Gets the active tab (applies to the tab under the popup if it is open)
-async function getActiveTab() {
-	return await chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-		return tabs[0];
 	});
 }
 
@@ -167,20 +126,22 @@ class BooleanReference {
 // ----- Errors -----
 
 class RandomYoutubeVideoError extends Error {
-	constructor(code = "RYV-0", message = "") {
+	constructor(code = "RYV-0", message = "", solveHint = "") {
 		super(message);
 		this.code = code;
 		this.message = message;
+		this.solveHint = solveHint;
 		this.name = "RandomYoutubeVideoError";
 	}
 }
 
 class YoutubeAPIError extends RandomYoutubeVideoError {
-	constructor(code = "YAPI-0", message = "", reason = "") {
+	constructor(code = "YAPI-0", message = "", reason = "", solveHint = "") {
 		super(message);
 		this.code = code;
 		this.message = message;
 		this.reason = reason;
+		this.solveHint = solveHint;
 		this.name = "YoutubeAPIError";
 	}
 }
