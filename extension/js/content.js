@@ -132,6 +132,7 @@ async function shuffleVideos() {
 
 			// Inform the user about what has happened
 			alert(`Random YouTube Video:
+
 The extension's background worker was reloaded. This happens after an extension update, or after you interrupted a shuffle that was started from the popup.
 
 The page will reload and you can try again.`)
@@ -144,10 +145,7 @@ The page will reload and you can try again.`)
 		// Alert the user about the error
 		alert(`Random YouTube Video:
 
-${displayText}
-${error.message}${error.reason ? "\n" + error.reason : ""}
-
-${error.solveHint ?? "Please contact the developer if this keeps happening."}`
+${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}`
 		);
 
 		// Immediately display the error and stop other text changes

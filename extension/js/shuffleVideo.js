@@ -23,7 +23,11 @@ async function chooseRandomVideo(channelId, firedFromPopup = false) {
 	// Get the id of the uploads playlist for this channel
 	const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : null;
 	if (!uploadsPlaylistId) {
-		throw new RandomYoutubeVideoError(code = "RYV-1", message = "No channelID. Please reload page.");
+		throw new RandomYoutubeVideoError(
+			code = "RYV-1",
+			message = "No channel-ID found.",
+			solveHint = "Please reload the page and try again. Please inform the developer if this keeps happening."
+		);
 	}
 
 	console.log(`Choosing a random video from playlist/channel: ${uploadsPlaylistId}`);
@@ -195,7 +199,11 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	// If the user does not use a custom API key and has no quota remaining, we cannot continue
 	if (!isCustomKey && userQuotaRemainingToday <= 0) {
 		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
-		throw new RandomYoutubeVideoError(code = "RYV-DailyQuota", message = "You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
+		throw new RandomYoutubeVideoError(
+			code = "RYV-4",
+			message = "You have exceeded your daily quota allocation for the YouTube API.",
+			solveHint = "You can try again tomorrow or provide a custom API key."
+		);
 	}
 
 	let playlistInfo = {};
@@ -234,7 +242,11 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	// If the user does not use a custom API key and has no quota remaining, we cannot continue
 	if (!isCustomKey && userQuotaRemainingToday <= 0) {
 		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
-		throw new RandomYoutubeVideoError(code = "RYV-DailyQuota", message = "You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
+		throw new RandomYoutubeVideoError(
+			code = "RYV-4",
+			message = "You have exceeded your daily quota allocation for the YouTube API.",
+			solveHint = "You can try again tomorrow or provide a custom API key."
+		);
 	}
 
 	let lastKnownUploadTime = playlistInfo["lastVideoPublishedAt"];
@@ -304,7 +316,11 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 				.then((data) => apiResponse = data);
 
 			if (apiResponse["error"]) {
-				throw new YoutubeAPIError(code = apiResponse["error"]["code"], message = apiResponse["error"]["message"], reason = apiResponse["error"]["errors"][0]["reason"]);
+				throw new YoutubeAPIError(
+					code = apiResponse["error"]["code"],
+					message = apiResponse["error"]["message"],
+					reason = apiResponse["error"]["errors"][0]["reason"]
+				);
 			}
 
 			break;
@@ -321,12 +337,18 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 					({ APIKey, isCustomKey, keyIndex } = await getAPIKey(keyIndex + 1));
 
 					if (keyIndex === originalKeyIndex) {
-						console.log("All API keys have exceeded the allocated quota. Please inform the developer.");
-						throw new RandomYoutubeVideoError(code = "RYV-2", message = "All API keys have exceeded the allocated quota. Please inform the developer.");
+						throw new RandomYoutubeVideoError(
+							code = "RYV-2",
+							message = "All API keys have exceeded the allocated quota.",
+							solveHint = "Please *immediately* inform the developer. You can try again tomorrow or provide a custom API key to immediately resolve this problem."
+						);
 					}
 				} else {
-					console.log("You have exceeded the quota of your custom API key. You need to wait until the quota is reset, or use a different API key.");
-					throw error;
+					throw new RandomYoutubeVideoError(
+						code = "RYV-5",
+						message = "Your custom API key has reached its daily quota allocation.",
+						solveHint = "You must have watched a lot of videos to have this happen, or are using the API key for something else as well. You need to wait until the quota is reset or use a different API key."
+					);
 				}
 			}
 		}
@@ -366,7 +388,11 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage(msg);
 
 	if (!APIKey) {
-		throw new RandomYoutubeVideoError(code = "RYV-3", message = "No API key available! Please inform the developer.");
+		throw new RandomYoutubeVideoError(
+			code = "RYV-3",
+			message = "There are no API keys available in the database, or they could not be fetched.",
+			solveHint = "Please *immediately* inform the developer."
+			);
 	}
 
 	return { APIKey, isCustomKey, keyIndex };
