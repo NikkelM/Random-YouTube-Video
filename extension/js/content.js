@@ -70,7 +70,15 @@ async function startDOMObserver(event) {
 }
 
 async function channelDetectedAction(pageType, channelId, channelName) {
-	await fetchConfigSync();
+	// We can get an error here if the extension context was invalidated and the user navigates without reloading the page
+	try {
+		await fetchConfigSync();
+	} catch (error) {
+		// If the extension's background worker was reloaded, we need to reload the page to re-connect to the background worker
+		if (error.message === 'Extension context invalidated.') {
+			window.location.reload();
+		}
+	}
 
 	// Save the current channelID and channelName in the extension's storage to be accessible by the popup
 	configSync.currentChannelId = channelId;
@@ -88,7 +96,7 @@ async function shuffleVideos() {
 	try {
 		// This needs to be on top, as we still need it even if the extension context is invalidated, which will cause an error when fetching the config
 		var changeToken = new BooleanReference();
-		
+
 		// Make sure we have the latest config
 		await fetchConfigSync();
 
