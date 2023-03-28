@@ -1,14 +1,17 @@
 # Changelog
 
-## v1.4.0
+## v1.4.1
 
 <!--Releasenotes start-->
+- The shuffle button will now show the current progress when requests to the YouTube API need to be made.
+<!--Releasenotes end-->
+
+## v1.4.0
+
 - Added a shuffle button to the extension popup that will shuffle from your most recently visited channel. When shuffling using this button, a new tab will open that must remain open while the shuffle is being prepared.
 - When an error is encountered, the full error message and a hint for what to do about it will be displayed.
 - Some updates to the internal handling of API keys.
 - Improved maintainability of the codebase.
-<!--Releasenotes end-->
-
 
 ## v1.3.0
 
