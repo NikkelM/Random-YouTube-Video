@@ -116,29 +116,43 @@ async function shuffleVideos() {
 		let displayText = "";
 		switch (error.name) {
 			case "RandomYoutubeVideoError":
-				displayText = `&nbsp;Error ${error.code}`;
+				displayText = `Error ${error.code}`;
 				break;
 			case "YoutubeAPIError":
-				displayText = `&nbsp;API Error ${error.code}`;
+				displayText = `API Error ${error.code}`;
 				break;
 			default:
-				displayText = `&nbsp;Unknown Error`;
+				displayText = `Unknown Error`;
 		}
 
 		// Special case: If the extension's background worker was reloaded, we need to reload the page to get the correct reference to the shuffle function again
 		if (error.message === 'Extension context invalidated.') {
 			// We don't want the button text to quickly change before the page is reloaded
-			displayText = `&nbsp;Shuffle`;
+			displayText = `Shuffle`;
 
 			// Inform the user about what has happened
-			alert("Random YouTube Video:\nThe extension's background worker was reloaded. This happens either when the extension is updated, or you interrupted a shuffle that was started from the popup.\n\nThe page will reload and you can try again.")
+			alert(`Random YouTube Video:
+The extension's background worker was reloaded. This happens after an extension update, or after you interrupted a shuffle that was started from the popup.
+
+The page will reload and you can try again.`)
 
 			// Reload the page
 			window.location.reload();
+			return;
 		}
 
+		// Alert the user about the error
+		alert(`Random YouTube Video:
+
+${displayText}
+${error.message}${error.reason ? "\n" + error.reason : ""}
+
+${error.solveHint ?? "Please contact the developer if this keeps happening."}`
+		);
+
 		// Immediately display the error and stop other text changes
-		setDOMTextWithDelay(shuffleButtonTextElement, displayText, 0, changeToken, true);
+		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;${displayText}`, 0, changeToken, true);
+
 		return;
 	}
 }
