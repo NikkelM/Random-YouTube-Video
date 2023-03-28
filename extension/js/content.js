@@ -102,6 +102,7 @@ async function shuffleVideos() {
 
 		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Please wait...`, 500, changeToken);
 		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Working on it...`, 6000, changeToken);
+		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Might be a while...`, 15000, changeToken);
 
 		// Get the saved channelId from the button. If for some reason it is not there, use the channelId from the config
 		const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerHTML ?? configSync.currentChannelId;
