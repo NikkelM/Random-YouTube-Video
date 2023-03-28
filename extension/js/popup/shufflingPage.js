@@ -42,7 +42,7 @@ async function shuffleButtonClicked() {
 	let changeToken = new BooleanReference();
 	setDOMTextWithDelay(domElements.pleaseWaitNotice, `Working on it...`, 10000, changeToken);
 	setDOMTextWithDelay(domElements.pleaseWaitNotice, `Just a bit longer...`, 18000, changeToken);
-	setDOMTextWithDelay(shuffleButtonTextElement, `The channel has a lot of videos. It might take a bit longer...`, 25000, changeToken);
+	setDOMTextWithDelay(domElements.pleaseWaitNotice, `The channel has a lot of videos. It might take a bit longer...`, 25000, changeToken);
 
 	try {
 		await chooseRandomVideo(configSync.currentChannelId, true);
