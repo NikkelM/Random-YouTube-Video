@@ -6,7 +6,7 @@ let configSync = null;
 let mustOverwriteDatabase = false;
 
 // Chooses a random video uploaded on the current YouTube channel
-async function chooseRandomVideo(channelId) {
+async function chooseRandomVideo(channelId, firedFromPopup = false) {
 	// Make sure we have the latest config
 	await fetchConfigSync();
 
@@ -23,7 +23,11 @@ async function chooseRandomVideo(channelId) {
 	// Get the id of the uploads playlist for this channel
 	const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : null;
 	if (!uploadsPlaylistId) {
-		throw new RandomYoutubeVideoError(code = "RYV-1", message = "No channelID. Please reload page.");
+		throw new RandomYoutubeVideoError(
+			code = "RYV-1",
+			message = "No channel-ID found.",
+			solveHint = "Please reload the page and try again. Please inform the developer if this keeps happening."
+		);
 	}
 
 	console.log(`Choosing a random video from playlist/channel: ${uploadsPlaylistId}`);
@@ -81,46 +85,7 @@ async function chooseRandomVideo(channelId) {
 	// Update the remaining user quota in the configSync
 	await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
 
-	// TODO: Maybe move this logic to a new function
-	const videoShufflePercentage = configSync.channelSettings[channelId]?.shufflePercentage ?? 100;
-
-	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
-	let videosByDate = Object.keys(allVideos).sort((a, b) => {
-		return new Date(allVideos[b]) - new Date(allVideos[a]);
-	});
-
-	let videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
-
-	let randomVideo = chooseRandomVideoFromList(videosToShuffle);
-	console.log("A random video has been chosen: " + randomVideo);
-
-	let encounteredDeletedVideos = false;
-	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
-	if (!await testVideoExistence(randomVideo)) {
-		encounteredDeletedVideos = true;
-		do {
-			console.log("The chosen video does not exist anymore. Removing it from the database and choosing a new one...");
-
-			// Remove the video from the local playlist object
-			// It will always be in the "videos" object, as we have just fetched the "newVideos" from the YouTube API
-			delete playlistInfo["videos"][randomVideo];
-
-			// Choose a new random video
-			allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
-			videosByDate = Object.keys(allVideos).sort((a, b) => {
-				return new Date(allVideos[b]) - new Date(allVideos[a]);
-			});
-
-			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
-
-			randomVideo = chooseRandomVideoFromList(videosToShuffle);
-
-			console.log(`A new random video has been chosen: ${randomVideo}`);
-		} while (!await testVideoExistence(randomVideo))
-
-		// Update the database by removing the deleted videos there as well
-		shouldUpdateDatabase = true;
-	}
+	({ randomVideo, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
 
 	if (shouldUpdateDatabase && databaseSharing) {
 		playlistInfo["lastUpdatedDBAt"] = new Date().toISOString();
@@ -136,24 +101,7 @@ async function chooseRandomVideo(channelId) {
 			videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
 		}
 
-		// Only upload the wanted keys
-		const playlistInfoForDatabase = {
-			"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
-			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
-			"videos": videosToDatabase
-		};
-
-		// Send the playlist info to the database
-		const msg = {
-			// mustOverwriteDatabase: In case the data is still in an old format, we need to overwrite it instead of updating
-			command: (encounteredDeletedVideos || mustOverwriteDatabase) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
-			data: {
-				key: 'uploadsPlaylists/' + uploadsPlaylistId,
-				val: playlistInfoForDatabase
-			}
-		};
-
-		chrome.runtime.sendMessage(msg);
+		uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos);
 
 		// If we just updated the database, we automatically have the same version as it
 		playlistInfo["lastFetchedFromDB"] = playlistInfo["lastUpdatedDBAt"];
@@ -176,7 +124,7 @@ async function chooseRandomVideo(channelId) {
 
 	await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
-	playVideo(randomVideo, uploadsPlaylistId);
+	playVideo(randomVideo, uploadsPlaylistId, firedFromPopup);
 }
 
 // ---------- Database ----------
@@ -192,7 +140,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 	// In case the playlist is still in the old Array format (before v1.0.0) in the database, convert it to the new format
 	if (playlistInfo && playlistInfo["videos"] && Array.isArray(playlistInfo["videos"])) {
-		console.log("The playlist was found in the database, but it is in an old format (before v1.0.0). Updating format...");
+		console.log("The playlist was found in the database, but it is in an old format (before v1.0.0). Removing...");
 		mustOverwriteDatabase = true;
 		return {};
 	}
@@ -206,25 +154,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 			playlistInfo["videos"][videoId] = playlistInfo["videos"][videoId].substring(0, 10);
 		}
 
-		// TODO: This is duplicated code with some smaller changes from the actual update code. We should merge them
-		// Only upload the wanted keys
-		const playlistInfoForDatabase = {
-			"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
-			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
-			"videos": playlistInfo["videos"]
-		};
-
-		// Send the playlist info to the database
-		const msg = {
-			// We need to overwrite the data in the database
-			command: 'overwritePlaylistInfoInDB',
-			data: {
-				key: 'uploadsPlaylists/' + playlistId,
-				val: playlistInfoForDatabase
-			}
-		};
-
-		chrome.runtime.sendMessage(msg);
+		uploadPlaylistToDatabase(playlistInfo, playlistInfo["videos"], playlistId, true, false);
 	}
 
 	if (!playlistInfo) {
@@ -234,6 +164,28 @@ async function tryGetPlaylistFromDB(playlistId) {
 	playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 
 	return playlistInfo;
+}
+
+// Upload a playlist to the database
+function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos) {
+	// Only upload the wanted keys
+	const playlistInfoForDatabase = {
+		"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
+		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
+		"videos": videosToDatabase
+	};
+
+	// Send the playlist info to the database
+	const msg = {
+		// mustOverwriteDatabase: In case the data is still in an old format, we need to overwrite it instead of updating
+		command: (mustOverwriteDatabase || encounteredDeletedVideos) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
+		data: {
+			key: 'uploadsPlaylists/' + uploadsPlaylistId,
+			val: playlistInfoForDatabase
+		}
+	};
+
+	chrome.runtime.sendMessage(msg);
 }
 
 // ---------- YouTube API ----------
@@ -247,7 +199,11 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	// If the user does not use a custom API key and has no quota remaining, we cannot continue
 	if (!isCustomKey && userQuotaRemainingToday <= 0) {
 		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
-		throw new RandomYoutubeVideoError(code = "RYV-DailyQuota", message = "You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
+		throw new RandomYoutubeVideoError(
+			code = "RYV-4",
+			message = "You have exceeded your daily quota allocation for the YouTube API.",
+			solveHint = "You can try again tomorrow or provide a custom API key."
+		);
 	}
 
 	let playlistInfo = {};
@@ -286,7 +242,11 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	// If the user does not use a custom API key and has no quota remaining, we cannot continue
 	if (!isCustomKey && userQuotaRemainingToday <= 0) {
 		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
-		throw new RandomYoutubeVideoError(code = "RYV-DailyQuota", message = "You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
+		throw new RandomYoutubeVideoError(
+			code = "RYV-4",
+			message = "You have exceeded your daily quota allocation for the YouTube API.",
+			solveHint = "You can try again tomorrow or provide a custom API key."
+		);
 	}
 
 	let lastKnownUploadTime = playlistInfo["lastVideoPublishedAt"];
@@ -347,14 +307,20 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 		try {
 			console.log("Getting snippet from YouTube API...");
 
+			// Update the remaining user quota in the configSync
 			userQuotaRemainingToday--;
+			setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
 
 			await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${APIKey}`)
 				.then((response) => response.json())
 				.then((data) => apiResponse = data);
 
 			if (apiResponse["error"]) {
-				throw new YoutubeAPIError(code = apiResponse["error"]["code"], message = apiResponse["error"]["message"], reason = apiResponse["error"]["errors"][0]["reason"]);
+				throw new YoutubeAPIError(
+					code = apiResponse["error"]["code"],
+					message = apiResponse["error"]["message"],
+					reason = apiResponse["error"]["errors"][0]["reason"]
+				);
 			}
 
 			break;
@@ -371,12 +337,18 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 					({ APIKey, isCustomKey, keyIndex } = await getAPIKey(keyIndex + 1));
 
 					if (keyIndex === originalKeyIndex) {
-						console.log("All API keys have exceeded the allocated quota. Please inform the developer.");
-						throw new RandomYoutubeVideoError(code = "RYV-2", message = "All API keys have exceeded the allocated quota. Please inform the developer.");
+						throw new RandomYoutubeVideoError(
+							code = "RYV-2",
+							message = "All API keys have exceeded the allocated quota.",
+							solveHint = "Please *immediately* inform the developer. You can try again tomorrow or provide a custom API key to immediately resolve this problem."
+						);
 					}
 				} else {
-					console.log("You have exceeded the quota of your custom API key. You need to wait until the quota is reset, or use a different API key.");
-					throw error;
+					throw new RandomYoutubeVideoError(
+						code = "RYV-5",
+						message = "Your custom API key has reached its daily quota allocation.",
+						solveHint = "You must have watched a lot of videos to have this happen, or are using the API key for something else as well. You need to wait until the quota is reset or use a different API key."
+					);
 				}
 			}
 		}
@@ -412,27 +384,73 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 		}
 	};
 
-	// The response includes three parts: the API key, whether or not it is a custom key, and if it is not, at which index of the list of API keys the current key is
+	// The response includes three parts: the API key, whether or not it is a custom key, and at which index of the list of API keys the current key is
 	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage(msg);
 
 	if (!APIKey) {
-		throw new RandomYoutubeVideoError(code = "RYV-3", message = "No API key available! Please inform the developer.");
+		throw new RandomYoutubeVideoError(
+			code = "RYV-3",
+			message = "There are no API keys available in the database, or they could not be fetched.",
+			solveHint = "Please *immediately* inform the developer."
+			);
 	}
 
 	return { APIKey, isCustomKey, keyIndex };
 }
 
-function chooseRandomVideoFromList(videoIds) {
-	let randomVideo = videoIds[Math.floor(Math.random() * videoIds.length)];
-	return randomVideo;
+async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase) {
+	const videoShufflePercentage = configSync.channelSettings[channelId]?.shufflePercentage ?? 100;
+
+	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
+	let videosByDate = Object.keys(allVideos).sort((a, b) => {
+		return new Date(allVideos[b]) - new Date(allVideos[a]);
+	});
+
+	let videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
+
+	let randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
+	console.log(`A random video has been chosen: ${randomVideo}`);
+
+	let encounteredDeletedVideos = false;
+	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
+	if (!await testVideoExistence(randomVideo)) {
+		encounteredDeletedVideos = true;
+		do {
+			console.log("The chosen video does not exist anymore. Removing it from the database and choosing a new one...");
+
+			// Remove the video from the local playlist object
+			// It will always be in the "videos" object, as we have just fetched the "newVideos" from the YouTube API
+			delete playlistInfo["videos"][randomVideo];
+
+			// Choose a new random video
+			allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
+			videosByDate = Object.keys(allVideos).sort((a, b) => {
+				return new Date(allVideos[b]) - new Date(allVideos[a]);
+			});
+
+			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
+
+			randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
+
+			console.log(`A new random video has been chosen: ${randomVideo}`);
+		} while (!await testVideoExistence(randomVideo))
+
+		// Update the database by removing the deleted videos there as well
+		shouldUpdateDatabase = true;
+	}
+
+	return { randomVideo, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
 }
 
-function playVideo(randomVideo, uploadsPlaylistId) {
+function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
 	// Get the correct URL format
-	let randomVideoURL = configSync.shuffleOpenAsPlaylistOption ? `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}` : `https://www.youtube.com/watch?v=${randomVideo}`;
+	let randomVideoURL = configSync.shuffleOpenAsPlaylistOption
+		? `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`
+		: `https://www.youtube.com/watch?v=${randomVideo}`;
 
 	// Open the video in a new tab or in the current tab, depending on the user's settings
-	if (configSync.shuffleOpenInNewTabOption) {
+	// If the shuffle button from the popup was used, we always open the video in the same tab (==the shuffling page)
+	if (configSync.shuffleOpenInNewTabOption && !firedFromPopup) {
 		// Video page: Pause the current video if it is playing
 		if (isVideoUrl(window.location.href)) {
 			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
@@ -445,7 +463,7 @@ function playVideo(randomVideo, uploadsPlaylistId) {
 			if (featuredPlayer && featuredPlayer.classList.contains('playing-mode')) {
 				featuredPlayer.children[0].click();
 			}
-			// Channel page: Pause the miniplayer if it exists and is playing
+			// Any page: Pause the miniplayer if it exists and is playing
 			const miniPlayer = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
 			if (miniPlayer && miniPlayer.classList.contains('playing-mode')) {
 				miniPlayer.children[0].click();
@@ -473,19 +491,3 @@ async function tryGetPlaylistFromLocalStorage(playlistId) {
 async function savePlaylistToLocalStorage(playlistId, playlistInfo) {
 	await chrome.storage.local.set({ [playlistId]: playlistInfo });
 }
-
-// ---------- Message handler ----------
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-	switch (request.command) {
-		// The popup sends this message when the user clicks the "Shuffle" button in the popup
-		case "shuffleFromChannel":
-			chooseRandomVideo(request.data)
-			break;
-		default:
-			console.log(`Unknown command: ${request.command}`);
-			sendResponse(`Unknown command: ${request.command}`);
-			break;
-	}
-	return true;
-});

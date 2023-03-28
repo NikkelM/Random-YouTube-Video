@@ -82,6 +82,11 @@ body {
 	color-scheme: dark;
 }
 
+html {
+	display: table;
+	margin: auto;
+}
+
 /*
  * Options Row
  */
