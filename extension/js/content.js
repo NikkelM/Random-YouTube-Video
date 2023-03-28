@@ -146,7 +146,9 @@ The page will reload and you can try again.`)
 		// Alert the user about the error
 		alert(`Random YouTube Video:
 
-${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}`
+${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}
+
+${error.stack}`
 		);
 
 		// Immediately display the error and stop other text changes

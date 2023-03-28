@@ -34,17 +34,17 @@ function getDomElements() {
 }
 
 async function shuffleButtonClicked() {
-	let configSync = await fetchConfigSync();
-
-	domElements.shufflingFromChannelHeading.innerHTML = configSync.currentChannelName;
-
-	// Called when the randomize-button is clicked
-	let changeToken = new BooleanReference();
-	setDOMTextWithDelay(domElements.pleaseWaitNotice, `Working on it...`, 10000, changeToken);
-	setDOMTextWithDelay(domElements.pleaseWaitNotice, `Just a bit longer...`, 18000, changeToken);
-	setDOMTextWithDelay(domElements.pleaseWaitNotice, `The channel has a lot of videos. It might take a bit longer...`, 25000, changeToken);
-
 	try {
+		var configSync = await fetchConfigSync();
+
+		domElements.shufflingFromChannelHeading.innerHTML = configSync.currentChannelName;
+
+		// Called when the randomize-button is clicked
+		var changeToken = new BooleanReference();
+		setDOMTextWithDelay(domElements.pleaseWaitNotice, `Working on it...`, 10000, changeToken);
+		setDOMTextWithDelay(domElements.pleaseWaitNotice, `Just a bit longer...`, 18000, changeToken);
+		setDOMTextWithDelay(domElements.pleaseWaitNotice, `The channel has a lot of videos. It might take a bit longer...`, 25000, changeToken);
+
 		await chooseRandomVideo(configSync.currentChannelId, true);
 		// Remove the port's onDisconnect listener, as we have successfully opened the video and the service worker won't freeze
 		port.postMessage({ command: "shuffleComplete" });
@@ -64,7 +64,7 @@ async function shuffleButtonClicked() {
 				displayText = `Unknown Error`;
 		}
 
-		const errorMessage = `${error.message ?? ""}${error.reason ? "<br>" + error.reason : ""}${error.solveHint ? "<br>" + error.solveHint : ""}`;
+		const errorMessage = `${error.message ?? ""}${error.reason ? "<br>" + error.reason : ""}${error.solveHint ? "<br>" + error.solveHint : ""}<br><br>${error.stack}`;
 
 		// Immediately display the error and stop other text changes
 		setDOMTextWithDelay(domElements.pleaseWaitNotice, displayText, 0, changeToken, true);
