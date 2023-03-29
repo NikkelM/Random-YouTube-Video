@@ -1,12 +1,16 @@
 # Changelog
 
-## v1.4.2
+## v1.4.3
 
 <!--Releasenotes start-->
-- The shuffle button will now show the current progress when more than one request to the YouTube API needs to be made.
-- The extension popup now shows the number of videos you have shuffled so far.
 - Fixed a bug occurring when a channel has no videos.
 <!--Releasenotes end-->
+
+## v1.4.2
+
+- The shuffle button will now show the current progress when more than one request to the YouTube API needs to be made.
+- The extension popup now shows the number of videos you have shuffled so far.
+- Fixed a bug where the surprise wouldn't work for people with certain settings.
 
 ## v1.4.1
 
