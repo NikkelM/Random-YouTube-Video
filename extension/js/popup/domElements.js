@@ -37,6 +37,8 @@ function getDomElements() {
 		// FYI - FOR YOUR INFORMATION
 		// FYI div
 		forYourInformationDiv: document.getElementById("forYourInformationDiv"),
+		// FYI: Number of shuffled videos text
+		numberOfShuffledVideosText: forYourInformationDiv.children.namedItem("numberOfShuffledVideosText"),
 		// FYI: Daily quota notice div
 		dailyQuotaNoticeDiv: forYourInformationDiv.children.namedItem("dailyQuotaNoticeDiv"),
 		// Daily quota notice: Text
@@ -180,7 +182,8 @@ async function setDomElemenEventListeners(domElements, configSync) {
 
 // Sometimes we change the content of the FYI div, or even if it should be displayed at all
 async function updateFYIDiv(domElements, configSync) {
-	let numFYIElements = 0;
+	// ----- FYI: Number of shuffled videos text -----
+	domElements.numberOfShuffledVideosText.innerText = `In total, you have shuffled ${configSync.numShuffledVideosTotal} video${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""}.`;
 
 	// ----- Daily quota notice -----
 	await getUserQuotaRemainingToday(configSync);
@@ -193,16 +196,7 @@ async function updateFYIDiv(domElements, configSync) {
 	// If the user has a custom API key, the daily quota notice is not relevant. So we only display it if the user is not providing a custom API key
 	if (!configSync.customYoutubeApiKey || !configSync.useCustomApiKeyOption) {
 		domElements.dailyQuotaNoticeDiv.classList.remove("hidden");
-		numFYIElements++;
 	} else {
 		domElements.dailyQuotaNoticeDiv.classList.add("hidden");
-	}
-
-	// ----- FYI div -----
-	// We need to do this after handling all above elements to decide if we even need to show the FYI div
-	if (numFYIElements > 0) {
-		domElements.forYourInformationDiv.classList.remove("hidden");
-	} else {
-		domElements.forYourInformationDiv.classList.add("hidden");
 	}
 }
