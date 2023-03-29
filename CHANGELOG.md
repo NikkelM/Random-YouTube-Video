@@ -3,7 +3,7 @@
 ## v1.4.2
 
 <!--Releasenotes start-->
-- The shuffle button will now show the current progress when requests to the YouTube API need to be made.
+- The shuffle button will now show the current progress when more than one request to the YouTube API needs to be made.
 <!--Releasenotes end-->
 
 ## v1.4.1
