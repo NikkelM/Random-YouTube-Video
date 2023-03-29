@@ -124,6 +124,9 @@ async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement)
 
 	await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
+	configSync.numShuffledVideosTotal += 1;
+	await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal);
+
 	playVideo(randomVideo, uploadsPlaylistId, firedFromPopup);
 
 	// April fools joke: Users get rickrolled once on April 1st every year
