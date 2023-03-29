@@ -105,15 +105,12 @@ async function shuffleVideos() {
 		// Make sure we have the latest config
 		await fetchConfigSync();
 
-		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Please wait...`, 500, changeToken);
-		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Working on it...`, 6000, changeToken);
-		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Might be a while...`, 15000, changeToken);
-
 		// Get the saved channelId from the button. If for some reason it is not there, use the channelId from the config
 		const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerHTML ?? configSync.currentChannelId;
 
-		await chooseRandomVideo(channelId);
+		await chooseRandomVideo(channelId, false, shuffleButtonTextElement);
 		// Reset the button text in case we opened the video in a new tab
+		// For some reason, it won't update correctly if we set it directly, so we still use the setDOMTextWithDelay function
 		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Shuffle`, 0, changeToken, true);
 	} catch (error) {
 		console.error(error.stack);
