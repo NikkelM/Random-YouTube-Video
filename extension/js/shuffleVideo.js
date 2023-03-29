@@ -383,6 +383,13 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 						solveHint = "You must have watched a lot of videos to have this happen, or are using the API key for something else as well. You need to wait until the quota is reset or use a different API key."
 					);
 				}
+			} else if(error instanceof YoutubeAPIError && error.code === 404 && error.reason === "playlistNotFound") {
+				throw new RandomYoutubeVideoError(
+					code = "RYV-6",
+					message = "This channel has not uploaded any videos."
+				);
+			}	else {
+				throw error;
 			}
 		}
 	}
