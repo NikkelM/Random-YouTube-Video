@@ -6,7 +6,7 @@ let configSync = null;
 let mustOverwriteDatabase = false;
 
 // Chooses a random video uploaded on the current YouTube channel
-async function chooseRandomVideo(channelId, firedFromPopup = false) {
+async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
 	// Make sure we have the latest config
 	await fetchConfigSync();
 
@@ -45,14 +45,14 @@ async function chooseRandomVideo(channelId, firedFromPopup = false) {
 		// If the playlist does not exist in the database, get it from the API
 		if (isEmpty(playlistInfo)) {
 			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
-			({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday));
+			({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
 
 			shouldUpdateDatabase = true;
 		} else if (databaseSharing && (playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
 			// If the playlist exists in the database but is outdated, update it from the API.
 			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
 
-			({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday));
+			({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
 
 			shouldUpdateDatabase = true;
 		}
@@ -70,13 +70,13 @@ async function chooseRandomVideo(channelId, firedFromPopup = false) {
 		// With the current functionality and db rules, this shouldn't happen, except if the user has opted out of database sharing.
 		if (isEmpty(playlistInfo)) {
 			console.log(`${databaseSharing ? "Uploads playlist for this channel does not exist in the database. " : "Fetching it from the YouTube API..."}`);
-			({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday));
+			({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
 
 			shouldUpdateDatabase = true;
 			// If the playlist exists in the database but is outdated there as well, update it from the API.
 		} else if ((playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
 			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
-			({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday));
+			({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
 
 			shouldUpdateDatabase = true;
 		}
@@ -101,7 +101,7 @@ async function chooseRandomVideo(channelId, firedFromPopup = false) {
 			videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
 		}
 
-		uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos);
+		await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos);
 
 		// If we just updated the database, we automatically have the same version as it
 		playlistInfo["lastFetchedFromDB"] = playlistInfo["lastUpdatedDBAt"];
@@ -158,7 +158,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 			playlistInfo["videos"][videoId] = playlistInfo["videos"][videoId].substring(0, 10);
 		}
 
-		uploadPlaylistToDatabase(playlistInfo, playlistInfo["videos"], playlistId, true, false);
+		await uploadPlaylistToDatabase(playlistInfo, playlistInfo["videos"], playlistId, true, false);
 	}
 
 	if (!playlistInfo) {
@@ -171,7 +171,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 }
 
 // Upload a playlist to the database
-function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos) {
+async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos) {
 	// Only upload the wanted keys
 	const playlistInfoForDatabase = {
 		"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
@@ -189,12 +189,12 @@ function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylis
 		}
 	};
 
-	chrome.runtime.sendMessage(msg);
+	await chrome.runtime.sendMessage(msg);
 }
 
 // ---------- YouTube API ----------
 
-async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemainingToday) {
+async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemainingToday, progressTextElement) {
 	// Get an API key
 	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyAtIndex);
 	// We need to keep track of the original key's index, so we know when we have tried all keys
@@ -217,6 +217,15 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	let apiResponse = null;
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
+	// Set the current progress as text for the shuffle button/info text
+	const totalResults = apiResponse["pageInfo"]["totalResults"];
+	let resultsFetchedCount = apiResponse["items"].length;
+
+	// If there are less than 50 videos, we don't need to show a progress percentage
+	if (totalResults > 50) {
+		progressTextElement.innerText = `\xa0Fetching: ${Math.round(resultsFetchedCount / totalResults * 100)}%`;
+	}
+
 	// For each video, add an entry in the form of videoId: uploadTime
 	playlistInfo["videos"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)]));
 
@@ -226,6 +235,11 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 
 	while (pageToken !== null) {
 		({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
+
+		// Set the current progress as text for the shuffle button/info text
+		// We never get to this code part if there are less than or exactly 50 videos in the playlist, so we don't need to check for that
+		resultsFetchedCount += apiResponse["items"].length;
+		progressTextElement.innerText = `\xa0Fetching: ${Math.round(resultsFetchedCount / totalResults * 100)}%`;
 
 		// For each video, add an entry in the form of videoId: uploadTime
 		playlistInfo["videos"] = Object.assign(playlistInfo["videos"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)])));
@@ -237,7 +251,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 }
 
 // Get snippets from the API as long as new videos are being found
-async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex, userQuotaRemainingToday) {
+async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex, userQuotaRemainingToday, progressTextElement) {
 	// Get an API key
 	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyAtIndex);
 	// We need to keep track of the original key's index, so we know when we have tried all keys
@@ -257,6 +271,15 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 	let apiResponse = null;
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, "", APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
+
+	// Set the current progress as text for the shuffle button/info text
+	const totalNewResults = apiResponse["pageInfo"]["totalResults"] - getLength(playlistInfo["videos"]);
+	let resultsFetchedCount = apiResponse["items"].length;
+
+	// If there are less than 50 new videos, we don't need to show a progress percentage
+	if (totalNewResults > 50) {
+		progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalNewResults * 100), 100)}%`;
+	}
 
 	// Update the "last video published at" date (only for the most recent video)
 	// If the newest video isn't newer than what we already have, we don't need to update the local storage
@@ -286,6 +309,11 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 				// Get the next snippet	
 				({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, apiResponse["nextPageToken"], APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
+				// Set the current progress as text for the shuffle button/info text
+				// We never get to this code part if there are less than or exactly 50 new videos, so we don't need to check for that
+				resultsFetchedCount += apiResponse["items"].length;
+				progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalNewResults * 100), 100)}%`;
+
 				currVideo = 0;
 				// Else, we have checked all videos
 			} else {
@@ -311,9 +339,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 		try {
 			console.log("Getting snippet from YouTube API...");
 
-			// Update the remaining user quota in the configSync
 			userQuotaRemainingToday--;
-			setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
 
 			await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${APIKey}`)
 				.then((response) => response.json())
