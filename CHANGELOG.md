@@ -4,6 +4,7 @@
 
 <!--Releasenotes start-->
 - Added a small surprise!
+- Fixed a bug that caused the shuffle button to not work initially after an update in a specific case.
 <!--Releasenotes end-->
 
 ## v1.4.0
