@@ -95,6 +95,8 @@ async function validateConfigSync() {
 		// These two properties are used by the popup to determine which channel's settings to show
 		"currentChannelId": null,
 		"currentChannelName": null,
+		// The number of videos the user has shuffled so far
+		"numShuffledVideosTotal": 0,
 		// These two properties determine the amount of quota remaining today, and the time at which the quota will next reset (daily resets at midnight)
 		"userQuotaRemainingToday": 200,
 		// The default reset time is midnight of the next day

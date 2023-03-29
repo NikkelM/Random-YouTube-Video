@@ -40,7 +40,7 @@
 }
 
 #randomYoutubeVideoPopupBody {
-	margin: 20px;
+	margin: 0px;
 	width: 400px;
 	max-width: 100%;
 	/* NOTE: Ensures content doesn't exceed restricted popup widths in Firefox */
