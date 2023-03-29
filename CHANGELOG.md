@@ -1,14 +1,18 @@
 # Changelog
 
-## v1.4.0
+## v1.4.1
 
 <!--Releasenotes start-->
+- Added a small surprise!
+- Fixed a bug that caused the shuffle button to not work initially after an update in a specific case.
+<!--Releasenotes end-->
+
+## v1.4.0
+
 - Added a shuffle button to the extension popup that will shuffle from your most recently visited channel. When shuffling using this button, a new tab will open that must remain open while the shuffle is being prepared.
 - When an error is encountered, the full error message and a hint for what to do about it will be displayed.
 - Some updates to the internal handling of API keys.
 - Improved maintainability of the codebase.
-<!--Releasenotes end-->
-
 
 ## v1.3.0
 

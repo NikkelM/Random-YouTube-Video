@@ -80,6 +80,11 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 		}
 	}
 
+	// When navigating from e.g. the homepage after an invalidated extension context, sometimes the config is not loaded correctly
+	if(!configSync) {
+		window.location.reload();
+	}
+
 	// Save the current channelID and channelName in the extension's storage to be accessible by the popup
 	configSync.currentChannelId = channelId;
 	await setSyncStorageValue("currentChannelId", channelId);

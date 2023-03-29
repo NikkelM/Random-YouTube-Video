@@ -125,6 +125,10 @@ async function chooseRandomVideo(channelId, firedFromPopup = false) {
 	await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
 	playVideo(randomVideo, uploadsPlaylistId, firedFromPopup);
+
+	// April fools joke: Users get rickrolled once on April 1st every year
+	// We do this last to make sure that the rickroll window gets focused
+	aprilFoolsJoke();
 }
 
 // ---------- Database ----------
@@ -392,7 +396,7 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 			code = "RYV-3",
 			message = "There are no API keys available in the database, or they could not be fetched.",
 			solveHint = "Please *immediately* inform the developer."
-			);
+		);
 	}
 
 	return { APIKey, isCustomKey, keyIndex };
@@ -473,6 +477,17 @@ function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
 		window.open(randomVideoURL, '_blank').focus();
 	} else {
 		window.location.href = randomVideoURL;
+	}
+}
+
+// Once per year on April first, rickroll the user
+function aprilFoolsJoke() {
+	const now = new Date();
+	if (now.getMonth() === 3 && now.getDate() === 1 && configSync.wasLastRickRolledInYear !== now.getFullYear()) {
+		configSync.wasLastRickRolledInYear = now.getFullYear();
+		setSyncStorageValue("wasLastRickRolledInYear", now.getFullYear());
+
+		window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", '_blank').focus();
 	}
 }
 
