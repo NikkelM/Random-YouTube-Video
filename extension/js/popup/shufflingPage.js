@@ -33,19 +33,16 @@ function getDomElements() {
 	}
 }
 
+// Called when the randomize-button from the popup is clicked
 async function shuffleButtonClicked() {
 	try {
+		var changeToken = new BooleanReference();
+
 		var configSync = await fetchConfigSync();
 
 		domElements.shufflingFromChannelHeading.innerHTML = configSync.currentChannelName;
 
-		// Called when the randomize-button is clicked
-		var changeToken = new BooleanReference();
-		setDOMTextWithDelay(domElements.pleaseWaitNotice, `Working on it...`, 10000, changeToken);
-		setDOMTextWithDelay(domElements.pleaseWaitNotice, `Just a bit longer...`, 18000, changeToken);
-		setDOMTextWithDelay(domElements.pleaseWaitNotice, `The channel has a lot of videos. It might take a bit longer...`, 25000, changeToken);
-
-		await chooseRandomVideo(configSync.currentChannelId, true);
+		await chooseRandomVideo(configSync.currentChannelId, true, domElements.pleaseWaitNotice);
 		// Remove the port's onDisconnect listener, as we have successfully opened the video and the service worker won't freeze
 		port.postMessage({ command: "shuffleComplete" });
 	} catch (error) {

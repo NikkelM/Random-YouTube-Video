@@ -55,6 +55,11 @@ function isEmpty(obj) {
 	return Object.keys(obj).length === 0;
 }
 
+// Gets the length of an object
+function getLength(obj) {
+	return Object.keys(obj).length;
+}
+
 // Adds a number of hours to a date
 function addHours(date, hours) {
 	return new Date(date.getTime() + hours * 3600000);
