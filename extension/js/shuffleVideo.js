@@ -128,10 +128,6 @@ async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement)
 	await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal);
 
 	playVideo(randomVideo, uploadsPlaylistId, firedFromPopup);
-
-	// April fools joke: Users get rickrolled once on April 1st every year
-	// We do this last to make sure that the rickroll window gets focused
-	aprilFoolsJoke();
 }
 
 // ---------- Database ----------
@@ -504,7 +500,14 @@ function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
 		}
 
 		window.open(randomVideoURL, '_blank').focus();
+
+		// April fools joke: Users get rickrolled once on April 1st every year
+		// If we open both videos in a new tab, we want the rickroll to be focused
+		aprilFoolsJoke();
 	} else {
+		// Else, we need to open the rickroll first, as otherwise the function call doesn't happen
+		aprilFoolsJoke();
+
 		window.location.href = randomVideoURL;
 	}
 }
