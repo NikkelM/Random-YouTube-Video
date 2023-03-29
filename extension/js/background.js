@@ -101,6 +101,8 @@ async function validateConfigSync() {
 		"userQuotaResetTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(),
 		// We want to regularly check if there are new API keys available (weekly)
 		"nextAPIKeysCheckTime": new Date(new Date().setHours(168, 0, 0, 0)).getTime(),
+		// For april fools: Will be the number of the year in which the user was last rickrolled (we only want to rickroll the user once per year)
+		"wasLastRickRolledInYear": "1970",
 	};
 
 	const configSyncValues = await chrome.storage.sync.get();

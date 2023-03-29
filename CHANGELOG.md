@@ -1,10 +1,15 @@
 # Changelog
 
-## v1.4.1
+## v1.4.2
 
 <!--Releasenotes start-->
 - The shuffle button will now show the current progress when requests to the YouTube API need to be made.
 <!--Releasenotes end-->
+
+## v1.4.1
+
+- Added a small surprise!
+- Fixed a bug that caused the shuffle button to not work initially after an update in a specific case.
 
 ## v1.4.0
 
