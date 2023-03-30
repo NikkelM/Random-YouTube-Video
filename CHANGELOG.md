@@ -1,10 +1,14 @@
 # Changelog
 
-## v1.4.3
+## v1.4.4
 
 <!--Releasenotes start-->
-- Fixed a bug occurring when a channel has no videos.
+- Fixed a bug where the channel name displayed in the popup would sometimes not be synchronized with the one that is used in the backend.
 <!--Releasenotes end-->
+
+## v1.4.3
+
+- Fixed a bug occurring when a channel has no videos.
 
 ## v1.4.2
 
