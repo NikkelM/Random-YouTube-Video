@@ -9,7 +9,7 @@ iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChil
 document.head.appendChild(iconFont);
 
 let shuffleButton = null;
-// We can access the actual text using "shuffleButtonTextElement.innerHTML"
+// We can access the actual text using "shuffleButtonTextElement.innerText"
 let shuffleButtonTextElement = null;
 
 document.addEventListener("yt-navigate-finish", startDOMObserver);
@@ -91,6 +91,10 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 	configSync.currentChannelName = channelName;
 	await setSyncStorageValue("currentChannelName", channelName);
 
+	// Update the channel name in the popup in case it was opened while the navigation was still going on
+	// If we didn't do this, the configSync and displayed value might diverge
+	chrome.runtime.sendMessage({ command: "updateCurrentChannel" });
+
 	buildShuffleButton(pageType, channelId);
 }
 
@@ -106,12 +110,11 @@ async function shuffleVideos() {
 		await fetchConfigSync();
 
 		// Get the saved channelId from the button. If for some reason it is not there, use the channelId from the config
-		const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerHTML ?? configSync.currentChannelId;
+		const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerText ?? configSync.currentChannelId;
 
 		await chooseRandomVideo(channelId, false, shuffleButtonTextElement);
 		// Reset the button text in case we opened the video in a new tab
-		// For some reason, it won't update correctly if we set it directly, so we still use the setDOMTextWithDelay function
-		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;Shuffle`, 0, changeToken, true);
+		shuffleButtonTextElement.innerText = "\xa0Shuffle";
 	} catch (error) {
 		console.error(error.stack);
 		console.error(error.message);
@@ -146,10 +149,10 @@ The page will reload and you can try again.`)
 		}
 
 		// Alert the user about the error
-		alert(`Random YouTube Video:\n\n${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}${error.showTrace ? "\n\n" + error.stack : ""}`);
+		alert(`Random YouTube Video:\n\n${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}${error.showTrace !== false ? "\n\n" + error.stack : ""}`);
 
-		// Immediately display the error and stop other text changes
-		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;${displayText}`, 0, changeToken, true);
+		// Immediately display the error
+		shuffleButtonTextElement.innerText = `\xa0${displayText}`;
 
 		return;
 	}

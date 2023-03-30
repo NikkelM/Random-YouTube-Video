@@ -90,7 +90,7 @@ async function validateConfigSync() {
 		// These two properties influence the behavior of the "shuffle" button
 		"shuffleOpenInNewTabOption": false,
 		"shuffleOpenAsPlaylistOption": true,
-		// channelSettings is a dictionary of channelID -> percentage pairs
+		// channelSettings is a dictionary of channelID -> Dictionary of channel settings
 		"channelSettings": {},
 		// These two properties are used by the popup to determine which channel's settings to show
 		"currentChannelId": null,
@@ -176,8 +176,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			sendResponse("New configSync set.");
 			break;
 		default:
-			console.log(`Unknown command: ${request.command}`);
-			sendResponse(`Unknown command: ${request.command}`);
+			console.log(`Unknown command: ${request.command} (service worker). Hopefully another message listener will handle it.`);
+			sendResponse(`Unknown command: ${request.command} (service worker). Hopefully another message listener will handle it.`);
 			break;
 	}
 	return true;

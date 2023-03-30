@@ -29,26 +29,12 @@ function isVideoUrl(url) {
 	return urlParts[3].startsWith("watch?v=");
 }
 
-// ----- DOM -----
+// ----- Small utilities -----
 
 // Waits for a certain amount of milliseconds
 function delay(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-function setDOMTextWithDelay(textElement, newText, delayMS, changeToken, finalizes = false) {
-	// Sets the innerHTML of a (text) DOM element after a delay, if something else hasn't changed it yet
-	// i.e. only one function can change the text among all functions that were passed the same changeToken
-	delay(delayMS).then(() => {
-		if (!changeToken.isFinalized) {
-			textElement.innerHTML = newText;
-			// If the caller wants to stop others from setting the value to something else
-			changeToken.isFinalized = finalizes;
-		}
-	});
-}
-
-// ----- Objects -----
 
 // Determines if an object is empty
 function isEmpty(obj) {
