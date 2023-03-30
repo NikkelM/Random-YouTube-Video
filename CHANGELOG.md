@@ -1,10 +1,15 @@
 # Changelog
 
-## v1.4.3
+## v1.4.4
 
 <!--Releasenotes start-->
-- Fixed a bug occurring when a channel has no videos.
+- Fixed a bug where the channel name displayed in the popup would sometimes not be synchronized with the one that is used in the backend.
+- Fixed a bug where it would not be possible to set the shuffle percentage to 100% if another value was previously set.
 <!--Releasenotes end-->
+
+## v1.4.3
+
+- Fixed a bug occurring when a channel has no videos.
 
 ## v1.4.2
 
