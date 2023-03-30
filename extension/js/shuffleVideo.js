@@ -24,9 +24,12 @@ async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement)
 	const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : null;
 	if (!uploadsPlaylistId) {
 		throw new RandomYoutubeVideoError(
-			code = "RYV-1",
-			message = "No channel-ID found.",
-			solveHint = "Please reload the page and try again. Please inform the developer if this keeps happening."
+			{
+				code: "RYV-1",
+				message: "No channel-ID found.",
+				solveHint: "Please reload the page and try again. Please inform the developer if this keeps happening.",
+				showTrace: false
+			}
 		);
 	}
 
@@ -203,9 +206,12 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	if (!isCustomKey && userQuotaRemainingToday <= 0) {
 		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
 		throw new RandomYoutubeVideoError(
-			code = "RYV-4",
-			message = "You have exceeded your daily quota allocation for the YouTube API.",
-			solveHint = "You can try again tomorrow or provide a custom API key."
+			{
+				code: "RYV-4",
+				message: "You have exceeded your daily quota allocation for the YouTube API.",
+				solveHint: "You can try again tomorrow or provide a custom API key.",
+				showTrace: false
+			}
 		);
 	}
 
@@ -260,9 +266,12 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	if (!isCustomKey && userQuotaRemainingToday <= 0) {
 		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
 		throw new RandomYoutubeVideoError(
-			code = "RYV-4",
-			message = "You have exceeded your daily quota allocation for the YouTube API.",
-			solveHint = "You can try again tomorrow or provide a custom API key."
+			{
+				code: "RYV-4",
+				message: "You have exceeded your daily quota allocation for the YouTube API.",
+				solveHint: "You can try again tomorrow or provide a custom API key.",
+				showTrace: false
+			}
 		);
 	}
 
@@ -367,18 +376,34 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 
 					if (keyIndex === originalKeyIndex) {
 						throw new RandomYoutubeVideoError(
-							code = "RYV-2",
-							message = "All API keys have exceeded the allocated quota.",
-							solveHint = "Please *immediately* inform the developer. You can try again tomorrow or provide a custom API key to immediately resolve this problem."
+							{
+								code: "RYV-2",
+								message: "All API keys have exceeded the allocated quota.",
+								solveHint: "Please *immediately* inform the developer. You can try again tomorrow or provide a custom API key to immediately resolve this problem.",
+								showTrace: false
+							}
 						);
 					}
 				} else {
 					throw new RandomYoutubeVideoError(
-						code = "RYV-5",
-						message = "Your custom API key has reached its daily quota allocation.",
-						solveHint = "You must have watched a lot of videos to have this happen, or are using the API key for something else as well. You need to wait until the quota is reset or use a different API key."
+						{
+							code: "RYV-5",
+							message: "Your custom API key has reached its daily quota allocation.",
+							solveHint: "You must have watched a lot of videos to have this happen, or are using the API key for something else as well. You need to wait until the quota is reset or use a different API key.",
+							showTrace: false
+						}
 					);
 				}
+			} else if (error instanceof YoutubeAPIError && error.code === 404 && error.reason === "playlistNotFound") {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-6A",
+						message: "This channel has not uploaded any videos.",
+						showTrace: false
+					}
+				);
+			} else {
+				throw error;
 			}
 		}
 	}
@@ -418,9 +443,12 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 
 	if (!APIKey) {
 		throw new RandomYoutubeVideoError(
-			code = "RYV-3",
-			message = "There are no API keys available in the database, or they could not be fetched.",
-			solveHint = "Please *immediately* inform the developer."
+			{
+				code: "RYV-3",
+				message: "There are no API keys available in the database, or they could not be fetched.",
+				solveHint: "Please *immediately* inform the developer.",
+				showTrace: false
+			}
 		);
 	}
 
@@ -462,6 +490,16 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 			randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
 
 			console.log(`A new random video has been chosen: ${randomVideo}`);
+
+			if (randomVideo === undefined) {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-6B",
+						message: "All previously uploaded videos on this channel were deleted - the channel does not have any uploads.",
+						showTrace: false
+					}
+				)
+			}
 		} while (!await testVideoExistence(randomVideo))
 
 		// Update the database by removing the deleted videos there as well

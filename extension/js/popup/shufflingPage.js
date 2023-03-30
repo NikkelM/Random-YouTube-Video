@@ -61,7 +61,7 @@ async function shuffleButtonClicked() {
 				displayText = `Unknown Error`;
 		}
 
-		const errorMessage = `${error.message ?? ""}${error.reason ? "<br>" + error.reason : ""}${error.solveHint ? "<br>" + error.solveHint : ""}<br><br>${error.stack}`;
+		const errorMessage = `${error.message ?? ""}${error.reason ? "<br>" + error.reason : ""}${error.solveHint ? "<br>" + error.solveHint : ""}${error.showTrace ? "<br><br>" + error.stack : ""}`;
 
 		// Immediately display the error and stop other text changes
 		setDOMTextWithDelay(domElements.fetchPercentageNotice, displayText, 0, changeToken, true);

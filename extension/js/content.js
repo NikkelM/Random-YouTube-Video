@@ -81,7 +81,7 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 	}
 
 	// When navigating from e.g. the homepage after an invalidated extension context, sometimes the config is not loaded correctly
-	if(!configSync) {
+	if (!configSync) {
 		window.location.reload();
 	}
 
@@ -146,12 +146,7 @@ The page will reload and you can try again.`)
 		}
 
 		// Alert the user about the error
-		alert(`Random YouTube Video:
-
-${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}
-
-${error.stack}`
-		);
+		alert(`Random YouTube Video:\n\n${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}${error.showTrace ? "\n\n" + error.stack : ""}`);
 
 		// Immediately display the error and stop other text changes
 		setDOMTextWithDelay(shuffleButtonTextElement, `&nbsp;${displayText}`, 0, changeToken, true);
