@@ -131,22 +131,24 @@ class BooleanReference {
 // ----- Errors -----
 
 class RandomYoutubeVideoError extends Error {
-	constructor(code = "RYV-0", message = "", solveHint = "") {
+	constructor({ code = "RYV-0", message = "", solveHint = "", showTrace = true }) {
 		super(message);
 		this.code = code;
 		this.message = message;
 		this.solveHint = solveHint;
+		this.showTrace = showTrace;
 		this.name = "RandomYoutubeVideoError";
 	}
 }
 
 class YoutubeAPIError extends RandomYoutubeVideoError {
-	constructor(code = "YAPI-0", message = "", reason = "", solveHint = "") {
+	constructor(code = "YAPI-0", message = "", reason = "", solveHint = "", showTrace = true) {
 		super(message);
 		this.code = code;
 		this.message = message;
 		this.reason = reason;
 		this.solveHint = solveHint;
+		this.showTrace = showTrace;
 		this.name = "YoutubeAPIError";
 	}
 }
