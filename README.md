@@ -27,9 +27,7 @@ The Random YouTube Video extension adds a "Shuffle" button to YouTube channel an
 Highlighted Features:<br>
 - Sharing is caring: If another user has already shuffled from the channel you want to watch, the extension will run faster for you as video IDs are shared!
 - Customize your experience: Choose from a wide range of options to individualize your experience, such as opening videos in a new tab or the channel's uploads playlist, and much more!
-
-Please note:<br>
-If the chosen channel has uploaded a lot of videos and you are the first user to use the extension with that channel, the loading time until the first video is chosen may be a bit longer - rest assured that the extension is doing the work in the background. After this, the video data is stored in your browser's local storage as well as in our database, and subsequent uses are much faster.
+- Quick access: You don't need to open YouTube to shuffle from your favourite channels: The extension popup allows you to shuffle from your most recently visited channel at any time!
 
 ## Contribution
 
