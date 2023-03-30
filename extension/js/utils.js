@@ -37,11 +37,10 @@ function delay(ms) {
 }
 
 function setDOMTextWithDelay(textElement, newText, delayMS, changeToken, finalizes = false) {
-	// Sets the innerHTML of a (text) DOM element after a delay, if something else hasn't changed it yet
-	// i.e. only one function can change the text among all functions that were passed the same changeToken
+	// Sets the innerText of a (text) DOM element after a delay, if the changeToken indicates it is still valid
 	delay(delayMS).then(() => {
 		if (!changeToken.isFinalized) {
-			textElement.innerHTML = newText;
+			textElement.innerText = newText;
 			// If the caller wants to stop others from setting the value to something else
 			changeToken.isFinalized = finalizes;
 		}

@@ -98,3 +98,19 @@ function setChannelSetting(channelId, setting, value) {
 	configSync.channelSettings = channelSettings;
 	setSyncStorageValue("channelSettings", channelSettings, configSync);
 }
+
+function removeChannelSetting(channelId, setting) {
+	let channelSettings = configSync.channelSettings;
+	if (!channelSettings[channelId]) {
+		return;
+	}
+	delete channelSettings[channelId][setting];
+
+	// If the channel settings object is empty, remove it entirely
+	if (getLength(channelSettings[channelId]) === 0) {
+		delete channelSettings[channelId];
+	}
+
+	configSync.channelSettings = channelSettings;
+	setSyncStorageValue("channelSettings", channelSettings, configSync);
+}

@@ -36,7 +36,7 @@ function buildShuffleButton(pageType, channelId) {
 		document.getElementById(buttonDivID).style.display = "flex";
 
 		// Update the channelId
-		document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('channelId').innerHTML = channelId ?? "";
+		document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('channelId').innerText = channelId ?? "";
 
 		return;
 	}

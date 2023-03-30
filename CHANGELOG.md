@@ -4,6 +4,7 @@
 
 <!--Releasenotes start-->
 - Fixed a bug where the channel name displayed in the popup would sometimes not be synchronized with the one that is used in the backend.
+- Fixed a bug where it would not be possible to set the shuffle percentage to 100% if another value was previously set.
 <!--Releasenotes end-->
 
 ## v1.4.3

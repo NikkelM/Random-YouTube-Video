@@ -20,8 +20,6 @@ function getDomElements() {
 		shuffleOpenInNewTabOptionToggle: document.getElementById("shuffleOpenInNewTabOptionToggle"),
 		// Shuffling: Open as playlist option toggle
 		shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle"),
-		// Shuffling: Shuffle from last x% of videos input
-		shuffleLastXVideosInputField: document.getElementById("shuffleLastXVideosInputField"),
 
 		// PER CHANNEL SETTINGS
 		// Custom options per channel div
@@ -71,19 +69,13 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	// ----- Shuffling: Open as playlist option toggle -----
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
 
+	// Updates all elements that contain the channel name
+	updateDomElementsWithChannelName(domElements, configSync);
+
 	// ----- Custom options per channel div -----
 	if (configSync.currentChannelId) {
 		domElements.channelCustomOptionsDiv.classList.remove("hidden");
 	}
-
-	// ----- Custom options per channel: Channel name and description -----
-	domElements.channelCustomOptionsHeader.innerText = `Channel Settings: ${configSync.currentChannelName}`;
-
-	// ----- Custom options per channel: Shuffling: Shuffle from last x% of videos input -----
-	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.channelSettings[configSync.currentChannelId]?.shufflePercentage ?? 100;
-
-	// Popup shuffle button
-	domElements.popupShuffleButton.innerHTML = `Shuffle from: ${configSync.currentChannelName}`;
 
 	// Contains logic for all the "For your information" div content
 	updateFYIDiv(domElements, configSync);
@@ -91,6 +83,7 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 
 // Set event listeners for DOM elements
 async function setDomElemenEventListeners(domElements, configSync) {
+
 	// Custom API key: Option toggle
 	domElements.useCustomApiKeyOptionToggle.addEventListener("change", function () {
 		configSync.useCustomApiKeyOption = this.checked;
@@ -138,16 +131,21 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	});
 
 	// Custom options per channel: Shuffling: Shuffle from last x% of videos input
-	domElements.shuffleLastXVideosChannelCustomInputField.addEventListener("focusout", function () {
+	domElements.shuffleLastXVideosChannelCustomInputField.addEventListener("focusout", async function () {
+		// Update the configSync in case the channel was changed after the event listener was added
+		configSync = await fetchConfigSync();
+
 		// Clamp the value to the range [1, 100]
 		if (this.value === "") {
 			this.value = 100;
 		}
 		const value = Math.min(Math.max(this.value, 1), 100);
 
-		// We only need to save the value if it's not the default of 100
+		// We only need to save the value if it's not the default of 100. If we have already saved a different one, we want to remove it
 		if (value !== 100) {
 			setChannelSetting(configSync.currentChannelId, "shufflePercentage", value);
+		} else {
+			removeChannelSetting(configSync.currentChannelId, "shufflePercentage");
 		}
 
 		// Set the value of the input field to the clamped value
@@ -199,4 +197,16 @@ async function updateFYIDiv(domElements, configSync) {
 	} else {
 		domElements.dailyQuotaNoticeDiv.classList.add("hidden");
 	}
+}
+
+// Responsible for all DOM elements that need a reference to the current channel
+async function updateDomElementsWithChannelName(domElements, configSync) {
+	// ----- Custom options per channel: Channel name and description -----
+	domElements.channelCustomOptionsHeader.innerText = `Channel Settings: ${configSync.currentChannelName}`;
+
+	// ----- Custom options per channel: Shuffling: Shuffle from last x% of videos input -----
+	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.channelSettings[configSync.currentChannelId]?.shufflePercentage ?? 100;
+
+	// Popup shuffle button
+	domElements.popupShuffleButton.innerText = `Shuffle from: ${configSync.currentChannelName}`;
 }

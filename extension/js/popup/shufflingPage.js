@@ -40,7 +40,7 @@ async function shuffleButtonClicked() {
 
 		var configSync = await fetchConfigSync();
 
-		domElements.shufflingFromChannelHeading.innerHTML = configSync.currentChannelName;
+		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
 
 		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
 		// Remove the port's onDisconnect listener, as we have successfully opened the video and the service worker won't freeze
@@ -49,23 +49,23 @@ async function shuffleButtonClicked() {
 		console.error(error.stack);
 		console.error(error.message);
 
-		let displayText = "";
+		let errorHeading = "";
 		switch (error.name) {
 			case "RandomYoutubeVideoError":
-				displayText = `Error ${error.code}`;
+				errorHeading = `Error ${error.code}`;
 				break;
 			case "YoutubeAPIError":
-				displayText = `API Error ${error.code}`;
+				errorHeading = `API Error ${error.code}`;
 				break;
 			default:
-				displayText = `Unknown Error`;
+				errorHeading = `Unknown Error`;
 		}
 
-		const errorMessage = `${error.message ?? ""}${error.reason ? "<br>" + error.reason : ""}${error.solveHint ? "<br>" + error.solveHint : ""}${error.showTrace ? "<br><br>" + error.stack : ""}`;
+		const errorMessage = `${error.message ?? ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}${error.showTrace !== false ? "\n\n" + error.stack : ""}`;
 
-		// Immediately display the error and stop other text changes
-		setDOMTextWithDelay(domElements.fetchPercentageNotice, displayText, 0, changeToken, true);
-		domElements.shuffleErrorText.innerHTML = errorMessage;
+		// Immediately display the error
+		domElements.fetchPercentageNotice.innerText = errorHeading;
+		domElements.shuffleErrorText.innerText = errorMessage;
 		domElements.shuffleErrorText.classList.remove("hidden");
 
 		// Stop displaying the elements that are only shown while shuffling
