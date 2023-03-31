@@ -170,6 +170,8 @@ html {
 	background-color: #333;
 	text-align: center;
 	height: 17.5px;
+	margin-top: 6px;
+	margin-bottom: 4px;
 }
 
 .optionTextInput input.numberInput {
@@ -208,6 +210,7 @@ select {
 	border: none;
 	font-size: 14px;
 	border-radius: 3px;
+	outline: none;
 }
 
 select option {
