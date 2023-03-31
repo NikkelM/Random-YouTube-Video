@@ -203,7 +203,6 @@ html {
  * Dropdown menu
  */
 select {
-	text-align: center;
 	background-color: #333;
 	color: #fff;
 	padding: 4px;
@@ -214,7 +213,6 @@ select {
 }
 
 select option {
-	text-align: left;
 	background-color: #333;
 	color: #fff;
 }
