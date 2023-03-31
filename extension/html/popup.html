@@ -65,21 +65,21 @@
 				<h3 id="channelCustomOptionsHeader2">Settings for the current channel</h3>
 				<p class="grey-text">Settings for the most recent channel you visited.</p>
 				<!-- Custom options per channel: Shuffling: Shuffle between last x videos -->
-				<div id="shuffleLastXVideosChannelCustomDiv2" class="optionTextInput">
-					<label for="shuffleRule" style="display:inline"></label>
+				<div id="shuffleLastXVideosChannelCustomDiv2" class="optionTextInput" style="margin-top: 8px;">
+					<p style="display: inline;">Shuffle from</p>
 					<select name="shuffleRuleOptions" id="shuffleRuleOptions" style="display:inline">
 						<option value="percentageOption"
 							title="Only the most recent X% of videos uploaded to the channel will be considered when shuffling.">
-							Shuffle from the most recent X% of videos</option>
+							the most recent % of videos:</option>
 						<option value="dateOption"
 							title="Only videos uploaded after the chosen date will be considered when shuffling.">
-							Shuffle from videos uploaded after date</option>
+							videos uploaded after date:</option>
 						<option value="IdOption"
 							title="Only videos uploaded after the video with the given ID will be considered when shuffling.">
-							Shuffle from videos after video with ID</option>
+							videos after video with ID:</option>
 					</select>
-					<input type="number" inputmode="numeric" max="100" min="1" class="numberInput" style="display:inline"
-						id="shuffleLastXVideosChannelCustomInputField" name="apiKeyInput" value="100">
+					<input type="number" inputmode="numeric" max="100" min="1" class="numberInput" style="display:inline; width: 70px;"
+						id="shuffleLastXVideosChannelCustomInputField2" name="apiKeyInput2" value="100">
 				</div>
 			</div>
 		</div>
