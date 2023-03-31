@@ -149,14 +149,16 @@ html {
 	color: var(--randomYoutubeVideo-grey-fg-color);
 }
 
+/* 
+ * Input 
+ */
 .optionTextInput input {
 	color: var(--randomYoutubeVideo-fg-color);
 	font-family: var(--randomYoutubeVideo-font-family);
 	font-size: 14px;
 	border: none;
 	border-radius: 3px;
-	padding: 4px 10px;
-	margin: 2px 1px;
+	padding: 4px;
 	background-color: #333;
 	text-align: center;
 	width: 80%;
@@ -181,6 +183,29 @@ html {
 	background-color: #444;
 	cursor: default;
 	color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+/* 
+ * Dropdown menu
+ */
+select {
+	text-align: center;
+	background-color: #333;
+	color: #fff;
+	padding: 4px;
+	border: none;
+	font-size: 14px;
+	border-radius: 3px;
+}
+
+select option {
+	text-align: left;
+	background-color: #333;
+	color: #fff;
+}
+
+select:hover {
+	background-color: #444;
 }
 
 /*
