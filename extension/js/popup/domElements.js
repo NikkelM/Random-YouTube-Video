@@ -199,10 +199,10 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		if (this.value === "") {
 			this.value = 100;
 		}
-		this.value = Math.min(Math.max(this.value, 1), 100);
+		this.value = Math.min(Math.max(Math.round(this.value), 1), 100);
 
 		// We only need to save the value if it's not the default of 100. If we have already saved a different one, we want to remove it
-		if (this.value !== 100) {
+		if (this.value != 100) {
 			setChannelSetting(configSync.currentChannelId, "percentageValue", this.value);
 		} else {
 			removeChannelSetting(configSync.currentChannelId, "percentageValue");
@@ -270,6 +270,7 @@ async function updateDomElementsDependentOnChannel(domElements, configSync) {
 
 async function updateChannelSettingsDropdownMenu(domElements, configSync) {
 	configSync = await fetchConfigSync();
+	console.log(configSync)
 
 	// ----- Custom options per channel: Dropdown menu -----
 	// Set the dropdown menu to the active option chosen by the user
