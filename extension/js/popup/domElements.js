@@ -26,8 +26,19 @@ function getDomElements() {
 		channelCustomOptionsDiv: document.getElementById("channelCustomOptionsDiv"),
 		// Custom options per channel: Channel name and description
 		channelCustomOptionsHeader: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsHeader"),
-		// Custom options per channel: Shuffling: Shuffle from last x% of videos input
-		shuffleLastXVideosChannelCustomInputField: document.getElementById("shuffleLastXVideosChannelCustomInputField"),
+		// Custom options per channel: Dropdown menu Div (only for reference below)
+		channelCustomOptionsDropdownDiv: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsDropdownDiv"),
+		// Dropdown menu div: Dropdown menu
+		channelCustomOptionsDropdown: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsDropdown"),
+		// ----- Inputs -----
+		// Dropdown menu div: Date input
+		channelCustomOptionsDateOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsDateOptionInput"),
+		// Dropdown menu div: YouTube Video ID input
+		channelCustomOptionsYoutubeIdOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsYoutubeIdOptionInput"),
+		// Dropdown menu div: Percentage input
+		channelCustomOptionsPercentageOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsPercentageOptionInput"),
+		// Dropdown menu div: Percentage input p for % sign
+		channelCustomOptionsPercentageOptionP: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsPercentageOptionP"),
 
 		// Popup shuffle button
 		popupShuffleButton: document.getElementById("popupShuffleButton"),
@@ -70,7 +81,7 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
 
 	// Updates all elements that contain the channel name
-	updateDomElementsWithChannelName(domElements, configSync);
+	updateDomElementsDependentOnChannel(domElements, configSync);
 
 	// ----- Custom options per channel div -----
 	if (configSync.currentChannelId) {
@@ -130,30 +141,6 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
 	});
 
-	// Custom options per channel: Shuffling: Shuffle from last x% of videos input
-	domElements.shuffleLastXVideosChannelCustomInputField.addEventListener("focusout", async function () {
-		// Update the configSync in case the channel was changed after the event listener was added
-		configSync = await fetchConfigSync();
-
-		// Clamp the value to the range [1, 100]
-		if (this.value === "") {
-			this.value = 100;
-		}
-		const value = Math.min(Math.max(this.value, 1), 100);
-
-		// We only need to save the value if it's not the default of 100. If we have already saved a different one, we want to remove it
-		if (value !== 100) {
-			setChannelSetting(configSync.currentChannelId, "shufflePercentage", value);
-		} else {
-			removeChannelSetting(configSync.currentChannelId, "shufflePercentage");
-		}
-
-		// Set the value of the input field to the clamped value
-		this.value = value;
-
-		manageDependents(domElements, domElements.shuffleLastXVideosChannelCustomInputField, value);
-	});
-
 	// Popup shuffle button
 	domElements.popupShuffleButton.addEventListener("click", function () {
 		// Open the shuffling page in a new tab, which will automatically start the shuffle
@@ -200,13 +187,46 @@ async function updateFYIDiv(domElements, configSync) {
 }
 
 // Responsible for all DOM elements that need a reference to the current channel
-async function updateDomElementsWithChannelName(domElements, configSync) {
+async function updateDomElementsDependentOnChannel(domElements, configSync) {
 	// ----- Custom options per channel: Channel name and description -----
 	domElements.channelCustomOptionsHeader.innerText = `Channel Settings: ${configSync.currentChannelName}`;
 
 	// ----- Custom options per channel: Shuffling: Shuffle from last x% of videos input -----
-	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.channelSettings[configSync.currentChannelId]?.shufflePercentage ?? 100;
+	// domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.channelSettings[configSync.currentChannelId]?.shufflePercentage ?? 100;
 
-	// Popup shuffle button
+	// ----- Custom options per channel: Dropdown menu -----
+	// Set the dropdown menu to the active option chosen by the user
+	channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "percentageOption";
+	console.log(configSync)
+
+	switch (channelCustomOptionsDropdown.value) {
+		case "dateOption":
+			// Hide the other inputs and unhide this one
+			domElements.channelCustomOptionsDateOptionInput.classList.remove("hidden");
+			domElements.channelCustomOptionsYoutubeIdOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsPercentageOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsPercentageOptionP.classList.add("hidden");
+			// Set the value of the active input to the value saved in the configSync
+			// If no date was set yet, use the default value of 7 days ago
+			domElements.channelCustomOptionsDateOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.dateOption
+				?? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+			break;
+		case "youtubeIdOption":
+			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsYoutubeIdOptionInput.classList.remove("hidden");
+			domElements.channelCustomOptionsPercentageOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsPercentageOptionP.classList.add("hidden");
+			domElements.channelCustomOptionsYoutubeIdOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.youtubeIdOption ?? "YT-Video-ID";
+			break;
+		case "percentageOption":
+			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsYoutubeIdOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsPercentageOptionInput.classList.remove("hidden");
+			domElements.channelCustomOptionsPercentageOptionP.classList.remove("hidden");
+			domElements.channelCustomOptionsPercentageOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.percentageOption ?? 100;
+			break;
+	}
+
+	// ----- Popup shuffle button -----
 	domElements.popupShuffleButton.innerText = `Shuffle from: ${configSync.currentChannelName}`;
 }
