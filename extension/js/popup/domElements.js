@@ -185,11 +185,15 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		if (this.value.length === 11) {
 			// Set the value in sync storage
 			await setChannelSetting(configSync.currentChannelId, "youtubeIdValue", this.value);
+		} else if (this.value === "") {
+			// If the input is empty, remove the value from sync storage
+			await removeChannelSetting(configSync.currentChannelId, "youtubeIdValue");
 		} else {
-			if (this.value !== "") {
+			// Else, the input was invalid
+			this.value = configSync.channelSettings[configSync.currentChannelId].youtubeIdValue ?? "";
+			if (this.value === "") {
 				this.placeholder = "Invalid video ID";
 			}
-			this.value = "";
 		}
 
 		manageDependents(domElements, domElements.channelCustomOptionsYoutubeIdOptionInput, this.value, configSync);
