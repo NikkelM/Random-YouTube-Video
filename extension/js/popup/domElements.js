@@ -242,7 +242,8 @@ async function setDomElemenEventListeners(domElements, configSync) {
 
 async function updateFYIDiv(domElements, configSync) {
 	// ----- FYI: Number of shuffled videos text -----
-	domElements.numberOfShuffledVideosText.innerText = `In total, you have shuffled ${configSync.numShuffledVideosTotal} video${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""}.`;
+	const numShuffledVideosTotal = configSync.numShuffledVideosTotal.toLocaleString();
+	domElements.numberOfShuffledVideosText.innerText = `In total, you have shuffled ${numShuffledVideosTotal} video${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""}.`;
 
 	// ----- Daily quota notice -----
 	await getUserQuotaRemainingToday(configSync);
