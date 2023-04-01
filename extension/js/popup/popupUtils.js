@@ -2,7 +2,7 @@
 
 // ----- Dependency management -----
 
-function manageDependents(domElements, parent, value) {
+async function manageDependents(domElements, parent, value, configSync) {
 	switch (parent) {
 		// Custom API key: Option toggle
 		case domElements.useCustomApiKeyOptionToggle:
@@ -18,7 +18,7 @@ function manageDependents(domElements, parent, value) {
 				// The user must share data with the database
 				domElements.dbSharingOptionToggle.checked = true;
 				configSync.databaseSharingEnabledOption = true;
-				setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
+				await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
 
 				manageDbOptOutOption(domElements, configSync);
 
@@ -55,7 +55,7 @@ async function manageDbOptOutOption(domElements, configSync) {
 	// If the user may not opt out of database sharing but the latest record shows they would like to, make sure it's set correctly in sync storage
 	if (!(await checkDbOptOutOptionEligibility(configSync)) && !configSync.databaseSharingEnabledOption) {
 		configSync.databaseSharingEnabledOption = true;
-		setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
+		await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
 	}
 	domElements.dbSharingOptionToggle.checked = configSync.databaseSharingEnabledOption;
 }
@@ -88,7 +88,7 @@ async function validateApiKey(APIKey, domElements) {
 	return true;
 }
 
-function setChannelSetting(channelId, setting, value) {
+async function setChannelSetting(channelId, setting, value) {
 	let channelSettings = configSync.channelSettings;
 	if (!channelSettings[channelId]) {
 		channelSettings[channelId] = {};
@@ -96,10 +96,10 @@ function setChannelSetting(channelId, setting, value) {
 	channelSettings[channelId][setting] = value;
 
 	configSync.channelSettings = channelSettings;
-	setSyncStorageValue("channelSettings", channelSettings, configSync);
+	await setSyncStorageValue("channelSettings", channelSettings, configSync);
 }
 
-function removeChannelSetting(channelId, setting) {
+async function removeChannelSetting(channelId, setting) {
 	let channelSettings = configSync.channelSettings;
 	if (!channelSettings[channelId]) {
 		return;
@@ -112,5 +112,5 @@ function removeChannelSetting(channelId, setting) {
 	}
 
 	configSync.channelSettings = channelSettings;
-	setSyncStorageValue("channelSettings", channelSettings, configSync);
+	await setSyncStorageValue("channelSettings", channelSettings, configSync);
 }

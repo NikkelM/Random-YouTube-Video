@@ -551,11 +551,11 @@ function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
 }
 
 // Once per year on April first, rickroll the user
-function aprilFoolsJoke() {
+async function aprilFoolsJoke() {
 	const now = new Date();
 	if (now.getMonth() === 3 && now.getDate() === 1 && configSync.wasLastRickRolledInYear !== now.getFullYear()) {
 		configSync.wasLastRickRolledInYear = now.getFullYear();
-		setSyncStorageValue("wasLastRickRolledInYear", now.getFullYear());
+		await setSyncStorageValue("wasLastRickRolledInYear", now.getFullYear());
 
 		window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", '_blank').focus();
 	}
