@@ -277,6 +277,7 @@ async function updateChannelSettingsDropdownMenu(domElements, configSync) {
 	// ----- Custom options per channel: Dropdown menu -----
 	// Set the dropdown menu to the active option chosen by the user
 	channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "percentageOption";
+	channelCustomOptionsDropdown.title = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].title;
 
 	switch (channelCustomOptionsDropdown.value) {
 		case "dateOption":
