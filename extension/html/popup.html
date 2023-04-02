@@ -49,11 +49,11 @@
 				<!-- Custom options per channel: Choose option from dropdown -->
 				<div id="channelCustomOptionsDropdownDiv" class="optionTextInput" style="margin-top: 8px;">
 					<p style="display: inline;"
-						title="Choose from one of the provided settings to customize your shuffling experience on this channel.">
+						title="Choose from one of the provided options in the dropdown to customize your shuffling experience on this channel.">
 						Shuffle from</p>
 					<!-- Dropdown menu START -->
 					<select id="channelCustomOptionsDropdown" class="displayInline"
-						title="Choose from one of the provided settings to customize your shuffling experience on this channel.">
+						title="Choose from one of the provided options in the dropdown to customize your shuffling experience on this channel.">
 						<option value="dateOption"
 							title="Only videos uploaded after the chosen date will be considered when shuffling.">
 							videos uploaded after date:</option>
@@ -66,7 +66,7 @@
 					</select>
 					<!-- Dropdown menu END -->
 					<!-- Input fields per option START -->
-					<input type="date" class="hidden" id="channelCustomOptionsDateOptionInput"
+					<input type="date" class="hidden dateInput" id="channelCustomOptionsDateOptionInput"
 						name="channelCustomOptionsDateOptionInput">
 					<input type="text" inputmode="text" class="hidden youtubeIdInput" maxlength="11"
 						id="channelCustomOptionsYoutubeIdOptionInput" name="channelCustomOptionsYoutubeIdOptionInput"
@@ -137,7 +137,6 @@
 		</div>
 		<!-- FYI end -->
 
-		<br>
 		<footer id="randomYoutubeVideoFooter">
 			<a class="randomYoutubeVideoLink"
 				href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"

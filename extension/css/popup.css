@@ -169,8 +169,7 @@ html {
 	padding: 4px;
 	background-color: #333;
 	text-align: center;
-	height: 17.5px;
-	margin-top: 6px;
+	height: 18px;
 	margin-bottom: 4px;
 }
 
@@ -178,7 +177,12 @@ html {
 	width: 25px;
 }
 
+.optionTextInput input.dateInput {
+	margin-top: 6px;
+}
+
 .optionTextInput input.youtubeIdInput {
+	margin-top: 6px;
 	width: 150px;
 }
 
