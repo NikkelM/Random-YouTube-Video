@@ -252,6 +252,11 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 	// If there are no API keys saved in local storage or if we need to perform a periodic check, get them from the database.
 	if (!availableAPIKeys || configSync.nextAPIKeysCheckTime < Date.now()) {
 		availableAPIKeys = await readDataOnce("youtubeAPIKeys");
+
+		if (!availableAPIKeys) {
+			return { APIKey: null, isCustomKey: false, keyIndex: null };
+		}
+
 		// The API keys get scrambled and stored locally
 		availableAPIKeys = availableAPIKeys.map(key => rot13(key, true));
 		setLocalStorage("youtubeAPIKeys", availableAPIKeys);
@@ -264,7 +269,7 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 
 	if (forceDefault) {
 		// Return a list of all API keys
-		return availableAPIKeys.map(key => rot13(key, false));
+		return { APIKey: availableAPIKeys.map(key => rot13(key, false)), isCustomKey: false, keyIndex: null };
 	}
 
 	let usedIndex = null;

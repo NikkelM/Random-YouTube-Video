@@ -38,7 +38,13 @@ async function manageDependents(domElements, parent, value, configSync) {
 }
 
 async function checkDbOptOutOptionEligibility(configSync) {
-	const defaultAPIKeys = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
+	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
+
+	if (!APIKey) {
+		APIKey = [];
+	}
+
+	const defaultAPIKeys = APIKey;
 
 	// This option may only be enabled if the user has provided a valid custom Youtube API key
 	return (configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey && !defaultAPIKeys.includes(configSync.customYoutubeApiKey));
@@ -63,18 +69,24 @@ async function manageDbOptOutOption(domElements, configSync) {
 // ---------- Helper functions ----------
 
 // Validates a YouTube API key by sending a short request
-async function validateApiKey(APIKey, domElements) {
-	const defaultAPIKeys = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
+async function validateApiKey(customAPIKey, domElements) {
+	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
+
+	if (!APIKey) {
+		APIKey = [];
+	}
+
+	const defaultAPIKeys = APIKey;
 
 	// Users should not add default API keys
-	if (defaultAPIKeys.includes(APIKey)) {
+	if (defaultAPIKeys.includes(customAPIKey)) {
 		domElements.customApiKeyInputInfoText.innerText = "This is a default API key. Please enter your own.";
 		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 		return false;
 	}
 
 	// Send a request to get the uploads of the "YouTube" channel
-	const apiResponse = await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=UUBR8-60-B28hp2BmDPdntcQ&key=${APIKey}`)
+	const apiResponse = await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=UUBR8-60-B28hp2BmDPdntcQ&key=${customAPIKey}`)
 		.then((response) => response.json());
 
 	if (apiResponse["error"]) {
