@@ -269,7 +269,7 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 
 	if (forceDefault) {
 		// Return a list of all API keys
-		return availableAPIKeys.map(key => rot13(key, false));
+		return { APIKey: availableAPIKeys.map(key => rot13(key, false)), isCustomKey: false, keyIndex: null };
 	}
 
 	let usedIndex = null;
