@@ -409,7 +409,9 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 		} catch (error) {
 			// Immediately set the user quota in sync storage, as we won't be able to do so correctly later due to the error
 			// We will set it again in the error handler and remove 1 from it, so we need to add 1 here to compensate
-			await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday + 1));
+			if (!isCustomKey) {
+				await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday + 1));
+			}
 
 			// We handle the case where an API key's quota was exceeded
 			if (error instanceof YoutubeAPIError && error.code === 403 && error.reason === "quotaExceeded") {
