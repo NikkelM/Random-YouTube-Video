@@ -230,6 +230,30 @@ async function readDataOnce(key) {
 	return res;
 }
 
+// ---------- Back4app ----------
+
+fetch("https://parseapi.back4app.com/functions/getPlaylistFromAPI", {
+	method: "POST",
+	headers: {
+		"X-Parse-Application-Id": "92N9jiScuAJmOxVoxPYT30jcOtqAHKBa0lUS57Cy",
+		"X-Parse-REST-API-Key": "ulIzCK8MGjOAV9GUdlminkKm3xVFVw3oqpChC6kR",
+		"Content-Type": "application/json"
+	},
+	body: JSON.stringify({
+		"playlistId": "UU-0td1u5jNbGmcjznCV9ZxA"
+	})
+})
+	.then(response => response.json())
+	.then(responseBody => {
+		console.log(responseBody);
+		// Handle the response body here
+	})
+	.catch(error => {
+		// handle errors here
+		console.log(error)
+	});
+
+
 // ---------- Helpers ----------
 
 async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
