@@ -347,7 +347,6 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 			console.log("Getting snippet from YouTube API...");
 
 			userQuotaRemainingToday--;
-			userQuotaRemainingToday = -201;
 			// We allow users to go beyond the daily limit in case there are only a few more videos to be fetched.
 			// But if it goes too far, we need to cancel the operation.
 			if (userQuotaRemainingToday <= -200) {
