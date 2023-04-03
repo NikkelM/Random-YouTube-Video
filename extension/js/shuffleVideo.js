@@ -232,7 +232,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 			{
 				code: "RYV-4B",
 				message: `The channel you are shuffling from has too many uploads (${totalResults}) for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.`,
-				solveHint: "To shuffle from channel's with more uploads, please use a custom API key.",
+				solveHint: "To shuffle from channels with more uploads, please use a custom API key.",
 				showTrace: false
 			}
 		);
@@ -307,7 +307,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 			{
 				code: "RYV-4B",
 				message: `The channel you are shuffling from has too many new uploads (${totalNewResults}) for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.`,
-				solveHint: "To shuffle from channel's with more uploads, please use a custom API key.",
+				solveHint: "To shuffle from channels with more uploads, please use a custom API key.",
 				showTrace: false
 			}
 		);
@@ -399,7 +399,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 					{
 						code: "RYV-4B",
 						message: "The channel you are shuffling from has too many uploads for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.",
-						solveHint: "To shuffle from channel's with more uploads, please use a custom API key.",
+						solveHint: "To shuffle from channels with more uploads, please use a custom API key.",
 						showTrace: false
 					}
 				);
