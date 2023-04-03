@@ -36,13 +36,12 @@ function getDomElements() {
 // Called when the randomize-button from the popup is clicked
 async function shuffleButtonClicked() {
 	try {
-		var changeToken = new BooleanReference();
-
 		var configSync = await fetchConfigSync();
 
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
 
 		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
+
 		// Remove the port's onDisconnect listener, as we have successfully opened the video and the service worker won't freeze
 		port.postMessage({ command: "shuffleComplete" });
 	} catch (error) {

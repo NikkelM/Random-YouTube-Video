@@ -103,9 +103,6 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 // Called when the randomize-button is clicked
 async function shuffleVideos() {
 	try {
-		// This needs to be on top, as we still need it even if the extension context is invalidated, which will cause an error when fetching the config
-		var changeToken = new BooleanReference();
-
 		// Make sure we have the latest config
 		await fetchConfigSync();
 
@@ -113,6 +110,7 @@ async function shuffleVideos() {
 		const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerText ?? configSync.currentChannelId;
 
 		await chooseRandomVideo(channelId, false, shuffleButtonTextElement);
+
 		// Reset the button text in case we opened the video in a new tab
 		shuffleButtonTextElement.innerText = "\xa0Shuffle";
 	} catch (error) {

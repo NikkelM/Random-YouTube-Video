@@ -7,130 +7,135 @@ let mustOverwriteDatabase = false;
 
 // Chooses a random video uploaded on the current YouTube channel
 async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
-	// Make sure we have the latest config
-	await fetchConfigSync();
+	try {
+		// Make sure we have the latest config
+		await fetchConfigSync();
 
-	// Each user has a set amount of quota they can use per day.
-	// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.
-	let userQuotaRemainingToday = await getUserQuotaRemainingToday(configSync);
+		// Each user has a set amount of quota they can use per day.
+		// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.
+		let userQuotaRemainingToday = await getUserQuotaRemainingToday(configSync);
 
-	// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
-	let shouldUpdateDatabase = false;
+		// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
+		let shouldUpdateDatabase = false;
 
-	// User preferences
-	const databaseSharing = configSync.databaseSharingEnabledOption;
+		// User preferences
+		const databaseSharing = configSync.databaseSharingEnabledOption;
 
-	// Get the id of the uploads playlist for this channel
-	const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : null;
-	if (!uploadsPlaylistId) {
-		throw new RandomYoutubeVideoError(
-			{
-				code: "RYV-1",
-				message: "No channel-ID found.",
-				solveHint: "Please reload the page and try again. Please inform the developer if this keeps happening.",
-				showTrace: false
+		// Get the id of the uploads playlist for this channel
+		const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : null;
+		if (!uploadsPlaylistId) {
+			throw new RandomYoutubeVideoError(
+				{
+					code: "RYV-1",
+					message: "No channel-ID found.",
+					solveHint: "Please reload the page and try again. Please inform the developer if this keeps happening.",
+					showTrace: false
+				}
+			);
+		}
+
+		console.log(`Choosing a random video from playlist/channel: ${uploadsPlaylistId}`);
+
+		// Check if the playlist is already saved in local storage, so we don't need to access the database
+		let playlistInfo = await tryGetPlaylistFromLocalStorage(uploadsPlaylistId);
+
+		// The playlist does not exist locally. Try to get it from the database first
+		if (isEmpty(playlistInfo)) {
+			// No information for this playlist is saved in local storage
+			// Try to get it from the database
+			console.log(`Uploads playlist for this channel does not exist locally.${databaseSharing ? " Trying to get it from the database..." : ""}`);
+			playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId) : {};
+
+			// If the playlist does not exist in the database, get it from the API
+			if (isEmpty(playlistInfo)) {
+				console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
+				({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
+
+				shouldUpdateDatabase = true;
+			} else if (databaseSharing && (playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
+				// If the playlist exists in the database but is outdated, update it from the API.
+				console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
+
+				({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
+
+				shouldUpdateDatabase = true;
 			}
-		);
-	}
 
-	console.log(`Choosing a random video from playlist/channel: ${uploadsPlaylistId}`);
+			console.log("Uploads playlist for this channel successfully retrieved.");
 
-	// Check if the playlist is already saved in local storage, so we don't need to access the database
-	let playlistInfo = await tryGetPlaylistFromLocalStorage(uploadsPlaylistId);
+			// The playlist exists locally, but may be outdated. Update it from the database. If needed, update the database values as well.
+		} else if ((databaseSharing && ((playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString())) ||
+			(!databaseSharing && ((playlistInfo["lastAccessedLocally"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()))) {
+			console.log(`Local uploads playlist for this channel may be outdated. ${databaseSharing ? "Updating from the database..." : ""}`);
 
-	// The playlist does not exist locally. Try to get it from the database first
-	if (isEmpty(playlistInfo)) {
-		// No information for this playlist is saved in local storage
-		// Try to get it from the database
-		console.log(`Uploads playlist for this channel does not exist locally.${databaseSharing ? " Trying to get it from the database..." : ""}`);
-		playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId) : {};
+			playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId) : {};
 
-		// If the playlist does not exist in the database, get it from the API
-		if (isEmpty(playlistInfo)) {
-			console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
-			({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
+			// The playlist does not exist in the database (==it was deleted since the user last fetched it). Get it from the API.
+			// With the current functionality and db rules, this shouldn't happen, except if the user has opted out of database sharing.
+			if (isEmpty(playlistInfo)) {
+				console.log(`${databaseSharing ? "Uploads playlist for this channel does not exist in the database. " : "Fetching it from the YouTube API..."}`);
+				({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
 
-			shouldUpdateDatabase = true;
-		} else if (databaseSharing && (playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
-			// If the playlist exists in the database but is outdated, update it from the API.
-			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
+				shouldUpdateDatabase = true;
+				// If the playlist exists in the database but is outdated there as well, update it from the API.
+			} else if ((playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
+				console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
+				({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
 
-			({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
-
-			shouldUpdateDatabase = true;
+				shouldUpdateDatabase = true;
+			}
 		}
 
-		console.log("Uploads playlist for this channel successfully retrieved.");
+		// Update the remaining user quota in the configSync
+		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
 
-		// The playlist exists locally, but may be outdated. Update it from the database. If needed, update the database values as well.
-	} else if ((databaseSharing && ((playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString())) ||
-		(!databaseSharing && ((playlistInfo["lastAccessedLocally"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()))) {
-		console.log(`Local uploads playlist for this channel may be outdated. ${databaseSharing ? "Updating from the database..." : ""}`);
+		({ randomVideo, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
 
-		playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId) : {};
+		if (shouldUpdateDatabase && databaseSharing) {
+			playlistInfo["lastUpdatedDBAt"] = new Date().toISOString();
 
-		// The playlist does not exist in the database (==it was deleted since the user last fetched it). Get it from the API.
-		// With the current functionality and db rules, this shouldn't happen, except if the user has opted out of database sharing.
-		if (isEmpty(playlistInfo)) {
-			console.log(`${databaseSharing ? "Uploads playlist for this channel does not exist in the database. " : "Fetching it from the YouTube API..."}`);
-			({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
+			let videosToDatabase = {};
+			// If any videos need to be deleted, this should be the union of videos, newvideos, minus the videos to delete
+			if (encounteredDeletedVideos) {
+				console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
+				videosToDatabase = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
+			} else {
+				// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
+				console.log("Uploading new video IDs to the database...");
+				videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
+			}
 
-			shouldUpdateDatabase = true;
-			// If the playlist exists in the database but is outdated there as well, update it from the API.
-		} else if ((playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
-			console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
-			({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
+			await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos);
 
-			shouldUpdateDatabase = true;
-		}
-	}
-
-	// Update the remaining user quota in the configSync
-	await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
-
-	({ randomVideo, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
-
-	if (shouldUpdateDatabase && databaseSharing) {
-		playlistInfo["lastUpdatedDBAt"] = new Date().toISOString();
-
-		let videosToDatabase = {};
-		// If any videos need to be deleted, this should be the union of videos, newvideos, minus the videos to delete
-		if (encounteredDeletedVideos) {
-			console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
-			videosToDatabase = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
-		} else {
-			// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
-			console.log("Uploading new video IDs to the database...");
-			videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
+			// If we just updated the database, we automatically have the same version as it
+			playlistInfo["lastFetchedFromDB"] = playlistInfo["lastUpdatedDBAt"];
 		}
 
-		await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos);
+		// Update the playlist locally
+		console.log("Saving playlist to local storage...");
 
-		// If we just updated the database, we automatically have the same version as it
-		playlistInfo["lastFetchedFromDB"] = playlistInfo["lastUpdatedDBAt"];
+		// We can now join the new videos with the old ones
+		playlistInfo["videos"] = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
+
+		// Only save the wanted keys
+		playlistInfoForLocalStorage = {
+			// Remember the last time the playlist was accessed locally (==now)
+			"lastAccessedLocally": new Date().toISOString(),
+			"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
+			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
+			"videos": playlistInfo["videos"] ?? {}
+		};
+
+		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
+
+		configSync.numShuffledVideosTotal += 1;
+		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal);
+
+		playVideo(randomVideo, uploadsPlaylistId, firedFromPopup);
+	} catch (error) {
+		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, configSync.userQuotaRemainingToday - 1));
+		throw error;
 	}
-
-	// Update the playlist locally
-	console.log("Saving playlist to local storage...");
-
-	// We can now join the new videos with the old ones
-	playlistInfo["videos"] = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
-
-	// Only save the wanted keys
-	playlistInfoForLocalStorage = {
-		// Remember the last time the playlist was accessed locally (==now)
-		"lastAccessedLocally": new Date().toISOString(),
-		"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
-		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
-		"videos": playlistInfo["videos"] ?? {}
-	};
-
-	await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
-
-	configSync.numShuffledVideosTotal += 1;
-	await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal);
-
-	playVideo(randomVideo, uploadsPlaylistId, firedFromPopup);
 }
 
 // ---------- Database ----------
@@ -204,7 +209,6 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 
 	// If the user does not use a custom API key and has no quota remaining, we cannot continue
 	if (!isCustomKey && userQuotaRemainingToday <= 0) {
-		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-4A",
@@ -216,14 +220,31 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	}
 
 	let playlistInfo = {};
-
 	let pageToken = "";
-
 	let apiResponse = null;
+
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
-	// Set the current progress as text for the shuffle button/info text
+	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
 	const totalResults = apiResponse["pageInfo"]["totalResults"];
+	if (totalResults / 50 > userQuotaRemainingToday + 200 && !isCustomKey) {
+		throw new RandomYoutubeVideoError(
+			{
+				code: "RYV-4B",
+				message: `The channel you are shuffling from has too many uploads (${totalResults}) for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.`,
+				solveHint: "To shuffle from channel's with more uploads, please use a custom API key.",
+				showTrace: false
+			}
+		);
+	}
+
+	// The YouTube API limits the number of videos that can be fetched for uploads playlists to 20,000
+	// If it seems that such a limitation is in place, we want to alert the user to it
+	if (totalResults >= 19999) {
+		alert("NOTICE: The channel you are shuffling from has a lot of uploads (20,000+). The YouTube API only allows fetching the most recent 20,000 videos, which means that older uploads will not be shuffled from. This limitation is in place no matter if you use a custom API key or not.\n\nThe extension will now fetch all videos it can get from the API.");
+	}
+
+	// Set the current progress as text for the shuffle button/info text
 	let resultsFetchedCount = apiResponse["items"].length;
 
 	// If there are less than 50 videos, we don't need to show a progress percentage
@@ -279,8 +300,20 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	let apiResponse = null;
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, "", APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
-	// Set the current progress as text for the shuffle button/info text
+	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
 	const totalNewResults = apiResponse["pageInfo"]["totalResults"] - getLength(playlistInfo["videos"]);
+	if (totalNewResults / 50 > userQuotaRemainingToday + 200 && !isCustomKey) {
+		throw new RandomYoutubeVideoError(
+			{
+				code: "RYV-4B",
+				message: `The channel you are shuffling from has too many new uploads (${totalNewResults}) for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.`,
+				solveHint: "To shuffle from channel's with more uploads, please use a custom API key.",
+				showTrace: false
+			}
+		);
+	}
+
+	// Set the current progress as text for the shuffle button/info text
 	let resultsFetchedCount = apiResponse["items"].length;
 
 	// If there are less than 50 new videos, we don't need to show a progress percentage
@@ -346,20 +379,6 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 		try {
 			console.log("Getting snippet from YouTube API...");
 
-			userQuotaRemainingToday--;
-			// We allow users to go beyond the daily limit in case there are only a few more videos to be fetched.
-			// But if it goes too far, we need to cancel the operation.
-			if (userQuotaRemainingToday <= -200) {
-				throw new RandomYoutubeVideoError(
-					{
-						code: "RYV-4B",
-						message: "The channel you are shuffling from has too many uploads. To protect the userbase, each user has a limited amount of requests they can make per day.",
-						solveHint: "To shuffle from channel's with more uploads, please provide a custom API key.",
-						showTrace: false
-					}
-				);
-			}
-
 			await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${APIKey}`)
 				.then((response) => response.json())
 				.then((data) => apiResponse = data);
@@ -372,10 +391,25 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 				);
 			}
 
+			// We allow users to go beyond the daily limit in case there are only a few more videos to be fetched.
+			// But if it goes too far, we need to cancel the operation.
+			userQuotaRemainingToday--;
+			if (userQuotaRemainingToday <= -200) {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-4B",
+						message: "The channel you are shuffling from has too many uploads for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.",
+						solveHint: "To shuffle from channel's with more uploads, please use a custom API key.",
+						showTrace: false
+					}
+				);
+			}
+
 			break;
 		} catch (error) {
-			// Immediately set the user quota in sync storage, as we won't do so later due to the error
-			await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
+			// Immediately set the user quota in sync storage, as we won't be able to do so correctly later due to the error
+			// We will set it again in the error handler and remove 1 from it, so we need to add 1 here to compensate
+			await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday + 1));
 
 			// We handle the case where an API key's quota was exceeded
 			if (error instanceof YoutubeAPIError && error.code === 403 && error.reason === "quotaExceeded") {
