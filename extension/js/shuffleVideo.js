@@ -207,7 +207,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
 		throw new RandomYoutubeVideoError(
 			{
-				code: "RYV-4",
+				code: "RYV-4A",
 				message: "You have exceeded your daily quota allocation for the YouTube API.",
 				solveHint: "You can try again tomorrow or provide a custom API key.",
 				showTrace: false
@@ -264,10 +264,9 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 	// If the user does not use a custom API key and has no quota remaining, we cannot continue
 	if (!isCustomKey && userQuotaRemainingToday <= 0) {
-		console.log("You have exceeded your daily quota allocation for the YouTube API. You can try again tomorrow or provide a custom API key.");
 		throw new RandomYoutubeVideoError(
 			{
-				code: "RYV-4",
+				code: "RYV-4A",
 				message: "You have exceeded your daily quota allocation for the YouTube API.",
 				solveHint: "You can try again tomorrow or provide a custom API key.",
 				showTrace: false
@@ -348,6 +347,19 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 			console.log("Getting snippet from YouTube API...");
 
 			userQuotaRemainingToday--;
+			userQuotaRemainingToday = -201;
+			// We allow users to go beyond the daily limit in case there are only a few more videos to be fetched.
+			// But if it goes too far, we need to cancel the operation.
+			if (userQuotaRemainingToday <= -200) {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-4B",
+						message: "The channel you are shuffling from has too many uploads. To protect the userbase, each user has a limited amount of requests they can make per day.",
+						solveHint: "To shuffle from channel's with more uploads, please provide a custom API key.",
+						showTrace: false
+					}
+				);
+			}
 
 			await fetch(`https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=${pageToken}&playlistId=${playlistId}&key=${APIKey}`)
 				.then((response) => response.json())
@@ -363,6 +375,9 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 
 			break;
 		} catch (error) {
+			// Immediately set the user quota in sync storage, as we won't do so later due to the error
+			await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
+
 			// We handle the case where an API key's quota was exceeded
 			if (error instanceof YoutubeAPIError && error.code === 403 && error.reason === "quotaExceeded") {
 				// We need to get another API key
@@ -389,7 +404,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 						{
 							code: "RYV-5",
 							message: "Your custom API key has reached its daily quota allocation.",
-							solveHint: "You must have watched a lot of videos to have this happen, or are using the API key for something else as well. You need to wait until the quota is reset or use a different API key.",
+							solveHint: "This can easily happen if the channel's you are shuffling from have a lot of uploads, or if you are using the API key for something else as well. You need to wait until the quota is reset or use a different API key.",
 							showTrace: false
 						}
 					);
