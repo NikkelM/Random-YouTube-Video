@@ -104,16 +104,6 @@ function sendMessage(msg) {
 	})
 }
 
-// ---------- Custom classes ----------
-
-// Used to pass a boolean by reference
-class BooleanReference {
-	constructor() {
-		// true if the final value has been reached
-		this.isFinalized = false;
-	}
-}
-
 // ----- Errors -----
 
 class RandomYoutubeVideoError extends Error {
