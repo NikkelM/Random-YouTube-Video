@@ -232,6 +232,9 @@ async function readDataOnce(key) {
 
 // ---------- Back4app ----------
 
+// https://parse-dashboard.back4app.com/apps/c90dc46b-82f9-4547-b8fb-1d9fedfdaf62/cloud_code
+// https://parse-dashboard.back4app.com/apps/c90dc46b-82f9-4547-b8fb-1d9fedfdaf62/logs/system
+// https://www.back4app.com/docs/get-started/cloud-functions
 fetch("https://parseapi.back4app.com/functions/getPlaylistFromAPI", {
 	method: "POST",
 	headers: {
