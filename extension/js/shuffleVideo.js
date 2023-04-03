@@ -227,7 +227,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 
 	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
 	const totalResults = apiResponse["pageInfo"]["totalResults"];
-	if (totalResults / 50 > userQuotaRemainingToday + 200 && !isCustomKey) {
+	if (totalResults / 50 >= userQuotaRemainingToday + 199 && !isCustomKey) {
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-4B",
@@ -302,7 +302,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
 	const totalNewResults = apiResponse["pageInfo"]["totalResults"] - getLength(playlistInfo["videos"]);
-	if (totalNewResults / 50 > userQuotaRemainingToday + 200 && !isCustomKey) {
+	if (totalNewResults / 50 >= userQuotaRemainingToday + 199 && !isCustomKey) {
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-4B",
