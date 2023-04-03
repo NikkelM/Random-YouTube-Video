@@ -3,7 +3,8 @@
 ## v1.4.5
 
 <!--Releasenotes start-->
-- Added an additional threshold to prevent the API quotas to be used up by channels with too many uploads.
+- Added an additional threshold to prevent the API quotas to be used up by channels with too many uploads by accident.
+- Added an alert for users of custom API keys when they are shuffling from a channel with 20,000+ uploads, as the YouTube API only provides the most recent 20,000 results.
 <!--Releasenotes end-->
 
 ## v1.4.4
