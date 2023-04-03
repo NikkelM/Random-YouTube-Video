@@ -460,8 +460,8 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-3",
-				message: "There are no API keys available in the database. This is due to an attacker using the API keys provided by the extension. Read the statement here: https://github.com/NikkelM/Random-YouTube-Video/issues/125",
-				solveHint: "You can still use the extension by providing your custom API key via the popup. The attacker is not able to use that API key, as it is never transmitted to the extension's database.",
+				message: "There are no API keys available in the database. It may be that they were removed for security reasons.",
+				solveHint: "Please check back later if this has been resolved, otherwise contact the developer. You can always use the extension by providing your custom API key via the popup, which is never communicated to the extension's database.",
 				showTrace: false
 			}
 		);
