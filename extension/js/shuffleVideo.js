@@ -437,7 +437,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 						{
 							code: "RYV-5",
 							message: "Your custom API key has reached its daily quota allocation.",
-							solveHint: "This can easily happen if the channel's you are shuffling from have a lot of uploads, or if you are using the API key for something else as well. You need to wait until the quota is reset or use a different API key.",
+							solveHint: "This can easily happen if the channels you are shuffling from have a lot of uploads, or if you are using the API key for something else as well. You need to wait until the quota is reset or use a different API key.",
 							showTrace: false
 						}
 					);
