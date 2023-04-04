@@ -6,6 +6,7 @@
 - Added an additional threshold to prevent the API quotas to be used up by channels with too many uploads by accident.
 - Added an alert for users of custom API keys when they are shuffling from a channel with 20,000+ uploads, as the YouTube API only provides the most recent 20,000 results.
 - Added a small text change to the shuffle button to indicate the shuffle is working in case it takes a bit longer to fetch data from the database.
+- Fixed some alignment issues in the extension popup.
 - Removed unused code.
 <!--Releasenotes end-->
 
