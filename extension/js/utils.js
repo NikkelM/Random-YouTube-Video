@@ -26,7 +26,6 @@ function setDOMTextWithDelay(textElement, newText, delayMS, predicate = () => { 
 	// Sets the innerHTML of a (text) DOM element after a delay, if a predicate evaluates to true
 	// If no predicate is passed, this function will always set the text after the delay
 	delay(delayMS).then(() => {
-		console.log(predicate())
 		if (predicate()) {
 			textElement.innerText = newText;
 		}
