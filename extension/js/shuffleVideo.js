@@ -302,6 +302,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
 	const totalNewResults = apiResponse["pageInfo"]["totalResults"] - getLength(playlistInfo["videos"]);
+
 	if (totalNewResults / 50 >= userQuotaRemainingToday + 199 && !isCustomKey) {
 		throw new RandomYoutubeVideoError(
 			{
