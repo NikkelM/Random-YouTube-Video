@@ -109,9 +109,12 @@ async function shuffleVideos() {
 		// Get the saved channelId from the button. If for some reason it is not there, use the channelId from the config
 		const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerText ?? configSync.currentChannelId;
 
-		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Shuffling...", 1500, () => { return shuffleButtonTextElement.innerText === "\xa0Shuffle"; });
+		// We need this variable to make sure the button text is only changed if the shuffle hasn't finished within the time limit
+		let hasBeenShuffled = false;
+		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Shuffling...", 1500, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffle" && !hasBeenShuffled); });
 
 		await chooseRandomVideo(channelId, false, shuffleButtonTextElement);
+		hasBeenShuffled = true;
 
 		// Reset the button text in case we opened the video in a new tab
 		shuffleButtonTextElement.innerText = "\xa0Shuffle";
