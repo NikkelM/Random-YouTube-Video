@@ -1,9 +1,9 @@
 # Changelog
 
-## v1.x.x
+## v1.4.6
 
 <!--Releasenotes start-->
-- Fixed the text of the shuffle button being updated after the shuffle has finished.
+- Fixed the "Shuffling..." text on the shuffle button not being reset after a shuffle.
 <!--Releasenotes end-->
 
 ## v1.4.5
