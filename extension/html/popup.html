@@ -54,13 +54,16 @@
 					<!-- Dropdown menu START -->
 					<select id="channelCustomOptionsDropdown" class="displayInline"
 						title="Choose from one of the provided options in the dropdown to customize your shuffling experience on this channel.">
-						<option value="dateOption"
+						<option value="allVideosOption" option-width="190px"
+							title="No filters are applied, and a random video from all uploaded videos will be chosen.">
+							all videos on this channel.</option>
+						<option value="dateOption" option-width="200px"
 							title="Only videos uploaded after the chosen date will be considered when shuffling.">
 							videos uploaded after date:</option>
-						<option value="youtubeIdOption"
+						<option value="youtubeIdOption" option-width="190px"
 							title="Only videos uploaded after the video with the given ID will be considered when shuffling. To reset this setting, simply enter an empty string into the input field.">
 							videos after video with ID:</option>
-						<option value="percentageOption"
+						<option value="percentageOption" option-width="206px"
 							title="Only the most recent X% of videos uploaded to the channel will be considered when shuffling.">
 							the most recent % of videos:</option>
 					</select>

@@ -164,14 +164,18 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		// Update the configSync in case the channel was changed after the event listener was added
 		configSync = await fetchConfigSync();
 
-		// Make sure the date is valid. If it is not, set it to one week ago
+		// Make sure the date is valid. If it is not, set it to the previous value. If there is no previous value, set it to null
 		const selectedDate = new Date(this.value);
 		if (selectedDate > new Date()) {
-			this.value = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+			this.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue ?? null;
 		}
 
 		// Set the value in sync storage
-		await setChannelSetting(configSync.currentChannelId, "dateValue", this.value);
+		if (this.value) {
+			await setChannelSetting(configSync.currentChannelId, "dateValue", this.value);
+		} else {
+			await removeChannelSetting(configSync.currentChannelId, "dateValue");
+		}
 
 		manageDependents(domElements, domElements.channelCustomOptionsDateOptionInput, this.value, configSync);
 	});
@@ -280,10 +284,19 @@ async function updateDomElementsDependentOnChannel(domElements, configSync) {
 async function updateChannelSettingsDropdownMenu(domElements, configSync) {
 	// ----- Custom options per channel: Dropdown menu -----
 	// Set the dropdown menu to the active option chosen by the user
-	channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "percentageOption";
+	// The default value is "allVideosOption"
+	channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "allVideosOption";
+	channelCustomOptionsDropdown.style.width = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].getAttribute("option-width");
 	channelCustomOptionsDropdown.title = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].title;
 
 	switch (channelCustomOptionsDropdown.value) {
+		case "allVideosOption":
+			// Hide all inputs
+			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsYoutubeIdOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsPercentageOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsPercentageOptionP.classList.add("hidden");
+			break;
 		case "dateOption":
 			// Hide the other inputs and unhide this one
 			domElements.channelCustomOptionsDateOptionInput.classList.remove("hidden");
@@ -291,9 +304,8 @@ async function updateChannelSettingsDropdownMenu(domElements, configSync) {
 			domElements.channelCustomOptionsPercentageOptionInput.classList.add("hidden");
 			domElements.channelCustomOptionsPercentageOptionP.classList.add("hidden");
 			// Set the value of the active input to the value saved in the configSync
-			// If no date was set yet, use the default value of 7 days ago
-			domElements.channelCustomOptionsDateOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue
-				?? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+			// If no date was set yet, set it to null
+			domElements.channelCustomOptionsDateOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue ?? null;
 			break;
 		case "youtubeIdOption":
 			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
