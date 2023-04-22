@@ -168,6 +168,11 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		const selectedDate = new Date(this.value);
 		if (selectedDate > new Date()) {
 			this.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue ?? null;
+
+			this.classList.add('invalid-input');
+			setTimeout(() => {
+				this.classList.remove('invalid-input');
+			}, 1500);
 		}
 
 		// Set the value in sync storage
@@ -187,6 +192,8 @@ async function setDomElemenEventListeners(domElements, configSync) {
 
 		// If an ID was entered, make sure it is valid, i.e. consists of 11 characters
 		if (this.value.length === 11) {
+			// In case we previously had an invalid input, reset the placeholder
+			this.placeholder = "Enter Video ID";
 			// Set the value in sync storage
 			await setChannelSetting(configSync.currentChannelId, "youtubeIdValue", this.value);
 		} else if (this.value === "") {
@@ -198,6 +205,11 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			if (this.value === "") {
 				this.placeholder = "Invalid video ID";
 			}
+
+			this.classList.add('invalid-input');
+			setTimeout(() => {
+				this.classList.remove('invalid-input');
+			}, 1500);
 		}
 
 		manageDependents(domElements, domElements.channelCustomOptionsYoutubeIdOptionInput, this.value, configSync);
@@ -208,11 +220,25 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		// Update the configSync in case the channel was changed after the event listener was added
 		configSync = await fetchConfigSync();
 
-		// Clamp the value to the range [1, 100]
 		if (this.value === "") {
-			this.value = 100;
+			// Set the previous value if the input is empty, or set it to 100 if there is no previous value
+			this.value = configSync.channelSettings[configSync.currentChannelId]?.percentageValue ?? 100;
+
+			this.classList.add('invalid-input');
+			setTimeout(() => {
+				this.classList.remove('invalid-input');
+			}, 1500);
 		}
-		this.value = Math.min(Math.max(Math.round(this.value), 1), 100);
+
+		// Clamp the value to the range [1, 100]
+		if (this.value < 1 || this.value > 100) {
+			this.value = Math.min(Math.max(Math.round(this.value), 1), 100);
+
+			this.classList.add('invalid-input');
+			setTimeout(() => {
+				this.classList.remove('invalid-input');
+			}, 1500);
+		}
 
 		// We only need to save the value if it's not the default of 100. If we have already saved a different one, we want to remove it
 		if (this.value != 100) {

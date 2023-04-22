@@ -164,9 +164,9 @@ html {
 	color: var(--randomYoutubeVideo-fg-color);
 	font-family: var(--randomYoutubeVideo-font-family);
 	font-size: 14px;
-	border: none;
+	border: 2.5px solid transparent;
 	border-radius: 3px;
-	padding: 4px;
+	padding: 1.5px;
 	background-color: #333;
 	text-align: center;
 	height: 18px;
@@ -201,6 +201,23 @@ html {
 	background-color: #444;
 	cursor: default;
 	color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+.optionTextInput input.invalid-input {
+	border: 2.5px solid #c32e04 !important;
+	animation: flash 0.5s infinite;
+}
+
+@keyframes flash {
+	0% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+	100% {
+		opacity: 1;
+	}
 }
 
 /* 
