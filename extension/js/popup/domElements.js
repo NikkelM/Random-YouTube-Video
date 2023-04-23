@@ -34,7 +34,7 @@ function getDomElements() {
 		// Dropdown menu div: Date input
 		channelCustomOptionsDateOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsDateOptionInput"),
 		// Dropdown menu div: YouTube Video ID input
-		channelCustomOptionsYoutubeIdOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsYoutubeIdOptionInput"),
+		channelCustomOptionsVideoIdOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsVideoIdOptionInput"),
 		// Dropdown menu div: Percentage input
 		channelCustomOptionsPercentageOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsPercentageOptionInput"),
 		// Dropdown menu div: Percentage input p for % sign
@@ -186,7 +186,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	});
 
 	// Custom options per channel: Dropdown menu: Youtube Video Id input
-	domElements.channelCustomOptionsYoutubeIdOptionInput.addEventListener("focusout", async function () {
+	domElements.channelCustomOptionsVideoIdOptionInput.addEventListener("focusout", async function () {
 		// Update the configSync in case the channel was changed after the event listener was added
 		configSync = await fetchConfigSync();
 
@@ -212,7 +212,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			}, 1500);
 		}
 
-		manageDependents(domElements, domElements.channelCustomOptionsYoutubeIdOptionInput, this.value, configSync);
+		manageDependents(domElements, domElements.channelCustomOptionsVideoIdOptionInput, this.value, configSync);
 	});
 
 	// Custom options per channel: Dropdown menu: Percentage input
@@ -319,30 +319,30 @@ async function updateChannelSettingsDropdownMenu(domElements, configSync) {
 		case "allVideosOption":
 			// Hide all inputs
 			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
-			domElements.channelCustomOptionsYoutubeIdOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsVideoIdOptionInput.classList.add("hidden");
 			domElements.channelCustomOptionsPercentageOptionInput.classList.add("hidden");
 			domElements.channelCustomOptionsPercentageOptionP.classList.add("hidden");
 			break;
 		case "dateOption":
 			// Hide the other inputs and unhide this one
 			domElements.channelCustomOptionsDateOptionInput.classList.remove("hidden");
-			domElements.channelCustomOptionsYoutubeIdOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsVideoIdOptionInput.classList.add("hidden");
 			domElements.channelCustomOptionsPercentageOptionInput.classList.add("hidden");
 			domElements.channelCustomOptionsPercentageOptionP.classList.add("hidden");
 			// Set the value of the active input to the value saved in the configSync
 			// If no date was set yet, set it to null
 			domElements.channelCustomOptionsDateOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue ?? null;
 			break;
-		case "youtubeIdOption":
+		case "videoIdOption":
 			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
-			domElements.channelCustomOptionsYoutubeIdOptionInput.classList.remove("hidden");
+			domElements.channelCustomOptionsVideoIdOptionInput.classList.remove("hidden");
 			domElements.channelCustomOptionsPercentageOptionInput.classList.add("hidden");
 			domElements.channelCustomOptionsPercentageOptionP.classList.add("hidden");
-			domElements.channelCustomOptionsYoutubeIdOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.youtubeIdValue ?? "";
+			domElements.channelCustomOptionsVideoIdOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.youtubeIdValue ?? "";
 			break;
 		case "percentageOption":
 			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
-			domElements.channelCustomOptionsYoutubeIdOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsVideoIdOptionInput.classList.add("hidden");
 			domElements.channelCustomOptionsPercentageOptionInput.classList.remove("hidden");
 			domElements.channelCustomOptionsPercentageOptionP.classList.remove("hidden");
 			domElements.channelCustomOptionsPercentageOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.percentageValue ?? 100;
