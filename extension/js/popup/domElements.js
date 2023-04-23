@@ -195,13 +195,13 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			// In case we previously had an invalid input, reset the placeholder
 			this.placeholder = "Enter Video ID";
 			// Set the value in sync storage
-			await setChannelSetting(configSync.currentChannelId, "youtubeIdValue", this.value);
+			await setChannelSetting(configSync.currentChannelId, "videoIdValue", this.value);
 		} else if (this.value === "") {
 			// If the input is empty, remove the value from sync storage
-			await removeChannelSetting(configSync.currentChannelId, "youtubeIdValue");
+			await removeChannelSetting(configSync.currentChannelId, "videoIdValue");
 		} else {
 			// Else, the input was invalid
-			this.value = configSync.channelSettings[configSync.currentChannelId].youtubeIdValue ?? "";
+			this.value = configSync.channelSettings[configSync.currentChannelId].videoIdValue ?? "";
 			if (this.value === "") {
 				this.placeholder = "Invalid video ID";
 			}
@@ -338,7 +338,7 @@ async function updateChannelSettingsDropdownMenu(domElements, configSync) {
 			domElements.channelCustomOptionsVideoIdOptionInput.classList.remove("hidden");
 			domElements.channelCustomOptionsPercentageOptionInput.classList.add("hidden");
 			domElements.channelCustomOptionsPercentageOptionP.classList.add("hidden");
-			domElements.channelCustomOptionsVideoIdOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.youtubeIdValue ?? "";
+			domElements.channelCustomOptionsVideoIdOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.videoIdValue ?? "";
 			break;
 		case "percentageOption":
 			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
