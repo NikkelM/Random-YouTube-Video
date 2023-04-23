@@ -505,17 +505,44 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 }
 
 async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase) {
-	const videoShufflePercentage = configSync.channelSettings[channelId]?.shufflePercentage ?? 100;
+	let activeShuffleFilterOption = configSync.channelSettings[channelId]?.activeOption ?? "allVideosOption";
+	let activeOptionValue;
 
+	switch (activeShuffleFilterOption) {
+		case "allVideosOption":
+			activeOptionValue = null;
+			break;
+		case "dateOption":
+			activeOptionValue = configSync.channelSettings[channelId]?.dateValue;
+			break;
+		case "videoIdOption":
+			activeOptionValue = configSync.channelSettings[channelId]?.videoIdValue;
+			break;
+		case "percentageOption":
+			activeOptionValue = configSync.channelSettings[channelId]?.percentageValue;
+			break;
+	}
+
+	// If there is no value set for the active option, we alert the user
+	if (activeOptionValue === undefined) {
+		throw new RandomYoutubeVideoError(
+			{
+				code: "RYV-7",
+				message: `You have set an option to filter the videos that are shuffled (${activeShuffleFilterOption}), but no value for the option is set.`,
+				solveHint: "Please set a value for the active shuffle filter option in the popup, e.g. a valid date or video ID.",
+				showTrace: false
+			}
+		);
+	}
+
+	// Sort all videos by date
 	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
 	let videosByDate = Object.keys(allVideos).sort((a, b) => {
 		return new Date(allVideos[b]) - new Date(allVideos[a]);
 	});
 
-	let videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
-
+	let videosToShuffle = chooseVideoWithFilter(videosByDate, activeShuffleFilterOption, activeOptionValue);
 	let randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
-	console.log(`A random video has been chosen: ${randomVideo}`);
 
 	let encounteredDeletedVideos = false;
 	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
@@ -534,8 +561,7 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 				return new Date(allVideos[b]) - new Date(allVideos[a]);
 			});
 
-			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (videoShufflePercentage / 100))));
-
+			videosToShuffle = chooseVideoWithFilter(videosByDate, activeShuffleFilterOption, activeOptionValue);
 			randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
 
 			console.log(`A new random video has been chosen: ${randomVideo}`);
@@ -556,6 +582,72 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 	}
 
 	return { randomVideo, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
+}
+
+// Applies a filter to the playlist object, based on the setting set in the popup
+function chooseVideoWithFilter(videosByDate, activeShuffleFilterOption, activeOptionValue) {
+	switch (activeShuffleFilterOption) {
+		case "allVideosOption":
+			// For this option, no additional filtering is needed
+			videosToShuffle = videosByDate;
+			break;
+
+		case "dateOption":
+			// Take only videos that were released after the specified date
+			videosToShuffle = videosByDate.filter((videoId) => {
+				return new Date(videosByDate[videoId]) >= new Date(activeOptionValue);
+			});
+			// If the list is empty, alert the user
+			if (videosToShuffle.length === 0) {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-8A",
+						message: `There are no videos that were released after the specified date (${activeOptionValue}).`,
+						solveHint: "Please change the date or use a different shuffle filter option.",
+						showTrace: false
+					}
+				);
+			}
+			break;
+
+		case "videoIdOption":
+			// Take only videos that were released after the specified video
+			// The videos are already sorted by date, so we can just take the videos that are after the specified video in the list
+			// If the specified video does not exist, we alert the user
+			const videoIndex = videosByDate.indexOf(activeOptionValue);
+			if (videoIndex === -1) {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-8B",
+						message: `The video ID you specified (${activeOptionValue}) does not map to a video uploaded on this channel.`,
+						solveHint: "Please fix the video ID or use a different shuffle filter option.",
+						showTrace: false
+					}
+				);
+			}
+
+			videosToShuffle = videosByDate.slice(0, videoIndex);
+
+			// If the list is empty, alert the user
+			if (videosToShuffle.length === 0) {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-8C",
+						message: `There are no videos that were released after the specified video ID (${activeOptionValue}), or the newest video has not yet been added to the database.`,
+						solveHint: "The extension will update playlists every 48 hours, so please wait for an update, change the video ID or use a different shuffle filter option.",
+						showTrace: false
+					}
+				);
+			}
+			break;
+
+		case "percentageOption":
+			// Take only a percentage of the videos, and then choose a random video from that subset
+			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (activeOptionValue / 100))));
+			break;
+	}
+
+	return videosToShuffle;
 }
 
 function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
