@@ -541,7 +541,7 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 		return new Date(allVideos[b]) - new Date(allVideos[a]);
 	});
 
-	let videosToShuffle = chooseVideoWithFilter(videosByDate, activeShuffleFilterOption, activeOptionValue);
+	let videosToShuffle = chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue);
 	let randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
 
 	let encounteredDeletedVideos = false;
@@ -561,7 +561,7 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 				return new Date(allVideos[b]) - new Date(allVideos[a]);
 			});
 
-			videosToShuffle = chooseVideoWithFilter(videosByDate, activeShuffleFilterOption, activeOptionValue);
+			videosToShuffle = chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue);
 			randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
 
 			console.log(`A new random video has been chosen: ${randomVideo}`);
@@ -585,7 +585,7 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 }
 
 // Applies a filter to the playlist object, based on the setting set in the popup
-function chooseVideoWithFilter(videosByDate, activeShuffleFilterOption, activeOptionValue) {
+function chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue) {
 	switch (activeShuffleFilterOption) {
 		case "allVideosOption":
 			// For this option, no additional filtering is needed
@@ -595,7 +595,7 @@ function chooseVideoWithFilter(videosByDate, activeShuffleFilterOption, activeOp
 		case "dateOption":
 			// Take only videos that were released after the specified date
 			videosToShuffle = videosByDate.filter((videoId) => {
-				return new Date(videosByDate[videoId]) >= new Date(activeOptionValue);
+				return new Date(allVideos[videoId]) >= new Date(activeOptionValue);
 			});
 			// If the list is empty, alert the user
 			if (videosToShuffle.length === 0) {
