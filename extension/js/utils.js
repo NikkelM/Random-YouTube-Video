@@ -26,7 +26,6 @@ function setDOMTextWithDelay(textElement, newText, delayMS, predicate = () => { 
 	// Sets the innerHTML of a (text) DOM element after a delay, if a predicate evaluates to true
 	// If no predicate is passed, this function will always set the text after the delay
 	delay(delayMS).then(() => {
-		console.log(predicate())
 		if (predicate()) {
 			textElement.innerText = newText;
 		}
@@ -76,7 +75,7 @@ async function fetchConfigSync() {
 
 // This function also exists in background.js
 async function setSyncStorageValue(key, value, passedConfigSync = null) {
-	// passedConfigSync is true if this is called from the popup, as for the others the config is a global variable
+	// passedConfigSync is set if this is called from the popup, as for the others the config is a global variable
 	if (passedConfigSync) {
 		passedConfigSync[key] = value;
 	} else {

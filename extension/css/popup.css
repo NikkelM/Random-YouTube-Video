@@ -27,7 +27,11 @@
 }
 
 .hidden {
-	display: none;
+	display: none !important;
+}
+
+.displayInline {
+	display: inline;
 }
 
 /*
@@ -58,6 +62,10 @@
 #randomYoutubeVideoPopup p {
 	margin-top: 2px;
 	margin-bottom: 2px;
+}
+
+#randomYoutubeVideoPopup h1 {
+	margin-bottom: 8px;
 }
 
 #randomYoutubeVideoPopup h2 {
@@ -149,21 +157,33 @@ html {
 	color: var(--randomYoutubeVideo-grey-fg-color);
 }
 
+/* 
+ * Input 
+ */
 .optionTextInput input {
 	color: var(--randomYoutubeVideo-fg-color);
 	font-family: var(--randomYoutubeVideo-font-family);
 	font-size: 14px;
-	border: none;
+	border: 2.5px solid transparent;
 	border-radius: 3px;
-	padding: 4px 10px;
-	margin: 2px 1px;
+	padding: 1.5px;
 	background-color: #333;
 	text-align: center;
-	width: 80%;
+	height: 18px;
+	margin-bottom: 4px;
 }
 
 .optionTextInput input.numberInput {
 	width: 25px;
+}
+
+.optionTextInput input.dateInput {
+	margin-top: 6px;
+}
+
+.optionTextInput input.youtubeIdInput {
+	margin-top: 6px;
+	width: 150px;
 }
 
 /* Remove the up and down arrows from the number input */
@@ -181,6 +201,47 @@ html {
 	background-color: #444;
 	cursor: default;
 	color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+.optionTextInput input.invalid-input {
+	border: 2.5px solid #c32e04 !important;
+	animation: flash 0.5s infinite;
+}
+
+@keyframes flash {
+	0% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.5;
+	}
+
+	100% {
+		opacity: 1;
+	}
+}
+
+/* 
+ * Dropdown menu
+ */
+select {
+	background-color: #333;
+	color: #fff;
+	padding: 4px;
+	border: none;
+	font-size: 14px;
+	border-radius: 3px;
+	outline: none;
+}
+
+select option {
+	background-color: #333;
+	color: #fff;
+}
+
+select:hover {
+	background-color: #444;
 }
 
 /*

@@ -15,7 +15,7 @@
 		<h1>Random YouTube Video</h1>
 
 		<!-- OPTIONS START -->
-		<h2>Extension Settings</h2>
+		<!-- <h2>Extension Settings</h2> -->
 		<p class="grey-text">Hover over an option to view a more detailed explanation.</p>
 
 		<h3>General Video Settings</h3>
@@ -45,15 +45,45 @@
 		<div id="channel">
 			<div id="channelCustomOptionsDiv" class="hidden">
 				<h3 id="channelCustomOptionsHeader">Channel settings</h3>
-				<p class="grey-text">This is your most recently visited channel.</p>
-				<!-- Custom options per channel: Shuffling: Shuffle between last x videos -->
-				<div id="shuffleLastXVideosChannelCustomDiv" class="optionTextInput"
-					title="Only the most recent x% of videos uploaded to the channel will be considered when shuffling.">
-					<p style="display:inline">Shuffle from the most recent</p>
-					<input type="number" inputmode="numeric" max="100" min="1" class="numberInput" style="display:inline"
-						id="shuffleLastXVideosChannelCustomInputField" name="apiKeyInput" value="100">
-					<p style="display:inline">% of videos.</p>
+				<p class="grey-text">Customize your most recently visited channel.</p>
+				<!-- Custom options per channel: Choose option from dropdown -->
+				<div id="channelCustomOptionsDropdownDiv" class="optionTextInput" style="margin-top: 8px;">
+					<p style="display: inline;"
+						title="Choose from one of the provided options in the dropdown to customize your shuffling experience on this channel.">
+						Shuffle from</p>
+					<!-- Dropdown menu START -->
+					<select id="channelCustomOptionsDropdown" class="displayInline"
+						title="Choose from one of the provided options in the dropdown to customize your shuffling experience on this channel.">
+						<option value="allVideosOption" option-width="190px"
+							title="No filters are applied, and a random video from all uploaded videos will be chosen.">
+							all videos on this channel.</option>
+						<option value="dateOption" option-width="200px"
+							title="Only videos uploaded on or after the chosen date will be considered when shuffling.">
+							videos uploaded since date:</option>
+						<option value="videoIdOption" option-width="190px"
+							title="Only videos uploaded on or after the day the video with the given ID was uploaded will be considered when shuffling.">
+							videos after video with ID:</option>
+						<option value="percentageOption" option-width="206px"
+							title="Only the most recent X% of videos uploaded to the channel will be considered when shuffling.">
+							the most recent % of videos:</option>
+					</select>
+					<!-- Dropdown menu END -->
+					<!-- Input fields per option START -->
+					<input type="date" class="hidden dateInput" id="channelCustomOptionsDateOptionInput"
+						name="channelCustomOptionsDateOptionInput"
+						title="Only videos uploaded on or after the chosen date will be considered when shuffling.">
+					<input type="text" inputmode="text" class="hidden youtubeIdInput" maxlength="11"
+						id="channelCustomOptionsVideoIdOptionInput" name="channelCustomOptionsVideoIdOptionInput"
+						title="Only videos uploaded on or after the day the video with the given ID was uploaded will be considered when shuffling."
+						placeholder="Enter Video ID">
+					<input type="number" inputmode="numeric" class="hidden displayInline numberInput" max="100" min="1"
+						id="channelCustomOptionsPercentageOptionInput" name="channelCustomOptionsPercentageOptionInput"
+						title="Only the most recent X% of videos uploaded to the channel will be considered when shuffling.">
+					<p id="channelCustomOptionsPercentageOptionP" class="hidden displayInline"
+						title="Only the most recent X% of videos uploaded to the channel will be considered when shuffling.">%</p>
+					<!-- Input fields per option END -->
 				</div>
+				<!-- Shuffle button -->
 				<button id="popupShuffleButton" class="randomYoutubeVideoButton shuffleButton">
 					Shuffle from this channel</button>
 			</div>
@@ -85,7 +115,7 @@
 		<!-- Custom API key: Input -->
 		<div id="customApiKeyInputDiv" class="optionTextInput hidden">
 			<p>Your custom API key:</p>
-			<input type="text" id="customApiKeyInputField" name="apiKeyInput"
+			<input type="text" id="customApiKeyInputField" name="customApiKeyInputField" style="width: 80%;"
 				title="Enter your YouTube API key here. It will not be shared with anyone."
 				placeholder="Enter API key here. It won't be shared with anyone.">
 			<br>
@@ -105,16 +135,15 @@
 			<!-- Daily quota notice -->
 			<div id="dailyQuotaNoticeDiv" class="hidden"
 				title="To protect the userbase against abuse, each user has a limited amount of requests to the YouTube API per day. This quota only ticks down if you are the first to shuffle from a channel, and should not effect users with normal usage patterns. If you are affected by this, you may make use of the custom API key option to remove this limitation.">
-				<p style="display:inline">You have</p>
-				<p style="display:inline" id="dailyQuotaNoticeText">200</p>
-				<p style="display:inline">requests to the YouTube API remaining today.<br>Use a custom API key to remove this
+				<p class="displayInline">You have</p>
+				<p class="displayInline" id="dailyQuotaNoticeText">200</p>
+				<p class="displayInline">requests to the YouTube API remaining today.<br>Use a custom API key to remove this
 					limit.</p>
 			</div>
 			<!-- Daily quota notice end -->
 		</div>
 		<!-- FYI end -->
 
-		<br>
 		<footer id="randomYoutubeVideoFooter">
 			<a class="randomYoutubeVideoLink"
 				href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"

@@ -26,8 +26,19 @@ function getDomElements() {
 		channelCustomOptionsDiv: document.getElementById("channelCustomOptionsDiv"),
 		// Custom options per channel: Channel name and description
 		channelCustomOptionsHeader: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsHeader"),
-		// Custom options per channel: Shuffling: Shuffle from last x% of videos input
-		shuffleLastXVideosChannelCustomInputField: document.getElementById("shuffleLastXVideosChannelCustomInputField"),
+		// Custom options per channel: Dropdown menu Div (only for reference below)
+		channelCustomOptionsDropdownDiv: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsDropdownDiv"),
+		// Dropdown menu div: Dropdown menu
+		channelCustomOptionsDropdown: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsDropdown"),
+		// ----- Inputs -----
+		// Dropdown menu div: Date input
+		channelCustomOptionsDateOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsDateOptionInput"),
+		// Dropdown menu div: YouTube Video ID input
+		channelCustomOptionsVideoIdOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsVideoIdOptionInput"),
+		// Dropdown menu div: Percentage input
+		channelCustomOptionsPercentageOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsPercentageOptionInput"),
+		// Dropdown menu div: Percentage input p for % sign
+		channelCustomOptionsPercentageOptionP: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsPercentageOptionP"),
 
 		// Popup shuffle button
 		popupShuffleButton: document.getElementById("popupShuffleButton"),
@@ -70,7 +81,7 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
 
 	// Updates all elements that contain the channel name
-	updateDomElementsWithChannelName(domElements, configSync);
+	updateDomElementsDependentOnChannel(domElements, configSync);
 
 	// ----- Custom options per channel div -----
 	if (configSync.currentChannelId) {
@@ -85,17 +96,19 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 async function setDomElemenEventListeners(domElements, configSync) {
 
 	// Custom API key: Option toggle
-	domElements.useCustomApiKeyOptionToggle.addEventListener("change", function () {
+	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
 		configSync.useCustomApiKeyOption = this.checked;
-		setSyncStorageValue("useCustomApiKeyOption", this.checked, configSync);
-		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked);
+		await setSyncStorageValue("useCustomApiKeyOption", this.checked, configSync);
+
+		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked, configSync);
 	});
 
 	// Database sharing: Option toggle
-	domElements.dbSharingOptionToggle.addEventListener("change", function () {
+	domElements.dbSharingOptionToggle.addEventListener("change", async function () {
 		configSync.databaseSharingEnabledOption = this.checked;
-		setSyncStorageValue("databaseSharingEnabledOption", this.checked, configSync);
-		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked);
+		await setSyncStorageValue("databaseSharingEnabledOption", this.checked, configSync);
+
+		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked, configSync);
 	});
 
 	// Custom API key: Input
@@ -113,45 +126,128 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			domElements.customApiKeyInputField.value = "";
 		}
 		manageDbOptOutOption(domElements, configSync);
-		manageDependents(domElements, domElements.customApiKeySubmitButton, null);
+
+		manageDependents(domElements, domElements.customApiKeySubmitButton, null, configSync);
 	});
 
 	// Shuffling: Open in new tab option toggle
-	domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", function () {
+	domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", async function () {
 		configSync.shuffleOpenInNewTabOption = this.checked;
-		setSyncStorageValue("shuffleOpenInNewTabOption", this.checked, configSync);
-		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked);
+		await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked, configSync);
+
+		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked, configSync);
 	});
 
 	// Shuffling: Open as playlist option toggle
-	domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", function () {
+	domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", async function () {
 		configSync.shuffleOpenAsPlaylistOption = this.checked;
-		setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked, configSync);
-		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
+		await setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked, configSync);
+
+		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked, configSync);
 	});
 
-	// Custom options per channel: Shuffling: Shuffle from last x% of videos input
-	domElements.shuffleLastXVideosChannelCustomInputField.addEventListener("focusout", async function () {
+	// Custom options per channel: Dropdown menu
+	domElements.channelCustomOptionsDropdown.addEventListener("change", async function () {
 		// Update the configSync in case the channel was changed after the event listener was added
 		configSync = await fetchConfigSync();
 
-		// Clamp the value to the range [1, 100]
-		if (this.value === "") {
-			this.value = 100;
+		// Set the value in configSync to the currently selected option
+		await setChannelSetting(configSync.currentChannelId, "activeOption", this.value);
+
+		updateChannelSettingsDropdownMenu(domElements, configSync);
+
+		manageDependents(domElements, domElements.channelCustomOptionsDropdown, this.value, configSync);
+	});
+
+	// Custom options per channel: Dropdown menu: Date input
+	domElements.channelCustomOptionsDateOptionInput.addEventListener("focusout", async function () {
+		// Update the configSync in case the channel was changed after the event listener was added
+		configSync = await fetchConfigSync();
+
+		// Make sure the date is valid. If it is not, set it to the previous value. If there is no previous value, set it to null
+		const selectedDate = new Date(this.value);
+		if (selectedDate > new Date()) {
+			this.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue ?? null;
+
+			this.classList.add('invalid-input');
+			setTimeout(() => {
+				this.classList.remove('invalid-input');
+			}, 1500);
 		}
-		const value = Math.min(Math.max(this.value, 1), 100);
+
+		// Set the value in sync storage
+		if (this.value) {
+			await setChannelSetting(configSync.currentChannelId, "dateValue", this.value);
+		} else {
+			await removeChannelSetting(configSync.currentChannelId, "dateValue");
+		}
+
+		manageDependents(domElements, domElements.channelCustomOptionsDateOptionInput, this.value, configSync);
+	});
+
+	// Custom options per channel: Dropdown menu: Youtube Video Id input
+	domElements.channelCustomOptionsVideoIdOptionInput.addEventListener("focusout", async function () {
+		// Update the configSync in case the channel was changed after the event listener was added
+		configSync = await fetchConfigSync();
+
+		// If an ID was entered, make sure it is valid, i.e. consists of 11 characters
+		if (this.value.length === 11) {
+			// In case we previously had an invalid input, reset the placeholder
+			this.placeholder = "Enter Video ID";
+			// Set the value in sync storage
+			await setChannelSetting(configSync.currentChannelId, "videoIdValue", this.value);
+		} else if (this.value === "") {
+			// If the input is empty, remove the value from sync storage
+			await removeChannelSetting(configSync.currentChannelId, "videoIdValue");
+		} else {
+			// Else, the input was invalid
+			this.value = configSync.channelSettings[configSync.currentChannelId].videoIdValue ?? "";
+			if (this.value === "") {
+				this.placeholder = "Invalid video ID";
+			}
+
+			this.classList.add('invalid-input');
+			setTimeout(() => {
+				this.classList.remove('invalid-input');
+			}, 1500);
+		}
+
+		manageDependents(domElements, domElements.channelCustomOptionsVideoIdOptionInput, this.value, configSync);
+	});
+
+	// Custom options per channel: Dropdown menu: Percentage input
+	domElements.channelCustomOptionsPercentageOptionInput.addEventListener("focusout", async function () {
+		// Update the configSync in case the channel was changed after the event listener was added
+		configSync = await fetchConfigSync();
+
+		if (this.value === "") {
+			// Set the previous value if the input is empty, or set it to 100 if there is no previous value
+			this.value = configSync.channelSettings[configSync.currentChannelId]?.percentageValue ?? 100;
+
+			this.classList.add('invalid-input');
+			setTimeout(() => {
+				this.classList.remove('invalid-input');
+			}, 1500);
+		}
+
+		// Clamp the value to the range [1, 100]
+		if (this.value < 1 || this.value > 100) {
+			this.value = Math.min(Math.max(Math.round(this.value), 1), 100);
+
+			this.classList.add('invalid-input');
+			setTimeout(() => {
+				this.classList.remove('invalid-input');
+			}, 1500);
+		}
 
 		// We only need to save the value if it's not the default of 100. If we have already saved a different one, we want to remove it
-		if (value !== 100) {
-			setChannelSetting(configSync.currentChannelId, "shufflePercentage", value);
+		if (this.value != 100) {
+			await setChannelSetting(configSync.currentChannelId, "percentageValue", this.value);
 		} else {
-			removeChannelSetting(configSync.currentChannelId, "shufflePercentage");
+			await removeChannelSetting(configSync.currentChannelId, "percentageValue");
 		}
 
-		// Set the value of the input field to the clamped value
-		this.value = value;
-
-		manageDependents(domElements, domElements.shuffleLastXVideosChannelCustomInputField, value);
+		manageDependents(domElements, domElements.channelCustomOptionsPercentageOptionInput, this.value, configSync);
 	});
 
 	// Popup shuffle button
@@ -178,10 +274,11 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	});
 }
 
-// Sometimes we change the content of the FYI div, or even if it should be displayed at all
 async function updateFYIDiv(domElements, configSync) {
 	// ----- FYI: Number of shuffled videos text -----
-	domElements.numberOfShuffledVideosText.innerText = `In total, you have shuffled ${configSync.numShuffledVideosTotal} video${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""}.`;
+	// Use toLocaleString() to add commas/periods to large numbers
+	const numShuffledVideosTotal = configSync.numShuffledVideosTotal.toLocaleString();
+	domElements.numberOfShuffledVideosText.innerText = `In total, you have shuffled ${numShuffledVideosTotal} video${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""}.`;
 
 	// ----- Daily quota notice -----
 	await getUserQuotaRemainingToday(configSync);
@@ -200,13 +297,56 @@ async function updateFYIDiv(domElements, configSync) {
 }
 
 // Responsible for all DOM elements that need a reference to the current channel
-async function updateDomElementsWithChannelName(domElements, configSync) {
+async function updateDomElementsDependentOnChannel(domElements, configSync) {
 	// ----- Custom options per channel: Channel name and description -----
 	domElements.channelCustomOptionsHeader.innerText = `Channel Settings: ${configSync.currentChannelName}`;
 
-	// ----- Custom options per channel: Shuffling: Shuffle from last x% of videos input -----
-	domElements.shuffleLastXVideosChannelCustomInputField.value = configSync.channelSettings[configSync.currentChannelId]?.shufflePercentage ?? 100;
+	// ----- Custom options per channel: Dropdown menu -----
+	updateChannelSettingsDropdownMenu(domElements, configSync);
 
-	// Popup shuffle button
+	// ----- Popup shuffle button -----
 	domElements.popupShuffleButton.innerText = `Shuffle from: ${configSync.currentChannelName}`;
+}
+
+async function updateChannelSettingsDropdownMenu(domElements, configSync) {
+	// ----- Custom options per channel: Dropdown menu -----
+	// Set the dropdown menu to the active option chosen by the user
+	// The default value is "allVideosOption"
+	channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "allVideosOption";
+	channelCustomOptionsDropdown.style.width = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].getAttribute("option-width");
+	channelCustomOptionsDropdown.title = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].title;
+
+	switch (channelCustomOptionsDropdown.value) {
+		case "allVideosOption":
+			// Hide all inputs
+			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsVideoIdOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsPercentageOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsPercentageOptionP.classList.add("hidden");
+			break;
+		case "dateOption":
+			// Hide the other inputs and unhide this one
+			domElements.channelCustomOptionsDateOptionInput.classList.remove("hidden");
+			domElements.channelCustomOptionsVideoIdOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsPercentageOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsPercentageOptionP.classList.add("hidden");
+			// Set the value of the active input to the value saved in the configSync
+			// If no date was set yet, set it to null
+			domElements.channelCustomOptionsDateOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue ?? null;
+			break;
+		case "videoIdOption":
+			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsVideoIdOptionInput.classList.remove("hidden");
+			domElements.channelCustomOptionsPercentageOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsPercentageOptionP.classList.add("hidden");
+			domElements.channelCustomOptionsVideoIdOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.videoIdValue ?? "";
+			break;
+		case "percentageOption":
+			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsVideoIdOptionInput.classList.add("hidden");
+			domElements.channelCustomOptionsPercentageOptionInput.classList.remove("hidden");
+			domElements.channelCustomOptionsPercentageOptionP.classList.remove("hidden");
+			domElements.channelCustomOptionsPercentageOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.percentageValue ?? 100;
+			break;
+	}
 }

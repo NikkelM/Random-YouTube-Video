@@ -1,10 +1,18 @@
 # Changelog
 
-## v1.4.6
+## v1.5.0
 
 <!--Releasenotes start-->
-- Fixed the "Shuffling..." text on the shuffle button not being reset after a shuffle.
+- Added three new options to the popup: You can now choose to only shuffle from...
+	- ...videos uploaded on or after a certain date.
+	- ...videos uploaded on or after the day another video was uploaded.
+	- ...the most recent x% of videos uploaded on the channel.
+- Fixed a bug that might sometimes cause user settings to not get saved correctly.
 <!--Releasenotes end-->
+
+## v1.4.6
+
+- Fixed the "Shuffling..." text on the shuffle button not being reset after a shuffle.
 
 ## v1.4.5
 
