@@ -68,6 +68,25 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 }
 
 async function handleVersionSpecificUpdates(previousVersion) {
+
+	// v1.5.0 added new channelSettings and renamed an old one
+	if(previousVersion < "1.5.0") {
+		console.log("Updating channelSettings to v1.5.0 format...");
+		let configSyncValues = await chrome.storage.sync.get();
+		console.log(configSyncValues);
+		// For each object entry in channelSettings that has the "shufflePercentage" item, rename it to "percentageValue" and add a new key "activeOption": "percentageOption"
+		// channelSetting has the following structure: {channelID: {shufflePercentage: 50}}
+		for (const [channelID, channelSetting] of Object.entries(configSyncValues["channelSettings"])) {
+			if (channelSetting["shufflePercentage"]) {
+				channelSetting["percentageValue"] = channelSetting["shufflePercentage"];
+				channelSetting["activeOption"] = "percentageOption";
+				delete channelSetting["shufflePercentage"];
+			}
+		}
+		console.log(configSyncValues)
+		await chrome.storage.sync.set(configSyncValues);
+	}
+
 	// v1.3.0 removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
 	if (previousVersion < "1.3.0") {
 		const localStorageContents = await chrome.storage.local.get();
