@@ -242,7 +242,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 
 		// We only need to save the value if it's not the default of 100. If we have already saved a different one, we want to remove it
 		if (this.value != 100) {
-			await setChannelSetting(configSync.currentChannelId, "percentageValue", this.value);
+			await setChannelSetting(configSync.currentChannelId, "percentageValue", parseInt(this.value));
 		} else {
 			await removeChannelSetting(configSync.currentChannelId, "percentageValue");
 		}
