@@ -1,11 +1,16 @@
 # Changelog
 
-## v1.5.1
+## v1.5.2
 
 <!--Releasenotes start-->
+- The default setting for shuffled videos was changed to open videos in a new tab. You can change this via the popup.
+- Added  logic to deal with a case where it was possible for the database to miss some videos.
+<!--Releasenotes end-->
+
+## v1.5.1
+
 - Correctly migrate old channel settings to the new format.
 - Small improvement to backend logic for channel settings.
-<!--Releasenotes end-->
 
 ## v1.5.0
 
