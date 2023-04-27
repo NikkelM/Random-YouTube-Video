@@ -106,7 +106,7 @@ async function validateConfigSync() {
 		// If the user has enabled sharing video ID's with the database
 		"databaseSharingEnabledOption": true,
 		// These two properties influence the behavior of the "shuffle" button
-		"shuffleOpenInNewTabOption": false,
+		"shuffleOpenInNewTabOption": true,
 		"shuffleOpenAsPlaylistOption": true,
 		// channelSettings is a dictionary of channelID -> Dictionary of channel settings
 		"channelSettings": {},
