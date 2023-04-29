@@ -300,9 +300,10 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	let apiResponse = null;
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, "", APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
-	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
-	const totalNewResults = apiResponse["pageInfo"]["totalResults"] - getLength(playlistInfo["videos"]);
+	const totalNumVideosOnChannel = apiResponse["pageInfo"]["totalResults"];
+	const totalNewResults = totalNumVideosOnChannel - getLength(playlistInfo["videos"]);
 
+	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
 	if (totalNewResults / 50 >= userQuotaRemainingToday + 199 && !isCustomKey) {
 		throw new RandomYoutubeVideoError(
 			{
@@ -329,6 +330,13 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 		playlistInfo["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
 	} else {
 		console.log("No new videos have been published since the last check.");
+
+		// Make sure that we are not missing any videos in the database
+		if (totalNumVideosOnChannel > getLength(playlistInfo["videos"]) + (getLength(playlistInfo["newVideos"] ?? {}))) {
+			console.log("There are less videos saved in the database than are uploaded on the channel, so some videos are missing. Refetching all videos...");
+			return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement);
+		}
+
 		return { playlistInfo, userQuotaRemainingToday };
 	}
 
@@ -366,6 +374,12 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 	// Add the new videos to a new key within the playlistInfo
 	playlistInfo["newVideos"] = newVideos;
+
+	// Make sure that we are not missing any videos in the database
+	if (totalNumVideosOnChannel > getLength(playlistInfo["videos"]) + (getLength(playlistInfo["newVideos"] ?? {}))) {
+		console.log("There are less videos saved in the database than are uploaded on the channel, so some videos are missing. Refetching all videos...");
+		return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement);
+	}
 
 	return { playlistInfo, userQuotaRemainingToday };
 }
