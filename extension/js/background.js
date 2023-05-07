@@ -106,7 +106,7 @@ async function validateConfigSync() {
 		// If the user has enabled sharing video ID's with the database
 		"databaseSharingEnabledOption": true,
 		// These properties influence the behavior of the "shuffle" button
-		"shuffleOpenInNewTabOption": true,
+		"shuffleOpenInNewTabOption": false,
 		"shuffleOpenAsPlaylistOption": true,
 		"shuffleReUseNewTabOption": false,
 		// If shuffled videos are opened in a new tab, save the tab ID of that tab here to reuse the tab when the user shuffles again
