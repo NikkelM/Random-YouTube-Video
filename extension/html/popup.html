@@ -19,13 +19,24 @@
 		<p class="grey-text">Hover over an option to view a more detailed explanation.</p>
 
 		<h3>General Video Settings</h3>
-		<!-- Shuffling: Open in new tab option toggle -->
+		<!-- First row of options -->
 		<div class="optionsRow">
+			<!-- Shuffling: Open in new tab option toggle -->
 			<div class="toggle optionsRow-item">
 				<label id="shuffleOpenInNewTabOption"
-					title="If this is enabled, shuffled videos will open in a new tab instead of the current one. This setting has no effect when using the shuffle button displayed in the popup, which will always open a new tab.">
+					title="If this is enabled, shuffled videos will open in a new tab instead of the current one. This setting is ignored when using the shuffle button displayed in the popup, which will always open a new tab.">
 					Open in new tab
 					<input type="checkbox" id="shuffleOpenInNewTabOptionToggle">
+					<span class="slider"></span>
+				</label>
+			</div>
+
+			<!-- Shuffling: Open in new tab option toggle -->
+			<div class="toggle optionsRow-item">
+				<label id="shuffleReUseNewTabOption"
+					title="If this is enabled, shuffling from a tab that was opened with a previous shuffle will not open yet another new tab, but reuse the current tab.">
+					Reuse new tab
+					<input type="checkbox" id="shuffleReUseNewTabOptionToggle">
 					<span class="slider"></span>
 				</label>
 			</div>
@@ -40,6 +51,7 @@
 				</label>
 			</div>
 		</div>
+		<!-- First row end -->
 
 		<!-- Settings for the most recently visited channel -->
 		<div id="channel">

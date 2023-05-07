@@ -675,7 +675,8 @@ async function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
 
 	// Open the video in a new tab or in the current tab, depending on the user's settings
 	// If the shuffle button from the popup was used, we always open the video in the same tab (==the shuffling page)
-	if (configSync.shuffleOpenInNewTabOption && currentTabId !== configSync.shuffleTabId && !firedFromPopup) {
+	// If the user wants to reuse tabs, we only open in a new tab if the last shuffle did not open the current tab
+	if (configSync.shuffleOpenInNewTabOption && !firedFromPopup && (!configSync.shuffleReUseNewTabOption || currentTabId !== configSync.shuffleTabId)) {
 		// Video page: Pause the current video if it is playing
 		if (isVideoUrl(window.location.href)) {
 			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];

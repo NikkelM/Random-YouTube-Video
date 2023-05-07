@@ -31,6 +31,20 @@ async function manageDependents(domElements, parent, value, configSync) {
 			// This is called after validation of a provided API key
 			// Depending on whether or not it is valid, we need to update the FYI div
 			updateFYIDiv(domElements, configSync);
+			break;
+		case domElements.shuffleOpenInNewTabOptionToggle:
+			// If it was turned off, we need to disable the reuse tab option toggle
+			if (value) {
+				// We call this function when first opening the popup, so this is where the initial state of the reuse tab option is set
+				domElements.shuffleReUseNewTabOptionToggle.checked = configSync.shuffleReUseNewTabOption;
+				domElements.shuffleReUseNewTabOptionToggle.parentElement.classList.remove("disabled");
+			} else {
+				// If the open in a new tab option gets disabled, we also want to disable the reuse tab option to avoid confusion
+				domElements.shuffleReUseNewTabOptionToggle.checked = false;
+				await setSyncStorageValue("shuffleReUseNewTabOption", false, configSync);
+				domElements.shuffleReUseNewTabOptionToggle.parentElement.classList.add("disabled");
+			}
+			break
 		default:
 			console.log(`No dependents to manage for element: ${parent.id}`);
 			break;
