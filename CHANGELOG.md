@@ -3,8 +3,9 @@
 ## v1.5.2
 
 <!--Releasenotes start-->
-- The default setting for shuffled videos was changed to open videos in a new tab. You can change this via the popup.
-- Added  logic to deal with a case where it was possible for the database to miss some videos.
+- Added an option that allows you to reuse the same tab when shuffling multiple times from the same channel. This setting only takes effect if you have enabled the option to open shuffled videos in a new tab.
+- The default setting for shuffled videos was changed to now open videos in a new tab. You can change this via the popup.
+- Added logic to deal with a case where it was possible for the database to not include some videos uploaded on a channel.
 <!--Releasenotes end-->
 
 ## v1.5.1
