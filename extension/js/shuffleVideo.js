@@ -664,15 +664,19 @@ function chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOptio
 	return videosToShuffle;
 }
 
-function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
+async function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
 	// Get the correct URL format
 	let randomVideoURL = configSync.shuffleOpenAsPlaylistOption
 		? `https://www.youtube.com/watch?v=${randomVideo}&list=${uploadsPlaylistId}`
 		: `https://www.youtube.com/watch?v=${randomVideo}`;
 
+	// Get the current tab id
+	const currentTabId = await chrome.runtime.sendMessage({ command: "getCurrentTabId" });
+
 	// Open the video in a new tab or in the current tab, depending on the user's settings
 	// If the shuffle button from the popup was used, we always open the video in the same tab (==the shuffling page)
-	if (configSync.shuffleOpenInNewTabOption && !firedFromPopup) {
+	// If the user wants to reuse tabs, we only open in a new tab if the last shuffle did not open the current tab
+	if (configSync.shuffleOpenInNewTabOption && !firedFromPopup && (!configSync.shuffleReUseNewTabOption || currentTabId !== configSync.shuffleTabId)) {
 		// Video page: Pause the current video if it is playing
 		if (isVideoUrl(window.location.href)) {
 			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
@@ -694,12 +698,20 @@ function playVideo(randomVideo, uploadsPlaylistId, firedFromPopup) {
 
 		window.open(randomVideoURL, '_blank').focus();
 
+		// Save the ID of the opened tab
+		await setSyncStorageValue("shuffleTabId", await chrome.runtime.sendMessage({ command: "getCurrentTabId" }));
+
 		// April fools joke: Users get rickrolled once on April 1st every year
 		// If we open both videos in a new tab, we want the rickroll to be focused
 		aprilFoolsJoke();
 	} else {
 		// Else, we need to open the rickroll first, as otherwise the function call doesn't happen
 		aprilFoolsJoke();
+
+		if (firedFromPopup) {
+			// Save the ID of the opened tab, as it is always a new tab when coming from the popup
+			await setSyncStorageValue("shuffleTabId", await chrome.runtime.sendMessage({ command: "getCurrentTabId" }));
+		}
 
 		window.location.href = randomVideoURL;
 	}

@@ -105,9 +105,12 @@ async function validateConfigSync() {
 		"customYoutubeApiKey": null,
 		// If the user has enabled sharing video ID's with the database
 		"databaseSharingEnabledOption": true,
-		// These two properties influence the behavior of the "shuffle" button
-		"shuffleOpenInNewTabOption": true,
+		// These properties influence the behavior of the "shuffle" button
+		"shuffleOpenInNewTabOption": false,
 		"shuffleOpenAsPlaylistOption": true,
+		"shuffleReUseNewTabOption": false,
+		// If shuffled videos are opened in a new tab, save the tab ID of that tab here to reuse the tab when the user shuffles again
+		"shuffleTabId": null,
 		// channelSettings is a dictionary of channelID -> Dictionary of channel settings
 		"channelSettings": {},
 		// These two properties are used by the popup to determine which channel's settings to show
@@ -192,6 +195,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		case "newConfigSync":
 			configSync = request.data;
 			sendResponse("New configSync set.");
+			break;
+		case "getCurrentTabId":
+			getCurrentTabId().then(sendResponse);
 			break;
 		default:
 			console.log(`Unknown command: ${request.command} (service worker). Hopefully another message listener will handle it.`);
@@ -321,6 +327,12 @@ function rot13(message, encrypt) {
 	} else {
 		return message.replace(/[a-z0-9]/gi, letter => originalAlpha[cipher.indexOf(letter)]);
 	}
+}
+
+// Get the current tab ID. Content scripts cannot access the chrome.tabs API
+async function getCurrentTabId() {
+	const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+	return tabs[0].id;
 }
 
 // ---------- Local storage ----------

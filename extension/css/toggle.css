@@ -1,7 +1,7 @@
 .toggle label {
   position: relative;
   display: inline-block;
-  width: 9.3em;
+  width: 9em;
   height: 3.5em;
 }
 
@@ -19,7 +19,7 @@
   position: absolute;
   cursor: pointer;
   top: 1.6em;
-	left: 3em;
+	left: 2.85em;
   width: 3.5em;
   height: 1.5em;
   background-color: #c32e04; 

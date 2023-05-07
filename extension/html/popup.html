@@ -19,13 +19,24 @@
 		<p class="grey-text">Hover over an option to view a more detailed explanation.</p>
 
 		<h3>General Video Settings</h3>
-		<!-- Shuffling: Open in new tab option toggle -->
+		<!-- First row of options -->
 		<div class="optionsRow">
+			<!-- Shuffling: Open in new tab option toggle -->
 			<div class="toggle optionsRow-item">
 				<label id="shuffleOpenInNewTabOption"
-					title="If this is enabled, shuffled videos will open in a new tab instead of the current one. This setting has no effect when using the shuffle button displayed in the popup, which will always open a new tab.">
+					title="If this is enabled, shuffled videos will open in a new tab instead of the current one. This setting is ignored when using the shuffle button displayed in the popup, which will always open a new tab.">
 					Open in new tab
 					<input type="checkbox" id="shuffleOpenInNewTabOptionToggle">
+					<span class="slider"></span>
+				</label>
+			</div>
+
+			<!-- Shuffling: Open in new tab option toggle -->
+			<div class="toggle optionsRow-item">
+				<label id="shuffleReUseNewTabOption"
+					title="If this is enabled, shuffling from a tab that was opened with a previous shuffle will not open yet another new tab, but reuse the current tab.">
+					Reuse new tab
+					<input type="checkbox" id="shuffleReUseNewTabOptionToggle">
 					<span class="slider"></span>
 				</label>
 			</div>
@@ -40,6 +51,7 @@
 				</label>
 			</div>
 		</div>
+		<!-- First row end -->
 
 		<!-- Settings for the most recently visited channel -->
 		<div id="channel">
@@ -128,10 +140,9 @@
 
 		<!-- FYI -->
 		<div id="forYourInformationDiv">
-			<h2>For Your Information</h2>
 			<!-- Number of shuffled videos -->
-			<p id="numberOfShuffledVideosText" style="margin-bottom: 6px;">In total, you have shuffled 0
-				videos.</p>
+			<p id="numberOfShuffledVideosText" style="margin-bottom: 6px; margin-top: 6px;">You have shuffled 0 videos until
+				now.</p>
 			<!-- Daily quota notice -->
 			<div id="dailyQuotaNoticeDiv" class="hidden"
 				title="To protect the userbase against abuse, each user has a limited amount of requests to the YouTube API per day. This quota only ticks down if you are the first to shuffle from a channel, and should not effect users with normal usage patterns. If you are affected by this, you may make use of the custom API key option to remove this limitation.">
@@ -148,7 +159,7 @@
 			<a class="randomYoutubeVideoLink"
 				href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
 				target="_blank" rel="noopener">Chrome store</a>
-			<a class="randomYoutubeVideoLink" href="https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose"
+			<a class="randomYoutubeVideoLink" href="https://github.com/NikkelM/Random-YouTube-Video/issues"
 				target="_blank" rel="noopener">Feedback</a>
 			<a class="randomYoutubeVideoLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank"
 				rel="noopener">GitHub</a>

@@ -18,6 +18,8 @@ function getDomElements() {
 		dbSharingOptionToggle: document.getElementById("dbSharingOptionToggle"),
 		// Shuffling: Open in new tab option toggle
 		shuffleOpenInNewTabOptionToggle: document.getElementById("shuffleOpenInNewTabOptionToggle"),
+		// Shuffling: Reuse tab option toggle
+		shuffleReUseNewTabOptionToggle: document.getElementById("shuffleReUseNewTabOptionToggle"),
 		// Shuffling: Open as playlist option toggle
 		shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle"),
 
@@ -76,6 +78,10 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 
 	// ----- Shuffling: Open in new tab option toggle -----
 	domElements.shuffleOpenInNewTabOptionToggle.checked = configSync.shuffleOpenInNewTabOption;
+
+	// ----- Shuffling: Reuse tab option toggle -----
+	// If this option is enabled depends on the state of the shuffleOpenInNewTabOptionToggle
+	manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, configSync.shuffleOpenInNewTabOption, configSync);
 
 	// ----- Shuffling: Open as playlist option toggle -----
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
@@ -136,6 +142,14 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked, configSync);
 
 		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked, configSync);
+	});
+
+	// Shuffling: Reuse tab option toggle
+	domElements.shuffleReUseNewTabOptionToggle.addEventListener("change", async function () {
+		configSync.shuffleReUseNewTabOption = this.checked;
+		await setSyncStorageValue("shuffleReUseNewTabOption", this.checked, configSync);
+
+		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked, configSync);
 	});
 
 	// Shuffling: Open as playlist option toggle
@@ -278,7 +292,7 @@ async function updateFYIDiv(domElements, configSync) {
 	// ----- FYI: Number of shuffled videos text -----
 	// Use toLocaleString() to add commas/periods to large numbers
 	const numShuffledVideosTotal = configSync.numShuffledVideosTotal.toLocaleString();
-	domElements.numberOfShuffledVideosText.innerText = `In total, you have shuffled ${numShuffledVideosTotal} video${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""}.`;
+	domElements.numberOfShuffledVideosText.innerText = `You have shuffled ${numShuffledVideosTotal} video${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""} until now.`;
 
 	// ----- Daily quota notice -----
 	await getUserQuotaRemainingToday(configSync);
