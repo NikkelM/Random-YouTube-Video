@@ -98,9 +98,11 @@ async function displayShufflingHints(currentHintIndex = null) {
 	const jsonFileUrl = chrome.runtime.getURL('data/shufflingTips.json');
 	const jsonData = await loadJsonFile(jsonFileUrl)
 
-	// Choose a random hint from the JSON file and display it
-	// If currentHintIndex is not null, choose the next hint or loop back to the first hint if we are at the end of the array
-	const randomHintIndex = currentHintIndex === null ? Math.floor(Math.random() * jsonData.length) : (currentHintIndex + 1) % jsonData.length;
+	// Choose a (new) random hint from the JSON file and display it
+	let randomHintIndex = currentHintIndex;
+	while (randomHintIndex === currentHintIndex) {
+		randomHintIndex = Math.floor(Math.random() * jsonData.length);
+	}
 	const randomHint = jsonData[randomHintIndex];
 	const resultText = `${randomHintIndex + 1}/${jsonData.length}: ${randomHint}`;
 
