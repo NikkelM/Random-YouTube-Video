@@ -271,7 +271,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		chrome.tabs.query({}, function (tabs) {
 			let mustOpenShufflingPage = true;
 			for (let i = 0; i <= tabs.length - 1; i++) {
-				if (tabs[i].url === "chrome-extension://kijgnjhogkjodpakfmhgleobifempckf/html/shufflingPage.html") {
+				if (tabs[i].url === chrome.runtime.getURL('html/shufflingPage.html')) {
 					// An instance of the shufflingPage already exists, so don't create a new one
 					mustOpenShufflingPage = false;
 					// Focus the existing shufflingPage
