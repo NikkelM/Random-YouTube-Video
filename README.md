@@ -16,7 +16,7 @@
     alt="View changelog"></a>
 </p>
 
-You can download the extension on the [Chrome Web Store](https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf).
+You can download the extension on the [Chrome Web Store](https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf) or the [Microsoft Edge Add-ons Store](https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe). The Chrome Web Store version can be installed on any Chromium-based browser, including Edge, Brave and more.
 
 ---
 
