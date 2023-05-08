@@ -1,6 +1,11 @@
 [
+	"A \"Shuffle\" button is added to all channel and video pages on YouTube, the button has the same behaviour as shuffling from the popup!",
 	"Use the \"Open in new tab\" option in the extension popup to open each shuffled video in its own tab!",
 	"Use the \"Reuse new tab\" option to only open a new tab on the first shuffle, and open subsequent shuffles in the same tab!",
+	"Use the \"Open in playlist\" option to open shuffled videos in the uploads playlist of the channel!",
+	"You can choose from a number of filters to choose what videos are considered when shuffling from a specific channel!",
+	"Do you have an idea on how this extension could be improved? Open an issue on GitHub!",
+	"I got the idea for this extension when I was bored and didn't know which video from my favourite channel to watch!",
 	"This extension is a hobby project - you can support it by sponsoring me on GitHub!",
 	"If you are enjoying this extension, please consider leaving a review on the Chrome Web Store to help others find it!",
 	"The extension's source code is available on GitHub: github.com/NikkelM/Random-YouTube-Video"
