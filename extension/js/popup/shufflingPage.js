@@ -104,12 +104,11 @@ async function displayShufflingHints(currentHintIndex = null) {
 		randomHintIndex = Math.floor(Math.random() * jsonData.length);
 	}
 	const randomHint = jsonData[randomHintIndex];
-	const resultText = `${randomHintIndex + 1}/${jsonData.length}: ${randomHint}`;
 
 	// Insert line breaks into the hint text after every 70 characters, but don't break words
-	const resultTextWithLineBreaks = resultText.replace(/(.{1,80})(?:\s+|$)/g, "$1\n");
+	const displayedText = randomHint.replace(/(.{1,80})(?:\s+|$)/g, "$1\n");
 
-	domElements.shufflingTipP.innerText = resultTextWithLineBreaks;
+	domElements.shufflingTipP.innerText = displayedText;
 
 	return randomHintIndex;
 }
