@@ -45,7 +45,7 @@
 				"data/shufflingTips.json"
 			],
 			"matches": [
-				"<all_urls>"
+				"*://*.youtube.com/*"
 			]
 		}
 	]
