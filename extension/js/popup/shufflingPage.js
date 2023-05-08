@@ -55,8 +55,17 @@ async function shuffleButtonClicked() {
 
 		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
 
+		// Focus this tab
+		chrome.tabs.query({ url: chrome.runtime.getURL('html/shufflingPage.html') }, function (tabs) {
+			if (tabs.length > 0) {
+				// Focus the tab
+				chrome.tabs.update(tabs[0].id, { active: true });
+			}
+		});
+
 		// Remove the port's onDisconnect listener, as we have successfully opened the video and the service worker won't freeze
 		port.postMessage({ command: "shuffleComplete" });
+
 	} catch (error) {
 		console.error(error.stack);
 		console.error(error.message);
