@@ -33,8 +33,18 @@ function getDomElements() {
 
 		// The p element containing the shuffle tip
 		shufflingTipP: document.getElementById("shufflingTipP"),
+
+		// The button that displays the next shuffle tip
+		nextTipButton: document.getElementById("nextTipButton"),
 	}
 }
+
+let currentHint = await displayShufflingHints();
+
+// Add click listener to the "Next tip" button
+domElements.nextTipButton.addEventListener("click", async function () {
+	currentHint = await displayShufflingHints(currentHint);
+});
 
 // Called when the randomize-button from the popup is clicked
 async function shuffleButtonClicked() {
@@ -43,9 +53,7 @@ async function shuffleButtonClicked() {
 
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
 
-		displayShufflingHints();
-
-		// await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
+		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
 
 		// Remove the port's onDisconnect listener, as we have successfully opened the video and the service worker won't freeze
 		port.postMessage({ command: "shuffleComplete" });
@@ -86,14 +94,13 @@ async function showDivContents() {
 	domElements.randomYoutubeVideoPopup.classList.remove("hidden");
 }
 
-async function displayShufflingHints() {
+async function displayShufflingHints(currentHintIndex = null) {
 	const jsonFileUrl = chrome.runtime.getURL('data/shufflingTips.json');
 	const jsonData = await loadJsonFile(jsonFileUrl)
 
-	console.log(jsonData);
-
 	// Choose a random hint from the JSON file and display it
-	const randomHintIndex = Math.floor(Math.random() * jsonData.length);
+	// If currentHintIndex is not null, choose the next hint or loop back to the first hint if we are at the end of the array
+	const randomHintIndex = currentHintIndex === null ? Math.floor(Math.random() * jsonData.length) : (currentHintIndex + 1) % jsonData.length;
 	const randomHint = jsonData[randomHintIndex];
 	const resultText = `${randomHintIndex + 1}/${jsonData.length}: ${randomHint}`;
 
@@ -101,20 +108,6 @@ async function displayShufflingHints() {
 	const resultTextWithLineBreaks = resultText.replace(/(.{1,80})(?:\s+|$)/g, "$1\n");
 
 	domElements.shufflingTipP.innerText = resultTextWithLineBreaks;
-}
 
-function loadJsonFile(jsonFileUrl) {
-	return new Promise((resolve, reject) => {
-		const xhr = new XMLHttpRequest();
-		xhr.open('GET', jsonFileUrl, true);
-		xhr.responseType = 'json';
-		xhr.onload = function () {
-			if (xhr.status === 200) {
-				resolve(xhr.response);
-			} else {
-				reject(xhr.statusText);
-			}
-		};
-		xhr.send();
-	});
+	return randomHintIndex;
 }
