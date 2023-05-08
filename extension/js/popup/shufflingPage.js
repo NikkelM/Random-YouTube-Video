@@ -30,6 +30,9 @@ function getDomElements() {
 
 		// The heading containing the "Shuffling from <channel name>..." text
 		shufflingFromChannelHeading: document.getElementById("shufflingFromChannelHeading"),
+
+		// The p element containing the shuffle tip
+		shufflingTipP: document.getElementById("shufflingTipP"),
 	}
 }
 
@@ -40,7 +43,9 @@ async function shuffleButtonClicked() {
 
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
 
-		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
+		displayShufflingHints();
+
+		// await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
 
 		// Remove the port's onDisconnect listener, as we have successfully opened the video and the service worker won't freeze
 		port.postMessage({ command: "shuffleComplete" });
@@ -79,4 +84,37 @@ async function shuffleButtonClicked() {
 async function showDivContents() {
 	await delay(1000);
 	domElements.randomYoutubeVideoPopup.classList.remove("hidden");
+}
+
+async function displayShufflingHints() {
+	const jsonFileUrl = chrome.runtime.getURL('data/shufflingTips.json');
+	const jsonData = await loadJsonFile(jsonFileUrl)
+
+	console.log(jsonData);
+
+	// Choose a random hint from the JSON file and display it
+	const randomHintIndex = Math.floor(Math.random() * jsonData.length);
+	const randomHint = jsonData[randomHintIndex];
+	const resultText = `${randomHintIndex + 1}/${jsonData.length}: ${randomHint}`;
+
+	// Insert line breaks into the hint text after every 70 characters, but don't break words
+	const resultTextWithLineBreaks = resultText.replace(/(.{1,80})(?:\s+|$)/g, "$1\n");
+
+	domElements.shufflingTipP.innerText = resultTextWithLineBreaks;
+}
+
+function loadJsonFile(jsonFileUrl) {
+	return new Promise((resolve, reject) => {
+		const xhr = new XMLHttpRequest();
+		xhr.open('GET', jsonFileUrl, true);
+		xhr.responseType = 'json';
+		xhr.onload = function () {
+			if (xhr.status === 200) {
+				resolve(xhr.response);
+			} else {
+				reject(xhr.statusText);
+			}
+		};
+		xhr.send();
+	});
 }
