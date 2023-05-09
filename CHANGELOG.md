@@ -4,7 +4,7 @@
 
 <!--Releasenotes start-->
 - Added tips and useful information about the extension to the shuffling page opened when using the shuffle button from the popup.
-- Fixed an issue with th extension checking an internal URL against a potentially wrong extension ID.
+- Fixed an issue with the extension checking an internal URL against a potentially wrong extension ID.
 <!--Releasenotes end-->
 
 ## v1.5.2
