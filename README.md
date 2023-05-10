@@ -12,7 +12,7 @@
     alt="Chrome web store users"></a>
 <br>
 <a href="https://github.com/NikkelM/Random-YouTube-Video/tree/main/CHANGELOG.md">
-  <img src="https://img.shields.io/badge/View-changelog-blue"
+  <img src="https://img.shields.io/badge/view-changelog-blue"
     alt="View changelog"></a>
 </p>
 
