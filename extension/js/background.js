@@ -335,20 +335,19 @@ function rot13(message, encrypt) {
 	}
 }
 
-// Get all tab IDs. Content scripts cannot access the chrome.tabs API
+// Get all tabs whose url is a YouTube page. Content scripts cannot access the chrome.tabs API
 async function getAllYouTubeTabs() {
-	const tabs = await chrome.tabs.query({ url: "*://*.youtube.com/*" });
-	return tabs;
+	return await chrome.tabs.query({ url: "*://*.youtube.com/*" });
 }
 
 async function getCurrentTabId() {
-	const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-	return tabs[0].id;
+	return await chrome.tabs.query({ active: true, currentWindow: true })[0]?.id;
 }
 
 // If we want to open the video in a tab other than the focused one, we need to use the chrome.tabs API, which is not available in content scripts
 async function openVideoInTabWithId(tabId, videoUrl) {
 	await chrome.tabs.update(tabId, { active: true, url: videoUrl });
+	return true;
 }
 
 // ---------- Local storage ----------
