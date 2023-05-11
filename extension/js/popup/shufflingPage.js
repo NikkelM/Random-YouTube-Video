@@ -30,8 +30,21 @@ function getDomElements() {
 
 		// The heading containing the "Shuffling from <channel name>..." text
 		shufflingFromChannelHeading: document.getElementById("shufflingFromChannelHeading"),
+
+		// The p element containing the shuffle tip
+		shufflingTipP: document.getElementById("shufflingTipP"),
+
+		// The button that displays the next shuffle tip
+		nextTipButton: document.getElementById("nextTipButton"),
 	}
 }
+
+let currentHint = await displayShufflingHints();
+
+// Add click listener to the "New tip" button
+domElements.nextTipButton.addEventListener("click", async function () {
+	currentHint = await displayShufflingHints(currentHint);
+});
 
 // Called when the randomize-button from the popup is clicked
 async function shuffleButtonClicked() {
@@ -42,8 +55,17 @@ async function shuffleButtonClicked() {
 
 		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
 
+		// Focus this tab when the shuffle completes
+		chrome.tabs.query({ url: chrome.runtime.getURL('html/shufflingPage.html') }, function (tabs) {
+			if (tabs.length > 0) {
+				// Focus the tab
+				chrome.tabs.update(tabs[0].id, { active: true });
+			}
+		});
+
 		// Remove the port's onDisconnect listener, as we have successfully opened the video and the service worker won't freeze
 		port.postMessage({ command: "shuffleComplete" });
+
 	} catch (error) {
 		console.error(error.stack);
 		console.error(error.message);
@@ -79,4 +101,23 @@ async function shuffleButtonClicked() {
 async function showDivContents() {
 	await delay(1000);
 	domElements.randomYoutubeVideoPopup.classList.remove("hidden");
+}
+
+async function displayShufflingHints(currentHintIndex = null) {
+	const jsonFileUrl = chrome.runtime.getURL('data/shufflingTips.json');
+	const jsonData = await loadJsonFile(jsonFileUrl)
+
+	// Choose a (new) random hint from the JSON file and display it
+	let randomHintIndex = currentHintIndex;
+	while (randomHintIndex === currentHintIndex) {
+		randomHintIndex = Math.floor(Math.random() * jsonData.length);
+	}
+	const randomHint = jsonData[randomHintIndex];
+
+	// Insert line breaks into the hint text after every 70 characters, but don't break words
+	const displayedText = randomHint.replace(/(.{1,80})(?:\s+|$)/g, "$1\n");
+
+	domElements.shufflingTipP.innerText = displayedText;
+
+	return randomHintIndex;
 }

@@ -38,5 +38,15 @@
 	],
 	"background": {
 		"service_worker": "js/background.js"
-	}
+	},
+	"web_accessible_resources": [
+		{
+			"resources": [
+				"data/shufflingTips.json"
+			],
+			"matches": [
+				"*://*.youtube.com/*"
+			]
+		}
+	]
 }

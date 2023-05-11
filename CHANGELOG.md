@@ -1,11 +1,16 @@
 # Changelog
 
-## v1.5.2
+## v1.5.3
 
 <!--Releasenotes start-->
+- Added tips and useful information about the extension to the shuffling page opened when using the shuffle button from the popup.
+- Fixed an issue with the extension checking an internal URL against a potentially wrong extension ID.
+<!--Releasenotes end-->
+
+## v1.5.2
+
 - Added an option that allows you to reuse the same tab when shuffling multiple times from the same channel. This setting only takes effect if you have enabled the option to open shuffled videos in a new tab.
 - Fixed a bug where it was possible for the database to not include some videos uploaded on a channel.
-<!--Releasenotes end-->
 
 ## v1.5.1
 
