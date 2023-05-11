@@ -199,6 +199,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		case "getCurrentTabId":
 			getCurrentTabId().then(sendResponse);
 			break;
+		case "getAllYouTubeTabs":
+			getAllYouTubeTabs().then(sendResponse);
+			break;
+		case "openVideoInTabWithId":
+			openVideoInTabWithId(request.data.tabId, request.data.videoUrl).then(sendResponse);
+			break
 		default:
 			console.log(`Unknown command: ${request.command} (service worker). Hopefully another message listener will handle it.`);
 			sendResponse(`Unknown command: ${request.command} (service worker). Hopefully another message listener will handle it.`);
@@ -329,10 +335,20 @@ function rot13(message, encrypt) {
 	}
 }
 
-// Get the current tab ID. Content scripts cannot access the chrome.tabs API
+// Get all tab IDs. Content scripts cannot access the chrome.tabs API
+async function getAllYouTubeTabs() {
+	const tabs = await chrome.tabs.query({ url: "*://*.youtube.com/*" });
+	return tabs;
+}
+
 async function getCurrentTabId() {
 	const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
 	return tabs[0].id;
+}
+
+// If we want to open the video in a tab other than the focused one, we need to use the chrome.tabs API, which is not available in content scripts
+async function openVideoInTabWithId(tabId, videoUrl) {
+	await chrome.tabs.update(tabId, { active: true, url: videoUrl });
 }
 
 // ---------- Local storage ----------
