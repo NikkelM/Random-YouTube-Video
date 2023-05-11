@@ -41,7 +41,7 @@ function getDomElements() {
 
 let currentHint = await displayShufflingHints();
 
-// Add click listener to the "Next tip" button
+// Add click listener to the "New tip" button
 domElements.nextTipButton.addEventListener("click", async function () {
 	currentHint = await displayShufflingHints(currentHint);
 });
@@ -55,7 +55,7 @@ async function shuffleButtonClicked() {
 
 		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
 
-		// Focus this tab
+		// Focus this tab when the shuffle completes
 		chrome.tabs.query({ url: chrome.runtime.getURL('html/shufflingPage.html') }, function (tabs) {
 			if (tabs.length > 0) {
 				// Focus the tab
