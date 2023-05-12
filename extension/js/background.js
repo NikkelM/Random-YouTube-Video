@@ -341,7 +341,9 @@ async function getAllYouTubeTabs() {
 }
 
 async function getCurrentTabId() {
-	return await chrome.tabs.query({ active: true, currentWindow: true })[0]?.id;
+	return await chrome.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+		return tabs[0].id;
+	});
 }
 
 // If we want to open the video in a tab other than the focused one, we need to use the chrome.tabs API, which is not available in content scripts
