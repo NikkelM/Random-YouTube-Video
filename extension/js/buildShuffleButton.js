@@ -100,7 +100,7 @@ function finalizeButton(pageType, channelId) {
 	let button = `
 	<button
 		class="yt-spec-button-shape-next yt-spec-button-shape-next--tonal yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-m"
-		aria-label="Shuffle all videos">
+		aria-label="Shuffle from this channel">
 			<span class="material-symbols-outlined">
 				shuffle
 			</span>
@@ -118,6 +118,17 @@ function finalizeButton(pageType, channelId) {
 			<span id="channelId" style="display: none">${channelId ?? ""}</span>
 	</button>`;
 	button = new DOMParser().parseFromString(button, "text/html").body.firstChild;
+
+	let buttonTooltip = `
+	<tp-yt-paper-tooltip fit-to-visible-bounds offset="8" role="tooltip" tabindex="-1">
+	</tp-yt-paper-tooltip>`;
+	buttonTooltip = new DOMParser().parseFromString(buttonTooltip, "text/html").body.firstChild;
+	buttonTooltip.innerText = "Shuffle from this channel";
+
+	// Remove the original button tooltip, it does not have all required attributes
+	buttonDivOwner.children.namedItem(buttonDivID).children[0].removeChild(buttonDivOwner.children.namedItem(buttonDivID).children[0].children[1]);
+	// Add the correct tooltip
+	buttonDivOwner.children.namedItem(buttonDivID).children[0].appendChild(buttonTooltip);
 
 	// Add the button to the page
 	buttonDivOwner.children.namedItem(buttonDivID).children[0].children[0].appendChild(button);
