@@ -105,10 +105,11 @@ async function validateConfigSync() {
 		"customYoutubeApiKey": null,
 		// If the user has enabled sharing video ID's with the database
 		"databaseSharingEnabledOption": true,
-		// These properties influence the behavior of the "shuffle" button
+		// These properties influence the behavior of the "Shuffle" button
 		"shuffleOpenInNewTabOption": false,
 		"shuffleOpenAsPlaylistOption": true,
 		"shuffleReUseNewTabOption": false,
+		"ignoreShorts": false,
 		// If shuffled videos are opened in a new tab, save the tab ID of that tab here to reuse the tab when the user shuffles again
 		"shuffleTabId": null,
 		// channelSettings is a dictionary of channelID -> Dictionary of channel settings

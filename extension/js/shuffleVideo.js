@@ -556,7 +556,9 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 	});
 
 	let videosToShuffle = chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue);
+	// Error handling for videosToShuffle being undefined/empty is done in chooseVideoWithFilter()
 	let randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
+	console.log(`A random video has been chosen: ${randomVideo}`);
 
 	let encounteredDeletedVideos = false;
 	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
@@ -577,7 +579,6 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 
 			videosToShuffle = chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue);
 			randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
-
 			console.log(`A new random video has been chosen: ${randomVideo}`);
 
 			if (randomVideo === undefined) {
@@ -593,6 +594,46 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 
 		// Update the database by removing the deleted videos there as well
 		shouldUpdateDatabase = true;
+	}
+
+	// configSync.ignoreShorts = true;
+	// This is a short
+	// randomVideo = 'BPriTFy3YDo';
+	// If the user does not want to shuffle from shorts, test if the video is a short
+	// We can test if it is a short by checking if pinging the url https://www.youtube.com/shorts/${randomVideo} returns a 200 status code
+	if (configSync.ignoreShorts) {
+		let response = await fetch(`https://www.youtube.com/shorts/${randomVideo}`, {
+			method: "HEAD",
+			redirect: "manual"
+		});
+
+		// The video is a short, so we choose a new one
+		while (response.status === 200) {
+			console.log("The chosen video is a short. Choosing a new one...");
+
+			// Remove the video from videosToShuffle to not choose it again
+			// Do not remove it from the playlistInfo object, as we do not want to delete it from the playlist
+			videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
+			randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
+			console.log(`A new random video has been chosen: ${randomVideo}`);
+
+			if (randomVideo === undefined) {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-6D",
+						message: "Your settings indicate to ignore shorts, but there are only shorts available to shuffle from.",
+						solveHint: "This may be due to your filter settings, e.g. only shuffling from the most recent videos. Revise your filter settings or turn on the option to shuffle from shorts.",
+						showTrace: false
+					}
+				)
+			}
+
+			response = await fetch(`https://www.youtube.com/shorts/${randomVideo}`, {
+				method: "HEAD",
+				redirect: "manual"
+			});
+
+		}
 	}
 
 	return { randomVideo, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
