@@ -480,11 +480,11 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 // ---------- Utility ----------
 
 async function testVideoExistence(videoId) {
-	try {
-		await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`)
-			.then((response) => response.json())
-			.then((data) => apiResponse = data);
-	} catch (error) {
+	let response = await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`, {
+		method: "HEAD"
+	});
+
+	if (response.status === 400) {
 		console.log(`Video doesn't exist: ${videoId}`);
 		return false;
 	}
@@ -597,14 +597,17 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 	}
 
 	// If the user does not want to shuffle from shorts, test if the video is a short
-	// We can test if it is a short by sending a HEAD request to https://www.youtube.com/shorts/${randomVideo}, for shorts this returns a 200 status code
+	// We can test if it is a short by sending a HEAD request to the oembed API, the thumbnail url will end in "hq2.jpg" for shorts and "hqdefault.jpg" for normal videos
+	// Sending a request to the oembed API is significantly faster than sending a HEAD request to https://www.youtube.com/shorts/${randomVideo}
 	if (configSync.shuffleIgnoreShortsOption) {
-		let response = await fetch(`https://www.youtube.com/shorts/${randomVideo}`, {
-			method: "HEAD"
-		});
+		let response;
+		await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
+			method: "GET"
+		}).then(res => res.json())
+			.then(res => response = res);
 
-		// The video is a short, so we choose a new one
-		while (response.status === 200) {
+		// For shorts, the thumbnail url ends in "hq2.jpg", for normal videos it ends in "hqdefault.jpg"
+		while (response.thumbnail_url === (`https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`)) {
 			console.log("The chosen video is a short. Choosing a new one...");
 
 			// Remove the video from videosToShuffle to not choose it again
