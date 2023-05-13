@@ -596,15 +596,11 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 		shouldUpdateDatabase = true;
 	}
 
-	// configSync.ignoreShorts = true;
-	// This is a short
-	// randomVideo = 'BPriTFy3YDo';
 	// If the user does not want to shuffle from shorts, test if the video is a short
-	// We can test if it is a short by checking if pinging the url https://www.youtube.com/shorts/${randomVideo} returns a 200 status code
-	if (configSync.ignoreShorts) {
+	// We can test if it is a short by sending a HEAD request to https://www.youtube.com/shorts/${randomVideo}, for shorts this returns a 200 status code
+	if (configSync.shuffleIgnoreShortsOption) {
 		let response = await fetch(`https://www.youtube.com/shorts/${randomVideo}`, {
-			method: "HEAD",
-			redirect: "manual"
+			method: "HEAD"
 		});
 
 		// The video is a short, so we choose a new one
