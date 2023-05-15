@@ -40,12 +40,12 @@
 
 .halfWidth {
 	width: 50%;
-	margin-left: 25%;
+	margin: auto;
 }
 
 .thirdWidth {
 	width: 34%;
-	margin-left: 33%;
+	margin: auto;
 }
 
 /*
