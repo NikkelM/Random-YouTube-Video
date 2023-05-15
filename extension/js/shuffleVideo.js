@@ -480,11 +480,11 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 // ---------- Utility ----------
 
 async function testVideoExistence(videoId) {
-	try {
-		await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`)
-			.then((response) => response.json())
-			.then((data) => apiResponse = data);
-	} catch (error) {
+	let response = await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`, {
+		method: "HEAD"
+	});
+
+	if (response.status === 400) {
 		console.log(`Video doesn't exist: ${videoId}`);
 		return false;
 	}
@@ -556,15 +556,15 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 	});
 
 	let videosToShuffle = chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue);
+	// Error handling for videosToShuffle being undefined/empty is done in chooseVideoWithFilter()
 	let randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
+	console.log(`A random video has been chosen: ${randomVideo}`);
 
 	let encounteredDeletedVideos = false;
 	// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
 	if (!await testVideoExistence(randomVideo)) {
 		encounteredDeletedVideos = true;
 		do {
-			console.log("The chosen video does not exist anymore. Removing it from the database and choosing a new one...");
-
 			// Remove the video from the local playlist object
 			// It will always be in the "videos" object, as we have just fetched the "newVideos" from the YouTube API
 			delete playlistInfo["videos"][randomVideo];
@@ -577,8 +577,7 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 
 			videosToShuffle = chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue);
 			randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
-
-			console.log(`A new random video has been chosen: ${randomVideo}`);
+			console.log(`The chosen video does not exist anymore, so it will be removed from the database. A new random video has been chosen: ${randomVideo}`);
 
 			if (randomVideo === undefined) {
 				throw new RandomYoutubeVideoError(
@@ -593,6 +592,42 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 
 		// Update the database by removing the deleted videos there as well
 		shouldUpdateDatabase = true;
+	}
+
+	// If the user does not want to shuffle from shorts, test if the video is a short
+	// We can test if it is a short by sending a HEAD request to the oembed API, the thumbnail url will end in "hq2.jpg" for shorts and "hqdefault.jpg" for normal videos
+	// Sending a request to the oembed API is significantly faster than sending a request to https://www.youtube.com/shorts/${randomVideo}
+	if (configSync.shuffleIgnoreShortsOption) {
+		let response;
+		await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
+			method: "GET"
+		}).then(res => res.json())
+			.then(res => response = res);
+
+		// For shorts, the thumbnail url ends in "hq2.jpg", for normal videos it ends in "hqdefault.jpg"
+		while (response.thumbnail_url === (`https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`)) {
+			// Remove the video from videosToShuffle to not choose it again
+			// Do not remove it from the playlistInfo object, as we do not want to delete it from the playlist
+			videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
+			randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
+			console.log(`The chosen video was a short, so a new random video has been chosen: ${randomVideo}`);
+
+			if (randomVideo === undefined) {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-6D",
+						message: "Your settings indicate to ignore shorts, but there are only shorts available to shuffle from.",
+						solveHint: "This may be due to your filter settings, e.g. only shuffling from the most recent videos. Revise your filter settings or turn on the option to shuffle from shorts.",
+						showTrace: false
+					}
+				)
+			}
+
+			await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
+				method: "GET"
+			}).then(res => res.json())
+				.then(res => response = res);
+		}
 	}
 
 	return { randomVideo, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };

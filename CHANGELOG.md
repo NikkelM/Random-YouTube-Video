@@ -3,10 +3,13 @@
 ## v1.5.3
 
 <!--Releasenotes start-->
+- Added a new option: 'Ignore shorts'. When enabled, the extension will not choose shorts when shuffling. This option is disabled by default, you can enable it in the extension popup.
 - The 'Reuse new tab' option is now able to reuse the tab even if it is not the currently focused one. It will however not reuse the tab if you have since navigated away from YouTube, to not accidentally overwrite a page you might still need.
 - Added tips and useful information about the extension to the shuffling page opened when using the shuffle button from the popup.
 - Added a tooltip to the 'Shuffle' button on channel and video pages.
-- Fixed an issue with the extension checking an internal URL against a potentially wrong extension ID.
+- Sped up the process of checking if a video exists or not by not waiting for unnecessary results from an API request.
+- Fixed an issue with the extension checking an internal URL against a fixed instead of dynamic extension ID.
+- Fixed a small scaling issue in the popup.
 <!--Releasenotes end-->
 
 ## v1.5.2

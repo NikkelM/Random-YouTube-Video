@@ -20,6 +20,8 @@ function getDomElements() {
 		shuffleOpenInNewTabOptionToggle: document.getElementById("shuffleOpenInNewTabOptionToggle"),
 		// Shuffling: Reuse tab option toggle
 		shuffleReUseNewTabOptionToggle: document.getElementById("shuffleReUseNewTabOptionToggle"),
+		// Shuffling : Ignore shorts option toggle
+		shuffleIgnoreShortsOptionToggle: document.getElementById("shuffleIgnoreShortsOptionToggle"),
 		// Shuffling: Open as playlist option toggle
 		shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle"),
 
@@ -82,6 +84,9 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	// ----- Shuffling: Reuse tab option toggle -----
 	// If this option is enabled depends on the state of the shuffleOpenInNewTabOptionToggle
 	manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, configSync.shuffleOpenInNewTabOption, configSync);
+
+	// ----- Shuffling: Ignore shorts option toggle -----
+	domElements.shuffleIgnoreShortsOptionToggle.checked = configSync.shuffleIgnoreShortsOption;
 
 	// ----- Shuffling: Open as playlist option toggle -----
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
@@ -150,6 +155,14 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		await setSyncStorageValue("shuffleReUseNewTabOption", this.checked, configSync);
 
 		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked, configSync);
+	});
+
+	// Shuffling: Ignore shorts option toggle
+	domElements.shuffleIgnoreShortsOptionToggle.addEventListener("change", async function () {
+		configSync.shuffleIgnoreShortsOption = this.checked;
+		await setSyncStorageValue("shuffleIgnoreShortsOption", this.checked, configSync);
+
+		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionToggle, this.checked, configSync);
 	});
 
 	// Shuffling: Open as playlist option toggle
