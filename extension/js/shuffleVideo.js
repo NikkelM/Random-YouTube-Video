@@ -565,8 +565,6 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 	if (!await testVideoExistence(randomVideo)) {
 		encounteredDeletedVideos = true;
 		do {
-			console.log("The chosen video does not exist anymore. Removing it from the database and choosing a new one...");
-
 			// Remove the video from the local playlist object
 			// It will always be in the "videos" object, as we have just fetched the "newVideos" from the YouTube API
 			delete playlistInfo["videos"][randomVideo];
@@ -579,7 +577,7 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 
 			videosToShuffle = chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue);
 			randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
-			console.log(`A new random video has been chosen: ${randomVideo}`);
+			console.log(`The chosen video does not exist anymore, so it will be removed from the database. A new random video has been chosen: ${randomVideo}`);
 
 			if (randomVideo === undefined) {
 				throw new RandomYoutubeVideoError(
@@ -608,13 +606,11 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 
 		// For shorts, the thumbnail url ends in "hq2.jpg", for normal videos it ends in "hqdefault.jpg"
 		while (response.thumbnail_url === (`https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`)) {
-			console.log("The chosen video is a short. Choosing a new one...");
-
 			// Remove the video from videosToShuffle to not choose it again
 			// Do not remove it from the playlistInfo object, as we do not want to delete it from the playlist
 			videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 			randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
-			console.log(`A new random video has been chosen: ${randomVideo}`);
+			console.log(`The chosen video was a short, so a new random video has been chosen: ${randomVideo}`);
 
 			if (randomVideo === undefined) {
 				throw new RandomYoutubeVideoError(
@@ -631,7 +627,6 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 				method: "GET"
 			}).then(res => res.json())
 				.then(res => response = res);
-
 		}
 	}
 
