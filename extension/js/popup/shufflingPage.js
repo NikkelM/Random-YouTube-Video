@@ -17,7 +17,7 @@ showDivContents();
 function getDomElements() {
 	return {
 		// The div containing all other elements
-		randomYoutubeVideoPopup: document.getElementById("randomYoutubeVideoPopup"),
+		randomYoutubeVideo: document.getElementById("randomYoutubeVideo"),
 
 		// Shows the percentage of videos that have been fetched
 		fetchPercentageNotice: document.getElementById("fetchPercentageNotice"),
@@ -93,14 +93,14 @@ async function shuffleButtonClicked() {
 		domElements.shufflingInProgressElements.classList.add("hidden");
 
 		// We don't need to wait to show the contents of the page as we have encountered an error
-		domElements.randomYoutubeVideoPopup.classList.remove("hidden");
+		domElements.randomYoutubeVideo.classList.remove("hidden");
 		return;
 	}
 }
 
 async function showDivContents() {
 	await delay(1000);
-	domElements.randomYoutubeVideoPopup.classList.remove("hidden");
+	domElements.randomYoutubeVideo.classList.remove("hidden");
 }
 
 async function displayShufflingHints(currentHintIndex = null) {

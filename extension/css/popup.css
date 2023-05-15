@@ -37,13 +37,13 @@
 /*
  * Main containers
  */
-#randomYoutubeVideoPopupHTML {
+#randomYoutubeVideoHTML {
 	color-scheme: dark;
 	max-height: 600px;
 	overflow-y: auto;
 }
 
-#randomYoutubeVideoPopupBody {
+#randomYoutubeVideoBody {
 	margin: 0px;
 	width: 400px;
 	max-width: 100%;
@@ -55,25 +55,25 @@
 	color-scheme: dark;
 }
 
-#randomYoutubeVideoPopup {
+#randomYoutubeVideo {
 	text-align: center;
 }
 
-#randomYoutubeVideoPopup p {
+#randomYoutubeVideo p {
 	margin-top: 2px;
 	margin-bottom: 2px;
 }
 
-#randomYoutubeVideoPopup h1 {
+#randomYoutubeVideo h1 {
 	margin-bottom: 8px;
 }
 
-#randomYoutubeVideoPopup h2 {
+#randomYoutubeVideo h2 {
 	margin-top: 10px;
 	margin-bottom: 8px;
 }
 
-#randomYoutubeVideoPopup h3 {
+#randomYoutubeVideo h3 {
 	margin-top: 12px;
 	margin-bottom: 4px;
 }
