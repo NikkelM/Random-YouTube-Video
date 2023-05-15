@@ -36,20 +36,38 @@ chrome.runtime.onStartup.addListener(async function () {
 	}
 });
 
-// Check whether new version is installed
+// Check whether a new version was installed
 chrome.runtime.onInstalled.addListener(async function (details) {
 	const manifestData = chrome.runtime.getManifest();
 
 	if (details.reason == "update" && details.previousVersion !== manifestData.version) {
 		await handleExtensionUpdate(manifestData, details.previousVersion);
+	} else if (details.reason == "install") {
+		await handleExtensionInstall(manifestData);
 	}
 
 	// Validate the config in sync storage
 	await validateConfigSync();
 });
 
+async function handleExtensionInstall(manifestData) {
+	console.log(`Extension was installed (v${manifestData.version})`);
+
+	// Open the changelog page
+	chrome.tabs.create({
+		url: chrome.runtime.getURL("html/extensionUpdate.html"),
+		active: true,
+	});
+}
+
 async function handleExtensionUpdate(manifestData, previousVersion) {
 	console.log(`Extension was updated to version v${manifestData.version}`);
+
+	// Open the changelog page
+	chrome.tabs.create({
+		url: chrome.runtime.getURL("html/extensionUpdate.html"),
+		active: true,
+	});
 
 	// Handle changes that may be specific to a certain version change
 	await handleVersionSpecificUpdates(previousVersion);
