@@ -295,7 +295,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 				}
 			}
 			if (mustOpenShufflingPage) {
-				window.open(chrome.runtime.getURL("html/shufflingPage.html"), "Random YouTube Video - Shuffling...");
+				window.open(chrome.runtime.getURL("html/shufflingPage.html"));
 			}
 		});
 	});

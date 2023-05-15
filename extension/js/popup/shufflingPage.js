@@ -39,6 +39,9 @@ function getDomElements() {
 	}
 }
 
+// Logic to display hints while waiting for the shuffle to complete
+const jsonFileUrl = chrome.runtime.getURL('data/shufflingTips.json');
+const jsonData = await loadJsonFile(jsonFileUrl);
 let currentHint = await displayShufflingHints();
 
 // Add click listener to the "New tip" button
@@ -104,20 +107,13 @@ async function showDivContents() {
 }
 
 async function displayShufflingHints(currentHintIndex = null) {
-	const jsonFileUrl = chrome.runtime.getURL('data/shufflingTips.json');
-	const jsonData = await loadJsonFile(jsonFileUrl)
-
 	// Choose a (new) random hint from the JSON file and display it
 	let randomHintIndex = currentHintIndex;
 	while (randomHintIndex === currentHintIndex) {
 		randomHintIndex = Math.floor(Math.random() * jsonData.length);
 	}
-	const randomHint = jsonData[randomHintIndex];
 
-	// Insert line breaks into the hint text after every 70 characters, but don't break words
-	const displayedText = randomHint.replace(/(.{1,80})(?:\s+|$)/g, "$1\n");
-
-	domElements.shufflingTipP.innerText = displayedText;
+	domElements.shufflingTipP.innerText = jsonData[randomHintIndex];
 
 	return randomHintIndex;
 }
