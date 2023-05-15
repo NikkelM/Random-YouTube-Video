@@ -598,7 +598,7 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 
 	// If the user does not want to shuffle from shorts, test if the video is a short
 	// We can test if it is a short by sending a HEAD request to the oembed API, the thumbnail url will end in "hq2.jpg" for shorts and "hqdefault.jpg" for normal videos
-	// Sending a request to the oembed API is significantly faster than sending a HEAD request to https://www.youtube.com/shorts/${randomVideo}
+	// Sending a request to the oembed API is significantly faster than sending a request to https://www.youtube.com/shorts/${randomVideo}
 	if (configSync.shuffleIgnoreShortsOption) {
 		let response;
 		await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
