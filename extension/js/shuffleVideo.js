@@ -627,10 +627,10 @@ async function chooseRandomVideoFromPlaylist(playlistInfo, channelId, shouldUpda
 				)
 			}
 
-			response = await fetch(`https://www.youtube.com/shorts/${randomVideo}`, {
-				method: "HEAD",
-				redirect: "manual"
-			});
+			await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
+				method: "GET"
+			}).then(res => res.json())
+				.then(res => response = res);
 
 		}
 	}
