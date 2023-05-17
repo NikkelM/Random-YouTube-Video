@@ -260,7 +260,7 @@ select:hover {
 	padding: 8px 0;
 }
 
-.randomYoutubeVideoLink {
+ #randomYoutubeVideoFooter .footerLink {
 	color: var(--randomYoutubeVideo-fg-color);
 	display: inline-block;
 	text-decoration: none;
@@ -271,10 +271,10 @@ select:hover {
 	margin: 2px 1px;
 }
 
-.randomYoutubeVideoLink:hover {
+#randomYoutubeVideoFooter .footerLink:hover {
 	background-color: #444;
 }
 
-.randomYoutubeVideoLink:active {
+#randomYoutubeVideoFooter .footerLink:active {
 	background-color: #555;
 }
