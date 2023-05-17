@@ -17,6 +17,7 @@ function getDomElements() {
 		customApiKeySubmitButton: customApiKeyInputDiv.children.namedItem("customApiKeySubmitButton"),
 		customApiKeyInputInfoDiv: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoDiv"),
 		customApiKeyInputInfoText: customApiKeyInputInfoDiv.children.namedItem("customApiKeyInputInfoText"),
+		customApiKeyHowToGetDiv: document.getElementById("customApiKeyHowToGetDiv"),
 		// Database sharing: Option toggle
 		dbSharingOptionToggle: document.getElementById("dbSharingOptionToggle"),
 		// Shuffling: Open in new tab option toggle
@@ -88,6 +89,10 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	// Set the value of the custom API key input field to the value in sync storage
 	domElements.customApiKeyInputField.value = configSync.customYoutubeApiKey ? configSync.customYoutubeApiKey : "";
 
+	if (configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
+		domElements.customApiKeyHowToGetDiv.classList.add("hidden");
+	}
+
 	// ----- Shuffling: Open in new tab option toggle -----
 	domElements.shuffleOpenInNewTabOptionToggle.checked = configSync.shuffleOpenInNewTabOption;
 
@@ -153,7 +158,8 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	domElements.customApiKeySubmitButton.addEventListener("click", async function () {
 		// Make sure the passed API key is valid
 		const newAPIKey = domElements.customApiKeyInputField.value;
-		if (await validateApiKey(newAPIKey, domElements)) {
+
+		if (newAPIKey.length > 0 && await validateApiKey(newAPIKey, domElements)) {
 			configSync.customYoutubeApiKey = newAPIKey;
 			await setSyncStorageValue("customYoutubeApiKey", newAPIKey, configSync);
 		} else {
@@ -163,6 +169,12 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
 			domElements.customApiKeyInputField.value = "";
 		}
+		// If the user removed the API key, show a message in the info div
+		if (newAPIKey.length === 0) {
+			domElements.customApiKeyInputInfoText.innerText = "Custom API key was successfully removed.";
+			domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
+		}
+
 		manageDbOptOutOption(domElements, configSync);
 
 		manageDependents(domElements, domElements.customApiKeySubmitButton, null, configSync);

@@ -13,6 +13,13 @@ async function manageDependents(domElements, parent, value, configSync) {
 				// Set the value of the custom API key input field to the value in sync storage
 				domElements.customApiKeyInputField.value = configSync.customYoutubeApiKey ? configSync.customYoutubeApiKey : "";
 
+				// Show the guide on how to get a custom API key if the user has not already provided one
+				if (!configSync.customYoutubeApiKey) {
+					domElements.customApiKeyHowToGetDiv.classList.remove("hidden");
+				} else {
+					domElements.customApiKeyHowToGetDiv.classList.add("hidden");
+				}
+
 				manageDbOptOutOption(domElements, configSync);
 			} else {
 				// The user must share data with the database
@@ -27,11 +34,20 @@ async function manageDependents(domElements, parent, value, configSync) {
 			}
 			updateFYIDiv(domElements, configSync);
 			break;
+
 		case domElements.customApiKeySubmitButton:
+			// Show the guide on how to get a custom API key if the user has not already provided one
+			if (!configSync.customYoutubeApiKey) {
+				domElements.customApiKeyHowToGetDiv.classList.remove("hidden");
+			} else {
+				domElements.customApiKeyHowToGetDiv.classList.add("hidden");
+			}
+
 			// This is called after validation of a provided API key
 			// Depending on whether or not it is valid, we need to update the FYI div
 			updateFYIDiv(domElements, configSync);
 			break;
+
 		case domElements.shuffleOpenInNewTabOptionToggle:
 			// If it was turned off, we need to disable the reuse tab option toggle
 			if (value) {
@@ -44,7 +60,8 @@ async function manageDependents(domElements, parent, value, configSync) {
 				await setSyncStorageValue("shuffleReUseNewTabOption", false, configSync);
 				domElements.shuffleReUseNewTabOptionToggle.parentElement.classList.add("disabled");
 			}
-			break
+			break;
+
 		default:
 			console.log(`No dependents to manage for element: ${parent.id}`);
 			break;
@@ -84,6 +101,7 @@ async function manageDbOptOutOption(domElements, configSync) {
 
 // Validates a YouTube API key by sending a short request
 async function validateApiKey(customAPIKey, domElements) {
+	// APIKey is actually an array of objects here, despite the naming
 	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
 
 	if (!APIKey) {
@@ -94,7 +112,7 @@ async function validateApiKey(customAPIKey, domElements) {
 
 	// Users should not add default API keys
 	if (defaultAPIKeys.includes(customAPIKey)) {
-		domElements.customApiKeyInputInfoText.innerText = "This is a default API key. Please enter your own.";
+		domElements.customApiKeyInputInfoText.innerText = "This API key is used by the extension. Please enter your own.";
 		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 		return false;
 	}
