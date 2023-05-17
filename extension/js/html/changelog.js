@@ -12,7 +12,7 @@ function getDomElements() {
 		// Text that is shown if there is no changelog for the currently installed version
 		noChangelogErrorP: document.getElementById("noChangelogErrorP"),
 		// Div that is shown if the changelog cannot be fetched in a reasonable amount of time
-		timeoutErrorDiv: document.getElementById("timeoutErrorDiv"),
+		genericErrorDiv: document.getElementById("genericErrorDiv"),
 		// The div containing all elements below the heading
 		belowHeadingDiv: document.getElementById("belowHeadingDiv"),
 		// The heading containing the "What's new in <version>:" text
@@ -39,7 +39,7 @@ const availableVersions = getVersions(changelogText);
 try {
 	addVersionsToDropdown(availableVersions);
 } catch (error) {
-	domElements.timeoutErrorDiv.classList.remove("hidden");
+	domElements.genericErrorDiv.classList.remove("hidden");
 }
 
 function getVersions(changelogText) {
@@ -67,7 +67,7 @@ domElements.chooseChangelogVersionDropdown.addEventListener("change", async func
 try {
 	await updateChangelog();
 } catch (error) {
-	domElements.timeoutErrorDiv.classList.remove("hidden");
+	domElements.genericErrorDiv.classList.remove("hidden");
 }
 displayErrorAfterWaiting();
 
@@ -124,7 +124,7 @@ async function updateChangelog(forVersion = `v${currentVersion}`) {
 async function displayErrorAfterWaiting(ms = 2000) {
 	await delay(ms);
 	if (domElements.belowHeadingDiv.classList.contains("hidden")) {
-		domElements.timeoutErrorDiv.classList.remove("hidden");
+		domElements.genericErrorDiv.classList.remove("hidden");
 	}
 }
 
