@@ -1,4 +1,4 @@
-// Utility functions for the various HTML pages' logic
+// Shared utility functions for the various HTML pages' logic
 
 // ----- Shuffling Hints -----
 let shufflingHintJsonData = null;
