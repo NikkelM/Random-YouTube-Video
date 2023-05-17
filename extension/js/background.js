@@ -113,9 +113,9 @@ async function validateConfigSync() {
 		"databaseSharingEnabledOption": true,
 		// These properties influence the behavior of the "Shuffle" button
 		"shuffleOpenInNewTabOption": true,
-		"shuffleOpenAsPlaylistOption": false,
 		"shuffleReUseNewTabOption": true,
 		"shuffleIgnoreShortsOption": false,
+		"shuffleOpenAsPlaylistOption": false,
 		// If shuffled videos are opened in a new tab, save the tab ID of that tab here to reuse the tab when the user shuffles again
 		"shuffleTabId": null,
 		// channelSettings is a dictionary of channelID -> Dictionary of channel settings
