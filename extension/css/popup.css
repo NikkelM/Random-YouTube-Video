@@ -254,13 +254,31 @@ select:hover {
 }
 
 /*
+ * Links
+ */
+ /* A link whose text is white and turns grey when hovered over */
+.whiteGreyLink {
+	color: var(--randomYoutubeVideo-fg-color);
+	display: inline-block;
+	text-decoration: none;
+}
+
+.whiteGreyLink:hover {
+	color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+.whiteGreyLink:active {
+	color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+/*
  * Footer
  */
 #randomYoutubeVideoFooter {
 	padding: 8px 0;
 }
 
- #randomYoutubeVideoFooter .footerLink {
+#randomYoutubeVideoFooter .footerLink {
 	color: var(--randomYoutubeVideo-fg-color);
 	display: inline-block;
 	text-decoration: none;
