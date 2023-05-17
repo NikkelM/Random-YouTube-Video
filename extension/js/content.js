@@ -92,7 +92,7 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 	await setSyncStorageValue("currentChannelName", channelName);
 
 	// Update the channel name in the popup in case it was opened while the navigation was still going on
-	// If we didn't do this, the configSync and displayed value might diverge
+	// If we don't do this, the configSync and displayed value might diverge
 	chrome.runtime.sendMessage({ command: "updateCurrentChannel" });
 
 	buildShuffleButton(pageType, channelId);
@@ -106,8 +106,20 @@ async function shuffleVideos() {
 		// Make sure we have the latest config
 		await fetchConfigSync();
 
-		// Get the saved channelId from the button. If for some reason it is not there, use the channelId from the config
-		const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerText ?? configSync.currentChannelId;
+		// Get the saved channelId from the button
+		const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerText;
+
+		// If the channelId somehow wasn't saved, throw an error
+		if (!channelId) {
+			throw new RandomYoutubeVideoError(
+				{
+					code: "RYV-9",
+					message: "The extension was unable to find from which channel to shuffle.",
+					solveHint: "The page will reload, after which it should work again. If it doesn't, please report this issue on GitHub!",
+					showTrace: false
+				}
+			)
+		}
 
 		// We need this variable to make sure the button text is only changed if the shuffle hasn't finished within the time limit
 		let hasBeenShuffled = false;

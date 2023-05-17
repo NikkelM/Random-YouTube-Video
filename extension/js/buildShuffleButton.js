@@ -38,6 +38,8 @@ function buildShuffleButton(pageType, channelId) {
 		// Update the channelId
 		document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('channelId').innerText = channelId ?? "";
 
+		// Set the variable to the correct button type (channel vs. video page)
+		shuffleButton = document.getElementById(buttonDivID);
 		return;
 	}
 
@@ -92,7 +94,7 @@ function finalizeButton(pageType, channelId) {
 			buttonDivOwner = document.getElementById("above-the-fold").children.namedItem("top-row").children.namedItem("owner");
 			break;
 		default:
-			console.warn("Cannot build button: unknown page type: " + pageType);
+			console.warn(`Cannot build button: unknown page type: ${pageType}`);
 			return;
 	}
 
