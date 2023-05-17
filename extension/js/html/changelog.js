@@ -50,29 +50,9 @@ async function updateChangelog(version) {
 	domElements.changelogDiv.children[0].replaceWith(changelogList);
 }
 
-
-// Tip logic
-const jsonFileUrl = chrome.runtime.getURL('data/shufflingTips.json');
-const jsonData = await loadJsonFile(jsonFileUrl);
-let currentHint = await displayShufflingHints();
-
+// Logic for displaying hints
+let currentHint = await displayShufflingHint(domElements.shufflingTipP);
 // Add click listener to the "New tip" button
 domElements.nextTipButton.addEventListener("click", async function () {
-	currentHint = await displayShufflingHints(currentHint);
+	currentHint = await displayShufflingHint(domElements.shufflingTipP, currentHint);
 });
-
-async function displayShufflingHints(currentHintIndex = null) {
-	// Choose a (new) random hint from the JSON file and display it
-	let randomHintIndex = currentHintIndex;
-	while (randomHintIndex === currentHintIndex) {
-		randomHintIndex = Math.floor(Math.random() * jsonData.length);
-	}
-	const randomHint = jsonData[randomHintIndex];
-
-	// Insert line breaks into the hint text after every 70 characters, but don't break words
-	const displayedText = randomHint//.replace(/(.{1,80})(?:\s+|$)/g, "$1\n");
-
-	domElements.shufflingTipP.innerText = displayedText;
-
-	return randomHintIndex;
-}

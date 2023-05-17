@@ -7,7 +7,7 @@ await setDomElementValuesFromConfig(domElements, originalConfigSync);
 
 await setDomElemenEventListeners(domElements, originalConfigSync);
 
-// IMPORTANT: Only one message handler can send a response. This is the one in the background script for us, so we CANNOT send a response here!
+// IMPORTANT: Only one message handler can send a response. This is the one in the background script for this extension, so we CANNOT send a response here!
 chrome.runtime.onMessage.addListener(async function (request, sender, sendResponse) {
 	switch (request.command) {
 		case "updateCurrentChannel":

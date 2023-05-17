@@ -39,14 +39,11 @@ function getDomElements() {
 	}
 }
 
-// Logic to display hints while waiting for the shuffle to complete
-const jsonFileUrl = chrome.runtime.getURL('data/shufflingTips.json');
-const jsonData = await loadJsonFile(jsonFileUrl);
-let currentHint = await displayShufflingHints();
-
+// Logic for displaying hints
+let currentHint = await displayShufflingHint(domElements.shufflingTipP);
 // Add click listener to the "New tip" button
 domElements.nextTipButton.addEventListener("click", async function () {
-	currentHint = await displayShufflingHints(currentHint);
+	currentHint = await displayShufflingHint(domElements.shufflingTipP, currentHint);
 });
 
 // Called when the randomize-button from the popup is clicked
@@ -56,7 +53,7 @@ async function shuffleButtonClicked() {
 
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
 
-		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
+		// await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
 
 		// Focus this tab when the shuffle completes
 		chrome.tabs.query({ url: chrome.runtime.getURL('html/shufflingPage.html') }, function (tabs) {
@@ -104,16 +101,4 @@ async function shuffleButtonClicked() {
 async function showDivContents() {
 	await delay(1000);
 	domElements.randomYoutubeVideo.classList.remove("hidden");
-}
-
-async function displayShufflingHints(currentHintIndex = null) {
-	// Choose a (new) random hint from the JSON file and display it
-	let randomHintIndex = currentHintIndex;
-	while (randomHintIndex === currentHintIndex) {
-		randomHintIndex = Math.floor(Math.random() * jsonData.length);
-	}
-
-	domElements.shufflingTipP.innerText = jsonData[randomHintIndex];
-
-	return randomHintIndex;
 }
