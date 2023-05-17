@@ -11,7 +11,7 @@ const domElements = getDomElements();
 shuffleButtonClicked();
 
 // Only show the contents of the page after a short delay, so that the user doesn't see the page at all for short loading times
-showDivContents();
+waitUntilShowingDivContents();
 
 // Get all relevant DOM elements
 function getDomElements() {
@@ -98,7 +98,7 @@ async function shuffleButtonClicked() {
 	}
 }
 
-async function showDivContents() {
+async function waitUntilShowingDivContents() {
 	await delay(1000);
 	domElements.randomYoutubeVideo.classList.remove("hidden");
 }
