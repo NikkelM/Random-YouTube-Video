@@ -57,12 +57,6 @@ async function handleExtensionInstall(manifestData) {
 async function handleExtensionUpdate(manifestData, previousVersion) {
 	console.log(`Extension was updated to version v${manifestData.version}`);
 
-	// Open the changelog page
-	chrome.tabs.create({
-		url: chrome.runtime.getURL("html/changelog.html"),
-		active: true,
-	});
-
 	// Handle changes that may be specific to a certain version change
 	await handleVersionSpecificUpdates(previousVersion);
 
@@ -118,9 +112,9 @@ async function validateConfigSync() {
 		// If the user has enabled sharing video ID's with the database
 		"databaseSharingEnabledOption": true,
 		// These properties influence the behavior of the "Shuffle" button
-		"shuffleOpenInNewTabOption": false,
-		"shuffleOpenAsPlaylistOption": true,
-		"shuffleReUseNewTabOption": false,
+		"shuffleOpenInNewTabOption": true,
+		"shuffleOpenAsPlaylistOption": false,
+		"shuffleReUseNewTabOption": true,
 		"shuffleIgnoreShortsOption": false,
 		// If shuffled videos are opened in a new tab, save the tab ID of that tab here to reuse the tab when the user shuffles again
 		"shuffleTabId": null,
@@ -137,6 +131,8 @@ async function validateConfigSync() {
 		"userQuotaResetTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(),
 		// We want to regularly check if there are new API keys available (weekly)
 		"nextAPIKeysCheckTime": new Date(new Date().setHours(168, 0, 0, 0)).getTime(),
+		// The most recent version for which the user has viewed the changelog
+		"lastViewedChangelogVersion": "0",
 		// For april fools: Will be the number of the year in which the user was last rickrolled (we only want to rickroll the user once per year)
 		"wasLastRickRolledInYear": "1970",
 	};
