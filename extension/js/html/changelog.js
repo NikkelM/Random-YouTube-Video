@@ -25,27 +25,45 @@ function getDomElements() {
 const currentVersion = chrome.runtime.getManifest().version;
 domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
 
-await updateChangelog(currentVersion);
+let changelogText = null;
+await updateChangelog();
 
-async function updateChangelog(version) {
-	// Get the complete changelog from GitHub
-	let versionChangelog = await fetch(`https://raw.githubusercontent.com/NikkelM/Random-YouTube-Video/v${version}/CHANGELOG.md`)
+async function fetchChangelog(forVersion = currentVersion) {
+	// Get the current changelog from GitHub
+	let changelog = await fetch(`https://raw.githubusercontent.com/NikkelM/Random-YouTube-Video/v${forVersion}/CHANGELOG.md`)
 		.then(response => response.text());
 
-	if (versionChangelog === "404: Not Found") {
-		versionChangelog = `\n- Could not find any release notes for this version (${version}).`;
-	} else {
-		// Get only the text between the <!--Releasenotes start--> and <!--Releasenotes end--> lines
-		versionChangelog = versionChangelog.substring(
-			versionChangelog.indexOf("<!--Releasenotes start-->") + "<!--Releasenotes start-->".length,
-			versionChangelog.indexOf("<!--Releasenotes end-->")
-		);
+	if (changelog === "404: Not Found") {
+		changelog = "\n- Could not fetch the changelog from GitHub. Try again later or visit GitHub directly.";
+	}
+
+	return changelog;
+}
+
+async function updateChangelog(forVersion = currentVersion) {
+	if (changelogText === null) {
+		changelogText = await fetchChangelog(forVersion);
+	}
+
+	// Get the text between "## v${version}" and the next "##"
+	const versionIndex = changelogText.indexOf(`## v${forVersion}`);
+
+	changelogText = versionIndex !== -1
+		? changelogText.substring(
+			versionIndex + `## v${forVersion}`.length,
+			changelogText.indexOf("##", versionIndex + `## v${forVersion}`.length))
+		: "";
+	console.log(changelogText)
+
+	if (changelogText === "") {
+		changelogText = `\n- No changes found for this version (v${forVersion}).`;
 	}
 
 	// Add the changelog to the changelogDiv in the form of an unordered list, with each line being a list item, minus the leading "- "
 	const changelogList = document.createElement("ul");
 	changelogList.classList.add("thirdWidth", "textLeft");
-	changelogList.innerHTML = versionChangelog.replace(/^- /gm, "<li>");
+	changelogList.innerHTML = changelogText.replace(/^- /gm, "<li>");
+
 	// Replace the current child of the changelogDiv with the new list
 	domElements.changelogDiv.children[0].replaceWith(changelogList);
 }
