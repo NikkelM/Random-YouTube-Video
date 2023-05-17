@@ -53,7 +53,7 @@ async function shuffleButtonClicked() {
 
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
 
-		// await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
+		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
 
 		// Focus this tab when the shuffle completes
 		chrome.tabs.query({ url: chrome.runtime.getURL('html/shufflingPage.html') }, function (tabs) {
