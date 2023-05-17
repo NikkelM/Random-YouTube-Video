@@ -105,6 +105,11 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 
 	// Contains logic for all the "For your information" div content
 	updateFYIDiv(domElements, configSync);
+
+	// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
+	if (configSync.lastViewedChangelogVersion < chrome.runtime.getManifest().version) {
+		domElements.viewChangelogButton.classList.add("highlight-green");
+	}
 }
 
 // Set event listeners for DOM elements
@@ -305,7 +310,8 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	});
 
 	// View changelog button
-	domElements.viewChangelogButton.addEventListener("click", function () {
+	domElements.viewChangelogButton.addEventListener("click", async function () {
+		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
 		window.open(chrome.runtime.getURL("html/changelog.html"));
 	});
 }
