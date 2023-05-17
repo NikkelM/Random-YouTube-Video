@@ -114,7 +114,6 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 
 // Set event listeners for DOM elements
 async function setDomElemenEventListeners(domElements, configSync) {
-
 	// Custom API key: Option toggle
 	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
 		configSync.useCustomApiKeyOption = this.checked;

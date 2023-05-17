@@ -1,4 +1,6 @@
 // Utility functions for the various HTML pages' logic
+
+// ----- Shuffling Hints -----
 let shufflingHintJsonData = null;
 
 async function initShufflingHints() {
