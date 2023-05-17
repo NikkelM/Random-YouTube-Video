@@ -5,6 +5,9 @@
 // Get relevant DOM elements
 function getDomElements() {
 	return {
+		// Body element
+		body: document.body,
+
 		// GLOBAL SETTINGS
 		// Custom API key: Option toggle
 		useCustomApiKeyOptionToggle: document.getElementById("useCustomApiKeyOptionToggle"),
@@ -66,6 +69,9 @@ function getDomElements() {
 // Set default values from config
 // The configSync contains all values the various sliders and text inputs should have
 async function setDomElementValuesFromConfig(domElements, configSync) {
+	// Disable animations to prevent them from playing when setting the values
+	toggleAnimations(domElements, false);
+
 	// ----- Custom API key: Option toggle -----
 	// If this option is checked is only dependent on the value in sync storage
 	domElements.useCustomApiKeyOptionToggle.checked = configSync.useCustomApiKeyOption;
@@ -109,6 +115,19 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
 	if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
 		domElements.viewChangelogButton.classList.add("highlight-green");
+	}
+
+	// Enable animations
+	toggleAnimations(domElements, true);
+}
+
+async function toggleAnimations(domElements, enable) {
+	if (enable) {
+		// Small delay to make sure running animations cannot be seen
+		await delay(100);
+		domElements.body.classList.remove("no-transitions");
+	} else {
+		domElements.body.classList.add("no-transitions");
 	}
 }
 
@@ -287,31 +306,17 @@ async function setDomElemenEventListeners(domElements, configSync) {
 
 	// Popup shuffle button
 	domElements.popupShuffleButton.addEventListener("click", function () {
-		// Open the shuffling page in a new tab, which will automatically start the shuffle
-		// Don't open it if an instance of the shuffling page already exists
-		chrome.tabs.query({}, function (tabs) {
-			let mustOpenShufflingPage = true;
-			for (let i = 0; i <= tabs.length - 1; i++) {
-				if (tabs[i].url === chrome.runtime.getURL('html/shufflingPage.html')) {
-					// An instance of the shufflingPage already exists, so don't create a new one
-					mustOpenShufflingPage = false;
-					// Focus the existing shufflingPage
-					chrome.tabs.update(tabs[i].id, { active: true });
-					// Close the popup
-					window.close();
-					break;
-				}
-			}
-			if (mustOpenShufflingPage) {
-				window.open(chrome.runtime.getURL("html/shufflingPage.html"));
-			}
-		});
+		focusOrOpenTab(chrome.runtime.getURL("html/shufflingPage.html"));
+		// Close the popup
+		window.close();
 	});
 
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
-		window.open(chrome.runtime.getURL("html/changelog.html"));
+		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
+		// Close the popup
+		window.close();
 	});
 }
 

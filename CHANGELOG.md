@@ -9,6 +9,7 @@
 - Added tips and useful information about the extension to the shuffling page opened when using the shuffle button from the popup.
 - Added a button to the popup that allows you to view the changelog.
 - Added a tooltip to the 'Shuffle' button on channel and video pages.
+- Sliders in the popup for enabled options will no longer play their 'enable' animation when the popup is opened and instead directly start in the correct position.
 - Changed some default settings for a better first-time experience.
 - Sped up the process of checking if a video exists or not by not waiting for unnecessary results from an API request.
 - Fixed an issue with the extension checking an internal URL against a fixed instead of dynamic extension ID.

@@ -23,3 +23,22 @@ async function displayShufflingHint(displayElement, currentHintIndex = null) {
 
 	return randomHintIndex;
 }
+
+// ----- Other utility functions -----
+function focusOrOpenTab(tabUrl) {
+	chrome.tabs.query({}, function (tabs) {
+		let mustOpenTab = true;
+		for (let i = 0; i <= tabs.length - 1; i++) {
+			if (tabs[i].url === tabUrl) {
+				// An instance of the page already exists, so don't create a new one
+				mustOpenTab = false;
+				// Focus the existing tab
+				chrome.tabs.update(tabs[i].id, { active: true });
+				break;
+			}
+		}
+		if (mustOpenTab) {
+			window.open(tabUrl);
+		}
+	});
+}

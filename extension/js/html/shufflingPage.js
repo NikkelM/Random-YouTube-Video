@@ -50,7 +50,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
-		window.open(chrome.runtime.getURL("html/changelog.html"));
+		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
 	});
 }
 
@@ -63,7 +63,6 @@ shuffleButtonClicked();
 
 // Only show the contents of the page after a short delay, so that the user doesn't see the page at all for short loading times
 waitUntilShowingDivContents();
-
 
 // ----- Shuffling Hints -----
 
