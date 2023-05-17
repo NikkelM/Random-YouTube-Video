@@ -9,6 +9,7 @@
 - Added tips and useful information about the extension to the shuffling page opened when using the shuffle button from the popup.
 - Added a button to the popup that allows you to view the changelog.
 - Added a tooltip to the 'Shuffle' button on channel and video pages.
+- Added a link to the YouTube API documentation to help you get started with setting up your own API key. You can find it in the popup when enabling the 'Use custom API key' option.
 - Sliders in the popup for enabled options will no longer play their 'enable' animation when the popup is opened and instead directly start in the correct position.
 - Changed some default settings for a better first-time experience.
 - Sped up the process of checking if a video exists or not by not waiting for unnecessary results from an API request.

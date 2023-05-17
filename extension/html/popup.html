@@ -140,7 +140,15 @@
 
 		<!-- Custom API key: Input -->
 		<div id="customApiKeyInputDiv" class="optionTextInput hidden">
-			<p>Your custom API key:</p>
+			<!-- Learn how to get an API key -->
+			<div id="customApiKeyHowToGetDiv">
+				<p class="grey-text displayInline">Follow the</p>
+				<a class="whiteGreyLink displayInline" href="https://developers.google.com/youtube/v3/getting-started"
+					target="_blank" rel="noopener">official guide</a>
+				<p class="grey-text displayInline">to learn how to get an API key.</p>
+			</div>
+
+			<p style="margin-top: 6px;">Your custom API key:</p>
 			<input type="text" id="customApiKeyInputField" name="customApiKeyInputField" style="width: 80%;"
 				title="Enter your YouTube API key here. It will not be shared with anyone."
 				placeholder="Enter API key here. It won't be shared with anyone.">
