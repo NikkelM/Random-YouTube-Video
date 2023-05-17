@@ -5,6 +5,9 @@
 // Get relevant DOM elements
 function getDomElements() {
 	return {
+		// Body element
+		body: document.body,
+
 		// GLOBAL SETTINGS
 		// Custom API key: Option toggle
 		useCustomApiKeyOptionToggle: document.getElementById("useCustomApiKeyOptionToggle"),
@@ -66,6 +69,9 @@ function getDomElements() {
 // Set default values from config
 // The configSync contains all values the various sliders and text inputs should have
 async function setDomElementValuesFromConfig(domElements, configSync) {
+	// Disable animations to prevent them from playing when setting the values
+	toggleAnimations(domElements, false);
+
 	// ----- Custom API key: Option toggle -----
 	// If this option is checked is only dependent on the value in sync storage
 	domElements.useCustomApiKeyOptionToggle.checked = configSync.useCustomApiKeyOption;
@@ -109,6 +115,19 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
 	if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
 		domElements.viewChangelogButton.classList.add("highlight-green");
+	}
+
+	// Enable animations
+	toggleAnimations(domElements, true);
+}
+
+async function toggleAnimations(domElements, enable) {
+	if (enable) {
+		// Small delay to make sure running animations cannot be seen
+		await delay(100);
+		domElements.body.classList.remove("no-transitions");
+	} else {
+		domElements.body.classList.add("no-transitions");
 	}
 }
 

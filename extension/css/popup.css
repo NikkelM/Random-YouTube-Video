@@ -48,6 +48,15 @@
 	margin: auto;
 }
 
+/* Disables various transitions */
+.no-transitions * {
+	transition: none !important;
+}
+
+.no-transitions *::before {
+	transition: none !important;
+}
+
 /*
  * Main containers
  */
