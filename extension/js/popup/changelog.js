@@ -1,4 +1,4 @@
-// Contains logic for the "extensionUpdate" page that is opened after the extension was updated
+// Contains logic for the "changelog" page
 
 const domElements = getDomElements();
 

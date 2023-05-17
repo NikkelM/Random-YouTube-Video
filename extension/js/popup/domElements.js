@@ -56,6 +56,10 @@ function getDomElements() {
 		dailyQuotaNoticeDiv: forYourInformationDiv.children.namedItem("dailyQuotaNoticeDiv"),
 		// Daily quota notice: Text
 		dailyQuotaNoticeText: dailyQuotaNoticeDiv.children.namedItem("dailyQuotaNoticeText"),
+
+		// FOOTER
+		// View changelog button
+		viewChangelogButton: document.getElementById("viewChangelogButton"),
 	}
 }
 
@@ -298,6 +302,11 @@ async function setDomElemenEventListeners(domElements, configSync) {
 				window.open(chrome.runtime.getURL("html/shufflingPage.html"));
 			}
 		});
+	});
+
+	// View changelog button
+	domElements.viewChangelogButton.addEventListener("click", function () {
+		window.open(chrome.runtime.getURL("html/changelog.html"));
 	});
 }
 

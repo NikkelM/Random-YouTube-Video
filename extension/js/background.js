@@ -59,7 +59,7 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 
 	// Open the changelog page
 	chrome.tabs.create({
-		url: chrome.runtime.getURL("html/extensionUpdate.html"),
+		url: chrome.runtime.getURL("html/changelog.html"),
 		active: true,
 	});
 
