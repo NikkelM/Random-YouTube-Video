@@ -64,7 +64,6 @@ shuffleButtonClicked();
 // Only show the contents of the page after a short delay, so that the user doesn't see the page at all for short loading times
 waitUntilShowingDivContents();
 
-
 // ----- Shuffling Hints -----
 
 let currentHint = await displayShufflingHint(domElements.shufflingTipP);
