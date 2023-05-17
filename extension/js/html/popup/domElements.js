@@ -107,7 +107,7 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	updateFYIDiv(domElements, configSync);
 
 	// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
-	if (configSync.lastViewedChangelogVersion < chrome.runtime.getManifest().version) {
+	if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
 		domElements.viewChangelogButton.classList.add("highlight-green");
 	}
 }
