@@ -141,17 +141,29 @@
 }
 
 .randomYoutubeVideoButton:hover {
-	background-color: #444;
+	background-color: #444 !important;
 }
 
 .randomYoutubeVideoButton:active {
-	background-color: #555;
+	background-color: #555 !important;
 }
 
 .randomYoutubeVideoButton:disabled {
-	background-color: #444;
+	background-color: #444 !important;
 	cursor: default;
 	color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+.randomYoutubeVideoButton.highlight-green {
+	background-color: #058101;
+}
+
+.randomYoutubeVideoButton.highlight-green:hover {
+	background-color: #06b800 !important;
+}
+
+.randomYoutubeVideoButton.highlight-green:active {
+	background-color: #07d400 !important;
 }
 
 /* 
@@ -261,4 +273,8 @@ select:hover {
 
 .randomYoutubeVideoLink:hover {
 	background-color: #444;
+}
+
+.randomYoutubeVideoLink:active {
+	background-color: #555;
 }
