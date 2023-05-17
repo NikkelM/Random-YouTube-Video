@@ -50,7 +50,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
-		window.open(chrome.runtime.getURL("html/changelog.html"));
+		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
 	});
 }
 

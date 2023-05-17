@@ -306,31 +306,17 @@ async function setDomElemenEventListeners(domElements, configSync) {
 
 	// Popup shuffle button
 	domElements.popupShuffleButton.addEventListener("click", function () {
-		// Open the shuffling page in a new tab, which will automatically start the shuffle
-		// Don't open it if an instance of the shuffling page already exists
-		chrome.tabs.query({}, function (tabs) {
-			let mustOpenShufflingPage = true;
-			for (let i = 0; i <= tabs.length - 1; i++) {
-				if (tabs[i].url === chrome.runtime.getURL('html/shufflingPage.html')) {
-					// An instance of the shufflingPage already exists, so don't create a new one
-					mustOpenShufflingPage = false;
-					// Focus the existing shufflingPage
-					chrome.tabs.update(tabs[i].id, { active: true });
-					// Close the popup
-					window.close();
-					break;
-				}
-			}
-			if (mustOpenShufflingPage) {
-				window.open(chrome.runtime.getURL("html/shufflingPage.html"));
-			}
-		});
+		focusOrOpenTab(chrome.runtime.getURL("html/shufflingPage.html"));
+		// Close the popup
+		window.close();
 	});
 
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
-		window.open(chrome.runtime.getURL("html/changelog.html"));
+		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
+		// Close the popup
+		window.close();
 	});
 }
 
