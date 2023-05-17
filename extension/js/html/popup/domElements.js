@@ -56,6 +56,10 @@ function getDomElements() {
 		dailyQuotaNoticeDiv: forYourInformationDiv.children.namedItem("dailyQuotaNoticeDiv"),
 		// Daily quota notice: Text
 		dailyQuotaNoticeText: dailyQuotaNoticeDiv.children.namedItem("dailyQuotaNoticeText"),
+
+		// FOOTER
+		// View changelog button
+		viewChangelogButton: document.getElementById("viewChangelogButton"),
 	}
 }
 
@@ -101,11 +105,15 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 
 	// Contains logic for all the "For your information" div content
 	updateFYIDiv(domElements, configSync);
+
+	// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
+	if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
+		domElements.viewChangelogButton.classList.add("highlight-green");
+	}
 }
 
 // Set event listeners for DOM elements
 async function setDomElemenEventListeners(domElements, configSync) {
-
 	// Custom API key: Option toggle
 	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
 		configSync.useCustomApiKeyOption = this.checked;
@@ -295,9 +303,15 @@ async function setDomElemenEventListeners(domElements, configSync) {
 				}
 			}
 			if (mustOpenShufflingPage) {
-				window.open(chrome.runtime.getURL("html/shufflingPage.html"), "Random YouTube Video - Shuffling...");
+				window.open(chrome.runtime.getURL("html/shufflingPage.html"));
 			}
 		});
+	});
+
+	// View changelog button
+	domElements.viewChangelogButton.addEventListener("click", async function () {
+		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
+		window.open(chrome.runtime.getURL("html/changelog.html"));
 	});
 }
 

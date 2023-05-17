@@ -8,8 +8,8 @@
 	<link id="RandomYoutubeVideoStyleSheet" rel="stylesheet" href="../css/popup.css" />
 </head>
 
-<body id="randomYoutubeVideoPopupBody" style="width: 100%;">
-	<div id="randomYoutubeVideoPopup" class="hidden">
+<body id="randomYoutubeVideoBody">
+	<div id="randomYoutubeVideo" class="hidden" style="margin-top: 10px;">
 
 		<h2>Shuffling from channel:</h2>
 		<h1 id="shufflingFromChannelHeading" style="margin-top: 0px;">Current channel</h1>
@@ -25,26 +25,26 @@
 			<br>
 			<br>
 			<h3><i>Did you know...</i></h3>
-			<p id="shufflingTipP">The tips could not be loaded - please report this bug on GitHub!</p>
+			<p id="shufflingTipP" class="thirdWidth">The tips could not be loaded - please report this bug on GitHub!</p>
 			<button id="nextTipButton" class="randomYoutubeVideoButton" style="margin-top: 6px;">New Tip</button>
 		</div>
 
 		<br>
 		<footer id="randomYoutubeVideoFooter">
-			<a class="randomYoutubeVideoLink"
+			<a class="footerLink"
 				href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
 				target="_blank" rel="noopener">Chrome store</a>
-			<a class="randomYoutubeVideoLink" href="https://github.com/NikkelM/Random-YouTube-Video/issues" target="_blank"
-				rel="noopener">Feedback</a>
-			<a class="randomYoutubeVideoLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank"
+			<a class="footerLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank"
 				rel="noopener">GitHub</a>
-			<a class="randomYoutubeVideoLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener">Donate</a>
+			<button class="randomYoutubeVideoButton" id="viewChangelogButton" type="button">Changelog</button>
+			<a class="footerLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener">Donate</a>
 		</footer>
 	</div>
 
 	<script src="../js/utils.js" type="text/javascript"></script>
 	<script src="../js/shuffleVideo.js" type="text/javascript"></script>
-	<script src="../js/popup/shufflingPage.js" type="module"></script>
+	<script src="../js/html/htmlUtils.js" type="text/javascript"></script>
+	<script src="../js/html/shufflingPage.js" type="module"></script>
 </body>
 
 </html>

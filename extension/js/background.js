@@ -36,17 +36,23 @@ chrome.runtime.onStartup.addListener(async function () {
 	}
 });
 
-// Check whether new version is installed
+// Check whether a new version was installed
 chrome.runtime.onInstalled.addListener(async function (details) {
 	const manifestData = chrome.runtime.getManifest();
 
 	if (details.reason == "update" && details.previousVersion !== manifestData.version) {
 		await handleExtensionUpdate(manifestData, details.previousVersion);
+	} else if (details.reason == "install") {
+		await handleExtensionInstall(manifestData);
 	}
 
 	// Validate the config in sync storage
 	await validateConfigSync();
 });
+
+async function handleExtensionInstall(manifestData) {
+	console.log(`Extension was installed (v${manifestData.version})`);
+}
 
 async function handleExtensionUpdate(manifestData, previousVersion) {
 	console.log(`Extension was updated to version v${manifestData.version}`);
@@ -106,10 +112,10 @@ async function validateConfigSync() {
 		// If the user has enabled sharing video ID's with the database
 		"databaseSharingEnabledOption": true,
 		// These properties influence the behavior of the "Shuffle" button
-		"shuffleOpenInNewTabOption": false,
-		"shuffleOpenAsPlaylistOption": true,
-		"shuffleReUseNewTabOption": false,
+		"shuffleOpenInNewTabOption": true,
+		"shuffleReUseNewTabOption": true,
 		"shuffleIgnoreShortsOption": false,
+		"shuffleOpenAsPlaylistOption": false,
 		// If shuffled videos are opened in a new tab, save the tab ID of that tab here to reuse the tab when the user shuffles again
 		"shuffleTabId": null,
 		// channelSettings is a dictionary of channelID -> Dictionary of channel settings
@@ -125,6 +131,8 @@ async function validateConfigSync() {
 		"userQuotaResetTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(),
 		// We want to regularly check if there are new API keys available (weekly)
 		"nextAPIKeysCheckTime": new Date(new Date().setHours(168, 0, 0, 0)).getTime(),
+		// The last version for which the user has viewed the changelog
+		"lastViewedChangelogVersion": "0",
 		// For april fools: Will be the number of the year in which the user was last rickrolled (we only want to rickroll the user once per year)
 		"wasLastRickRolledInYear": "1970",
 	};

@@ -1,5 +1,9 @@
 // Contains logic for the "shufflingPage" that is opened when the user clicks the "Shuffle" button from the popup
 
+// ---------- Setup ----------
+
+let configSync = await fetchConfigSync();
+
 // Open a port to the background script
 // By default, the port will cause the background script to reload when it is closed (== when this page is closed/URL changes)
 // However, if the shuffle completes successfully, this script will send a message to the port that will disconnect that listener
@@ -7,44 +11,63 @@ const port = await chrome.runtime.connect({ name: "shufflingPage" });
 
 const domElements = getDomElements();
 
-// If this page is open, it means the user has clicked the shuffle button
-shuffleButtonClicked();
-
-// Only show the contents of the page after a short delay, so that the user doesn't see the page at all for short loading times
-showDivContents();
-
 // Get all relevant DOM elements
 function getDomElements() {
 	return {
 		// The div containing all other elements
-		randomYoutubeVideoPopup: document.getElementById("randomYoutubeVideoPopup"),
-
+		randomYoutubeVideo: document.getElementById("randomYoutubeVideo"),
 		// Shows the percentage of videos that have been fetched
 		fetchPercentageNotice: document.getElementById("fetchPercentageNotice"),
-
 		// The text that is displayed when an error has occurred
 		shuffleErrorText: document.getElementById("shuffleErrorText"),
-
 		// Div containing all elements that should only be displayed if we are still shuffling
 		shufflingInProgressElements: document.getElementById("shufflingInProgressElements"),
-
 		// The heading containing the "Shuffling from <channel name>..." text
 		shufflingFromChannelHeading: document.getElementById("shufflingFromChannelHeading"),
-
 		// The p element containing the shuffle tip
 		shufflingTipP: document.getElementById("shufflingTipP"),
-
 		// The button that displays the next shuffle tip
 		nextTipButton: document.getElementById("nextTipButton"),
+
+		// FOOTER
+		// View changelog button
+		viewChangelogButton: document.getElementById("viewChangelogButton")
 	}
 }
 
-let currentHint = await displayShufflingHints();
+// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
+if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
+	domElements.viewChangelogButton.classList.add("highlight-green");
+}
 
-// Add click listener to the "New tip" button
-domElements.nextTipButton.addEventListener("click", async function () {
-	currentHint = await displayShufflingHints(currentHint);
-});
+// Set event listeners for DOM elements
+async function setDomElemenEventListeners(domElements, configSync) {
+	// Add click listener to the "New tip" button
+	domElements.nextTipButton.addEventListener("click", async function () {
+		currentHint = await displayShufflingHint(domElements.shufflingTipP, currentHint);
+	});
+
+	// View changelog button
+	domElements.viewChangelogButton.addEventListener("click", async function () {
+		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
+		window.open(chrome.runtime.getURL("html/changelog.html"));
+	});
+}
+
+await setDomElemenEventListeners(domElements, configSync);
+
+// ----- Main -----
+
+// If this page is open, it means the user has clicked the shuffle button
+shuffleButtonClicked();
+
+// Only show the contents of the page after a short delay, so that the user doesn't see the page at all for short loading times
+waitUntilShowingDivContents();
+
+
+// ----- Shuffling Hints -----
+
+let currentHint = await displayShufflingHint(domElements.shufflingTipP);
 
 // Called when the randomize-button from the popup is clicked
 async function shuffleButtonClicked() {
@@ -93,31 +116,12 @@ async function shuffleButtonClicked() {
 		domElements.shufflingInProgressElements.classList.add("hidden");
 
 		// We don't need to wait to show the contents of the page as we have encountered an error
-		domElements.randomYoutubeVideoPopup.classList.remove("hidden");
+		domElements.randomYoutubeVideo.classList.remove("hidden");
 		return;
 	}
 }
 
-async function showDivContents() {
+async function waitUntilShowingDivContents() {
 	await delay(1000);
-	domElements.randomYoutubeVideoPopup.classList.remove("hidden");
-}
-
-async function displayShufflingHints(currentHintIndex = null) {
-	const jsonFileUrl = chrome.runtime.getURL('data/shufflingTips.json');
-	const jsonData = await loadJsonFile(jsonFileUrl)
-
-	// Choose a (new) random hint from the JSON file and display it
-	let randomHintIndex = currentHintIndex;
-	while (randomHintIndex === currentHintIndex) {
-		randomHintIndex = Math.floor(Math.random() * jsonData.length);
-	}
-	const randomHint = jsonData[randomHintIndex];
-
-	// Insert line breaks into the hint text after every 70 characters, but don't break words
-	const displayedText = randomHint.replace(/(.{1,80})(?:\s+|$)/g, "$1\n");
-
-	domElements.shufflingTipP.innerText = displayedText;
-
-	return randomHintIndex;
+	domElements.randomYoutubeVideo.classList.remove("hidden");
 }

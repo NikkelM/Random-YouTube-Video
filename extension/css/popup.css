@@ -34,20 +34,34 @@
 	display: inline;
 }
 
+.textLeft {
+	text-align: left;
+}
+
+.halfWidth {
+	width: 50%;
+	margin: auto;
+}
+
+.thirdWidth {
+	width: 34%;
+	margin: auto;
+}
+
 /*
  * Main containers
  */
-#randomYoutubeVideoPopupHTML {
+#randomYoutubeVideoHTML {
 	color-scheme: dark;
-	max-height: 600px;
 	overflow-y: auto;
 }
 
-#randomYoutubeVideoPopupBody {
-	margin: 0px;
+.randomYoutubeVideoPopupBody {
 	width: 400px;
-	max-width: 100%;
-	/* NOTE: Ensures content doesn't exceed restricted popup widths in Firefox */
+}
+
+#randomYoutubeVideoBody {
+	margin: 0px;
 	font-size: 14px;
 	font-family: var(--randomYoutubeVideo-font-family);
 	background-color: var(--randomYoutubeVideo-bg-color);
@@ -55,44 +69,27 @@
 	color-scheme: dark;
 }
 
-#randomYoutubeVideoPopup {
+#randomYoutubeVideo {
 	text-align: center;
 }
 
-#randomYoutubeVideoPopup p {
+#randomYoutubeVideo p {
 	margin-top: 2px;
 	margin-bottom: 2px;
 }
 
-#randomYoutubeVideoPopup h1 {
+#randomYoutubeVideo h1 {
 	margin-bottom: 8px;
 }
 
-#randomYoutubeVideoPopup h2 {
+#randomYoutubeVideo h2 {
 	margin-top: 10px;
 	margin-bottom: 8px;
 }
 
-#randomYoutubeVideoPopup h3 {
+#randomYoutubeVideo h3 {
 	margin-top: 12px;
 	margin-bottom: 4px;
-}
-
-body {
-	margin: 2px;
-	width: 400px;
-	max-width: 100%;
-	/* NOTE: Ensures content doesn't exceed restricted popup widths in Firefox */
-	font-size: 14px;
-	font-family: var(--randomYoutubeVideo-font-family);
-	background-color: var(--randomYoutubeVideo-bg-color);
-	color: var(--randomYoutubeVideo-fg-color);
-	color-scheme: dark;
-}
-
-html {
-	display: table;
-	margin: auto;
 }
 
 /*
@@ -144,17 +141,29 @@ html {
 }
 
 .randomYoutubeVideoButton:hover {
-	background-color: #444;
+	background-color: #444 !important;
 }
 
 .randomYoutubeVideoButton:active {
-	background-color: #555;
+	background-color: #555 !important;
 }
 
 .randomYoutubeVideoButton:disabled {
-	background-color: #444;
+	background-color: #444 !important;
 	cursor: default;
 	color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+.randomYoutubeVideoButton.highlight-green {
+	background-color: #058101;
+}
+
+.randomYoutubeVideoButton.highlight-green:hover {
+	background-color: #06b800 !important;
+}
+
+.randomYoutubeVideoButton.highlight-green:active {
+	background-color: #07d400 !important;
 }
 
 /* 
@@ -245,13 +254,31 @@ select:hover {
 }
 
 /*
+ * Links
+ */
+ /* A link whose text is white and turns grey when hovered over */
+.whiteGreyLink {
+	color: var(--randomYoutubeVideo-fg-color);
+	display: inline-block;
+	text-decoration: none;
+}
+
+.whiteGreyLink:hover {
+	color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+.whiteGreyLink:active {
+	color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+/*
  * Footer
  */
 #randomYoutubeVideoFooter {
 	padding: 8px 0;
 }
 
-.randomYoutubeVideoLink {
+#randomYoutubeVideoFooter .footerLink {
 	color: var(--randomYoutubeVideo-fg-color);
 	display: inline-block;
 	text-decoration: none;
@@ -262,6 +289,10 @@ select:hover {
 	margin: 2px 1px;
 }
 
-.randomYoutubeVideoLink:hover {
+#randomYoutubeVideoFooter .footerLink:hover {
 	background-color: #444;
+}
+
+#randomYoutubeVideoFooter .footerLink:active {
+	background-color: #555;
 }

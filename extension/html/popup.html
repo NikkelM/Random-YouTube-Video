@@ -9,8 +9,8 @@
 	<link id="RandomYoutubeVideoStyleSheet" rel="stylesheet" href="../css/toggle.css" />
 </head>
 
-<body id="randomYoutubeVideoPopupBody">
-	<div id="randomYoutubeVideoPopup" class="randomYoutubeVideoPageBody">
+<body id="randomYoutubeVideoBody" class="randomYoutubeVideoPopupBody">
+	<div id="randomYoutubeVideo">
 
 		<h1>Random YouTube Video</h1>
 
@@ -74,7 +74,7 @@
 				<p class="grey-text">Customize your most recently visited channel.</p>
 				<!-- Custom options per channel: Choose option from dropdown -->
 				<div id="channelCustomOptionsDropdownDiv" class="optionTextInput" style="margin-top: 8px;">
-					<p style="display: inline;"
+					<p class="displayInline"
 						title="Choose from one of the provided options in the dropdown to customize your shuffling experience on this channel.">
 						Shuffle from</p>
 					<!-- Dropdown menu START -->
@@ -170,23 +170,22 @@
 		<!-- FYI end -->
 
 		<footer id="randomYoutubeVideoFooter">
-			<a class="randomYoutubeVideoLink"
+			<a class="footerLink"
 				href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
 				target="_blank" rel="noopener">Chrome store</a>
-			<a class="randomYoutubeVideoLink" href="https://github.com/NikkelM/Random-YouTube-Video/issues" target="_blank"
-				rel="noopener">Feedback</a>
-			<a class="randomYoutubeVideoLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank"
+			<a class="footerLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank"
 				rel="noopener">GitHub</a>
-			<a class="randomYoutubeVideoLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener">Donate</a>
+			<button class="randomYoutubeVideoButton" id="viewChangelogButton" type="button">Changelog</button>
+			<a class="footerLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener">Donate</a>
 		</footer>
 
 	</div>
 
 	<script src="../js/utils.js" type="text/javascript"></script>
 	<script src="../js/shuffleVideo.js" type="text/javascript"></script>
-	<script src="../js/popup/popupUtils.js" type="text/javascript"></script>
-	<script src="../js/popup/domElements.js" type="text/javascript"></script>
-	<script src="../js/popup/popup.js" type="module"></script>
+	<script src="../js/html/popup/popupUtils.js" type="text/javascript"></script>
+	<script src="../js/html/popup/domElements.js" type="text/javascript"></script>
+	<script src="../js/html/popup/popup.js" type="module"></script>
 </body>
 
 </html>
