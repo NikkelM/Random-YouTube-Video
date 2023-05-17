@@ -33,4 +33,9 @@ Highlighted Features:<br>
 
 Do you have ideas for new features or have encountered a bug? Please [open an issue](https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose).
 
+The `main` branch of this repository *should* always be stable. If you want to test the newest unreleased features, simply load the `extension` folder as an unpacked extension in your browser of choice.
+<br>
+You can find out what new changes are coming with the unreleased version in the [changelog](https://github.com/NikkelM/Random-YouTube-Video/blob/main/CHANGELOG.md).
+Did you find any bugs with the version you tested? Please let me know by [opening an issue](https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose)!
+
 If you enjoy this extension and want to say thanks, consider buying me a [coffee](https://ko-fi.com/nikkelm), or [sponsoring](https://github.com/sponsors/NikkelM) this project.
