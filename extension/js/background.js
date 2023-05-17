@@ -52,12 +52,6 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 
 async function handleExtensionInstall(manifestData) {
 	console.log(`Extension was installed (v${manifestData.version})`);
-
-	// Open the changelog page
-	chrome.tabs.create({
-		url: chrome.runtime.getURL("html/extensionUpdate.html"),
-		active: true,
-	});
 }
 
 async function handleExtensionUpdate(manifestData, previousVersion) {
