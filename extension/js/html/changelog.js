@@ -11,6 +11,8 @@ function getDomElements() {
 		updateHeading: document.getElementById("updateHeading"),
 		// Text that is shown if there is no changelog for the currently installed version
 		noChangelogErrorP: document.getElementById("noChangelogErrorP"),
+		// Div that is shown if the changelog cannot be fetched in a reasonable amount of time
+		timeoutErrorDiv: document.getElementById("timeoutErrorDiv"),
 		// The div containing all elements below the heading
 		belowHeadingDiv: document.getElementById("belowHeadingDiv"),
 		// The heading containing the "What's new in <version>:" text
@@ -34,7 +36,11 @@ let changelogText = await fetchChangelog(`v${currentVersion}`);
 
 // ----- Dropdown menu -----
 const availableVersions = getVersions(changelogText);
-addVersionsToDropdown(availableVersions);
+try {
+	addVersionsToDropdown(availableVersions);
+} catch (error) {
+	domElements.timeoutErrorDiv.classList.remove("hidden");
+}
 
 function getVersions(changelogText) {
 	const regex = /v\d+(\.\d+)+/g;
@@ -56,16 +62,14 @@ domElements.chooseChangelogVersionDropdown.addEventListener("change", async func
 	await updateChangelog(this.value);
 });
 
-// ----- Hints -----
-let currentHint = await displayShufflingHint(domElements.shufflingTipP);
-// Add click listener to the "New tip" button
-domElements.nextTipButton.addEventListener("click", async function () {
-	currentHint = await displayShufflingHint(domElements.shufflingTipP, currentHint);
-});
-
 // ----- Changelog -----
 // Do this after adding the dropdown options, so that if there is no changelog for the current version, we know the most recent version that does have a changelog
-await updateChangelog();
+try {
+	await updateChangelog();
+} catch (error) {
+	domElements.timeoutErrorDiv.classList.remove("hidden");
+}
+displayErrorAfterWaiting();
 
 async function fetchChangelog(forVersion = `v${currentVersion}`) {
 	// Get the current changelog from GitHub
@@ -73,7 +77,7 @@ async function fetchChangelog(forVersion = `v${currentVersion}`) {
 		.then(response => response.text());
 
 	if (changelog === "404: Not Found") {
-		changelog = await fetch(`https://raw.githubusercontent.com/NikkelM/Random-YouTube-Video/main/CHANGELOG.md`)
+		changelog = await fetch("https://raw.githubusercontent.com/NikkelM/Random-YouTube-Video/main/CHANGELOG.md")
 			.then(response => response.text());
 	}
 
@@ -99,8 +103,8 @@ async function updateChangelog(forVersion = `v${currentVersion}`) {
 
 	// If the given version has no changelog available, try to get the changelog for the latest version
 	if (thisVersionChangelog === "") {
-		domElements.noChangelogErrorP.classList.remove("hidden");
 		updateChangelog(availableVersions[0]);
+		domElements.noChangelogErrorP.classList.remove("hidden");
 		return;
 	}
 
@@ -115,3 +119,18 @@ async function updateChangelog(forVersion = `v${currentVersion}`) {
 	// Show the changelog if it was hidden
 	domElements.belowHeadingDiv.classList.remove("hidden");
 }
+
+// If the main content is not shown yet, it means the changelog could not be fetched
+async function displayErrorAfterWaiting(ms = 2000) {
+	await delay(ms);
+	if (domElements.belowHeadingDiv.classList.contains("hidden")) {
+		domElements.timeoutErrorDiv.classList.remove("hidden");
+	}
+}
+
+// ----- Shuffling Hints -----
+let currentHint = await displayShufflingHint(domElements.shufflingTipP);
+// Add click listener to the "New tip" button
+domElements.nextTipButton.addEventListener("click", async function () {
+	currentHint = await displayShufflingHint(domElements.shufflingTipP, currentHint);
+});
