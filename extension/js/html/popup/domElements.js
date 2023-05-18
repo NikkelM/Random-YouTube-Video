@@ -237,7 +237,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			}, 1500);
 		}
 
-		// Clamp the value to the range [1, 20]
+		// Clamp the value to the range [1, 50]
 		const minValue = parseInt(this.getAttribute("min"));
 		const maxValue = parseInt(this.getAttribute("max"));
 		if (this.value < minValue || this.value > maxValue) {
