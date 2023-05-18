@@ -563,7 +563,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 	let encounteredDeletedVideos = false;
 	const numVideosToChoose = configSync.shuffleOpenAsPlaylistOption ? configSync.shuffleNumVideosInPlaylist : 1;
 
-	console.log(`Choosing ${numVideosToChoose} random videos.`);
+	console.log(`Choosing ${numVideosToChoose} random video${numVideosToChoose > 1 ? "s" : ""}.`);
 
 	for (let i = 0; i < numVideosToChoose; i++) {
 		if (videosToShuffle.length === 0) {
@@ -648,7 +648,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		chosenVideos.push(randomVideo);
 		videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 	}
-	console.log(`${chosenVideos.length} random videos were chosen: [${chosenVideos}]`);
+	console.log(`${chosenVideos.length} random videos have been chosen: [${chosenVideos}]`);
 
 	return { chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
 }
