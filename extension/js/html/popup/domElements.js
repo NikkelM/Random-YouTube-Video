@@ -238,8 +238,10 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		}
 
 		// Clamp the value to the range [1, 20]
-		if (this.value < parseInt(this.getAttribute("min")) || this.value > parseInt(this.getAttribute("max"))) {
-			this.value = Math.min(Math.max(Math.round(this.value), 1), 20);
+		const minValue = parseInt(this.getAttribute("min"));
+		const maxValue = parseInt(this.getAttribute("max"));
+		if (this.value < minValue || this.value > maxValue) {
+			this.value = Math.min(Math.max(Math.round(this.value), minValue), maxValue);
 
 			this.classList.add('invalid-input');
 			setTimeout(() => {
@@ -337,8 +339,10 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		}
 
 		// Clamp the value to the range [1, 100]
-		if (this.value < parseInt(this.getAttribute("min")) || this.value > parseInt(this.getAttribute("max"))) {
-			this.value = Math.min(Math.max(Math.round(this.value), 1), 100);
+		const minValue = parseInt(this.getAttribute("min"));
+		const maxValue = parseInt(this.getAttribute("max"));
+		if (this.value < minValue || this.value > maxValue) {
+			this.value = Math.min(Math.max(Math.round(this.value), minValue), maxValue);
 
 			this.classList.add('invalid-input');
 			setTimeout(() => {
