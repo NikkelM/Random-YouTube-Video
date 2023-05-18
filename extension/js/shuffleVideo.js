@@ -563,9 +563,16 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 	let encounteredDeletedVideos = false;
 	const numVideosToChoose = configSync.shuffleOpenAsPlaylistOption ? configSync.shuffleNumVideosInPlaylist : 1;
 
+	console.log(`Choosing ${numVideosToChoose} random videos.`);
+
 	for (let i = 0; i < numVideosToChoose; i++) {
+		if (videosToShuffle.length === 0) {
+			// All available videos were chosen from, so we need to terminate the loop early
+			console.log(`No more videos to choose from (${numVideosToChoose - i} videos too few uploaded on channel).`);
+			break;
+		}
+
 		randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
-		console.log(`A random video has been chosen: ${randomVideo}`);
 
 		// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
 		if (!await testVideoExistence(randomVideo)) {
@@ -612,18 +619,19 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 
 			// For shorts, the thumbnail url ends in "hq2.jpg", for normal videos it ends in "hqdefault.jpg"
 			while (response.thumbnail_url === (`https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`)) {
+				console.log("A chosen video was a short, but shorts are ignored. Choosing a new random video.");
+
 				// Remove the video from videosToShuffle to not choose it again
-				// Do not remove it from the playlistInfo object, as we do not want to delete it from the playlist
+				// Do not remove it from the playlistInfo object, as we do not want to delete it from the database
 				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 				randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
-				console.log(`The chosen video was a short, so a new random video has been chosen: ${randomVideo}`);
 
 				if (randomVideo === undefined) {
 					throw new RandomYoutubeVideoError(
 						{
 							code: "RYV-6D",
 							message: "Your settings indicate to ignore shorts, but there are only shorts available to shuffle from.",
-							solveHint: "This may be due to your filter settings, e.g. only shuffling from the most recent videos. Revise your filter settings or turn on the option to shuffle from shorts.",
+							solveHint: "This may be due to your filters, e.g. only shuffling from the most recent videos. Revise your filterss or turn on the option to shuffle from shorts.",
 							showTrace: false
 						}
 					)
@@ -636,9 +644,11 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			}
 		}
 
-		// Add the video to the list of chosen videos
+		// Add the video to the list of chosen videos and remove it from the pool of videos to choose from
 		chosenVideos.push(randomVideo);
+		videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 	}
+	console.log(`${chosenVideos.length} random videos were chosen: [${chosenVideos}]`);
 
 	return { chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
 }
