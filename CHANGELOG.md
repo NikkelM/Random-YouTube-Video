@@ -13,6 +13,7 @@
 - Sliders in the popup for enabled options will no longer play their 'enable' animation when the popup is opened and instead directly start in the correct position.
 - Changed some default settings for a better first-time experience.
 - Sped up the process of checking if a video exists or not by not waiting for unnecessary results from an API request.
+- Fixed the buttons displayed under a video sometimes being misaligned/overlapping for most resolutions.
 - Fixed a bug where it was possible that the 'Shuffle' button shuffled from a previously visited channel instead of the current one.
 - Fixed an issue with the extension checking an internal URL against a fixed instead of dynamic extension ID.
 - Fixed a small scaling issue in the popup.
