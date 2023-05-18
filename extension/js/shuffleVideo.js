@@ -630,8 +630,8 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 					throw new RandomYoutubeVideoError(
 						{
 							code: "RYV-6D",
-							message: "Your settings indicate to ignore shorts, but there are only shorts available to shuffle from.",
-							solveHint: "This may be due to your filters, e.g. only shuffling from the most recent videos. Revise your filterss or turn on the option to shuffle from shorts.",
+							message: "Your settings indicate to ignore shorts, but there are only shorts available to shuffle from, or not enough non-short videos to fill the playlist.",
+							solveHint: "This may be due to your filters, e.g. only shuffling from the most recent videos. Revise your filters or turn off the option tp ignore shorts.",
 							showTrace: false
 						}
 					)

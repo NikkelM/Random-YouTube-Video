@@ -124,6 +124,7 @@ async function shuffleVideos() {
 		// We need this variable to make sure the button text is only changed if the shuffle hasn't finished within the time limit
 		let hasBeenShuffled = false;
 		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Shuffling...", 1000, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffle" && !hasBeenShuffled); });
+		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still on it...", 5000, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffling..." && !hasBeenShuffled); });
 
 		await chooseRandomVideo(channelId, false, shuffleButtonTextElement);
 		hasBeenShuffled = true;
