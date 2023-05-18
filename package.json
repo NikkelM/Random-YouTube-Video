@@ -8,6 +8,6 @@
 		"sinon": "^15.1.0"
 	},
 	"scripts": {
-		"test": "nyc mocha"
+		"test": "nyc --reporter=lcov --reporter=text mocha"
 	}
 }
