@@ -7,6 +7,6 @@
 		"test-console": "^2.0.0"
 	},
 	"scripts": {
-		"test": "mocha"
+		"test": "nyc mocha"
 	}
 }
