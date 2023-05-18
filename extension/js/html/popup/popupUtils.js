@@ -62,6 +62,14 @@ async function manageDependents(domElements, parent, value, configSync) {
 			}
 			break;
 
+		case domElements.shuffleOpenAsPlaylistOptionToggle:
+			if (value) {
+				domElements.shuffleNumVideosInPlaylistDiv.classList.remove("disabled");
+			} else {
+				domElements.shuffleNumVideosInPlaylistDiv.classList.add("disabled");
+			}
+			break;
+
 		default:
 			console.log(`No dependents to manage for element: ${parent.id}`);
 			break;

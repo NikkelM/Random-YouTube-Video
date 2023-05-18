@@ -21,6 +21,7 @@
 		<h3>General Video Settings</h3>
 		<!-- First row of options -->
 		<div class="optionsRow">
+
 			<!-- Shuffling: Open in new tab option toggle -->
 			<div class="toggle optionsRow-item">
 				<label id="shuffleOpenInNewTabOption"
@@ -40,11 +41,7 @@
 					<span class="slider"></span>
 				</label>
 			</div>
-		</div>
-		<!-- First row end -->
 
-		<!-- Second row of options -->
-		<div class="optionsRow">
 			<!-- Shuffling: Ignore shorts option toggle -->
 			<div class="toggle optionsRow-item">
 				<label id="shuffleIgnoreShortsOption"
@@ -55,15 +52,30 @@
 				</label>
 			</div>
 
+		</div>
+		<!-- First row end -->
+
+		<!-- Second row of options -->
+		<div class="optionsRow">
+
 			<!-- Shuffling: Open as playlist option toggle -->
 			<div class="toggle optionsRow-item">
 				<label id="shuffleOpenAsPlaylistOption"
-					title="If this is enabled, the channel's uploads playlist will be started when shuffling videos. By default, the video uploaded right before the current one will be played next. This activates YouTube's SPA (Single Page Application) mode, which you may want to avoid.">
-					Open in playlist
+					title="If this is enabled, shuffling will open a temporary playlist with a number of random videos, which will be played in order. Use the input field to choose how many videos should be in the playlist.">
+					Open a playlist
 					<input type="checkbox" id="shuffleOpenAsPlaylistOptionToggle">
 					<span class="slider"></span>
 				</label>
 			</div>
+
+			<!-- Shuffling: Open as playlist number of videos input -->
+			<div id="shuffleNumVideosInPlaylistDiv" class="optionsRow-item optionTextInput"
+				title="Choose how many videos should be in the playlist when shuffling. The maximum you can set this to is 20. Please note that on higher values, the shuffle may take slightly longer than usual.">
+				<p>Videos in playlist:</p>
+				<input type="number" inputmode="numeric" class="numberInput" max="20" min="1"
+					id="shuffleNumVideosInPlaylistInput" name="shuffleNumVideosInPlaylistInput" value="5">
+			</div>
+
 		</div>
 		<!-- Second row end -->
 
@@ -102,7 +114,7 @@
 						id="channelCustomOptionsVideoIdOptionInput" name="channelCustomOptionsVideoIdOptionInput"
 						title="Only videos uploaded on or after the day the video with the given ID was uploaded will be considered when shuffling."
 						placeholder="Enter Video ID">
-					<input type="number" inputmode="numeric" class="hidden displayInline numberInput" max="100" min="1"
+					<input type="number" inputmode="numeric" class="hidden displayInline numberInput noArrows" max="100" min="1"
 						id="channelCustomOptionsPercentageOptionInput" name="channelCustomOptionsPercentageOptionInput"
 						title="Only the most recent X% of videos uploaded to the channel will be considered when shuffling.">
 					<p id="channelCustomOptionsPercentageOptionP" class="hidden displayInline"

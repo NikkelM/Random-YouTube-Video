@@ -192,6 +192,12 @@
 }
 
 .optionTextInput input.numberInput {
+	width: 40px;
+	text-align: left;
+	padding-left: 4px;
+}
+
+.optionTextInput input.numberInput.noArrows {
 	width: 25px;
 }
 
@@ -205,8 +211,8 @@
 }
 
 /* Remove the up and down arrows from the number input */
-.optionTextInput input.numberInput::-webkit-outer-spin-button,
-.optionTextInput input.numberInput::-webkit-inner-spin-button {
+.optionTextInput input.numberInput.noArrows::-webkit-outer-spin-button,
+.optionTextInput input.numberInput.noArrows::-webkit-inner-spin-button {
 	-webkit-appearance: none;
 	margin: 0;
 }
@@ -219,6 +225,11 @@
 	background-color: #444;
 	cursor: default;
 	color: var(--randomYoutubeVideo-grey-fg-color);
+}
+
+.optionTextInput.disabled {
+	opacity: 0.5;
+	pointer-events: none;
 }
 
 .optionTextInput input.invalid-input {
