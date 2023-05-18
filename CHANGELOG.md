@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.5.3 (Unreleased)
+## v2.0.0
 
 <!--Releasenotes start-->
 - Added a new option: 'Ignore shorts'. When enabled, the extension will not choose shorts when shuffling. This option is disabled by default, you can enable it in the extension popup.
