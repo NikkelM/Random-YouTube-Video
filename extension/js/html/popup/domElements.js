@@ -84,7 +84,10 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 
 	// ----- Database sharing: Option toggle -----
 	// Determine if the dbSharingOptionToggle should be checked and enabled
-	manageDbOptOutOption(domElements, configSync);
+	domElements.dbSharingOptionToggle.checked = configSync.databaseSharingEnabledOption;
+	if (!configSync.useCustomApiKeyOption || !configSync.customYoutubeApiKey) {
+		domElements.dbSharingOptionToggle.parentElement.classList.add("disabled");
+	}
 
 	// ----- Custom API key: Input -----
 	// Show the customAPIKeyInputDiv if the user has enabled the option
