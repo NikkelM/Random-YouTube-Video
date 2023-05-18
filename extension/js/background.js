@@ -115,9 +115,9 @@ async function validateConfigSync() {
 		"shuffleOpenInNewTabOption": true,
 		"shuffleReUseNewTabOption": true,
 		"shuffleIgnoreShortsOption": false,
-		"shuffleOpenAsPlaylistOption": false,
+		"shuffleOpenAsPlaylistOption": true,
 		// How many random videos to add to a playlist
-		"shuffleNumVideosInPlaylist": 5,
+		"shuffleNumVideosInPlaylist": 10,
 		// If shuffled videos are opened in a new tab, save the tab ID of that tab here to reuse the tab when the user shuffles again
 		"shuffleTabId": null,
 		// channelSettings is a dictionary of channelID -> Dictionary of channel settings
