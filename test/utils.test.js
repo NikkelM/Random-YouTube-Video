@@ -112,6 +112,58 @@ describe('utils.js', function () {
 			});
 
 		});
+
+		context('loadJsonFile()', function () {
+			const loadJsonFile = utils.__get__('loadJsonFile');
+
+			// Mock the XMLHttpRequest object
+			let xhr, requests;
+			beforeEach(function () {
+				// Replace XMLHttpRequest with FakeXMLHttpRequest
+				xhr = sinon.useFakeXMLHttpRequest();
+				global.XMLHttpRequest = xhr;
+
+				requests = [];
+
+				xhr.onCreate = function (xhr) {
+					requests.push(xhr);
+				};
+			});
+
+			afterEach(function () {
+				// Restore original XMLHttpRequest
+				xhr.restore();
+			});
+
+			it('should load a JSON file', async function () {
+				let json = loadJsonFile("test/test.json");
+
+				// Fake the response
+				requests[0].respond(200, { "Content-Type": "application/json" }, '{ "test": "test" }');
+
+				json = await json;
+
+				expect(json).to.be.an('object');
+				expect(json.test).to.be("test");
+			});
+
+			it('should throw an error if the file is not found', async function () {
+				let json = loadJsonFile("test/doesNotExist.json");
+
+				// Fake the response
+				requests[0].respond(404);
+
+				try {
+					json = await json;
+					expect(true).to.be(false);
+				} catch (e) {
+					expect(e.message).to.be("Not Found");
+				}
+
+			}
+			);
+
+		});
 	});
 
 })

@@ -56,7 +56,7 @@ function loadJsonFile(jsonFileUrl) {
 			if (xhr.status === 200) {
 				resolve(xhr.response);
 			} else {
-				reject(xhr.statusText);
+				reject(Error(xhr.statusText));
 			}
 		};
 		xhr.send();
