@@ -3,18 +3,23 @@
 // ---------- Console extension ----------
 
 let log = console.log;
-
 console.log = function () {
 	var args = Array.from(arguments);
-	args.unshift("[youtube-random-video]: ");
+	args.unshift("[youtube-random-video]:");
 	log.apply(console, args);
 }
 
-let error = console.error;
+let warn = console.warn;
+console.warn = function () {
+	var args = Array.from(arguments);
+	args.unshift("[youtube-random-video]:");
+	warn.apply(console, args);
+}
 
+let error = console.error;
 console.error = function () {
 	var args = Array.from(arguments);
-	args.unshift("[youtube-random-video]: ");
+	args.unshift("[youtube-random-video]:");
 	error.apply(console, args);
 }
 
@@ -38,7 +43,7 @@ function isVideoUrl(url) {
 	if (!url) return false;
 
 	const urlParts = url.split("/");
-	return urlParts[3].startsWith("watch?v=");
+	return urlParts[3]?.startsWith("watch?v=") ?? false;
 }
 
 // Loads a JSON file from a URL
