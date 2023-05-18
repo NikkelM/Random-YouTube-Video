@@ -5,7 +5,7 @@
 <!--Releasenotes start-->
 - Added a new option: 'Ignore shorts'. When enabled, the extension will not choose shorts when shuffling. This option is disabled by default, you can enable it in the extension popup.
 - The 'Open as Playlist' option has been reworked to be more useful in the context of the extension: If this option is enabled, the shuffle will now open a playlist of randomly chosen videos instead of the uploads playlist of the channel. Please note that YouTube does not allow you to save this playlist.
-- Added an input to let you choose how many videos should be shuffled and placed in the playlist when the 'Open a Playlist' option is enabled. The default value is 5, the maximum is 20.
+- Added an input to let you choose how many videos should be shuffled and placed in the playlist when the 'Open a Playlist' option is enabled. YouTube limits the length of these temporary playlists to 50 videos. Higher values will also lead to longer shuffle times.
 - The 'Reuse new tab' option is now able to reuse the tab even if it is not the currently focused one. It will however not reuse the tab if you have since navigated away from YouTube, to not accidentally overwrite a page you might still need.
 - Added a 'Changelog' button to the popup that will open the changelog in a new tab. The button will be highlighted if the extension has received an update since the last time you opened the changelog. You can also use this page to view older versions of the changelog.
 - Added tips and useful information about the extension to the shuffling page opened when using the shuffle button from the popup.
