@@ -1,0 +1,12 @@
+{
+	"dependencies": {
+		"expect.js": "^0.3.1",
+		"mocha": "^10.2.0",
+		"nyc": "^15.1.0",
+		"rewire": "^6.0.0",
+		"test-console": "^2.0.0"
+	},
+	"scripts": {
+		"test": "mocha"
+	}
+}
