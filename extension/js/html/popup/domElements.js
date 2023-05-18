@@ -18,6 +18,7 @@ function getDomElements() {
 		customApiKeyInputInfoDiv: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoDiv"),
 		customApiKeyInputInfoText: customApiKeyInputInfoDiv.children.namedItem("customApiKeyInputInfoText"),
 		customApiKeyHowToGetDiv: document.getElementById("customApiKeyHowToGetDiv"),
+
 		// Database sharing: Option toggle
 		dbSharingOptionToggle: document.getElementById("dbSharingOptionToggle"),
 		// Shuffling: Open in new tab option toggle
@@ -28,6 +29,10 @@ function getDomElements() {
 		shuffleIgnoreShortsOptionToggle: document.getElementById("shuffleIgnoreShortsOptionToggle"),
 		// Shuffling: Open as playlist option toggle
 		shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle"),
+		// Shuffling: Number of videos in playlist div
+		shuffleNumVideosInPlaylistDiv: document.getElementById("shuffleNumVideosInPlaylistDiv"),
+		// Shuffling: Number of videos in playlist input
+		shuffleNumVideosInPlaylistInput: shuffleNumVideosInPlaylistDiv.children.namedItem("shuffleNumVideosInPlaylistInput"),
 
 		// PER CHANNEL SETTINGS
 		// Custom options per channel div
@@ -79,7 +84,10 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 
 	// ----- Database sharing: Option toggle -----
 	// Determine if the dbSharingOptionToggle should be checked and enabled
-	manageDbOptOutOption(domElements, configSync);
+	domElements.dbSharingOptionToggle.checked = configSync.databaseSharingEnabledOption;
+	if (!configSync.useCustomApiKeyOption || !configSync.customYoutubeApiKey) {
+		domElements.dbSharingOptionToggle.parentElement.classList.add("disabled");
+	}
 
 	// ----- Custom API key: Input -----
 	// Show the customAPIKeyInputDiv if the user has enabled the option
@@ -105,6 +113,14 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 
 	// ----- Shuffling: Open as playlist option toggle -----
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
+
+	// ----- Shuffling: Number of videos in playlist div -----
+	// Disable the div if the user has not enabled the option to open as playlist
+	if (!configSync.shuffleOpenAsPlaylistOption) {
+		domElements.shuffleNumVideosInPlaylistDiv.classList.add("disabled");
+	}
+	// Set the value of the input field to the value in sync storage
+	domElements.shuffleNumVideosInPlaylistInput.value = configSync.shuffleNumVideosInPlaylist;
 
 	// Updates all elements that contain the channel name
 	updateDomElementsDependentOnChannel(domElements, configSync);
@@ -212,6 +228,35 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked, configSync);
 	});
 
+	// Shuffling: Number of videos in playlist input
+	domElements.shuffleNumVideosInPlaylistInput.addEventListener("focusout", async function () {
+		if (this.value === "") {
+			// Set the previous value if the input is empty, or set it to 5 if there is no previous value
+			this.value = configSync.shuffleNumVideosInPlaylist ?? 5;
+
+			this.classList.add('invalid-input');
+			setTimeout(() => {
+				this.classList.remove('invalid-input');
+			}, 1500);
+		}
+
+		// Clamp the value to the range [1, 50]
+		const minValue = parseInt(this.getAttribute("min"));
+		const maxValue = parseInt(this.getAttribute("max"));
+		if (this.value < minValue || this.value > maxValue) {
+			this.value = Math.min(Math.max(Math.round(this.value), minValue), maxValue);
+
+			this.classList.add('invalid-input');
+			setTimeout(() => {
+				this.classList.remove('invalid-input');
+			}, 1500);
+		}
+
+		await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value), configSync);
+
+		manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value, configSync);
+	});
+
 	// Custom options per channel: Dropdown menu
 	domElements.channelCustomOptionsDropdown.addEventListener("change", async function () {
 		// Update the configSync in case the channel was changed after the event listener was added
@@ -297,8 +342,10 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		}
 
 		// Clamp the value to the range [1, 100]
-		if (this.value < 1 || this.value > 100) {
-			this.value = Math.min(Math.max(Math.round(this.value), 1), 100);
+		const minValue = parseInt(this.getAttribute("min"));
+		const maxValue = parseInt(this.getAttribute("max"));
+		if (this.value < minValue || this.value > maxValue) {
+			this.value = Math.min(Math.max(Math.round(this.value), minValue), maxValue);
 
 			this.classList.add('invalid-input');
 			setTimeout(() => {

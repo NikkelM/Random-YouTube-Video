@@ -1,9 +1,11 @@
 # Changelog
 
-## v1.5.3 (Unreleased)
+## v2.0.0
 
 <!--Releasenotes start-->
 - Added a new option: 'Ignore shorts'. When enabled, the extension will not choose shorts when shuffling. This option is disabled by default, you can enable it in the extension popup.
+- The 'Open as playlist' option has been reworked to be more useful in the context of the extension: If this option is enabled, the shuffle will now open a playlist of randomly chosen videos instead of the uploads playlist of the channel. Please note that YouTube does not allow you to save this playlist.
+- Added an input to let you choose how many videos should be shuffled and placed in the playlist when the 'Open a playlist' option is enabled. YouTube limits the length of these temporary playlists to 50 videos. Higher values will also lead to longer shuffle times.
 - The 'Reuse new tab' option is now able to reuse the tab even if it is not the currently focused one. It will however not reuse the tab if you have since navigated away from YouTube, to not accidentally overwrite a page you might still need.
 - Added a 'Changelog' button to the popup that will open the changelog in a new tab. The button will be highlighted if the extension has received an update since the last time you opened the changelog. You can also use this page to view older versions of the changelog.
 - Added tips and useful information about the extension to the shuffling page opened when using the shuffle button from the popup.
@@ -13,6 +15,7 @@
 - Sliders in the popup for enabled options will no longer play their 'enable' animation when the popup is opened and instead directly start in the correct position.
 - Changed some default settings for a better first-time experience.
 - Sped up the process of checking if a video exists or not by not waiting for unnecessary results from an API request.
+- Sped up the popup initialization.
 - Fixed the buttons displayed under a video sometimes being misaligned/overlapping for most resolutions.
 - Fixed a bug where it was possible that the 'Shuffle' button shuffled from a previously visited channel instead of the current one.
 - Fixed an issue with the extension checking an internal URL against a fixed instead of dynamic extension ID.
