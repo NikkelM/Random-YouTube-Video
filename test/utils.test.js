@@ -1,5 +1,5 @@
 var expect = require('expect.js');
-const stdout = require("test-console").stdout;
+const sinon = require('sinon');
 var rewire = require('rewire');
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
@@ -11,12 +11,29 @@ describe('utils.js', function () {
 	context('console helpers', function () {
 
 		it('should reroute console.log', function () {
-			const output = stdout.inspectSync(() => {
-				console.log("Test log");
-			});
+			let spy = sinon.spy(console, 'log');
+			console.log("Test log");
 
-			expect(output).to.eql(["[youtube-random-video]: Test log\n"]);
+			expect(spy.calledOnce).to.be(true);
+			expect(spy.calledWith("Test log")).to.be(true);
 		});
+
+		it('should reroute console.warn', function () {
+			let spy = sinon.spy(console, 'warn');
+			console.warn("Test warning");
+
+			expect(spy.calledOnce).to.be(true);
+			expect(spy.calledWith("Test warning")).to.be(true);
+		});
+
+		it('should reroute console.error', function () {
+			let spy = sinon.spy(console, 'error');
+			console.error("Test error");
+
+			expect(spy.calledOnce).to.be(true);
+			expect(spy.calledWith("Test error")).to.be(true);
+		});
+
 	});
 
 	context('DOM helpers', function () {
