@@ -61,7 +61,7 @@
 			<!-- Shuffling: Open as playlist option toggle -->
 			<div class="toggle optionsRow-item">
 				<label id="shuffleOpenAsPlaylistOption"
-					title="If this is enabled, shuffling will open a temporary playlist with a number of random videos, which will be played in order. Use the input field to choose how many videos should be in the playlist.">
+					title="If this is enabled, shuffling will choose multiple videos and open a temporary playlist that contains these videos. Use the input field to the right to choose how many videos should be in that playlist.">
 					Open a playlist
 					<input type="checkbox" id="shuffleOpenAsPlaylistOptionToggle">
 					<span class="slider"></span>
@@ -70,7 +70,7 @@
 
 			<!-- Shuffling: Open as playlist number of videos input -->
 			<div id="shuffleNumVideosInPlaylistDiv" class="optionsRow-item optionTextInput"
-				title="Choose how many videos should be in the playlist when shuffling. The maximum you can set this to is 20. Please note that on higher values, the shuffle may take slightly longer than usual.">
+				title="Choose how many videos should be in the playlist when shuffling. YouTube limits the number of videos in this playlist type to 50. With higher values the shuffle may take slightly longer than usual.">
 				<p>Videos in playlist:</p>
 				<input type="number" inputmode="numeric" class="numberInput" max="50" min="1"
 					id="shuffleNumVideosInPlaylistInput" name="shuffleNumVideosInPlaylistInput" value="5">
