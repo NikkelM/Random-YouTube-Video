@@ -23,6 +23,13 @@ function buildShuffleButton(pageType, channelId) {
 			return;
 	}
 
+	// If we are on a video page, modify the "min-width" of the two divs holding the buttons to make room for the 'Shuffle' button
+	// This doesn't fix them overlapping in all cases, but most times it does
+	if (pageType == "video") {
+		buttonDivOwner.style.minWidth = "calc(50% + 50px)";
+		buttonDivOwner.parentElement.children.namedItem("actions").style.minWidth = "calc(50% - 62px)";
+	}
+
 	// If the button should not be visible but exists, hide it
 	if (document.getElementById(buttonDivID) && !channelId) {
 		document.getElementById(buttonDivID).style.display = "none";
