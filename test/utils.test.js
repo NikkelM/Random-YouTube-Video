@@ -4,9 +4,27 @@ var rewire = require('rewire');
 const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 
+const testUtils = rewire('./testUtils.js');
+
 const utils = rewire('../extension/js/utils.js');
 
 describe('utils.js', function () {
+
+	let mockChromeStorage, setupMockSyncStorageObject;
+	global.mockSyncStorageObject = {}, global.mockLocalStorageObject = {};
+
+	this.beforeAll(function () {
+		mockChromeStorage = testUtils.__get__('mockChromeStorage');
+		
+		global.chrome = mockChromeStorage();
+
+		setupMockSyncStorageObject = testUtils.__get__('setupMockSyncStorageObject');
+	});
+
+	// Restore the original chrome object
+	this.afterAll(function () {
+		delete global.chrome;
+	});
 
 	context('console helpers', function () {
 
@@ -162,6 +180,90 @@ describe('utils.js', function () {
 
 			}
 			);
+
+		});
+	});
+
+	context('utilities', function () {
+
+		context('isEmpty()', function () {
+			const isEmpty = utils.__get__('isEmpty');
+
+			it('should return true for empty objects', function () {
+				expect(isEmpty({})).to.be(true);
+			});
+
+			it('should return false for non-empty objects', function () {
+				expect(isEmpty({ "test": "test" })).to.be(false);
+			});
+
+			it('should return true for empty arrays', function () {
+				expect(isEmpty([])).to.be(true);
+			});
+
+			it('should return false for non-empty arrays', function () {
+				expect(isEmpty(["test"])).to.be(false);
+			});
+		});
+
+		context('getLength()', function () {
+			const getLength = utils.__get__('getLength');
+
+			it('should return 0 for empty objects', function () {
+				expect(getLength({})).to.be(0);
+			});
+
+			it('should return the number of keys for non-empty objects', function () {
+				expect(getLength({ "test": "test" })).to.be(1);
+				expect(getLength({ "test": "test", "test2": "test2" })).to.be(2);
+			});
+
+			it('should return 0 for empty arrays', function () {
+				expect(getLength([])).to.be(0);
+			});
+
+			it('should return the number of elements for non-empty arrays', function () {
+				expect(getLength(["test"])).to.be(1);
+				expect(getLength(["test", "test2"])).to.be(2);
+			});
+		});
+
+		context('addHours()', function () {
+			const addHours = utils.__get__('addHours');
+
+			it('should add hours to a date', function () {
+				let date = new Date("2019-01-01T00:00:00Z");
+				date = addHours(date, 1);
+				expect(date.toISOString()).to.be("2019-01-01T01:00:00.000Z");
+			});
+
+			it('should add negative hours to a date', function () {
+				let date = new Date("2019-01-01T00:00:00Z");
+				date = addHours(date, -1);
+				expect(date.toISOString()).to.be("2018-12-31T23:00:00.000Z");
+			});
+		});
+
+	});
+
+	context('browser storage', function () {
+
+		context('fetchConfigSync()', function () {
+			const fetchConfigSync = utils.__get__('fetchConfigSync');
+
+			this.beforeEach(async function () {
+				await setupMockSyncStorageObject();
+			});
+
+			it('should return the config if it exists', async function () {
+				let config = await fetchConfigSync();
+
+				expect(config).to.be.an('object');
+				expect(config.storageType).to.be("syncStorage");
+				expect(config.stringKey).to.be("stringVal");
+				expect(config.objectKey).to.be.an('object');
+				expect(config.objectKey.innerNumberKey).to.be(1);
+			});
 
 		});
 	});
