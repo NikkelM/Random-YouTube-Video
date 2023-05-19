@@ -1,3 +1,5 @@
+// ---------- Storage ----------
+
 function mockChrome() {
 	let chrome = {
 		storage: {
@@ -163,4 +165,12 @@ async function setupMockLocalStorageObject() {
 	await chrome.storage.local.clear();
 
 	mockLocalStorageObject = defaultLocalStorage;
+}
+
+// ---------- Fetch ----------
+// Within a given scope (file), fetch will return the given response
+function mockFetch(scope, response) {
+	scope.__set__('fetch', () => {
+		return response;
+	});
 }

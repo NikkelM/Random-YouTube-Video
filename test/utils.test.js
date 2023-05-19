@@ -1,7 +1,7 @@
-var expect = require('expect.js');
+const expect = require('expect.js');
 const sinon = require('sinon');
-var rewire = require('rewire');
-const jsdom = require("jsdom");
+const rewire = require('rewire');
+const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
 
 const testUtils = rewire('./testUtils.js');
@@ -13,9 +13,9 @@ describe('utils.js', function () {
 	let mockChrome, setupMockSyncStorageObject, setupMockLocalStorageObject;
 
 	this.beforeAll(function () {
-		global.configSync = {}, global.mockLocalStorageObject = {};
 		mockChrome = testUtils.__get__('mockChrome');
 
+		global.configSync = {}, global.mockLocalStorageObject = {};
 		global.chrome = mockChrome();
 
 		setupMockSyncStorageObject = testUtils.__get__('setupMockSyncStorageObject');
