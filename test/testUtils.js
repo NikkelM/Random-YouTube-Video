@@ -47,8 +47,19 @@ function mockChrome() {
 					// updatePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
 					// Gets an API key depending on user settings
 					case "getAPIKey":
-						// getAPIKey(false, request.data.useAPIKeyAtIndex).then(sendResponse);
-						break;
+						const APIKeys = configSync.APIKeys;
+						let APIKey, isCustomKey, keyIndex;
+						if (request.data.useAPIKeyAtIndex !== null) {
+							APIKey = APIKeys[request.data.useAPIKeyAtIndex];
+							isCustomKey = false;
+							keyIndex = request.data.useAPIKeyAtIndex;
+							return { APIKey, isCustomKey, keyIndex };
+						} else {
+							keyIndex = Math.floor(Math.random() * APIKeys.length);
+							APIKey = APIKeys[keyIndex];
+							isCustomKey = false;
+							return { APIKey, isCustomKey, keyIndex };
+						}
 					// Gets the default API keys saved in the database
 					case "getDefaultAPIKeys":
 						// getAPIKey(true, null).then(sendResponse);
@@ -69,7 +80,7 @@ function mockChrome() {
 					default:
 						return `Unknown command: ${request.command} (service worker). Hopefully another message listener will handle it.`;
 				}
-			},
+			}
 		}
 	};
 
