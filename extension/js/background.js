@@ -93,7 +93,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 
 	// v1.3.0 removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
 	if (previousVersion < "1.3.0") {
-		consolelog("Updating local storage to v1.3.0 format...");
+		console.log("Updating local storage to v1.3.0 format...");
 		const localStorageContents = await chrome.storage.local.get();
 		// Delete the youtubeAPIKey from local storage if it exists
 		if (localStorageContents["youtubeAPIKey"]) {
@@ -194,6 +194,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		// Updates (with overwriting videos, as some were deleted and we do not grant 'delete' permissions) the playlist in Firebase
 		case "overwritePlaylistInfoInDB":
 			updatePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
+			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":
 			getAPIKey(false, request.data.useAPIKeyAtIndex).then(sendResponse);
