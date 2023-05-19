@@ -375,4 +375,77 @@ describe('utils.js', function () {
 		});
 	});
 
+	context('custom errors', function () {
+
+		context('RandomYoutubeVideoError', function () {
+			const RandomYoutubeVideoError = utils.__get__('RandomYoutubeVideoError');
+
+			it('should be an instance of Error', function () {
+				const e = new RandomYoutubeVideoError({});
+
+				expect(e).to.be.an(Error);
+			});
+
+			it('should have the correct name', function () {
+				const e = new RandomYoutubeVideoError({});
+
+				expect(e.name).to.equal('RandomYoutubeVideoError');
+			});
+
+			it('should have the correct properties', function () {
+				const e = new RandomYoutubeVideoError({
+					code: "RYV-test",
+					message: 'test message',
+					solveHint: 'test solveHint',
+					showTrace: true
+				});
+
+				expect(e).to.have.property('code');
+				expect(e).to.have.property('message');
+				expect(e).to.have.property('solveHint');
+				expect(e).to.have.property('showTrace');
+
+				expect(e.code).to.equal('RYV-test');
+				expect(e.message).to.equal('test message');
+				expect(e.solveHint).to.equal('test solveHint');
+				expect(e.showTrace).to.equal(true);
+			});
+		});
+
+		context('YoutubeAPIError', function () {
+			const RandomYoutubeVideoError = utils.__get__('RandomYoutubeVideoError');
+			const YoutubeAPIError = utils.__get__('YoutubeAPIError');
+
+			it('should be an instance of Error', function () {
+				const e = new YoutubeAPIError();
+
+				expect(e).to.be.an(Error);
+				expect(e).to.be.an(RandomYoutubeVideoError);
+			});
+
+			it('should have the correct name', function () {
+				const e = new YoutubeAPIError();
+
+				expect(e.name).to.equal('YoutubeAPIError');
+			});
+
+			it('should have the correct properties', function () {
+				const e = new YoutubeAPIError(code = "RYV-test", message = 'test message', reason = 'test reason', solveHint = 'test solveHint', showTrace = true);
+
+				expect(e).to.have.property('code');
+				expect(e).to.have.property('message');
+				expect(e).to.have.property('reason');
+				expect(e).to.have.property('solveHint');
+				expect(e).to.have.property('showTrace');
+
+				expect(e.code).to.equal('RYV-test');
+				expect(e.message).to.equal('test message');
+				expect(e.reason).to.equal('test reason');
+				expect(e.solveHint).to.equal('test solveHint');
+				expect(e.showTrace).to.equal(true);
+			});
+		});
+
+	});
+
 })

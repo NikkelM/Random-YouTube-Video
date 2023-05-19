@@ -42,7 +42,7 @@ function mockChrome() {
 						break;
 					// Updates (with overwriting videos, as some were deleted and we do not grant 'delete' permissions) the playlist in Firebase
 					case "overwritePlaylistInfoInDB":
-						// updatePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
+					// updatePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
 					// Gets an API key depending on user settings
 					case "getAPIKey":
 						// getAPIKey(false, request.data.useAPIKeyAtIndex).then(sendResponse);
