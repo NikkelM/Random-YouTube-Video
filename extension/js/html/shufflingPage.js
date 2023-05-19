@@ -24,10 +24,10 @@ function getDomElements() {
 		shufflingInProgressElements: document.getElementById("shufflingInProgressElements"),
 		// The heading containing the "Shuffling from <channel name>..." text
 		shufflingFromChannelHeading: document.getElementById("shufflingFromChannelHeading"),
-		// The p element containing the shuffle tip
-		shufflingTipP: document.getElementById("shufflingTipP"),
-		// The button that displays the next shuffle tip
-		nextTipButton: document.getElementById("nextTipButton"),
+		// The p element containing the shuffle hint
+		shufflingHintP: document.getElementById("shufflingHintP"),
+		// The button that displays the next shuffle hint
+		nextHintButton: document.getElementById("nextHintButton"),
 
 		// FOOTER
 		// View changelog button
@@ -42,9 +42,9 @@ if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().versi
 
 // Set event listeners for DOM elements
 async function setDomElemenEventListeners(domElements, configSync) {
-	// Add click listener to the "New tip" button
-	domElements.nextTipButton.addEventListener("click", async function () {
-		currentHint = await displayShufflingHint(domElements.shufflingTipP, currentHint);
+	// Add click listener to the "New hint" button
+	domElements.nextHintButton.addEventListener("click", async function () {
+		currentHint = await displayShufflingHint(domElements.shufflingHintP, currentHint);
 	});
 
 	// View changelog button
@@ -66,7 +66,7 @@ waitUntilShowingDivContents();
 
 // ----- Shuffling Hints -----
 
-let currentHint = await displayShufflingHint(domElements.shufflingTipP);
+let currentHint = await displayShufflingHint(domElements.shufflingHintP);
 
 // Called when the randomize-button from the popup is clicked
 async function shuffleButtonClicked() {

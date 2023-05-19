@@ -21,10 +21,10 @@ function getDomElements() {
 		changelogDiv: document.getElementById("changelogDiv"),
 		// The dropdown menu for selecting a version
 		chooseChangelogVersionDropdown: document.getElementById("chooseChangelogVersionDropdown"),
-		// The p element containing the shuffle tip
-		shufflingTipP: document.getElementById("shufflingTipP"),
-		// The button that displays the next shuffle tip
-		nextTipButton: document.getElementById("nextTipButton"),
+		// The p element containing the shuffle hint
+		shufflingHintP: document.getElementById("shufflingHintP"),
+		// The button that displays the next shuffle hint
+		nextHintButton: document.getElementById("nextHintButton"),
 	}
 }
 
@@ -129,8 +129,8 @@ async function displayErrorAfterWaiting(ms = 2000) {
 }
 
 // ----- Shuffling Hints -----
-let currentHint = await displayShufflingHint(domElements.shufflingTipP);
-// Add click listener to the "New tip" button
-domElements.nextTipButton.addEventListener("click", async function () {
-	currentHint = await displayShufflingHint(domElements.shufflingTipP, currentHint);
+let currentHint = await displayShufflingHint(domElements.shufflingHintP);
+// Add click listener to the "New hint" button
+domElements.nextHintButton.addEventListener("click", async function () {
+	currentHint = await displayShufflingHint(domElements.shufflingHintP, currentHint);
 });
