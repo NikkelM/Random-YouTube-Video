@@ -1,8 +1,8 @@
 // Main file that is run when the user enters a youtube.com page
 
-import { isVideoUrl, fetchConfigSync, setSyncStorageValue, RandomYoutubeVideoError, setDOMTextWithDelay } from "./utils.js";
+import { isVideoUrl, fetchConfigSync, setSyncStorageValue, setDOMTextWithDelay, RandomYoutubeVideoError } from "./utils.js";
 import { buildShuffleButton, shuffleButton, shuffleButtonTextElement } from "./buildShuffleButton.js";
-// import {chooseRandomVideo } from "./shuffleVideo.js";
+import {chooseRandomVideo } from "./shuffleVideo.js";
 
 let configSync = await fetchConfigSync();
 
@@ -13,10 +13,6 @@ let configSync = await fetchConfigSync();
 let iconFont = `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0">`;
 iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChild;
 document.head.appendChild(iconFont);
-
-// let shuffleButton = null;
-// We can access the actual text using "shuffleButtonTextElement.innerText"
-// let shuffleButtonTextElement = null;
 
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
@@ -132,8 +128,8 @@ async function shuffleVideos() {
 		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Shuffling...", 1000, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffle" && !hasBeenShuffled); });
 		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still on it...", 5000, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffling..." && !hasBeenShuffled); });
 
-		// await chooseRandomVideo(channelId, false, shuffleButtonTextElement);
-		// hasBeenShuffled = true;
+		await chooseRandomVideo(channelId, false, shuffleButtonTextElement);
+		hasBeenShuffled = true;
 
 		// Reset the button text in case we opened the video in a new tab
 		shuffleButtonTextElement.innerText = "\xa0Shuffle";

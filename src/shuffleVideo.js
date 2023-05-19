@@ -1,15 +1,26 @@
 // Handles everything concerning the shuffling of videos, including sending messages to the backend database and the YouTube API
+import {
+	isEmpty,
+	addHours,
+	getLength,
+	isVideoUrl,
+	fetchConfigSync,
+	setSyncStorageValue,
+	getUserQuotaRemainingToday,
+	RandomYoutubeVideoError,
+	YoutubeAPIError
+} from "./utils.js";
 
-let configSync = null;
+let configSync = await fetchConfigSync();
 
 // For cases in which the playlist in the database has the old Array format (before v1.0.0), we need to overwrite it
 let mustOverwriteDatabase = false;
 
 // Chooses a random video uploaded on the current YouTube channel
-async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
+export async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
 	try {
 		// Make sure we have the latest config
-		await fetchConfigSync();
+		configSync = await fetchConfigSync();
 
 		// Each user has a set amount of quota they can use per day.
 		// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.
@@ -87,8 +98,9 @@ async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement)
 		}
 
 		// Update the remaining user quota in the configSync
-		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
+		configSync = await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday), configSync);
 
+		let chosenVideos, encounteredDeletedVideos;
 		({ chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
 
 		if (shouldUpdateDatabase && databaseSharing) {
@@ -118,7 +130,7 @@ async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement)
 		playlistInfo["videos"] = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
 
 		// Only save the wanted keys
-		playlistInfoForLocalStorage = {
+		const playlistInfoForLocalStorage = {
 			// Remember the last time the playlist was accessed locally (==now)
 			"lastAccessedLocally": new Date().toISOString(),
 			"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
@@ -129,11 +141,11 @@ async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement)
 		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
 		configSync.numShuffledVideosTotal += 1;
-		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal);
+		configSync = await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal, configSync);
 
 		playVideo(chosenVideos, firedFromPopup);
 	} catch (error) {
-		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, configSync.userQuotaRemainingToday - 1));
+		configSync = await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, configSync.userQuotaRemainingToday - 1), configSync);
 		throw error;
 	}
 }
@@ -390,6 +402,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 	let apiResponse = null;
 
 	// We wrap this in a while block to simulate a retry mechanism until we get a valid response
+	/*eslint no-constant-condition: ["error", { "checkLoops": false }]*/
 	while (true) {
 		try {
 			console.log("Getting snippet from YouTube API...");
@@ -400,9 +413,9 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 
 			if (apiResponse["error"]) {
 				throw new YoutubeAPIError(
-					code = apiResponse["error"]["code"],
-					message = apiResponse["error"]["message"],
-					reason = apiResponse["error"]["errors"][0]["reason"]
+					apiResponse["error"]["code"],
+					apiResponse["error"]["message"],
+					apiResponse["error"]["errors"][0]["reason"]
 				);
 			}
 
@@ -424,7 +437,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 		} catch (error) {
 			// Immediately set the user quota in sync storage, as we won't be able to do so correctly later due to the error
 			// We will set it again in the error handler and remove 1 from it, so we need to add 1 here to compensate
-			await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, Math.min(200, userQuotaRemainingToday + 1)));
+			configSync = await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, Math.min(200, userQuotaRemainingToday + 1)), configSync);
 
 			// We handle the case where an API key's quota was exceeded
 			if (error instanceof YoutubeAPIError && error.code === 403 && error.reason === "quotaExceeded") {
@@ -434,7 +447,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 
 					// In case this is something irregular, we want to check if anything has changed with the API keys now
 					// We can force this by setting the nextAPIKeysCheckTime to a time in the past
-					await setSyncStorageValue("nextAPIKeysCheckTime", Date.now() - 100);
+					configSync = await setSyncStorageValue("nextAPIKeysCheckTime", Date.now() - 100, configSync);
 					({ APIKey, isCustomKey, keyIndex } = await getAPIKey(keyIndex + 1));
 
 					if (keyIndex === originalKeyIndex) {
@@ -655,6 +668,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 
 // Applies a filter to the playlist object, based on the setting set in the popup
 function chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue) {
+	let videosToShuffle;
 	switch (activeShuffleFilterOption) {
 		case "allVideosOption":
 			// For this option, no additional filtering is needed
@@ -683,7 +697,7 @@ function chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOptio
 			// Take only videos that were released after the specified video
 			// The videos are already sorted by date, so we can just take the videos that are after the specified video in the list
 			// If the specified video does not exist, we alert the user
-			const videoIndex = videosByDate.indexOf(activeOptionValue);
+			var videoIndex = videosByDate.indexOf(activeOptionValue);
 			if (videoIndex === -1) {
 				throw new RandomYoutubeVideoError(
 					{
@@ -769,7 +783,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 			window.open(randomVideoURL, '_blank').focus();
 
 			// Save the ID of the opened tab as the new reusable tab
-			await setSyncStorageValue("shuffleTabId", await chrome.runtime.sendMessage({ command: "getCurrentTabId" }));
+			configSync = await setSyncStorageValue("shuffleTabId", await chrome.runtime.sendMessage({ command: "getCurrentTabId" }), configSync);
 
 			// April fools joke: Users get rickrolled once on April 1st every year
 			// If we open both videos in a new tab, we want the rickroll to be focused
@@ -778,7 +792,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 	} else {
 		if (firedFromPopup) {
 			// Save the ID of the current tab as the reusable tab, as it is a new page opened from the popup
-			await setSyncStorageValue("shuffleTabId", await chrome.runtime.sendMessage({ command: "getCurrentTabId" }));
+			configSync = await setSyncStorageValue("shuffleTabId", await chrome.runtime.sendMessage({ command: "getCurrentTabId" }), configSync);
 		}
 
 		// We need to open the rickroll first, as otherwise the function call doesn't happen, as we change the URL
@@ -793,7 +807,7 @@ async function aprilFoolsJoke() {
 	const now = new Date();
 	if (now.getMonth() === 3 && now.getDate() === 1 && configSync.wasLastRickRolledInYear !== now.getFullYear()) {
 		configSync.wasLastRickRolledInYear = now.getFullYear();
-		await setSyncStorageValue("wasLastRickRolledInYear", now.getFullYear());
+		configSync = await setSyncStorageValue("wasLastRickRolledInYear", now.getFullYear(), configSync);
 
 		window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", '_blank').focus();
 	}

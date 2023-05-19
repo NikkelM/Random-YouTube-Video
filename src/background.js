@@ -228,7 +228,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // ---------- Firebase ----------
 
 import { initializeApp } from 'firebase/app';
-import { getDatabase } from 'firebase/database';
+import { getDatabase, ref, child, get } from 'firebase/database';
 
 const firebaseConfig = {
 	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
@@ -266,7 +266,8 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 // Prefers to get cached data instead of sending a request to the database
 async function readDataOnce(key) {
 	console.log(`Reading data for key ${key} from database...`);
-	const res = await db.ref(key).once("value").then((snapshot) => {
+
+	const res = get(child(ref(getDatabase()), key)).then((snapshot) => {
 		return snapshot.val();
 	});
 
@@ -307,7 +308,7 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 		console.log("API keys were fetched. Next check will be in one week.");
 		// Set the next time to check for API keys to one week from now
 		configSync.nextAPIKeysCheckTime = new Date(new Date().setHours(168, 0, 0, 0)).getTime();
-		await setSyncStorageValue("nextAPIKeysCheckTime", configSync.nextAPIKeysCheckTime);
+		configSync = await setSyncStorageValue("nextAPIKeysCheckTime", configSync.nextAPIKeysCheckTime);
 	}
 
 	if (forceDefault) {
@@ -392,8 +393,10 @@ async function fetchConfigSync() {
 }
 
 // This function also exists in utils.js
-async function setSyncStorageValue(key, value) {
+async function setSyncStorageValue(key, value, configSync) {
 	configSync[key] = value;
 
 	await chrome.storage.sync.set({ [key]: value });
+
+	return configSync;
 }
