@@ -42,7 +42,7 @@
 	"web_accessible_resources": [
 		{
 			"resources": [
-				"data/shufflingTips.json"
+				"data/shufflingHints.json"
 			],
 			"matches": [
 				"*://*.youtube.com/*"
