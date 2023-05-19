@@ -248,6 +248,9 @@ describe('utils.js', function () {
 	});
 
 	context('browser storage', function () {
+		const fetchConfigSync = utils.__get__('fetchConfigSync');
+		const setSyncStorageValue = utils.__get__('setSyncStorageValue');
+		const addHours = utils.__get__('addHours');
 
 		this.beforeEach(async function () {
 			await setupMockSyncStorageObject();
@@ -255,7 +258,6 @@ describe('utils.js', function () {
 		});
 
 		context('fetchConfigSync()', function () {
-			const fetchConfigSync = utils.__get__('fetchConfigSync');
 
 			it('should return the correct config', async function () {
 				let config = await fetchConfigSync();
@@ -270,12 +272,15 @@ describe('utils.js', function () {
 		});
 
 		context('setSyncStorageValue()', function () {
-			const setSyncStorageValue = utils.__get__('setSyncStorageValue');
 
 			this.beforeAll(async function () {
-				// Spy on chrome.runtime.sendMessage() to check if it is called
 				sinon.spy(chrome.runtime, "sendMessage");
 				sinon.spy(chrome.storage.sync, "set");
+			});
+
+			this.afterAll(async function () {
+				chrome.runtime.sendMessage.restore();
+				chrome.storage.sync.set.restore();
 			});
 
 			this.beforeEach(async function () {
@@ -316,13 +321,57 @@ describe('utils.js', function () {
 				expect(passedConfigSync.testAddedKeyPassed).to.be("testAddedValPassed");
 				expect(chrome.runtime.sendMessage.calledOnce).to.be(true);
 				expect(chrome.storage.sync.set.calledOnce).to.be(true);
-				
+
 				expect(chrome.runtime.sendMessage.calledWith({ command: "newConfigSync", data: passedConfigSync })).to.be(true);
 				expect(chrome.runtime.sendMessage.calledWith({ command: "newConfigSync", data: configSyncBefore })).to.be(false);
 				// Make sure the global configSync object was replaced
 				expect(configSync).to.equal(passedConfigSync);
 			});
 
+		});
+
+		context('getUserQuotaRemainingToday()', function () {
+			const getUserQuotaRemainingToday = utils.__get__('getUserQuotaRemainingToday');
+
+			this.beforeAll(async function () {
+				sinon.spy(chrome.storage.sync, "set");
+			});
+
+			this.afterAll(async function () {
+				chrome.storage.sync.set.restore();
+			});
+
+			this.beforeEach(async function () {
+				// Reset the spy
+				chrome.storage.sync.set.resetHistory();
+			});
+
+			it('should return the correct value', async function () {
+				// Set the quota to 100
+				await setSyncStorageValue("userQuotaRemainingToday", 100);
+
+				let quota = await getUserQuotaRemainingToday(configSync);
+
+				expect(quota).to.be(100);
+				expect(chrome.storage.sync.set.calledOnce).to.be(true);
+			});
+
+			it('should correctly reset the quota if the reset time has passed', async function () {
+				// Set the quota to 100
+				await setSyncStorageValue("userQuotaRemainingToday", 100);
+				// Set the reset time to 1 hour ago
+				await setSyncStorageValue("userQuotaResetTime", addHours(new Date(), -1).getTime());
+
+				expect(configSync.userQuotaRemainingToday).to.be(100);
+				expect(configSync.userQuotaResetTime).to.be.lessThan(new Date().getTime());
+
+				let quota = await getUserQuotaRemainingToday(configSync);
+
+				expect(quota).to.be(200);
+				expect(chrome.storage.sync.set.callCount).to.be(4);
+				expect(chrome.storage.sync.set.calledWith({ "userQuotaRemainingToday": 200 })).to.be(true);
+				expect(chrome.storage.sync.set.calledWith({ "userQuotaResetTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime() })).to.be(true);
+			});
 		});
 	});
 
