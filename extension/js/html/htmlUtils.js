@@ -4,7 +4,7 @@
 let shufflingHintJsonData = null;
 
 async function initShufflingHints() {
-	const shufflingHintJsonUrl = chrome.runtime.getURL('data/shufflingTips.json');
+	const shufflingHintJsonUrl = chrome.runtime.getURL('data/shufflingHints.json');
 	shufflingHintJsonData = await loadJsonFile(shufflingHintJsonUrl);
 }
 
