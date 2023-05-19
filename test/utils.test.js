@@ -11,9 +11,9 @@ const utils = rewire('../extension/js/utils.js');
 describe('utils.js', function () {
 
 	let mockChrome, setupMockSyncStorageObject, setupMockLocalStorageObject;
-	global.configSync = {}, global.mockLocalStorageObject = {};
 
 	this.beforeAll(function () {
+		global.configSync = {}, global.mockLocalStorageObject = {};
 		mockChrome = testUtils.__get__('mockChrome');
 
 		global.chrome = mockChrome();
@@ -22,9 +22,11 @@ describe('utils.js', function () {
 		setupMockLocalStorageObject = testUtils.__get__('setupMockLocalStorageObject');
 	});
 
-	// Restore the original chrome object
+	// Restore everything
 	this.afterAll(function () {
 		delete global.chrome;
+		delete global.configSync;
+		delete global.mockLocalStorageObject;
 	});
 
 	context('console helpers', function () {
