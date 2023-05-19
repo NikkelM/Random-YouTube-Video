@@ -10,15 +10,16 @@ const utils = rewire('../extension/js/utils.js');
 
 describe('utils.js', function () {
 
-	let mockChromeStorage, setupMockSyncStorageObject;
-	global.mockSyncStorageObject = {}, global.mockLocalStorageObject = {};
+	let mockChrome, setupMockSyncStorageObject, setupMockLocalStorageObject;
+	global.configSync = {}, global.mockLocalStorageObject = {};
 
 	this.beforeAll(function () {
-		mockChromeStorage = testUtils.__get__('mockChromeStorage');
-		
-		global.chrome = mockChromeStorage();
+		mockChrome = testUtils.__get__('mockChrome');
+
+		global.chrome = mockChrome();
 
 		setupMockSyncStorageObject = testUtils.__get__('setupMockSyncStorageObject');
+		setupMockLocalStorageObject = testUtils.__get__('setupMockLocalStorageObject');
 	});
 
 	// Restore the original chrome object
@@ -248,21 +249,78 @@ describe('utils.js', function () {
 
 	context('browser storage', function () {
 
+		this.beforeEach(async function () {
+			await setupMockSyncStorageObject();
+			await setupMockLocalStorageObject();
+		});
+
 		context('fetchConfigSync()', function () {
 			const fetchConfigSync = utils.__get__('fetchConfigSync');
 
-			this.beforeEach(async function () {
-				await setupMockSyncStorageObject();
-			});
-
-			it('should return the config if it exists', async function () {
+			it('should return the correct config', async function () {
 				let config = await fetchConfigSync();
 
+				// Only test for some properties, a full test is done separately
 				expect(config).to.be.an('object');
-				expect(config.storageType).to.be("syncStorage");
-				expect(config.stringKey).to.be("stringVal");
-				expect(config.objectKey).to.be.an('object');
-				expect(config.objectKey.innerNumberKey).to.be(1);
+				expect(config).to.have.property('shuffleOpenInNewTabOption');
+				expect(config.customYoutubeApiKey).to.be(null);
+				expect(config.channelSettings).to.be.an('object');
+				expect(config.channelSettings).to.be.empty;
+			});
+		});
+
+		context('setSyncStorageValue()', function () {
+			const setSyncStorageValue = utils.__get__('setSyncStorageValue');
+
+			this.beforeAll(async function () {
+				// Spy on chrome.runtime.sendMessage() to check if it is called
+				sinon.spy(chrome.runtime, "sendMessage");
+				sinon.spy(chrome.storage.sync, "set");
+			});
+
+			this.beforeEach(async function () {
+				// Reset the spies
+				chrome.runtime.sendMessage.resetHistory();
+				chrome.storage.sync.set.resetHistory();
+			});
+
+			it('should set the correct value in the global config object', async function () {
+				await setSyncStorageValue("testAddedKeyGlobal", "testAddedValGlobal");
+
+				expect(configSync.testAddedKeyGlobal).to.be("testAddedValGlobal");
+				expect(chrome.runtime.sendMessage.calledOnce).to.be(true);
+				expect(chrome.storage.sync.set.calledOnce).to.be(true);
+				expect(chrome.runtime.sendMessage.calledWith({ command: "newConfigSync", data: configSync })).to.be(true);
+
+				expect(chrome.runtime.sendMessage.returnValues[0]).to.equal("New configSync set.");
+			});
+
+			it('should set the correct value in the passed config object', async function () {
+				let passedConfigSync = {};
+				await setSyncStorageValue("testAddedKeyPassed", "testAddedValPassed", passedConfigSync);
+
+				expect(passedConfigSync.testAddedKeyPassed).to.be("testAddedValPassed");
+				expect(chrome.runtime.sendMessage.calledOnce).to.be(true);
+				expect(chrome.storage.sync.set.calledOnce).to.be(true);
+
+				expect(chrome.runtime.sendMessage.calledWith({ command: "newConfigSync", data: configSync })).to.be(true);
+			});
+
+			it('should correctly overwrite the global configSync object with the new one', async function () {
+				let passedConfigSync = {};
+				// Remember what the configSync was before to make sure it was replaced
+				let configSyncBefore = configSync;
+
+				await setSyncStorageValue("testAddedKeyPassed", "testAddedValPassed", passedConfigSync);
+
+				expect(passedConfigSync.testAddedKeyPassed).to.be("testAddedValPassed");
+				expect(chrome.runtime.sendMessage.calledOnce).to.be(true);
+				expect(chrome.storage.sync.set.calledOnce).to.be(true);
+				
+				expect(chrome.runtime.sendMessage.calledWith({ command: "newConfigSync", data: passedConfigSync })).to.be(true);
+				expect(chrome.runtime.sendMessage.calledWith({ command: "newConfigSync", data: configSyncBefore })).to.be(false);
+				// Make sure the global configSync object was replaced
+				expect(configSync).to.equal(passedConfigSync);
 			});
 
 		});

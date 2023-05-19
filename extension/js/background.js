@@ -102,6 +102,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 	}
 }
 
+// Remember to update this default config in the tests as well
 async function validateConfigSync() {
 	// All keys regarding user settings and their defaults
 	const configSyncDefaults = {
