@@ -1,9 +1,14 @@
 // This file contains functions that are related to the DOM elements of the popup
+import { delay, fetchConfigSync, setSyncStorageValue, getUserQuotaRemainingToday } from "../../utils.js";
+import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting } from "./popupUtils.js";
+import { focusOrOpenTab } from "../htmlUtils.js";
 
 // ---------- Setup ----------
 
+let configSync = await fetchConfigSync();
+
 // Get relevant DOM elements
-function getDomElements() {
+export function getDomElements() {
 	return {
 		// Body element
 		body: document.body,
@@ -13,10 +18,10 @@ function getDomElements() {
 		useCustomApiKeyOptionToggle: document.getElementById("useCustomApiKeyOptionToggle"),
 		// Custom API key: Input
 		customApiKeyInputDiv: document.getElementById("customApiKeyInputDiv"),
-		customApiKeyInputField: customApiKeyInputDiv.children.namedItem("customApiKeyInputField"),
-		customApiKeySubmitButton: customApiKeyInputDiv.children.namedItem("customApiKeySubmitButton"),
-		customApiKeyInputInfoDiv: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoDiv"),
-		customApiKeyInputInfoText: customApiKeyInputInfoDiv.children.namedItem("customApiKeyInputInfoText"),
+		customApiKeyInputField: document.getElementById("customApiKeyInputDiv").children.namedItem("customApiKeyInputField"),
+		customApiKeySubmitButton: document.getElementById("customApiKeyInputDiv").children.namedItem("customApiKeySubmitButton"),
+		customApiKeyInputInfoDiv: document.getElementById("customApiKeyInputDiv").children.namedItem("customApiKeyInputInfoDiv"),
+		customApiKeyInputInfoText: document.getElementById("customApiKeyInputDiv").children.namedItem("customApiKeyInputInfoDiv").children.namedItem("customApiKeyInputInfoText"),
 		customApiKeyHowToGetDiv: document.getElementById("customApiKeyHowToGetDiv"),
 
 		// Database sharing: Option toggle
@@ -32,26 +37,26 @@ function getDomElements() {
 		// Shuffling: Number of videos in playlist div
 		shuffleNumVideosInPlaylistDiv: document.getElementById("shuffleNumVideosInPlaylistDiv"),
 		// Shuffling: Number of videos in playlist input
-		shuffleNumVideosInPlaylistInput: shuffleNumVideosInPlaylistDiv.children.namedItem("shuffleNumVideosInPlaylistInput"),
+		shuffleNumVideosInPlaylistInput: document.getElementById("shuffleNumVideosInPlaylistDiv").children.namedItem("shuffleNumVideosInPlaylistInput"),
 
 		// PER CHANNEL SETTINGS
 		// Custom options per channel div
 		channelCustomOptionsDiv: document.getElementById("channelCustomOptionsDiv"),
 		// Custom options per channel: Channel name and description
-		channelCustomOptionsHeader: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsHeader"),
+		channelCustomOptionsHeader: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsHeader"),
 		// Custom options per channel: Dropdown menu Div (only for reference below)
-		channelCustomOptionsDropdownDiv: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsDropdownDiv"),
+		channelCustomOptionsDropdownDiv: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsDropdownDiv"),
 		// Dropdown menu div: Dropdown menu
-		channelCustomOptionsDropdown: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsDropdown"),
+		channelCustomOptionsDropdown: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsDropdownDiv").children.namedItem("channelCustomOptionsDropdown"),
 		// ----- Inputs -----
 		// Dropdown menu div: Date input
-		channelCustomOptionsDateOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsDateOptionInput"),
+		channelCustomOptionsDateOptionInput: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsDropdownDiv").children.namedItem("channelCustomOptionsDateOptionInput"),
 		// Dropdown menu div: YouTube Video ID input
-		channelCustomOptionsVideoIdOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsVideoIdOptionInput"),
+		channelCustomOptionsVideoIdOptionInput: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsDropdownDiv").children.namedItem("channelCustomOptionsVideoIdOptionInput"),
 		// Dropdown menu div: Percentage input
-		channelCustomOptionsPercentageOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsPercentageOptionInput"),
+		channelCustomOptionsPercentageOptionInput: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsDropdownDiv").children.namedItem("channelCustomOptionsPercentageOptionInput"),
 		// Dropdown menu div: Percentage input p for % sign
-		channelCustomOptionsPercentageOptionP: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsPercentageOptionP"),
+		channelCustomOptionsPercentageOptionP: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsDropdownDiv").children.namedItem("channelCustomOptionsPercentageOptionP"),
 
 		// Popup shuffle button
 		popupShuffleButton: document.getElementById("popupShuffleButton"),
@@ -60,11 +65,11 @@ function getDomElements() {
 		// FYI div
 		forYourInformationDiv: document.getElementById("forYourInformationDiv"),
 		// FYI: Number of shuffled videos text
-		numberOfShuffledVideosText: forYourInformationDiv.children.namedItem("numberOfShuffledVideosText"),
+		numberOfShuffledVideosText: document.getElementById("forYourInformationDiv").children.namedItem("numberOfShuffledVideosText"),
 		// FYI: Daily quota notice div
-		dailyQuotaNoticeDiv: forYourInformationDiv.children.namedItem("dailyQuotaNoticeDiv"),
+		dailyQuotaNoticeDiv: document.getElementById("forYourInformationDiv").children.namedItem("dailyQuotaNoticeDiv"),
 		// Daily quota notice: Text
-		dailyQuotaNoticeText: dailyQuotaNoticeDiv.children.namedItem("dailyQuotaNoticeText"),
+		dailyQuotaNoticeText: document.getElementById("forYourInformationDiv").children.namedItem("dailyQuotaNoticeDiv").children.namedItem("dailyQuotaNoticeText"),
 
 		// FOOTER
 		// View changelog button
@@ -74,7 +79,7 @@ function getDomElements() {
 
 // Set default values from config
 // The configSync contains all values the various sliders and text inputs should have
-async function setDomElementValuesFromConfig(domElements, configSync) {
+export async function setDomElementValuesFromConfig(domElements) {
 	// Disable animations to prevent them from playing when setting the values
 	toggleAnimations(domElements, false);
 
@@ -131,7 +136,7 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	}
 
 	// Contains logic for all the "For your information" div content
-	updateFYIDiv(domElements, configSync);
+	updateFYIDiv(domElements);
 
 	// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
 	if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
@@ -153,11 +158,11 @@ async function toggleAnimations(domElements, enable) {
 }
 
 // Set event listeners for DOM elements
-async function setDomElemenEventListeners(domElements, configSync) {
+export async function setDomElemenEventListeners(domElements) {
 	// Custom API key: Option toggle
 	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
 		configSync.useCustomApiKeyOption = this.checked;
-		await setSyncStorageValue("useCustomApiKeyOption", this.checked, configSync);
+		configSync = await setSyncStorageValue("useCustomApiKeyOption", this.checked, configSync);
 
 		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked, configSync);
 	});
@@ -165,7 +170,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	// Database sharing: Option toggle
 	domElements.dbSharingOptionToggle.addEventListener("change", async function () {
 		configSync.databaseSharingEnabledOption = this.checked;
-		await setSyncStorageValue("databaseSharingEnabledOption", this.checked, configSync);
+		configSync = await setSyncStorageValue("databaseSharingEnabledOption", this.checked, configSync);
 
 		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked, configSync);
 	});
@@ -177,12 +182,12 @@ async function setDomElemenEventListeners(domElements, configSync) {
 
 		if (newAPIKey.length > 0 && await validateApiKey(newAPIKey, domElements)) {
 			configSync.customYoutubeApiKey = newAPIKey;
-			await setSyncStorageValue("customYoutubeApiKey", newAPIKey, configSync);
+			configSync = await setSyncStorageValue("customYoutubeApiKey", newAPIKey, configSync);
 		} else {
 			configSync.customYoutubeApiKey = null;
 			configSync.databaseSharingEnabledOption = true;
-			await setSyncStorageValue("customYoutubeApiKey", null, configSync);
-			await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
+			configSync = await setSyncStorageValue("customYoutubeApiKey", null, configSync);
+			configSync = await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
 			domElements.customApiKeyInputField.value = "";
 		}
 		// If the user removed the API key, show a message in the info div
@@ -199,7 +204,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	// Shuffling: Open in new tab option toggle
 	domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", async function () {
 		configSync.shuffleOpenInNewTabOption = this.checked;
-		await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked, configSync);
+		configSync = await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked, configSync);
 
 		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked, configSync);
 	});
@@ -207,7 +212,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	// Shuffling: Reuse tab option toggle
 	domElements.shuffleReUseNewTabOptionToggle.addEventListener("change", async function () {
 		configSync.shuffleReUseNewTabOption = this.checked;
-		await setSyncStorageValue("shuffleReUseNewTabOption", this.checked, configSync);
+		configSync = await setSyncStorageValue("shuffleReUseNewTabOption", this.checked, configSync);
 
 		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked, configSync);
 	});
@@ -215,7 +220,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	// Shuffling: Ignore shorts option toggle
 	domElements.shuffleIgnoreShortsOptionToggle.addEventListener("change", async function () {
 		configSync.shuffleIgnoreShortsOption = this.checked;
-		await setSyncStorageValue("shuffleIgnoreShortsOption", this.checked, configSync);
+		configSync = await setSyncStorageValue("shuffleIgnoreShortsOption", this.checked, configSync);
 
 		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionToggle, this.checked, configSync);
 	});
@@ -223,7 +228,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 	// Shuffling: Open as playlist option toggle
 	domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", async function () {
 		configSync.shuffleOpenAsPlaylistOption = this.checked;
-		await setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked, configSync);
+		configSync = await setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked, configSync);
 
 		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked, configSync);
 	});
@@ -252,7 +257,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			}, 1500);
 		}
 
-		await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value), configSync);
+		configSync = await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value), configSync);
 
 		manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value, configSync);
 	});
@@ -372,14 +377,14 @@ async function setDomElemenEventListeners(domElements, configSync) {
 
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
-		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
+		configSync = await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
 		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
 		// Close the popup
 		window.close();
 	});
 }
 
-async function updateFYIDiv(domElements, configSync) {
+async function updateFYIDiv(domElements) {
 	// ----- FYI: Number of shuffled videos text -----
 	// Use toLocaleString() to add commas/periods to large numbers
 	const numShuffledVideosTotal = configSync.numShuffledVideosTotal.toLocaleString();
@@ -402,7 +407,7 @@ async function updateFYIDiv(domElements, configSync) {
 }
 
 // Responsible for all DOM elements that need a reference to the current channel
-async function updateDomElementsDependentOnChannel(domElements, configSync) {
+export async function updateDomElementsDependentOnChannel(domElements, configSync) {
 	// ----- Custom options per channel: Channel name and description -----
 	domElements.channelCustomOptionsHeader.innerText = `Channel Settings: ${configSync.currentChannelName}`;
 
@@ -417,11 +422,11 @@ async function updateChannelSettingsDropdownMenu(domElements, configSync) {
 	// ----- Custom options per channel: Dropdown menu -----
 	// Set the dropdown menu to the active option chosen by the user
 	// The default value is "allVideosOption"
-	channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "allVideosOption";
-	channelCustomOptionsDropdown.style.width = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].getAttribute("option-width");
-	channelCustomOptionsDropdown.title = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].title;
+	domElements.channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "allVideosOption";
+	domElements.channelCustomOptionsDropdown.style.width = domElements.channelCustomOptionsDropdown.options[domElements.channelCustomOptionsDropdown.selectedIndex].getAttribute("option-width");
+	domElements.channelCustomOptionsDropdown.title = domElements.channelCustomOptionsDropdown.options[domElements.channelCustomOptionsDropdown.selectedIndex].title;
 
-	switch (channelCustomOptionsDropdown.value) {
+	switch (domElements.channelCustomOptionsDropdown.value) {
 		case "allVideosOption":
 			// Hide all inputs
 			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");

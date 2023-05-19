@@ -1,21 +1,23 @@
 // Utility functions
 
 // ---------- Console extension ----------
+export function rerouteConsole() {
+	// Reroute console.log and console.error
+	let log = console.log;
 
-let log = console.log;
+	console.log = function () {
+		var args = Array.from(arguments);
+		args.unshift("[youtube-random-video]: ");
+		log.apply(console, args);
+	}
 
-console.log = function () {
-	var args = Array.from(arguments);
-	args.unshift("[youtube-random-video]: ");
-	log.apply(console, args);
-}
+	let error = console.error;
 
-let error = console.error;
-
-console.error = function () {
-	var args = Array.from(arguments);
-	args.unshift("[youtube-random-video]: ");
-	error.apply(console, args);
+	console.error = function () {
+		var args = Array.from(arguments);
+		args.unshift("[youtube-random-video]: ");
+		error.apply(console, args);
+	}
 }
 
 // ---------- Utility functions ----------

@@ -11,16 +11,16 @@ module.exports = {
     background: './src/background.js',
 		buildShuffleButton: './src/buildShuffleButton.js',
     content: './src/content.js',
-		// shuffleVideo: './src/shuffleVideo.js',
+		shuffleVideo: './src/shuffleVideo.js',
 		utils: './src/utils.js',
 		// HTML
-		// changelog: './src/html/changelog.js',
-		// htmlUtils: './src/html/htmlUtils.js',
-		// shufflingPage: './src/html/shufflingPage.js',
+		changelog: './src/html/changelog.js',
+		htmlUtils: './src/html/htmlUtils.js',
+		shufflingPage: './src/html/shufflingPage.js',
 		// POPUP
-    // popup: './src/html/popup/popup.js',
-		// domElements: './src/html/popup/domElements.js',
-		// popupUtils: './src/html/popup/popupUtils.js',
+    popup: './src/html/popup/popup.js',
+		domElements: './src/html/popup/domElements.js',
+		popupUtils: './src/html/popup/popupUtils.js',
   },
   module: {
     rules: [

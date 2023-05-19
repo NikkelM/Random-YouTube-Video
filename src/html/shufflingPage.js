@@ -1,4 +1,7 @@
 // Contains logic for the "shufflingPage" that is opened when the user clicks the "Shuffle" button from the popup
+import { delay, fetchConfigSync, setSyncStorageValue } from "../utils.js";
+import { displayShufflingHint, focusOrOpenTab } from "./htmlUtils.js";
+import { chooseRandomVideo } from "../shuffleVideo.js";
 
 // ---------- Setup ----------
 
@@ -7,7 +10,7 @@ let configSync = await fetchConfigSync();
 // Open a port to the background script
 // By default, the port will cause the background script to reload when it is closed (== when this page is closed/URL changes)
 // However, if the shuffle completes successfully, this script will send a message to the port that will disconnect that listener
-const port = await chrome.runtime.connect({ name: "shufflingPage" });
+const port = chrome.runtime.connect({ name: "shufflingPage" });
 
 const domElements = getDomElements();
 
@@ -41,7 +44,7 @@ if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().versi
 }
 
 // Set event listeners for DOM elements
-async function setDomElemenEventListeners(domElements, configSync) {
+async function setDomElemenEventListeners(domElements) {
 	// Add click listener to the "New hint" button
 	domElements.nextHintButton.addEventListener("click", async function () {
 		currentHint = await displayShufflingHint(domElements.shufflingHintP, currentHint);
@@ -49,12 +52,12 @@ async function setDomElemenEventListeners(domElements, configSync) {
 
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
-		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
+		configSync = await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
 		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
 	});
 }
 
-await setDomElemenEventListeners(domElements, configSync);
+await setDomElemenEventListeners(domElements);
 
 // ----- Main -----
 
@@ -71,7 +74,7 @@ let currentHint = await displayShufflingHint(domElements.shufflingHintP);
 // Called when the randomize-button from the popup is clicked
 async function shuffleButtonClicked() {
 	try {
-		var configSync = await fetchConfigSync();
+		configSync = await fetchConfigSync();
 
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
 

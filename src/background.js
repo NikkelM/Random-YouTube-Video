@@ -1,7 +1,24 @@
 // Background script for the extension, which is run ("started") on extension initialization
 // Handles communication between the extension and the content script as well as firebase
+import { fetchConfigSync, setSyncStorageValue, rerouteConsole } from "./utils.js";
 
-let configSync = null;
+let configSync = await fetchConfigSync();
+// rerouteConsole();
+let log = console.log;
+
+console.log = function () {
+	var args = Array.from(arguments);
+	args.unshift("[youtube-random-video]: ");
+	log.apply(console, args);
+}
+
+let error = console.error;
+
+console.error = function () {
+	var args = Array.from(arguments);
+	args.unshift("[youtube-random-video]: ");
+	error.apply(console, args);
+}
 
 // ---------- Initialization/Chrome event listeners ----------
 
@@ -277,7 +294,7 @@ async function readDataOnce(key) {
 // ---------- Helpers ----------
 
 async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
-	await fetchConfigSync();
+	configSync = await fetchConfigSync();
 
 	// List of API keys that are stored in the database/locally
 	let availableAPIKeys = null;
@@ -308,7 +325,7 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 		console.log("API keys were fetched. Next check will be in one week.");
 		// Set the next time to check for API keys to one week from now
 		configSync.nextAPIKeysCheckTime = new Date(new Date().setHours(168, 0, 0, 0)).getTime();
-		configSync = await setSyncStorageValue("nextAPIKeysCheckTime", configSync.nextAPIKeysCheckTime);
+		configSync = await setSyncStorageValue("nextAPIKeysCheckTime", configSync.nextAPIKeysCheckTime, configSync);
 	}
 
 	if (forceDefault) {
@@ -384,19 +401,19 @@ async function setLocalStorage(key, value) {
 
 // ---------- Sync storage ----------
 
-async function fetchConfigSync() {
-	configSync = await chrome.storage.sync.get().then((result) => {
-		return result;
-	});
+// async function fetchConfigSync() {
+// 	configSync = await chrome.storage.sync.get().then((result) => {
+// 		return result;
+// 	});
 
-	return configSync;
-}
+// 	return configSync;
+// }
 
 // This function also exists in utils.js
-async function setSyncStorageValue(key, value, configSync) {
-	configSync[key] = value;
+// async function setSyncStorageValue(key, value, configSync) {
+// 	configSync[key] = value;
 
-	await chrome.storage.sync.set({ [key]: value });
+// 	await chrome.storage.sync.set({ [key]: value });
 
-	return configSync;
-}
+// 	return configSync;
+// }

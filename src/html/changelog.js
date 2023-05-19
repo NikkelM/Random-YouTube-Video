@@ -1,4 +1,6 @@
 // Contains logic for the "changelog" page
+import { delay } from "../utils.js";
+import { displayShufflingHint } from "./htmlUtils.js";
 
 const domElements = getDomElements();
 
