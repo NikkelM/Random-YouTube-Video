@@ -128,7 +128,7 @@ export async function setDomElementValuesFromConfig(domElements) {
 	domElements.shuffleNumVideosInPlaylistInput.value = configSync.shuffleNumVideosInPlaylist;
 
 	// Updates all elements that contain the channel name
-	updateDomElementsDependentOnChannel(domElements, configSync);
+	updateDomElementsDependentOnChannel(domElements);
 
 	// ----- Custom options per channel div -----
 	if (configSync.currentChannelId) {
@@ -407,7 +407,7 @@ async function updateFYIDiv(domElements) {
 }
 
 // Responsible for all DOM elements that need a reference to the current channel
-export async function updateDomElementsDependentOnChannel(domElements, configSync) {
+export async function updateDomElementsDependentOnChannel(domElements) {
 	// ----- Custom options per channel: Channel name and description -----
 	domElements.channelCustomOptionsHeader.innerText = `Channel Settings: ${configSync.currentChannelName}`;
 
@@ -422,11 +422,11 @@ async function updateChannelSettingsDropdownMenu(domElements, configSync) {
 	// ----- Custom options per channel: Dropdown menu -----
 	// Set the dropdown menu to the active option chosen by the user
 	// The default value is "allVideosOption"
-	domElements.channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "allVideosOption";
-	domElements.channelCustomOptionsDropdown.style.width = domElements.channelCustomOptionsDropdown.options[domElements.channelCustomOptionsDropdown.selectedIndex].getAttribute("option-width");
-	domElements.channelCustomOptionsDropdown.title = domElements.channelCustomOptionsDropdown.options[domElements.channelCustomOptionsDropdown.selectedIndex].title;
+	channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "allVideosOption";
+	channelCustomOptionsDropdown.style.width = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].getAttribute("option-width");
+	channelCustomOptionsDropdown.title = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].title;
 
-	switch (domElements.channelCustomOptionsDropdown.value) {
+	switch (channelCustomOptionsDropdown.value) {
 		case "allVideosOption":
 			// Hide all inputs
 			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");

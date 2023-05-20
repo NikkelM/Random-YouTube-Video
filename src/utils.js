@@ -110,8 +110,8 @@ export async function getUserQuotaRemainingToday(configSync) {
 	if (configSync.userQuotaResetTime < Date.now()) {
 		configSync.userQuotaRemainingToday = 200;
 		configSync.userQuotaResetTime = new Date(new Date().setHours(24, 0, 0, 0)).getTime();
-		await setSyncStorageValue("userQuotaRemainingToday", configSync.userQuotaRemainingToday);
-		await setSyncStorageValue("userQuotaResetTime", configSync.userQuotaResetTime);
+		configSync = await setSyncStorageValue("userQuotaRemainingToday", configSync.userQuotaRemainingToday, configSync);
+		configSync = await setSyncStorageValue("userQuotaResetTime", configSync.userQuotaResetTime, configSync);
 	}
 	return configSync.userQuotaRemainingToday;
 }
