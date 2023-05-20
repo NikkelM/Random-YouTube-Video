@@ -1,12 +1,12 @@
 // This file contains helper functions for the popup
 import { getLength, fetchConfigSync, setSyncStorageValue, } from "../../utils.js";
-import { updateFYIDiv } from "../htmlUtils.js";
+import { updateFYIDiv } from "./domElements.js";
 
 // ----- Dependency management -----
 
 let configSync = await fetchConfigSync();
 
-export async function manageDependents(domElements, parent, value, configSync) {
+export async function manageDependents(domElements, parent, value) {
 	switch (parent) {
 		// Custom API key: Option toggle
 		case domElements.useCustomApiKeyOptionToggle:
@@ -24,19 +24,19 @@ export async function manageDependents(domElements, parent, value, configSync) {
 					domElements.customApiKeyHowToGetDiv.classList.add("hidden");
 				}
 
-				manageDbOptOutOption(domElements, configSync);
+				manageDbOptOutOption(domElements);
 			} else {
 				// The user must share data with the database
 				domElements.dbSharingOptionToggle.checked = true;
 				configSync.databaseSharingEnabledOption = true;
 				configSync = await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
 
-				manageDbOptOutOption(domElements, configSync);
+				manageDbOptOutOption(domElements);
 
 				// Hide input field for custom API key
 				domElements.customApiKeyInputDiv.classList.add("hidden");
 			}
-			updateFYIDiv(domElements, configSync);
+			updateFYIDiv(domElements);
 			break;
 
 		case domElements.customApiKeySubmitButton:
@@ -49,7 +49,7 @@ export async function manageDependents(domElements, parent, value, configSync) {
 
 			// This is called after validation of a provided API key
 			// Depending on whether or not it is valid, we need to update the FYI div
-			updateFYIDiv(domElements, configSync);
+			updateFYIDiv(domElements);
 			break;
 
 		case domElements.shuffleOpenInNewTabOptionToggle:
@@ -93,7 +93,7 @@ async function checkDbOptOutOptionEligibility(configSync) {
 	return (configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey && !defaultAPIKeys.includes(configSync.customYoutubeApiKey));
 }
 
-async function manageDbOptOutOption(domElements, configSync) {
+export async function manageDbOptOutOption(domElements) {
 	// If useCustomApiKeyOption is not checked, the user must share data with the database
 	if (await checkDbOptOutOptionEligibility(configSync)) {
 		domElements.dbSharingOptionToggle.parentElement.classList.remove("disabled");

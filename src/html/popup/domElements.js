@@ -111,7 +111,7 @@ export async function setDomElementValuesFromConfig(domElements) {
 
 	// ----- Shuffling: Reuse tab option toggle -----
 	// If this option is enabled depends on the state of the shuffleOpenInNewTabOptionToggle
-	manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, configSync.shuffleOpenInNewTabOption, configSync);
+	manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, configSync.shuffleOpenInNewTabOption);
 
 	// ----- Shuffling: Ignore shorts option toggle -----
 	domElements.shuffleIgnoreShortsOptionToggle.checked = configSync.shuffleIgnoreShortsOption;
@@ -164,7 +164,7 @@ export async function setDomElemenEventListeners(domElements) {
 		configSync.useCustomApiKeyOption = this.checked;
 		configSync = await setSyncStorageValue("useCustomApiKeyOption", this.checked, configSync);
 
-		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked, configSync);
+		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked);
 	});
 
 	// Database sharing: Option toggle
@@ -172,7 +172,7 @@ export async function setDomElemenEventListeners(domElements) {
 		configSync.databaseSharingEnabledOption = this.checked;
 		configSync = await setSyncStorageValue("databaseSharingEnabledOption", this.checked, configSync);
 
-		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked, configSync);
+		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked);
 	});
 
 	// Custom API key: Input
@@ -196,9 +196,9 @@ export async function setDomElemenEventListeners(domElements) {
 			domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 		}
 
-		manageDbOptOutOption(domElements, configSync);
+		manageDbOptOutOption(domElements);
 
-		manageDependents(domElements, domElements.customApiKeySubmitButton, null, configSync);
+		manageDependents(domElements, domElements.customApiKeySubmitButton, null);
 	});
 
 	// Shuffling: Open in new tab option toggle
@@ -206,7 +206,7 @@ export async function setDomElemenEventListeners(domElements) {
 		configSync.shuffleOpenInNewTabOption = this.checked;
 		configSync = await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked, configSync);
 
-		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked, configSync);
+		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked);
 	});
 
 	// Shuffling: Reuse tab option toggle
@@ -214,7 +214,7 @@ export async function setDomElemenEventListeners(domElements) {
 		configSync.shuffleReUseNewTabOption = this.checked;
 		configSync = await setSyncStorageValue("shuffleReUseNewTabOption", this.checked, configSync);
 
-		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked, configSync);
+		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked);
 	});
 
 	// Shuffling: Ignore shorts option toggle
@@ -222,7 +222,7 @@ export async function setDomElemenEventListeners(domElements) {
 		configSync.shuffleIgnoreShortsOption = this.checked;
 		configSync = await setSyncStorageValue("shuffleIgnoreShortsOption", this.checked, configSync);
 
-		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionToggle, this.checked, configSync);
+		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionToggle, this.checked);
 	});
 
 	// Shuffling: Open as playlist option toggle
@@ -230,7 +230,7 @@ export async function setDomElemenEventListeners(domElements) {
 		configSync.shuffleOpenAsPlaylistOption = this.checked;
 		configSync = await setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked, configSync);
 
-		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked, configSync);
+		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
 	});
 
 	// Shuffling: Number of videos in playlist input
@@ -259,7 +259,7 @@ export async function setDomElemenEventListeners(domElements) {
 
 		configSync = await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value), configSync);
 
-		manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value, configSync);
+		manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value);
 	});
 
 	// Custom options per channel: Dropdown menu
@@ -272,7 +272,7 @@ export async function setDomElemenEventListeners(domElements) {
 
 		updateChannelSettingsDropdownMenu(domElements, configSync);
 
-		manageDependents(domElements, domElements.channelCustomOptionsDropdown, this.value, configSync);
+		manageDependents(domElements, domElements.channelCustomOptionsDropdown, this.value);
 	});
 
 	// Custom options per channel: Dropdown menu: Date input
@@ -298,7 +298,7 @@ export async function setDomElemenEventListeners(domElements) {
 			configSync = await removeChannelSetting(configSync.currentChannelId, "dateValue", configSync);
 		}
 
-		manageDependents(domElements, domElements.channelCustomOptionsDateOptionInput, this.value, configSync);
+		manageDependents(domElements, domElements.channelCustomOptionsDateOptionInput, this.value);
 	});
 
 	// Custom options per channel: Dropdown menu: Youtube Video Id input
@@ -328,7 +328,7 @@ export async function setDomElemenEventListeners(domElements) {
 			}, 1500);
 		}
 
-		manageDependents(domElements, domElements.channelCustomOptionsVideoIdOptionInput, this.value, configSync);
+		manageDependents(domElements, domElements.channelCustomOptionsVideoIdOptionInput, this.value);
 	});
 
 	// Custom options per channel: Dropdown menu: Percentage input
@@ -365,7 +365,7 @@ export async function setDomElemenEventListeners(domElements) {
 			configSync = await removeChannelSetting(configSync.currentChannelId, "percentageValue", configSync);
 		}
 
-		manageDependents(domElements, domElements.channelCustomOptionsPercentageOptionInput, this.value, configSync);
+		manageDependents(domElements, domElements.channelCustomOptionsPercentageOptionInput, this.value);
 	});
 
 	// Popup shuffle button
@@ -384,7 +384,7 @@ export async function setDomElemenEventListeners(domElements) {
 	});
 }
 
-async function updateFYIDiv(domElements) {
+export async function updateFYIDiv(domElements) {
 	// ----- FYI: Number of shuffled videos text -----
 	// Use toLocaleString() to add commas/periods to large numbers
 	const numShuffledVideosTotal = configSync.numShuffledVideosTotal.toLocaleString();
