@@ -39,19 +39,14 @@ module.exports = {
 		extensions: ['.ts', '.js'],
 	},
 	output: {
-		filename: '[name].js',
 		path: path.resolve(__dirname, 'dist'),
 		clean: true,
 	},
 	plugins: [
-		new DotenvPlugin(),
 		new ESLintPlugin({
 			extensions: ['js', 'ts'],
 			overrideConfigFile: path.resolve(__dirname, '.eslintrc'),
 		}),
-		// new MiniCssExtractPlugin({
-		//   filename: 'styles/[name].css',
-		// }),
 		new CopyPlugin({
 			patterns: [{ from: 'static' }],
 		}),

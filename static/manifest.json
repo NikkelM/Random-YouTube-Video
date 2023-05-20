@@ -1,5 +1,5 @@
 {
-	"name": "Random YouTube Video - Webpack",
+	"name": "Random YouTube Video",
 	"description": "Play a random video uploaded on the current YouTube channel.",
 	"version": "2.0.0",
 	"manifest_version": 3,
@@ -22,7 +22,6 @@
 		"tabs"
 	],
 	"action": {
-		"default_title": "Random YouTube Video",
 		"default_popup": "html/popup.html",
 		"default_icon": {
 			"16": "icons/icon-16-red.png",
