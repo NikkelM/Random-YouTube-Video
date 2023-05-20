@@ -7,7 +7,7 @@ import { focusOrOpenTab } from "../htmlUtils.js";
 
 // Get relevant DOM elements
 export function getDomElements() {
-	/*global customApiKeyInputDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv*/
+	/*global customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv*/
 	/*eslint no-undef: "error"*/
 	return {
 		// Body element
@@ -21,7 +21,7 @@ export function getDomElements() {
 		customApiKeyInputField: customApiKeyInputDiv.children.namedItem("customApiKeyInputField"),
 		customApiKeySubmitButton: customApiKeyInputDiv.children.namedItem("customApiKeySubmitButton"),
 		customApiKeyInputInfoDiv: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoDiv"),
-		customApiKeyInputInfoText: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoText"),
+		customApiKeyInputInfoText: customApiKeyInputInfoDiv.children.namedItem("customApiKeyInputInfoText"),
 		customApiKeyHowToGetDiv: document.getElementById("customApiKeyHowToGetDiv"),
 
 		// Database sharing: Option toggle
