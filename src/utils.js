@@ -32,23 +32,6 @@ export function isVideoUrl(url) {
 	return urlParts[3].startsWith("watch?v=");
 }
 
-// Loads a JSON file from a URL
-export function loadJsonFile(jsonFileUrl) {
-	return new Promise((resolve, reject) => {
-		const xhr = new XMLHttpRequest();
-		xhr.open('GET', jsonFileUrl, true);
-		xhr.responseType = 'json';
-		xhr.onload = function () {
-			if (xhr.status === 200) {
-				resolve(xhr.response);
-			} else {
-				reject(xhr.statusText);
-			}
-		};
-		xhr.send();
-	});
-}
-
 // ----- Small utilities -----
 
 // Waits for a certain amount of milliseconds

@@ -1,26 +1,16 @@
 // Shared utility functions for the various HTML pages' logic
-import { loadJsonFile } from "../utils.js";
+import { shufflingHints } from "../config.js";
 
 // ----- Shuffling Hints -----
-let shufflingHintJsonData = null;
-
-async function initShufflingHints() {
-	const shufflingHintJsonUrl = chrome.runtime.getURL('data/shufflingHints.json');
-	shufflingHintJsonData = await loadJsonFile(shufflingHintJsonUrl);
-}
 
 export async function displayShufflingHint(displayElement, currentHintIndex = null) {
-	if (shufflingHintJsonData === null) {
-		await initShufflingHints();
-	}
-
 	// Choose a (new) random hint from the JSON file and display it
 	let randomHintIndex = currentHintIndex;
 	while (randomHintIndex === currentHintIndex) {
-		randomHintIndex = Math.floor(Math.random() * shufflingHintJsonData.length);
+		randomHintIndex = Math.floor(Math.random() * shufflingHints.length);
 	}
 
-	displayElement.innerText = shufflingHintJsonData[randomHintIndex];
+	displayElement.innerText = shufflingHints[randomHintIndex];
 
 	return randomHintIndex;
 }
