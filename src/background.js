@@ -2,23 +2,6 @@
 // Handles communication between the extension and the content script as well as firebase
 import { configSync, setSyncStorageValue } from "./utils.js";
 
-// rerouteConsole();
-// let log = console.log;
-
-// console.log = function () {
-// 	var args = Array.from(arguments);
-// 	args.unshift("[youtube-random-video]: ");
-// 	log.apply(console, args);
-// }
-
-// let error = console.error;
-
-// console.error = function () {
-// 	var args = Array.from(arguments);
-// 	args.unshift("[youtube-random-video]: ");
-// 	error.apply(console, args);
-// }
-
 // ---------- Initialization/Chrome event listeners ----------
 
 // On Chrome startup, we make sure we are not using too much local storage
@@ -222,11 +205,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		case "getDefaultAPIKeys":
 			getAPIKey(true, null).then(sendResponse);
 			break;
-		// A new configSync should be set
-		case "newConfigSync":
-			configSync = request.data;
-			sendResponse("New configSync set.");
-			break;
 		case "getCurrentTabId":
 			getCurrentTabId().then(sendResponse);
 			break;
@@ -247,7 +225,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // ---------- Firebase ----------
 
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, child, get } from 'firebase/database';
+import { getDatabase, ref, child, push, update, set, get } from 'firebase/database';
 
 const firebaseConfig = {
 	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
@@ -266,17 +244,17 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 	if (overwriteVideos) {
 		console.log("Setting playlistInfo in the database...");
 		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested within the playlist
-		db.ref(playlistId).update(playlistInfo);
+		update(ref(db, playlistId), playlistInfo);
 	} else {
 		console.log("Updating playlistInfo in the database...");
 		// Contains all properties except the videos
 		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => key !== "videos"));
 
 		// Upload the 'metadata'
-		db.ref(playlistId).update(playlistInfoWithoutVideos);
+		update(ref(db, playlistId), playlistInfoWithoutVideos);
 
-		// Update the videos separately to not overwrite the existing videos
-		db.ref(playlistId + "/videos").update(playlistInfo.videos);
+		// Update the videos separately to not overwrite existing videos
+		update(ref(db, playlistId + "/videos"), playlistInfo.videos);
 	}
 
 	return "PlaylistInfo was sent to database.";
