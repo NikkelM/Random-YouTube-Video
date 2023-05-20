@@ -21,7 +21,7 @@ export function getDomElements() {
 		customApiKeyInputField: customApiKeyInputDiv.children.namedItem("customApiKeyInputField"),
 		customApiKeySubmitButton: customApiKeyInputDiv.children.namedItem("customApiKeySubmitButton"),
 		customApiKeyInputInfoDiv: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoDiv"),
-		customApiKeyInputInfoText: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoDiv").children.namedItem("customApiKeyInputInfoText"),
+		customApiKeyInputInfoText: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoText"),
 		customApiKeyHowToGetDiv: document.getElementById("customApiKeyHowToGetDiv"),
 
 		// Database sharing: Option toggle
