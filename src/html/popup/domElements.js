@@ -7,6 +7,8 @@ import { focusOrOpenTab } from "../htmlUtils.js";
 
 // Get relevant DOM elements
 export function getDomElements() {
+	/*global customApiKeyInputDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv*/
+	/*eslint no-undef: "error"*/
 	return {
 		// Body element
 		body: document.body,
@@ -16,10 +18,10 @@ export function getDomElements() {
 		useCustomApiKeyOptionToggle: document.getElementById("useCustomApiKeyOptionToggle"),
 		// Custom API key: Input
 		customApiKeyInputDiv: document.getElementById("customApiKeyInputDiv"),
-		customApiKeyInputField: document.getElementById("customApiKeyInputDiv").children.namedItem("customApiKeyInputField"),
-		customApiKeySubmitButton: document.getElementById("customApiKeyInputDiv").children.namedItem("customApiKeySubmitButton"),
-		customApiKeyInputInfoDiv: document.getElementById("customApiKeyInputDiv").children.namedItem("customApiKeyInputInfoDiv"),
-		customApiKeyInputInfoText: document.getElementById("customApiKeyInputDiv").children.namedItem("customApiKeyInputInfoDiv").children.namedItem("customApiKeyInputInfoText"),
+		customApiKeyInputField: customApiKeyInputDiv.children.namedItem("customApiKeyInputField"),
+		customApiKeySubmitButton: customApiKeyInputDiv.children.namedItem("customApiKeySubmitButton"),
+		customApiKeyInputInfoDiv: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoDiv"),
+		customApiKeyInputInfoText: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoDiv").children.namedItem("customApiKeyInputInfoText"),
 		customApiKeyHowToGetDiv: document.getElementById("customApiKeyHowToGetDiv"),
 
 		// Database sharing: Option toggle
@@ -35,26 +37,26 @@ export function getDomElements() {
 		// Shuffling: Number of videos in playlist div
 		shuffleNumVideosInPlaylistDiv: document.getElementById("shuffleNumVideosInPlaylistDiv"),
 		// Shuffling: Number of videos in playlist input
-		shuffleNumVideosInPlaylistInput: document.getElementById("shuffleNumVideosInPlaylistDiv").children.namedItem("shuffleNumVideosInPlaylistInput"),
+		shuffleNumVideosInPlaylistInput: shuffleNumVideosInPlaylistDiv.children.namedItem("shuffleNumVideosInPlaylistInput"),
 
 		// PER CHANNEL SETTINGS
 		// Custom options per channel div
 		channelCustomOptionsDiv: document.getElementById("channelCustomOptionsDiv"),
 		// Custom options per channel: Channel name and description
-		channelCustomOptionsHeader: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsHeader"),
+		channelCustomOptionsHeader: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsHeader"),
 		// Custom options per channel: Dropdown menu Div (only for reference below)
-		channelCustomOptionsDropdownDiv: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsDropdownDiv"),
+		channelCustomOptionsDropdownDiv: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsDropdownDiv"),
 		// Dropdown menu div: Dropdown menu
-		channelCustomOptionsDropdown: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsDropdownDiv").children.namedItem("channelCustomOptionsDropdown"),
+		channelCustomOptionsDropdown: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsDropdown"),
 		// ----- Inputs -----
 		// Dropdown menu div: Date input
-		channelCustomOptionsDateOptionInput: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsDropdownDiv").children.namedItem("channelCustomOptionsDateOptionInput"),
+		channelCustomOptionsDateOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsDateOptionInput"),
 		// Dropdown menu div: YouTube Video ID input
-		channelCustomOptionsVideoIdOptionInput: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsDropdownDiv").children.namedItem("channelCustomOptionsVideoIdOptionInput"),
+		channelCustomOptionsVideoIdOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsVideoIdOptionInput"),
 		// Dropdown menu div: Percentage input
-		channelCustomOptionsPercentageOptionInput: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsDropdownDiv").children.namedItem("channelCustomOptionsPercentageOptionInput"),
+		channelCustomOptionsPercentageOptionInput: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsPercentageOptionInput"),
 		// Dropdown menu div: Percentage input p for % sign
-		channelCustomOptionsPercentageOptionP: document.getElementById("channelCustomOptionsDiv").children.namedItem("channelCustomOptionsDropdownDiv").children.namedItem("channelCustomOptionsPercentageOptionP"),
+		channelCustomOptionsPercentageOptionP: channelCustomOptionsDropdownDiv.children.namedItem("channelCustomOptionsPercentageOptionP"),
 
 		// Popup shuffle button
 		popupShuffleButton: document.getElementById("popupShuffleButton"),
@@ -63,11 +65,11 @@ export function getDomElements() {
 		// FYI div
 		forYourInformationDiv: document.getElementById("forYourInformationDiv"),
 		// FYI: Number of shuffled videos text
-		numberOfShuffledVideosText: document.getElementById("forYourInformationDiv").children.namedItem("numberOfShuffledVideosText"),
+		numberOfShuffledVideosText: forYourInformationDiv.children.namedItem("numberOfShuffledVideosText"),
 		// FYI: Daily quota notice div
-		dailyQuotaNoticeDiv: document.getElementById("forYourInformationDiv").children.namedItem("dailyQuotaNoticeDiv"),
+		dailyQuotaNoticeDiv: forYourInformationDiv.children.namedItem("dailyQuotaNoticeDiv"),
 		// Daily quota notice: Text
-		dailyQuotaNoticeText: document.getElementById("forYourInformationDiv").children.namedItem("dailyQuotaNoticeDiv").children.namedItem("dailyQuotaNoticeText"),
+		dailyQuotaNoticeText: forYourInformationDiv.children.namedItem("dailyQuotaNoticeDiv").children.namedItem("dailyQuotaNoticeText"),
 
 		// FOOTER
 		// View changelog button
