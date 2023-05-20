@@ -3,7 +3,7 @@
 export let shuffleButton = null;
 export let shuffleButtonTextElement = null;
 
-export function buildShuffleButton(pageType, channelId, shuffleVideos) {
+export function buildShuffleButton(pageType, channelId, clickHandler) {
 	let buttonDivID = "youtube-random-video-shuffle-button";
 	let buttonDivExtraStyle = "";
 	let buttonDivOwner = null;
@@ -78,7 +78,7 @@ export function buildShuffleButton(pageType, channelId, shuffleVideos) {
 		var shuffleButton = buttonDivOwner.children.namedItem(buttonDivID);
 		if (shuffleButton.children.length > 0) {
 			me.disconnect(); // Stop observing
-			finalizeButton(pageType, channelId, shuffleVideos);
+			finalizeButton(pageType, channelId, clickHandler);
 			return;
 		}
 	});
@@ -90,7 +90,7 @@ export function buildShuffleButton(pageType, channelId, shuffleVideos) {
 	});
 }
 
-function finalizeButton(pageType, channelId, shuffleVideos) {
+function finalizeButton(pageType, channelId, clickHandler) {
 	let buttonDivID = "youtube-random-video-shuffle-button";
 	let buttonDivOwner = null;
 
@@ -150,5 +150,5 @@ function finalizeButton(pageType, channelId, shuffleVideos) {
 	shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[1].children[0];
 
 	// Add the event listener that shuffles the videos to the button
-	shuffleButton.addEventListener("click", shuffleVideos);
+	shuffleButton.addEventListener("click", clickHandler);
 }
