@@ -656,7 +656,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		chosenVideos.push(randomVideo);
 		videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 	}
-	console.log(`${chosenVideos.length} random videos have been chosen: [${chosenVideos}]`);
+	console.log(`${chosenVideos.length} random video${chosenVideos.length > 1 ? "s have" : " has"} been chosen: [${chosenVideos}]`);
 
 	return { chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
 }
