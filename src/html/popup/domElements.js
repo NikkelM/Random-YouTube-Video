@@ -3,8 +3,7 @@ import { configSync, delay, setSyncStorageValue, getUserQuotaRemainingToday } fr
 import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting } from "./popupUtils.js";
 import { focusOrOpenTab } from "../htmlUtils.js";
 
-// ---------- Setup ----------
-
+// ---------- Public ----------
 // Get relevant DOM elements
 export function getDomElements() {
 	/*global customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv*/
@@ -77,11 +76,10 @@ export function getDomElements() {
 	}
 }
 
-// Set default values from config
-// The configSync contains all values the various sliders and text inputs should have
+// Set default values from configSync == user preferences
 export async function setDomElementValuesFromConfig(domElements) {
 	// Disable animations to prevent them from playing when setting the values
-	toggleAnimations(domElements, false);
+	toggleAnimations(domElements);
 
 	// ----- Custom API key: Option toggle -----
 	// If this option is checked is only dependent on the value in sync storage
@@ -144,17 +142,7 @@ export async function setDomElementValuesFromConfig(domElements) {
 	}
 
 	// Enable animations
-	toggleAnimations(domElements, true);
-}
-
-async function toggleAnimations(domElements, enable) {
-	if (enable) {
-		// Small delay to make sure running animations cannot be seen
-		await delay(100);
-		domElements.body.classList.remove("no-transitions");
-	} else {
-		domElements.body.classList.add("no-transitions");
-	}
+	toggleAnimations(domElements);
 }
 
 // Set event listeners for DOM elements
@@ -363,6 +351,7 @@ export async function setDomElemenEventListeners(domElements) {
 	});
 }
 
+// Contains information such as number of shuffled videos so far, daily quota notice, etc.
 export async function updateFYIDiv(domElements) {
 	// ----- FYI: Number of shuffled videos text -----
 	// Use toLocaleString() to add commas/periods to large numbers
@@ -395,6 +384,17 @@ export async function updateDomElementsDependentOnChannel(domElements) {
 
 	// ----- Popup shuffle button -----
 	domElements.popupShuffleButton.innerText = `Shuffle from: ${configSync.currentChannelName}`;
+}
+
+// ---------- Private ----------
+async function toggleAnimations(domElements) {
+	if (domElements.body.classList.contains("no-transitions")) {
+		// Small delay to make sure running animations cannot be seen
+		await delay(100);
+		domElements.body.classList.remove("no-transitions");
+	} else {
+		domElements.body.classList.add("no-transitions");
+	}
 }
 
 async function updateChannelSettingsDropdownMenu(domElements) {
