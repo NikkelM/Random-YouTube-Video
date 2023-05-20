@@ -1,7 +1,4 @@
-// import { fetchConfigSync } from "../../utils.js";
 import { getDomElements, setDomElementValuesFromConfig, setDomElemenEventListeners, updateDomElementsDependentOnChannel } from "./domElements.js";
-
-// let configSync = await fetchConfigSync();
 
 // Get all relevant DOM elements
 const domElements = getDomElements();
@@ -14,8 +11,6 @@ await setDomElemenEventListeners(domElements);
 chrome.runtime.onMessage.addListener(async function (request, sender, sendResponse) {
 	switch (request.command) {
 		case "updateCurrentChannel":
-			// The currentChannelId and currentChannelName have been updated in the configSync
-			// configSync = await fetchConfigSync();
 			// We need to update the relevant DOM elements with the new channel name
 			updateDomElementsDependentOnChannel(domElements);
 			break;

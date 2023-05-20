@@ -1,10 +1,7 @@
 // Main file that is run when the user enters a youtube.com page
-
-import { isVideoUrl, fetchConfigSync, setSyncStorageValue, setDOMTextWithDelay, RandomYoutubeVideoError } from "./utils.js";
+import { configSync, isVideoUrl, setSyncStorageValue, setDOMTextWithDelay, RandomYoutubeVideoError } from "./utils.js";
 import { buildShuffleButton, shuffleButton, shuffleButtonTextElement } from "./buildShuffleButton.js";
 import {chooseRandomVideo } from "./shuffleVideo.js";
-
-let configSync = await fetchConfigSync();
 
 // ---------- Initialization ----------
 
@@ -74,7 +71,8 @@ async function startDOMObserver(event) {
 async function channelDetectedAction(pageType, channelId, channelName) {
 	// We can get an error here if the extension context was invalidated and the user navigates without reloading the page
 	try {
-		configSync = await fetchConfigSync();
+		// TODO
+		console.log("Are we still connected to the background worker?");
 	} catch (error) {
 		// If the extension's background worker was reloaded, we need to reload the page to re-connect to the background worker
 		if (error.message === 'Extension context invalidated.') {
@@ -89,9 +87,9 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 
 	// Save the current channelID and channelName in the extension's storage to be accessible by the popup
 	// configSync.currentChannelId = channelId;
-	configSync = await setSyncStorageValue("currentChannelId", channelId, configSync);
+	await setSyncStorageValue("currentChannelId", channelId);
 	// configSync.currentChannelName = channelName;
-	configSync = await setSyncStorageValue("currentChannelName", channelName, configSync);
+	await setSyncStorageValue("currentChannelName", channelName);
 
 	// Update the channel name in the popup in case it was opened while the navigation was still going on
 	// If we don't do this, the configSync and displayed value might diverge
@@ -105,9 +103,6 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 // Called when the randomize-button is clicked
 async function shuffleVideos() {
 	try {
-		// Make sure we have the latest config
-		configSync = await fetchConfigSync();
-
 		// Get the saved channelId from the button
 		const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerText;
 

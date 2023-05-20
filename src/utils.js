@@ -1,24 +1,24 @@
 // Utility functions
 
 // ---------- Console extension ----------
-export function rerouteConsole() {
-	// Reroute console.log and console.error
-	let log = console.log;
+// export function rerouteConsole() {
+// 	// Reroute console.log and console.error
+// 	let log = console.log;
 
-	console.log = function () {
-		var args = Array.from(arguments);
-		args.unshift("[youtube-random-video]: ");
-		log.apply(console, args);
-	}
+// 	console.log = function () {
+// 		var args = Array.from(arguments);
+// 		args.unshift("[youtube-random-video]: ");
+// 		log.apply(console, args);
+// 	}
 
-	let error = console.error;
+// 	let error = console.error;
 
-	console.error = function () {
-		var args = Array.from(arguments);
-		args.unshift("[youtube-random-video]: ");
-		error.apply(console, args);
-	}
-}
+// 	console.error = function () {
+// 		var args = Array.from(arguments);
+// 		args.unshift("[youtube-random-video]: ");
+// 		error.apply(console, args);
+// 	}
+// }
 
 // ---------- Utility functions ----------
 
@@ -83,7 +83,19 @@ export function addHours(date, hours) {
 }
 
 // ----- Storage -----
-export async function fetchConfigSync() {
+export let configSync = await fetchConfigSync();
+
+chrome.storage.onChanged.addListener(async function (changes, namespace) {
+	// Only do stuff if the change was made to sync storage
+	if (namespace !== "sync") {
+		return;
+	}
+	for (const [key, value] of Object.entries(changes)) {
+		configSync[key] = value.newValue;
+	}
+});
+
+async function fetchConfigSync() {
 	let configSync = await chrome.storage.sync.get().then((result) => {
 		return result;
 	});
@@ -92,16 +104,10 @@ export async function fetchConfigSync() {
 }
 
 // This function also exists in background.js
-export async function setSyncStorageValue(key, value, configSync) {
+export async function setSyncStorageValue(key, value) {
 	configSync[key] = value;
 
 	await chrome.storage.sync.set({ [key]: value });
-
-	// Refresh the config in the background script. Send it like this to avoid a request to the chrome storage API
-	// TODO: Is this still necessary?
-	// chrome.runtime.sendMessage({ command: "newConfigSync", data: configSync });
-
-	return configSync;
 }
 
 // Returns the number of requests the user can still make to the Youtube API today
@@ -110,8 +116,8 @@ export async function getUserQuotaRemainingToday(configSync) {
 	if (configSync.userQuotaResetTime < Date.now()) {
 		configSync.userQuotaRemainingToday = 200;
 		configSync.userQuotaResetTime = new Date(new Date().setHours(24, 0, 0, 0)).getTime();
-		configSync = await setSyncStorageValue("userQuotaRemainingToday", configSync.userQuotaRemainingToday, configSync);
-		configSync = await setSyncStorageValue("userQuotaResetTime", configSync.userQuotaResetTime, configSync);
+		await setSyncStorageValue("userQuotaRemainingToday", configSync.userQuotaRemainingToday);
+		await setSyncStorageValue("userQuotaResetTime", configSync.userQuotaResetTime);
 	}
 	return configSync.userQuotaRemainingToday;
 }

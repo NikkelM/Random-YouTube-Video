@@ -1,10 +1,8 @@
 // This file contains helper functions for the popup
-import { getLength, fetchConfigSync, setSyncStorageValue, } from "../../utils.js";
+import { configSync, getLength, setSyncStorageValue, } from "../../utils.js";
 import { updateFYIDiv } from "./domElements.js";
 
 // ----- Dependency management -----
-
-let configSync = await fetchConfigSync();
 
 export async function manageDependents(domElements, parent, value) {
 	switch (parent) {
@@ -29,7 +27,7 @@ export async function manageDependents(domElements, parent, value) {
 				// The user must share data with the database
 				domElements.dbSharingOptionToggle.checked = true;
 				configSync.databaseSharingEnabledOption = true;
-				configSync = await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
 
 				manageDbOptOutOption(domElements);
 
@@ -61,7 +59,7 @@ export async function manageDependents(domElements, parent, value) {
 			} else {
 				// If the open in a new tab option gets disabled, we also want to disable the reuse tab option to avoid confusion
 				domElements.shuffleReUseNewTabOptionToggle.checked = false;
-				configSync = await setSyncStorageValue("shuffleReUseNewTabOption", false, configSync);
+				await setSyncStorageValue("shuffleReUseNewTabOption", false);
 				domElements.shuffleReUseNewTabOptionToggle.parentElement.classList.add("disabled");
 			}
 			break;
@@ -104,7 +102,7 @@ export async function manageDbOptOutOption(domElements) {
 	// If the user may not opt out of database sharing but the latest record shows they would like to, make sure it's set correctly in sync storage
 	if (!(await checkDbOptOutOptionEligibility(configSync)) && !configSync.databaseSharingEnabledOption) {
 		configSync.databaseSharingEnabledOption = true;
-		configSync = await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
+		await setSyncStorageValue("databaseSharingEnabledOption", true);
 	}
 	domElements.dbSharingOptionToggle.checked = configSync.databaseSharingEnabledOption;
 }
@@ -144,20 +142,17 @@ export async function validateApiKey(customAPIKey, domElements) {
 	return true;
 }
 
-export async function setChannelSetting(channelId, setting, value, configSync) {
+export async function setChannelSetting(channelId, setting, value) {
 	let channelSettings = configSync.channelSettings;
 	if (!channelSettings[channelId]) {
 		channelSettings[channelId] = {};
 	}
 	channelSettings[channelId][setting] = value;
 
-	configSync.channelSettings = channelSettings;
-	configSync = await setSyncStorageValue("channelSettings", channelSettings, configSync);
-
-	return configSync;
+	await setSyncStorageValue("channelSettings", channelSettings);
 }
 
-export async function removeChannelSetting(channelId, setting, configSync) {
+export async function removeChannelSetting(channelId, setting) {
 	let channelSettings = configSync.channelSettings;
 	if (!channelSettings[channelId]) {
 		return;
@@ -169,8 +164,5 @@ export async function removeChannelSetting(channelId, setting, configSync) {
 		delete channelSettings[channelId];
 	}
 
-	configSync.channelSettings = channelSettings;
-	configSync = await setSyncStorageValue("channelSettings", channelSettings, configSync);
-
-	return configSync;
+	await setSyncStorageValue("channelSettings", channelSettings);
 }

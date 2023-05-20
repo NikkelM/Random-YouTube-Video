@@ -1,11 +1,9 @@
 // This file contains functions that are related to the DOM elements of the popup
-import { delay, fetchConfigSync, setSyncStorageValue, getUserQuotaRemainingToday } from "../../utils.js";
+import { configSync, delay, setSyncStorageValue, getUserQuotaRemainingToday } from "../../utils.js";
 import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting } from "./popupUtils.js";
 import { focusOrOpenTab } from "../htmlUtils.js";
 
 // ---------- Setup ----------
-
-let configSync = await fetchConfigSync();
 
 // Get relevant DOM elements
 export function getDomElements() {
@@ -162,7 +160,7 @@ export async function setDomElemenEventListeners(domElements) {
 	// Custom API key: Option toggle
 	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
 		configSync.useCustomApiKeyOption = this.checked;
-		configSync = await setSyncStorageValue("useCustomApiKeyOption", this.checked, configSync);
+		await setSyncStorageValue("useCustomApiKeyOption", this.checked);
 
 		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked);
 	});
@@ -170,7 +168,7 @@ export async function setDomElemenEventListeners(domElements) {
 	// Database sharing: Option toggle
 	domElements.dbSharingOptionToggle.addEventListener("change", async function () {
 		configSync.databaseSharingEnabledOption = this.checked;
-		configSync = await setSyncStorageValue("databaseSharingEnabledOption", this.checked, configSync);
+		await setSyncStorageValue("databaseSharingEnabledOption", this.checked);
 
 		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked);
 	});
@@ -182,12 +180,12 @@ export async function setDomElemenEventListeners(domElements) {
 
 		if (newAPIKey.length > 0 && await validateApiKey(newAPIKey, domElements)) {
 			configSync.customYoutubeApiKey = newAPIKey;
-			configSync = await setSyncStorageValue("customYoutubeApiKey", newAPIKey, configSync);
+			await setSyncStorageValue("customYoutubeApiKey", newAPIKey);
 		} else {
 			configSync.customYoutubeApiKey = null;
 			configSync.databaseSharingEnabledOption = true;
-			configSync = await setSyncStorageValue("customYoutubeApiKey", null, configSync);
-			configSync = await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
+			await setSyncStorageValue("customYoutubeApiKey", null);
+			await setSyncStorageValue("databaseSharingEnabledOption", true);
 			domElements.customApiKeyInputField.value = "";
 		}
 		// If the user removed the API key, show a message in the info div
@@ -204,15 +202,21 @@ export async function setDomElemenEventListeners(domElements) {
 	// Shuffling: Open in new tab option toggle
 	domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", async function () {
 		configSync.shuffleOpenInNewTabOption = this.checked;
-		configSync = await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked, configSync);
+		await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked);
 
 		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked);
 	});
 
 	// Shuffling: Reuse tab option toggle
 	domElements.shuffleReUseNewTabOptionToggle.addEventListener("change", async function () {
-		configSync.shuffleReUseNewTabOption = this.checked;
-		configSync = await setSyncStorageValue("shuffleReUseNewTabOption", this.checked, configSync);
+		// configSync.shuffleReUseNewTabOption = this.checked;
+		console.log("copy in dom")
+		const copy = Object.assign({}, configSync);
+		console.log(copy);
+		await setSyncStorageValue("shuffleReUseNewTabOption", this.checked);
+		console.log("copy2 in dom")
+		const copy2 = Object.assign({}, configSync);
+		console.log(copy2);
 
 		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked);
 	});
@@ -220,7 +224,7 @@ export async function setDomElemenEventListeners(domElements) {
 	// Shuffling: Ignore shorts option toggle
 	domElements.shuffleIgnoreShortsOptionToggle.addEventListener("change", async function () {
 		configSync.shuffleIgnoreShortsOption = this.checked;
-		configSync = await setSyncStorageValue("shuffleIgnoreShortsOption", this.checked, configSync);
+		await setSyncStorageValue("shuffleIgnoreShortsOption", this.checked);
 
 		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionToggle, this.checked);
 	});
@@ -228,7 +232,7 @@ export async function setDomElemenEventListeners(domElements) {
 	// Shuffling: Open as playlist option toggle
 	domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", async function () {
 		configSync.shuffleOpenAsPlaylistOption = this.checked;
-		configSync = await setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked, configSync);
+		await setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked);
 
 		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
 	});
@@ -257,18 +261,15 @@ export async function setDomElemenEventListeners(domElements) {
 			}, 1500);
 		}
 
-		configSync = await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value), configSync);
+		await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value));
 
 		manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value);
 	});
 
 	// Custom options per channel: Dropdown menu
 	domElements.channelCustomOptionsDropdown.addEventListener("change", async function () {
-		// Update the configSync in case the channel was changed after the event listener was added
-		configSync = await fetchConfigSync();
-
 		// Set the value in configSync to the currently selected option
-		configSync = await setChannelSetting(configSync.currentChannelId, "activeOption", this.value, configSync);
+		await setChannelSetting(configSync.currentChannelId, "activeOption", this.value);
 
 		updateChannelSettingsDropdownMenu(domElements, configSync);
 
@@ -277,9 +278,6 @@ export async function setDomElemenEventListeners(domElements) {
 
 	// Custom options per channel: Dropdown menu: Date input
 	domElements.channelCustomOptionsDateOptionInput.addEventListener("focusout", async function () {
-		// Update the configSync in case the channel was changed after the event listener was added
-		configSync = await fetchConfigSync();
-
 		// Make sure the date is valid. If it is not, set it to the previous value. If there is no previous value, set it to null
 		const selectedDate = new Date(this.value);
 		if (selectedDate > new Date()) {
@@ -293,9 +291,9 @@ export async function setDomElemenEventListeners(domElements) {
 
 		// Set the value in sync storage
 		if (this.value) {
-			configSync = await setChannelSetting(configSync.currentChannelId, "dateValue", this.value, configSync);
+			await setChannelSetting(configSync.currentChannelId, "dateValue", this.value);
 		} else {
-			configSync = await removeChannelSetting(configSync.currentChannelId, "dateValue", configSync);
+			await removeChannelSetting(configSync.currentChannelId, "dateValue");
 		}
 
 		manageDependents(domElements, domElements.channelCustomOptionsDateOptionInput, this.value);
@@ -303,18 +301,15 @@ export async function setDomElemenEventListeners(domElements) {
 
 	// Custom options per channel: Dropdown menu: Youtube Video Id input
 	domElements.channelCustomOptionsVideoIdOptionInput.addEventListener("focusout", async function () {
-		// Update the configSync in case the channel was changed after the event listener was added
-		configSync = await fetchConfigSync();
-
 		// If an ID was entered, make sure it is valid, i.e. consists of 11 characters
 		if (this.value.length === 11) {
 			// In case we previously had an invalid input, reset the placeholder
 			this.placeholder = "Enter Video ID";
 			// Set the value in sync storage
-			configSync = await setChannelSetting(configSync.currentChannelId, "videoIdValue", this.value, configSync);
+			await setChannelSetting(configSync.currentChannelId, "videoIdValue", this.value);
 		} else if (this.value === "") {
 			// If the input is empty, remove the value from sync storage
-			configSync = await removeChannelSetting(configSync.currentChannelId, "videoIdValue", configSync);
+			await removeChannelSetting(configSync.currentChannelId, "videoIdValue");
 		} else {
 			// Else, the input was invalid
 			this.value = configSync.channelSettings[configSync.currentChannelId].videoIdValue ?? "";
@@ -333,9 +328,6 @@ export async function setDomElemenEventListeners(domElements) {
 
 	// Custom options per channel: Dropdown menu: Percentage input
 	domElements.channelCustomOptionsPercentageOptionInput.addEventListener("focusout", async function () {
-		// Update the configSync in case the channel was changed after the event listener was added
-		configSync = await fetchConfigSync();
-
 		if (this.value === "") {
 			// Set the previous value if the input is empty, or set it to 100 if there is no previous value
 			this.value = configSync.channelSettings[configSync.currentChannelId]?.percentageValue ?? 100;
@@ -360,9 +352,9 @@ export async function setDomElemenEventListeners(domElements) {
 
 		// We only need to save the value if it's not the default of 100. If we have already saved a different one, we want to remove it
 		if (this.value != 100) {
-			configSync = await setChannelSetting(configSync.currentChannelId, "percentageValue", parseInt(this.value), configSync);
+			await setChannelSetting(configSync.currentChannelId, "percentageValue", parseInt(this.value));
 		} else {
-			configSync = await removeChannelSetting(configSync.currentChannelId, "percentageValue", configSync);
+			await removeChannelSetting(configSync.currentChannelId, "percentageValue");
 		}
 
 		manageDependents(domElements, domElements.channelCustomOptionsPercentageOptionInput, this.value);
@@ -377,7 +369,7 @@ export async function setDomElemenEventListeners(domElements) {
 
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
-		configSync = await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
+		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
 		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
 		// Close the popup
 		window.close();

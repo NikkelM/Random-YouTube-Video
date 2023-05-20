@@ -1,11 +1,9 @@
 // Contains logic for the "shufflingPage" that is opened when the user clicks the "Shuffle" button from the popup
-import { delay, fetchConfigSync, setSyncStorageValue } from "../utils.js";
+import { configSync, delay, setSyncStorageValue } from "../utils.js";
 import { displayShufflingHint, focusOrOpenTab } from "./htmlUtils.js";
 import { chooseRandomVideo } from "../shuffleVideo.js";
 
 // ---------- Setup ----------
-
-let configSync = await fetchConfigSync();
 
 // Open a port to the background script
 // By default, the port will cause the background script to reload when it is closed (== when this page is closed/URL changes)
@@ -52,7 +50,7 @@ async function setDomElemenEventListeners(domElements) {
 
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
-		configSync = await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
+		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
 		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
 	});
 }
@@ -74,8 +72,6 @@ let currentHint = await displayShufflingHint(domElements.shufflingHintP);
 // Called when the randomize-button from the popup is clicked
 async function shuffleButtonClicked() {
 	try {
-		configSync = await fetchConfigSync();
-
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
 
 		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
