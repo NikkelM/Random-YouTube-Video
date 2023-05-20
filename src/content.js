@@ -1,16 +1,16 @@
-// Main file that is run when the user enters a youtube.com page
+// Content script that is injected into YouTube pages
 import { configSync, isVideoUrl, setSyncStorageValue, setDOMTextWithDelay, RandomYoutubeVideoError } from "./utils.js";
 import { buildShuffleButton, shuffleButton, shuffleButtonTextElement } from "./buildShuffleButton.js";
 import { chooseRandomVideo } from "./shuffleVideo.js";
 
 // ---------- Initialization ----------
-
 // Load the font used for the "shuffle" icon
 // Do this before building the button to prevent a flash of unstyled text
 let iconFont = `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0">`;
 iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChild;
 document.head.appendChild(iconFont);
 
+// After every navigation event, we need to check if this page needs a 'Shuffle' button
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
 async function startDOMObserver(event) {
@@ -97,8 +97,7 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 }
 
 // ---------- Shuffle ----------
-
-// Called when the randomize-button is clicked
+// Called when the 'Shuffle' button is clicked
 async function shuffleVideos() {
 	try {
 		// Get the saved channelId from the button

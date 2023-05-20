@@ -1,5 +1,6 @@
-// Builds the shuffle-buttons that are used by the extension
+// Builds the 'Shuffle' buttons that are used by the extension
 
+// ----- Public -----
 export let shuffleButton = null;
 export let shuffleButtonTextElement = null;
 
@@ -90,6 +91,7 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 	});
 }
 
+// ----- Private -----
 function finalizeButton(pageType, channelId, clickHandler) {
 	let buttonDivID = "youtube-random-video-shuffle-button";
 	let buttonDivOwner = null;

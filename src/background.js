@@ -1,10 +1,9 @@
-// Background script for the extension, which is run ("started") on extension initialization
-// Handles communication between the extension and the content script as well as firebase
+// Background service worker for the extension, which is run ("started") on extension initialization
+// Handles communication between the extension and the content script as well as Firebase interactions
 import { configSync, setSyncStorageValue } from "./utils.js";
 import { configSyncDefaults } from "./config.js";
 
 // ---------- Initialization/Chrome event listeners ----------
-
 // On Chrome startup, we make sure we are not using too much local storage
 chrome.runtime.onStartup.addListener(async function () {
 	// If over 90% of the storage quota for playlists is used, remove playlists that have not been accessed in a long time
@@ -144,21 +143,21 @@ function reloadServiceWorker() {
 }
 
 // ---------- Message handler ----------
-
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	switch (request.command) {
+		// Simple connection test from the content script
 		case "connectionTest":
 			sendResponse("Connection to background script successful.");
 			break;
-		// Tries to get the playlist from Firebase
+		// Tries to get a playlist from Firebase
 		case "getPlaylistFromDB":
 			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
 			break;
-		// Updates (without overwriting videos) the playlist in Firebase 
+		// Updates (not overwriting videos) a playlist in Firebase 
 		case "updatePlaylistInfoInDB":
 			updatePlaylistInfoInDB(request.data.key, request.data.val, false).then(sendResponse);
 			break;
-		// Updates (with overwriting videos, as some were deleted and we do not grant 'delete' permissions) the playlist in Firebase
+		// Updates (overwriting videos) a playlist in Firebase
 		case "overwritePlaylistInfoInDB":
 			updatePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
 			break;
@@ -188,9 +187,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ---------- Firebase ----------
-
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, child, push, update, set, get } from 'firebase/database';
+import { getDatabase, ref, child, update, get } from 'firebase/database';
 
 const firebaseConfig = {
 	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
@@ -237,7 +235,6 @@ async function readDataOnce(key) {
 }
 
 // ---------- Helpers ----------
-
 async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 	// List of API keys that are stored in the database/locally
 	let availableAPIKeys = null;
@@ -263,7 +260,7 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 
 		// The API keys get scrambled and stored locally
 		availableAPIKeys = availableAPIKeys.map(key => rot13(key, true));
-		setLocalStorage("youtubeAPIKeys", availableAPIKeys);
+		setInLocalStorage("youtubeAPIKeys", availableAPIKeys);
 
 		console.log("API keys were fetched. Next check will be in one week.");
 		// Set the next time to check for API keys to one week from now
@@ -326,7 +323,6 @@ async function openVideoInTabWithId(tabId, videoUrl) {
 }
 
 // ---------- Local storage ----------
-
 async function getFromLocalStorage(key) {
 	return await chrome.storage.local.get([key]).then((result) => {
 		if (result[key]) {
@@ -336,7 +332,7 @@ async function getFromLocalStorage(key) {
 	});
 }
 
-async function setLocalStorage(key, value) {
+async function setInLocalStorage(key, value) {
 	await chrome.storage.local.set({ [key]: value });
 	return value;
 }

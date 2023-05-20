@@ -1,4 +1,4 @@
-// Handles everything concerning the shuffling of videos, including sending messages to the backend database and the YouTube API
+// Handles everything concerning the shuffling of videos, including fetching data from the YouTube API
 import {
 	configSync,
 	isEmpty,
@@ -14,6 +14,7 @@ import {
 // For cases in which the playlist in the database has the old Array format (before v1.0.0), we need to overwrite it
 let mustOverwriteDatabase = false;
 
+// --------------- Public ---------------
 // Chooses a random video uploaded on the current YouTube channel
 export async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
 	try {
@@ -144,8 +145,8 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 	}
 }
 
+// --------------- Private ---------------
 // ---------- Database ----------
-
 // Try to get the playlist from the database. If it does not exist, return an empty dictionary.
 async function tryGetPlaylistFromDB(playlistId) {
 	const msg = {
@@ -206,7 +207,6 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsP
 }
 
 // ---------- YouTube API ----------
-
 async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemainingToday, progressTextElement) {
 	// Get an API key
 	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyAtIndex);
@@ -487,7 +487,6 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 }
 
 // ---------- Utility ----------
-
 async function testVideoExistence(videoId) {
 	let response = await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`, {
 		method: "HEAD"
@@ -810,7 +809,6 @@ async function aprilFoolsJoke() {
 }
 
 // ---------- Local storage ----------
-
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
 async function tryGetPlaylistFromLocalStorage(playlistId) {
 	return await chrome.storage.local.get([playlistId]).then((result) => {

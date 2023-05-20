@@ -3,8 +3,7 @@ import { configSync, delay, setSyncStorageValue } from "../utils.js";
 import { displayShufflingHint, focusOrOpenTab } from "./htmlUtils.js";
 import { chooseRandomVideo } from "../shuffleVideo.js";
 
-// ---------- Setup ----------
-
+// ----- Setup -----
 // Open a port to the background script
 // By default, the port will cause the background script to reload when it is closed (== when this page is closed/URL changes)
 // However, if the shuffle completes successfully, this script will send a message to the port that will disconnect that listener
@@ -58,7 +57,6 @@ async function setDomElemenEventListeners(domElements) {
 await setDomElemenEventListeners(domElements);
 
 // ----- Main -----
-
 // If this page is open, it means the user has clicked the shuffle button
 shuffleButtonClicked();
 
@@ -66,7 +64,6 @@ shuffleButtonClicked();
 waitUntilShowingDivContents();
 
 // ----- Shuffling Hints -----
-
 let currentHint = await displayShufflingHint(domElements.shufflingHintP);
 
 // Called when the randomize-button from the popup is clicked

@@ -1,9 +1,65 @@
-// Contains logic for the "changelog" page
+// Contains logic for the "Changelog" page
 import { delay } from "../utils.js";
 import { displayShufflingHint } from "./htmlUtils.js";
 
+// ----- Setup -----
 const domElements = getDomElements();
+await buildShufflingHints();
 
+// --- Set headers ---
+const currentVersion = chrome.runtime.getManifest().version;
+domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
+domElements.whatsNewHeader.innerText = `What's new in v${currentVersion}:`;
+
+// --- Build dropdown menu ---
+let changelogText = await fetchChangelog(`v${currentVersion}`);
+
+const availableVersions = changelogText.match(/v\d+(\.\d+)+/g);
+try {
+	addVersionsToDropdown(availableVersions);
+} catch (error) {
+	domElements.genericErrorDiv.classList.remove("hidden");
+}
+
+// Change the displayed changelog to the chosen version
+domElements.chooseChangelogVersionDropdown.addEventListener("change", async function () {
+	await updateChangelog(this.value);
+});
+
+function addVersionsToDropdown(versions) {
+	// Add all versions to the dropdown menu
+	versions.forEach(version => {
+		const option = document.createElement("option");
+		option.value = version;
+		option.innerText = version;
+		domElements.chooseChangelogVersionDropdown.appendChild(option);
+	});
+}
+
+// --- Display most recent Changelog ---
+// Do this after adding the dropdown options, so that if there is no changelog for the current version, we know the most recent version that does have a changelog
+try {
+	await updateChangelog();
+} catch (error) {
+	domElements.genericErrorDiv.classList.remove("hidden");
+}
+// If this takes too long, display an error
+displayErrorAfterWaiting();
+
+async function fetchChangelog(forVersion = `v${currentVersion}`) {
+	// Get the current changelog from GitHub
+	let changelog = await fetch(`https://raw.githubusercontent.com/NikkelM/Random-YouTube-Video/${forVersion}/CHANGELOG.md`)
+		.then(response => response.text());
+
+	if (changelog === "404: Not Found") {
+		changelog = await fetch("https://raw.githubusercontent.com/NikkelM/Random-YouTube-Video/main/CHANGELOG.md")
+			.then(response => response.text());
+	}
+
+	return changelog;
+}
+
+// ---------- DOM ----------
 // Get all relevant DOM elements
 function getDomElements() {
 	return {
@@ -30,62 +86,8 @@ function getDomElements() {
 	}
 }
 
-const currentVersion = chrome.runtime.getManifest().version;
-domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
-domElements.whatsNewHeader.innerText = `What's new in v${currentVersion}:`;
-
-let changelogText = await fetchChangelog(`v${currentVersion}`);
-
-// ----- Dropdown menu -----
-const availableVersions = getVersions(changelogText);
-try {
-	addVersionsToDropdown(availableVersions);
-} catch (error) {
-	domElements.genericErrorDiv.classList.remove("hidden");
-}
-
-function getVersions(changelogText) {
-	const regex = /v\d+(\.\d+)+/g;
-	return changelogText.match(regex);
-}
-
-function addVersionsToDropdown(versions) {
-	// Add all versions to the dropdown menu
-	versions.forEach(version => {
-		const option = document.createElement("option");
-		option.value = version;
-		option.innerText = version;
-		domElements.chooseChangelogVersionDropdown.appendChild(option);
-	});
-}
-
-// Change the displayed changelog to the chosen version
-domElements.chooseChangelogVersionDropdown.addEventListener("change", async function () {
-	await updateChangelog(this.value);
-});
 
 // ----- Changelog -----
-// Do this after adding the dropdown options, so that if there is no changelog for the current version, we know the most recent version that does have a changelog
-try {
-	await updateChangelog();
-} catch (error) {
-	domElements.genericErrorDiv.classList.remove("hidden");
-}
-displayErrorAfterWaiting();
-
-async function fetchChangelog(forVersion = `v${currentVersion}`) {
-	// Get the current changelog from GitHub
-	let changelog = await fetch(`https://raw.githubusercontent.com/NikkelM/Random-YouTube-Video/${forVersion}/CHANGELOG.md`)
-		.then(response => response.text());
-
-	if (changelog === "404: Not Found") {
-		changelog = await fetch("https://raw.githubusercontent.com/NikkelM/Random-YouTube-Video/main/CHANGELOG.md")
-			.then(response => response.text());
-	}
-
-	return changelog;
-}
-
 async function updateChangelog(forVersion = `v${currentVersion}`) {
 	if (changelogText === null) {
 		changelogText = await fetchChangelog(forVersion);
@@ -122,6 +124,7 @@ async function updateChangelog(forVersion = `v${currentVersion}`) {
 	domElements.belowHeadingDiv.classList.remove("hidden");
 }
 
+// ----- Error -----
 // If the main content is not shown yet, it means the changelog could not be fetched
 async function displayErrorAfterWaiting(ms = 2000) {
 	await delay(ms);
@@ -131,8 +134,10 @@ async function displayErrorAfterWaiting(ms = 2000) {
 }
 
 // ----- Shuffling Hints -----
-let currentHint = await displayShufflingHint(domElements.shufflingHintP);
-// Add click listener to the "New hint" button
-domElements.nextHintButton.addEventListener("click", async function () {
-	currentHint = await displayShufflingHint(domElements.shufflingHintP, currentHint);
-});
+async function buildShufflingHints() {
+	let currentHint = await displayShufflingHint(domElements.shufflingHintP);
+	// Add click listener to the "New hint" button
+	domElements.nextHintButton.addEventListener("click", async function () {
+		currentHint = await displayShufflingHint(domElements.shufflingHintP, currentHint);
+	});
+}

@@ -1,8 +1,8 @@
 // Shared utility functions for the various HTML pages' logic
 import { shufflingHints } from "../config.js";
 
+// ---------- Public ----------
 // ----- Shuffling Hints -----
-
 export async function displayShufflingHint(displayElement, currentHintIndex = null) {
 	// Choose a (new) random hint from the JSON file and display it
 	let randomHintIndex = currentHintIndex;

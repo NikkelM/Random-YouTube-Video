@@ -1,9 +1,9 @@
-// This file contains helper functions for the popup
+// Helper functions for the popup
 import { configSync, getLength, setSyncStorageValue, } from "../../utils.js";
 import { updateFYIDiv } from "./domElements.js";
 
-// ----- Dependency management -----
-
+// ---------- Dependency management ----------
+// ----- Public -----
 export async function manageDependents(domElements, parent, value) {
 	switch (parent) {
 		// Custom API key: Option toggle
@@ -78,19 +78,6 @@ export async function manageDependents(domElements, parent, value) {
 	}
 }
 
-async function checkDbOptOutOptionEligibility() {
-	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
-
-	if (!APIKey) {
-		APIKey = [];
-	}
-
-	const defaultAPIKeys = APIKey;
-
-	// This option may only be enabled if the user has provided a valid custom Youtube API key
-	return (configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey && !defaultAPIKeys.includes(configSync.customYoutubeApiKey));
-}
-
 export async function manageDbOptOutOption(domElements) {
 	// If useCustomApiKeyOption is not checked, the user must share data with the database
 	if (await checkDbOptOutOptionEligibility()) {
@@ -107,12 +94,28 @@ export async function manageDbOptOutOption(domElements) {
 	domElements.dbSharingOptionToggle.checked = configSync.databaseSharingEnabledOption;
 }
 
-// ---------- Helper functions ----------
+// ----- Private -----
+async function checkDbOptOutOptionEligibility() {
+	let { APIKey } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
+	console.log(APIKey)
 
+	if (!APIKey) {
+		APIKey = [];
+	}
+
+	const defaultAPIKeys = APIKey;
+
+	// This option may only be enabled if the user has provided a valid custom Youtube API key
+	return (configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey && !defaultAPIKeys.includes(configSync.customYoutubeApiKey));
+}
+
+// ---------- Helper functions ----------
+// ----- Public -----
 // Validates a YouTube API key by sending a short request
 export async function validateApiKey(customAPIKey, domElements) {
 	// APIKey is actually an array of objects here, despite the naming
-	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
+	let { APIKey } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
+	console.log(APIKey)
 
 	if (!APIKey) {
 		APIKey = [];
