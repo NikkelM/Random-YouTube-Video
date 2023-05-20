@@ -35,15 +35,5 @@
 		"32": "icons/icon-32-red.png",
 		"48": "icons/icon-48-red.png",
 		"128": "icons/icon-128-red.png"
-	},
-	"web_accessible_resources": [
-		{
-			"resources": [
-				"data/shufflingHints.json"
-			],
-			"matches": [
-				"*://*.youtube.com/*"
-			]
-		}
-	]
+	}
 }

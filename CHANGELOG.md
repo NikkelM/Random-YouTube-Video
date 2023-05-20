@@ -1,8 +1,15 @@
 # Changelog
 
-## v2.0.0
+## v2.0.1 (Unreleased)
 
 <!--Releasenotes start-->
+- Fixed some cosmetic issues across the extension.
+- Made the internal handling of user settings more robust.
+- The extension is now bundled using Webpack, which makes it faster and easier to maintain.
+<!--Releasenotes end-->
+
+## v2.0.0
+
 - Added a new option: 'Ignore shorts'. When enabled, the extension will not choose shorts when shuffling. This option is disabled by default, you can enable it in the extension popup.
 - The 'Open as playlist' option has been reworked to be more useful in the context of the extension: If this option is enabled, the shuffle will now open a playlist of randomly chosen videos instead of the uploads playlist of the channel. Please note that YouTube does not allow you to save this playlist.
 - Added an input to let you choose how many videos should be shuffled and placed in the playlist when the 'Open a playlist' option is enabled. YouTube limits the length of these temporary playlists to 50 videos. Higher values will also lead to longer shuffle times.
@@ -19,7 +26,6 @@
 - Fixed a bug where it was possible that the 'Shuffle' button shuffled from a previously visited channel instead of the current one.
 - Fixed an issue with the extension checking an internal URL against a fixed instead of dynamic extension ID.
 - Fixed a small scaling issue in the popup.
-<!--Releasenotes end-->
 
 ## v1.5.2
 
