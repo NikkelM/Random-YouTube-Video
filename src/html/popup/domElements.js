@@ -268,7 +268,7 @@ export async function setDomElemenEventListeners(domElements) {
 		configSync = await fetchConfigSync();
 
 		// Set the value in configSync to the currently selected option
-		await setChannelSetting(configSync.currentChannelId, "activeOption", this.value);
+		configSync = await setChannelSetting(configSync.currentChannelId, "activeOption", this.value, configSync);
 
 		updateChannelSettingsDropdownMenu(domElements, configSync);
 
@@ -293,9 +293,9 @@ export async function setDomElemenEventListeners(domElements) {
 
 		// Set the value in sync storage
 		if (this.value) {
-			await setChannelSetting(configSync.currentChannelId, "dateValue", this.value);
+			configSync = await setChannelSetting(configSync.currentChannelId, "dateValue", this.value, configSync);
 		} else {
-			await removeChannelSetting(configSync.currentChannelId, "dateValue");
+			configSync = await removeChannelSetting(configSync.currentChannelId, "dateValue", configSync);
 		}
 
 		manageDependents(domElements, domElements.channelCustomOptionsDateOptionInput, this.value, configSync);
@@ -311,10 +311,10 @@ export async function setDomElemenEventListeners(domElements) {
 			// In case we previously had an invalid input, reset the placeholder
 			this.placeholder = "Enter Video ID";
 			// Set the value in sync storage
-			await setChannelSetting(configSync.currentChannelId, "videoIdValue", this.value);
+			configSync = await setChannelSetting(configSync.currentChannelId, "videoIdValue", this.value, configSync);
 		} else if (this.value === "") {
 			// If the input is empty, remove the value from sync storage
-			await removeChannelSetting(configSync.currentChannelId, "videoIdValue");
+			configSync = await removeChannelSetting(configSync.currentChannelId, "videoIdValue", configSync);
 		} else {
 			// Else, the input was invalid
 			this.value = configSync.channelSettings[configSync.currentChannelId].videoIdValue ?? "";
@@ -360,9 +360,9 @@ export async function setDomElemenEventListeners(domElements) {
 
 		// We only need to save the value if it's not the default of 100. If we have already saved a different one, we want to remove it
 		if (this.value != 100) {
-			await setChannelSetting(configSync.currentChannelId, "percentageValue", parseInt(this.value));
+			configSync = await setChannelSetting(configSync.currentChannelId, "percentageValue", parseInt(this.value), configSync);
 		} else {
-			await removeChannelSetting(configSync.currentChannelId, "percentageValue");
+			configSync = await removeChannelSetting(configSync.currentChannelId, "percentageValue", configSync);
 		}
 
 		manageDependents(domElements, domElements.channelCustomOptionsPercentageOptionInput, this.value, configSync);
