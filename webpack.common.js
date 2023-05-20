@@ -19,7 +19,6 @@ module.exports = {
 		shufflingPage: './src/html/shufflingPage.js',
 		// POPUP
 		popup: './src/html/popup/popup.js',
-		domElements: './src/html/popup/domElements.js',
 		popupUtils: './src/html/popup/popupUtils.js',
 	},
 	module: {

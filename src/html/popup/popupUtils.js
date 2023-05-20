@@ -1,6 +1,5 @@
 // Helper functions for the popup
-import { configSync, getLength, setSyncStorageValue, } from "../../utils.js";
-import { updateFYIDiv } from "./domElements.js";
+import { configSync, getLength, setSyncStorageValue, getUserQuotaRemainingToday} from "../../utils.js";
 
 // ---------- Dependency management ----------
 // ----- Public -----
@@ -109,7 +108,32 @@ async function checkDbOptOutOptionEligibility() {
 	return (configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey && !defaultAPIKeys.includes(configSync.customYoutubeApiKey));
 }
 
-// ---------- Helper functions ----------
+// ---------- Helpers ----------
+// ----- Public -----
+// Contains information such as number of shuffled videos so far, daily quota notice, etc.
+export async function updateFYIDiv(domElements) {
+	// ----- FYI: Number of shuffled videos text -----
+	// Use toLocaleString() to add commas/periods to large numbers
+	const numShuffledVideosTotal = configSync.numShuffledVideosTotal.toLocaleString();
+	domElements.numberOfShuffledVideosText.innerText = `You have shuffled ${numShuffledVideosTotal} video${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""} until now.`;
+
+	// ----- Daily quota notice -----
+	await getUserQuotaRemainingToday();
+
+	// ----- Daily quota notice: Text -----
+	// We set the value first to prevent the default value from being displayed for a split second
+	domElements.dailyQuotaNoticeText.innerText = configSync.userQuotaRemainingToday;
+
+	// ----- FYI: Daily quota notice div -----
+	// If the user has a custom API key, the daily quota notice is not relevant. So we only display it if the user is not providing a custom API key
+	if (!configSync.customYoutubeApiKey || !configSync.useCustomApiKeyOption) {
+		domElements.dailyQuotaNoticeDiv.classList.remove("hidden");
+	} else {
+		domElements.dailyQuotaNoticeDiv.classList.add("hidden");
+	}
+}
+
+// ---------- Storage ----------
 // ----- Public -----
 // Validates a YouTube API key by sending a short request
 export async function validateApiKey(customAPIKey, domElements) {

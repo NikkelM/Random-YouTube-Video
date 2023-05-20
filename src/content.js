@@ -1,5 +1,5 @@
 // Content script that is injected into YouTube pages
-import { configSync, isVideoUrl, setSyncStorageValue, setDOMTextWithDelay, RandomYoutubeVideoError } from "./utils.js";
+import { delay, configSync, isVideoUrl, setSyncStorageValue, RandomYoutubeVideoError } from "./utils.js";
 import { buildShuffleButton, shuffleButton, shuffleButtonTextElement } from "./buildShuffleButton.js";
 import { chooseRandomVideo } from "./shuffleVideo.js";
 
@@ -10,6 +10,7 @@ let iconFont = `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?f
 iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChild;
 document.head.appendChild(iconFont);
 
+// ---------- DOM ----------
 // After every navigation event, we need to check if this page needs a 'Shuffle' button
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
@@ -94,6 +95,16 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 	chrome.runtime.sendMessage({ command: "updateCurrentChannel" });
 
 	buildShuffleButton(pageType, channelId, shuffleVideos);
+}
+
+function setDOMTextWithDelay(textElement, newText, delayMS, predicate = () => { return true; }) {
+	// Sets the innerHTML of a (text) DOM element after a delay, if a predicate evaluates to true
+	// If no predicate is passed, this function will always set the text after the delay
+	delay(delayMS).then(() => {
+		if (predicate()) {
+			textElement.innerText = newText;
+		}
+	});
 }
 
 // ---------- Shuffle ----------

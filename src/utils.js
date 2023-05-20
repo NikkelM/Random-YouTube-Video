@@ -17,16 +17,6 @@ console.error = function () {
 }
 
 // ---------- Utility functions ----------
-// ----- DOM -----
-export function setDOMTextWithDelay(textElement, newText, delayMS, predicate = () => { return true; }) {
-	// Sets the innerHTML of a (text) DOM element after a delay, if a predicate evaluates to true
-	// If no predicate is passed, this function will always set the text after the delay
-	delay(delayMS).then(() => {
-		if (predicate()) {
-			textElement.innerText = newText;
-		}
-	});
-}
 
 // ----- URLs -----
 export function isVideoUrl(url) {
