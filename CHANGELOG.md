@@ -9,7 +9,6 @@
 - The 'Reuse new tab' option is now able to reuse the tab even if it is not the currently focused one. It will however not reuse the tab if you have since navigated away from YouTube, to not accidentally overwrite a page you might still need.
 - Added a 'Changelog' button to the popup that will open the changelog in a new tab. The button will be highlighted if the extension has received an update since the last time you opened the changelog. You can also use this page to view older versions of the changelog.
 - Added hints and useful information about the extension to the shuffling page opened when using the shuffle button from the popup.
-- Added a button to the popup that allows you to view the changelog.
 - Added a tooltip to the 'Shuffle' button on channel and video pages.
 - Added a link to the YouTube API documentation to help you get started with setting up your own API key. You can find it in the popup when enabling the 'Use custom API key' option.
 - Sliders in the popup for enabled options will no longer play their 'enable' animation when the popup is opened and instead directly start in the correct position.
