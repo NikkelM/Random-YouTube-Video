@@ -159,7 +159,6 @@ async function toggleAnimations(domElements, enable) {
 export async function setDomElemenEventListeners(domElements) {
 	// Custom API key: Option toggle
 	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
-		configSync.useCustomApiKeyOption = this.checked;
 		await setSyncStorageValue("useCustomApiKeyOption", this.checked);
 
 		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked);
@@ -167,7 +166,6 @@ export async function setDomElemenEventListeners(domElements) {
 
 	// Database sharing: Option toggle
 	domElements.dbSharingOptionToggle.addEventListener("change", async function () {
-		configSync.databaseSharingEnabledOption = this.checked;
 		await setSyncStorageValue("databaseSharingEnabledOption", this.checked);
 
 		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked);
@@ -179,11 +177,8 @@ export async function setDomElemenEventListeners(domElements) {
 		const newAPIKey = domElements.customApiKeyInputField.value;
 
 		if (newAPIKey.length > 0 && await validateApiKey(newAPIKey, domElements)) {
-			configSync.customYoutubeApiKey = newAPIKey;
 			await setSyncStorageValue("customYoutubeApiKey", newAPIKey);
 		} else {
-			configSync.customYoutubeApiKey = null;
-			configSync.databaseSharingEnabledOption = true;
 			await setSyncStorageValue("customYoutubeApiKey", null);
 			await setSyncStorageValue("databaseSharingEnabledOption", true);
 			domElements.customApiKeyInputField.value = "";
@@ -201,7 +196,6 @@ export async function setDomElemenEventListeners(domElements) {
 
 	// Shuffling: Open in new tab option toggle
 	domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", async function () {
-		configSync.shuffleOpenInNewTabOption = this.checked;
 		await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked);
 
 		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked);
@@ -209,21 +203,13 @@ export async function setDomElemenEventListeners(domElements) {
 
 	// Shuffling: Reuse tab option toggle
 	domElements.shuffleReUseNewTabOptionToggle.addEventListener("change", async function () {
-		// configSync.shuffleReUseNewTabOption = this.checked;
-		console.log("copy in dom")
-		const copy = Object.assign({}, configSync);
-		console.log(copy);
 		await setSyncStorageValue("shuffleReUseNewTabOption", this.checked);
-		console.log("copy2 in dom")
-		const copy2 = Object.assign({}, configSync);
-		console.log(copy2);
 
 		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked);
 	});
 
 	// Shuffling: Ignore shorts option toggle
 	domElements.shuffleIgnoreShortsOptionToggle.addEventListener("change", async function () {
-		configSync.shuffleIgnoreShortsOption = this.checked;
 		await setSyncStorageValue("shuffleIgnoreShortsOption", this.checked);
 
 		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionToggle, this.checked);
@@ -231,7 +217,6 @@ export async function setDomElemenEventListeners(domElements) {
 
 	// Shuffling: Open as playlist option toggle
 	domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", async function () {
-		configSync.shuffleOpenAsPlaylistOption = this.checked;
 		await setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked);
 
 		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
@@ -240,8 +225,8 @@ export async function setDomElemenEventListeners(domElements) {
 	// Shuffling: Number of videos in playlist input
 	domElements.shuffleNumVideosInPlaylistInput.addEventListener("focusout", async function () {
 		if (this.value === "") {
-			// Set the previous value if the input is empty, or set it to 5 if there is no previous value
-			this.value = configSync.shuffleNumVideosInPlaylist ?? 5;
+			// Set the previous value if the input is empty, or set it to 10 if there is no previous value
+			this.value = configSync.shuffleNumVideosInPlaylist ?? 10;
 
 			this.classList.add('invalid-input');
 			setTimeout(() => {
@@ -414,11 +399,11 @@ async function updateChannelSettingsDropdownMenu(domElements, configSync) {
 	// ----- Custom options per channel: Dropdown menu -----
 	// Set the dropdown menu to the active option chosen by the user
 	// The default value is "allVideosOption"
-	channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "allVideosOption";
-	channelCustomOptionsDropdown.style.width = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].getAttribute("option-width");
-	channelCustomOptionsDropdown.title = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].title;
+	domElements.channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "allVideosOption";
+	domElements.channelCustomOptionsDropdown.style.width = domElements.channelCustomOptionsDropdown.options[domElements.channelCustomOptionsDropdown.selectedIndex].getAttribute("option-width");
+	domElements.channelCustomOptionsDropdown.title = domElements.channelCustomOptionsDropdown.options[domElements.channelCustomOptionsDropdown.selectedIndex].title;
 
-	switch (channelCustomOptionsDropdown.value) {
+	switch (domElements.channelCustomOptionsDropdown.value) {
 		case "allVideosOption":
 			// Hide all inputs
 			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
