@@ -7,7 +7,7 @@ import { focusOrOpenTab } from "../htmlUtils.js";
 
 // Get relevant DOM elements
 export function getDomElements() {
-	/*global customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv*/
+	/*global customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv*/
 	/*eslint no-undef: "error"*/
 	return {
 		// Body element
@@ -69,7 +69,7 @@ export function getDomElements() {
 		// FYI: Daily quota notice div
 		dailyQuotaNoticeDiv: forYourInformationDiv.children.namedItem("dailyQuotaNoticeDiv"),
 		// Daily quota notice: Text
-		dailyQuotaNoticeText: forYourInformationDiv.children.namedItem("dailyQuotaNoticeDiv").children.namedItem("dailyQuotaNoticeText"),
+		dailyQuotaNoticeText: dailyQuotaNoticeDiv.children.namedItem("dailyQuotaNoticeText"),
 
 		// FOOTER
 		// View changelog button
