@@ -258,7 +258,7 @@ export async function setDomElemenEventListeners(domElements) {
 		// Set the value in configSync to the currently selected option
 		await setChannelSetting(configSync.currentChannelId, "activeOption", this.value);
 
-		updateChannelSettingsDropdownMenu(domElements, configSync);
+		updateChannelSettingsDropdownMenu(domElements);
 
 		manageDependents(domElements, domElements.channelCustomOptionsDropdown, this.value);
 	});
@@ -370,7 +370,7 @@ export async function updateFYIDiv(domElements) {
 	domElements.numberOfShuffledVideosText.innerText = `You have shuffled ${numShuffledVideosTotal} video${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""} until now.`;
 
 	// ----- Daily quota notice -----
-	await getUserQuotaRemainingToday(configSync);
+	await getUserQuotaRemainingToday();
 
 	// ----- Daily quota notice: Text -----
 	// We set the value first to prevent the default value from being displayed for a split second
@@ -391,13 +391,13 @@ export async function updateDomElementsDependentOnChannel(domElements) {
 	domElements.channelCustomOptionsHeader.innerText = `Channel Settings: ${configSync.currentChannelName}`;
 
 	// ----- Custom options per channel: Dropdown menu -----
-	updateChannelSettingsDropdownMenu(domElements, configSync);
+	updateChannelSettingsDropdownMenu(domElements);
 
 	// ----- Popup shuffle button -----
 	domElements.popupShuffleButton.innerText = `Shuffle from: ${configSync.currentChannelName}`;
 }
 
-async function updateChannelSettingsDropdownMenu(domElements, configSync) {
+async function updateChannelSettingsDropdownMenu(domElements) {
 	// ----- Custom options per channel: Dropdown menu -----
 	// Set the dropdown menu to the active option chosen by the user
 	// The default value is "allVideosOption"

@@ -91,13 +91,11 @@ export async function setSyncStorageValue(key, value) {
 }
 
 // Returns the number of requests the user can still make to the Youtube API today
-export async function getUserQuotaRemainingToday(configSync) {
+export async function getUserQuotaRemainingToday() {
 	// The quota gets reset at midnight
 	if (configSync.userQuotaResetTime < Date.now()) {
-		configSync.userQuotaRemainingToday = 200;
-		configSync.userQuotaResetTime = new Date(new Date().setHours(24, 0, 0, 0)).getTime();
-		await setSyncStorageValue("userQuotaRemainingToday", configSync.userQuotaRemainingToday);
-		await setSyncStorageValue("userQuotaResetTime", configSync.userQuotaResetTime);
+		await setSyncStorageValue("userQuotaRemainingToday", 200);
+		await setSyncStorageValue("userQuotaResetTime", new Date(new Date().setHours(24, 0, 0, 0)).getTime());
 	}
 	return configSync.userQuotaRemainingToday;
 }

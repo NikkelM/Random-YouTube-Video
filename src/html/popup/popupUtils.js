@@ -78,7 +78,7 @@ export async function manageDependents(domElements, parent, value) {
 	}
 }
 
-async function checkDbOptOutOptionEligibility(configSync) {
+async function checkDbOptOutOptionEligibility() {
 	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
 
 	if (!APIKey) {
@@ -93,14 +93,14 @@ async function checkDbOptOutOptionEligibility(configSync) {
 
 export async function manageDbOptOutOption(domElements) {
 	// If useCustomApiKeyOption is not checked, the user must share data with the database
-	if (await checkDbOptOutOptionEligibility(configSync)) {
+	if (await checkDbOptOutOptionEligibility()) {
 		domElements.dbSharingOptionToggle.parentElement.classList.remove("disabled");
 	} else {
 		domElements.dbSharingOptionToggle.parentElement.classList.add("disabled");
 	}
 
 	// If the user may not opt out of database sharing but the latest record shows they would like to, make sure it's set correctly in sync storage
-	if (!(await checkDbOptOutOptionEligibility(configSync)) && !configSync.databaseSharingEnabledOption) {
+	if (!(await checkDbOptOutOptionEligibility()) && !configSync.databaseSharingEnabledOption) {
 		configSync.databaseSharingEnabledOption = true;
 		await setSyncStorageValue("databaseSharingEnabledOption", true);
 	}

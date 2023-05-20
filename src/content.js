@@ -86,9 +86,7 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 	}
 
 	// Save the current channelID and channelName in the extension's storage to be accessible by the popup
-	// configSync.currentChannelId = channelId;
 	await setSyncStorageValue("currentChannelId", channelId);
-	// configSync.currentChannelName = channelName;
 	await setSyncStorageValue("currentChannelName", channelName);
 
 	// Update the channel name in the popup in case it was opened while the navigation was still going on

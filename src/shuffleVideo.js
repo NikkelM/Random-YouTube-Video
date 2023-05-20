@@ -19,7 +19,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 	try {
 		// Each user has a set amount of quota they can use per day.
 		// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.
-		let userQuotaRemainingToday = await getUserQuotaRemainingToday(configSync);
+		let userQuotaRemainingToday = await getUserQuotaRemainingToday();
 
 		// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
 		let shouldUpdateDatabase = false;
@@ -135,8 +135,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 
 		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
-		configSync.numShuffledVideosTotal += 1;
-		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal);
+		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
 
 		playVideo(chosenVideos, firedFromPopup);
 	} catch (error) {

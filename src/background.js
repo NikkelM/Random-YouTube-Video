@@ -267,8 +267,7 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 
 		console.log("API keys were fetched. Next check will be in one week.");
 		// Set the next time to check for API keys to one week from now
-		configSync.nextAPIKeysCheckTime = new Date(new Date().setHours(168, 0, 0, 0)).getTime();
-		await setSyncStorageValue("nextAPIKeysCheckTime", configSync.nextAPIKeysCheckTime);
+		await setSyncStorageValue("nextAPIKeysCheckTime", new Date(new Date().setHours(168, 0, 0, 0)).getTime());
 	}
 
 	if (forceDefault) {
