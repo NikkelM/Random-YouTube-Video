@@ -199,6 +199,9 @@ function reloadServiceWorker() {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	switch (request.command) {
+		case "connectionTest":
+			sendResponse("Connection to background script successful.");
+			break;
 		// Tries to get the playlist from Firebase
 		case "getPlaylistFromDB":
 			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);

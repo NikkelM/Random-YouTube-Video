@@ -86,7 +86,7 @@ export function addHours(date, hours) {
 export let configSync = await fetchConfigSync();
 
 chrome.storage.onChanged.addListener(async function (changes, namespace) {
-	// Only do stuff if the change was made to sync storage
+	// We only care about changes to the sync storage
 	if (namespace !== "sync") {
 		return;
 	}
