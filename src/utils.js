@@ -1,12 +1,20 @@
 // Utility functions
 
 // ---------- Console rerouting ----------
-var old = console.log;
+var oldLog = console.log;
 console.log = function () {
 	if (arguments[0] !== "[random-youtube-video]:") {
 		Array.prototype.unshift.call(arguments, '[random-youtube-video]:');
 	}
-	old.apply(this, arguments)
+	oldLog.apply(this, arguments)
+}
+
+var oldError = console.error;
+console.error = function () {
+	if (arguments[0] !== "[random-youtube-video]:") {
+		Array.prototype.unshift.call(arguments, '[random-youtube-video]:');
+	}
+	oldError.apply(this, arguments)
 }
 
 // ---------- Utility functions ----------

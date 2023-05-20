@@ -112,7 +112,7 @@ async function shuffleVideos() {
 				{
 					code: "RYV-9",
 					message: "The extension was unable to find from which channel to shuffle.",
-					solveHint: "The page will reload, after which it should work again. If it doesn't, please report this issue on GitHub!",
+					solveHint: "The page will now reload, after which the button should work again. If it doesn't, please report this issue on GitHub!",
 					showTrace: false
 				}
 			)
@@ -129,8 +129,7 @@ async function shuffleVideos() {
 		// Reset the button text in case we opened the video in a new tab
 		shuffleButtonTextElement.innerText = "\xa0Shuffle";
 	} catch (error) {
-		console.error(error.stack);
-		console.error(error.message);
+		console.error(error);
 
 		let displayText = "";
 		switch (error.name) {
