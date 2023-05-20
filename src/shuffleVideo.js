@@ -569,7 +569,6 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 	let chosenVideos = [];
 	let randomVideo;
 	let encounteredDeletedVideos = false;
-	console.log(configSync.shuffleOpenAsPlaylistOption)
 	const numVideosToChoose = configSync.shuffleOpenAsPlaylistOption ? configSync.shuffleNumVideosInPlaylist : 1;
 
 	console.log(`Choosing ${numVideosToChoose} random video${numVideosToChoose > 1 ? "s" : ""}.`);
