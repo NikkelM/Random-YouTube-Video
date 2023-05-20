@@ -56,7 +56,4 @@ module.exports = {
 			patterns: [{ from: 'static' }],
 		}),
 	],
-	optimization: {
-		minimize: false
-	},
 };
