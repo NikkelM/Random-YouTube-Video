@@ -7,7 +7,7 @@
     "build": "webpack --config webpack.prod.cjs",
     "lint": "eslint --ext .ts,.js --max-warnings=0 .",
     "prettier": "prettier --write",
-    "test": "mocha --require @babel/register ./test/testSetup.js ./test/**/*.test.js"
+    "test": "nyc --reporter=lcov --reporter=text mocha --require @babel/register ./test/testSetup.js ./test/**/*.test.js"
   },
 	"type": "module",
   "devDependencies": {
@@ -27,26 +27,19 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-webpack-plugin": "^3.2.0",
     "expect.js": "^0.3.1",
-    "husky": "^8.0.1",
-    "jsdom": "^22.0.0",
     "lint-staged": "^13.0.3",
-    "mini-css-extract-plugin": "^2.6.1",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
     "prettier": "^2.7.1",
-    "sass": "^1.53.0",
-    "sass-loader": "^13.0.2",
     "sinon": "^15.1.0",
     "sinon-chrome": "^3.0.1",
-    "typescript": "^4.7.4",
     "webpack": "^5.73.0",
     "webpack-cli": "^4.10.0",
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
     "@babel/runtime": "^7.18.6",
-    "firebase": "^9.22.0",
-    "rewire": "^6.0.0"
+    "firebase": "^9.22.0"
   },
   "lint-staged": {
     "*.{ts,js}": [

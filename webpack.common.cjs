@@ -1,9 +1,7 @@
 const path = require('path');
 
-const DotenvPlugin = require('dotenv-webpack');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
 	entry: {
@@ -28,10 +26,6 @@ module.exports = {
 				test: /\.(js|ts)x?$/,
 				use: ['babel-loader'],
 				exclude: /node_modules/,
-			},
-			{
-				test: /\.(scss|css)$/,
-				use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader'],
 			},
 		],
 	},
