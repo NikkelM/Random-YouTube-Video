@@ -1,9 +1,18 @@
-// This file contains functions that are related to the DOM elements of the popup
+// Entry point for the popup page
+import { configSync, delay, setSyncStorageValue } from "../../utils.js";
+import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv } from "./popupUtils.js";
+import { focusOrOpenTab } from "../htmlUtils.js";
 
-// ---------- Setup ----------
+const domElements = getPopupDomElements();
+await setPopupDomElementValuesFromConfig(domElements);
+await setPopupDomElemenEventListeners(domElements);
 
+// ----- DOM -----
+// --- Private ---
 // Get relevant DOM elements
-function getDomElements() {
+function getPopupDomElements() {
+	/*global customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv*/
+	/*eslint no-undef: "error"*/
 	return {
 		// Body element
 		body: document.body,
@@ -72,11 +81,10 @@ function getDomElements() {
 	}
 }
 
-// Set default values from config
-// The configSync contains all values the various sliders and text inputs should have
-async function setDomElementValuesFromConfig(domElements, configSync) {
+// Set default values from configSync == user preferences
+async function setPopupDomElementValuesFromConfig(domElements) {
 	// Disable animations to prevent them from playing when setting the values
-	toggleAnimations(domElements, false);
+	toggleAnimations(domElements);
 
 	// ----- Custom API key: Option toggle -----
 	// If this option is checked is only dependent on the value in sync storage
@@ -106,7 +114,7 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 
 	// ----- Shuffling: Reuse tab option toggle -----
 	// If this option is enabled depends on the state of the shuffleOpenInNewTabOptionToggle
-	manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, configSync.shuffleOpenInNewTabOption, configSync);
+	manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, configSync.shuffleOpenInNewTabOption);
 
 	// ----- Shuffling: Ignore shorts option toggle -----
 	domElements.shuffleIgnoreShortsOptionToggle.checked = configSync.shuffleIgnoreShortsOption;
@@ -123,7 +131,7 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	domElements.shuffleNumVideosInPlaylistInput.value = configSync.shuffleNumVideosInPlaylist;
 
 	// Updates all elements that contain the channel name
-	updateDomElementsDependentOnChannel(domElements, configSync);
+	updateDomElementsDependentOnChannel(domElements);
 
 	// ----- Custom options per channel div -----
 	if (configSync.currentChannelId) {
@@ -131,7 +139,7 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	}
 
 	// Contains logic for all the "For your information" div content
-	updateFYIDiv(domElements, configSync);
+	updateFYIDiv(domElements);
 
 	// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
 	if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
@@ -139,35 +147,23 @@ async function setDomElementValuesFromConfig(domElements, configSync) {
 	}
 
 	// Enable animations
-	toggleAnimations(domElements, true);
-}
-
-async function toggleAnimations(domElements, enable) {
-	if (enable) {
-		// Small delay to make sure running animations cannot be seen
-		await delay(100);
-		domElements.body.classList.remove("no-transitions");
-	} else {
-		domElements.body.classList.add("no-transitions");
-	}
+	toggleAnimations(domElements);
 }
 
 // Set event listeners for DOM elements
-async function setDomElemenEventListeners(domElements, configSync) {
+async function setPopupDomElemenEventListeners(domElements) {
 	// Custom API key: Option toggle
 	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
-		configSync.useCustomApiKeyOption = this.checked;
-		await setSyncStorageValue("useCustomApiKeyOption", this.checked, configSync);
+		await setSyncStorageValue("useCustomApiKeyOption", this.checked);
 
-		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked, configSync);
+		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked);
 	});
 
 	// Database sharing: Option toggle
 	domElements.dbSharingOptionToggle.addEventListener("change", async function () {
-		configSync.databaseSharingEnabledOption = this.checked;
-		await setSyncStorageValue("databaseSharingEnabledOption", this.checked, configSync);
+		await setSyncStorageValue("databaseSharingEnabledOption", this.checked);
 
-		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked, configSync);
+		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked);
 	});
 
 	// Custom API key: Input
@@ -176,13 +172,10 @@ async function setDomElemenEventListeners(domElements, configSync) {
 		const newAPIKey = domElements.customApiKeyInputField.value;
 
 		if (newAPIKey.length > 0 && await validateApiKey(newAPIKey, domElements)) {
-			configSync.customYoutubeApiKey = newAPIKey;
-			await setSyncStorageValue("customYoutubeApiKey", newAPIKey, configSync);
+			await setSyncStorageValue("customYoutubeApiKey", newAPIKey);
 		} else {
-			configSync.customYoutubeApiKey = null;
-			configSync.databaseSharingEnabledOption = true;
-			await setSyncStorageValue("customYoutubeApiKey", null, configSync);
-			await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
+			await setSyncStorageValue("customYoutubeApiKey", null);
+			await setSyncStorageValue("databaseSharingEnabledOption", true);
 			domElements.customApiKeyInputField.value = "";
 		}
 		// If the user removed the API key, show a message in the info div
@@ -191,48 +184,44 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 		}
 
-		manageDbOptOutOption(domElements, configSync);
+		manageDbOptOutOption(domElements);
 
-		manageDependents(domElements, domElements.customApiKeySubmitButton, null, configSync);
+		manageDependents(domElements, domElements.customApiKeySubmitButton, null);
 	});
 
 	// Shuffling: Open in new tab option toggle
 	domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", async function () {
-		configSync.shuffleOpenInNewTabOption = this.checked;
-		await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked, configSync);
+		await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked);
 
-		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked, configSync);
+		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked);
 	});
 
 	// Shuffling: Reuse tab option toggle
 	domElements.shuffleReUseNewTabOptionToggle.addEventListener("change", async function () {
-		configSync.shuffleReUseNewTabOption = this.checked;
-		await setSyncStorageValue("shuffleReUseNewTabOption", this.checked, configSync);
+		await setSyncStorageValue("shuffleReUseNewTabOption", this.checked);
 
-		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked, configSync);
+		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked);
 	});
 
 	// Shuffling: Ignore shorts option toggle
 	domElements.shuffleIgnoreShortsOptionToggle.addEventListener("change", async function () {
-		configSync.shuffleIgnoreShortsOption = this.checked;
-		await setSyncStorageValue("shuffleIgnoreShortsOption", this.checked, configSync);
+		await setSyncStorageValue("shuffleIgnoreShortsOption", this.checked);
 
-		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionToggle, this.checked, configSync);
+		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionToggle, this.checked);
 	});
 
 	// Shuffling: Open as playlist option toggle
 	domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", async function () {
-		configSync.shuffleOpenAsPlaylistOption = this.checked;
-		await setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked, configSync);
+		await setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked);
 
-		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked, configSync);
+		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
 	});
 
 	// Shuffling: Number of videos in playlist input
 	domElements.shuffleNumVideosInPlaylistInput.addEventListener("focusout", async function () {
 		if (this.value === "") {
-			// Set the previous value if the input is empty, or set it to 5 if there is no previous value
-			this.value = configSync.shuffleNumVideosInPlaylist ?? 5;
+			// Set the previous value if the input is empty, or set it to 10 if there is no previous value
+			this.value = configSync.shuffleNumVideosInPlaylist ?? 10;
 
 			this.classList.add('invalid-input');
 			setTimeout(() => {
@@ -252,29 +241,23 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			}, 1500);
 		}
 
-		await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value), configSync);
+		await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value));
 
-		manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value, configSync);
+		manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value);
 	});
 
 	// Custom options per channel: Dropdown menu
 	domElements.channelCustomOptionsDropdown.addEventListener("change", async function () {
-		// Update the configSync in case the channel was changed after the event listener was added
-		configSync = await fetchConfigSync();
-
 		// Set the value in configSync to the currently selected option
 		await setChannelSetting(configSync.currentChannelId, "activeOption", this.value);
 
-		updateChannelSettingsDropdownMenu(domElements, configSync);
+		updateChannelSettingsDropdownMenu(domElements);
 
-		manageDependents(domElements, domElements.channelCustomOptionsDropdown, this.value, configSync);
+		manageDependents(domElements, domElements.channelCustomOptionsDropdown, this.value);
 	});
 
 	// Custom options per channel: Dropdown menu: Date input
 	domElements.channelCustomOptionsDateOptionInput.addEventListener("focusout", async function () {
-		// Update the configSync in case the channel was changed after the event listener was added
-		configSync = await fetchConfigSync();
-
 		// Make sure the date is valid. If it is not, set it to the previous value. If there is no previous value, set it to null
 		const selectedDate = new Date(this.value);
 		if (selectedDate > new Date()) {
@@ -293,14 +276,11 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			await removeChannelSetting(configSync.currentChannelId, "dateValue");
 		}
 
-		manageDependents(domElements, domElements.channelCustomOptionsDateOptionInput, this.value, configSync);
+		manageDependents(domElements, domElements.channelCustomOptionsDateOptionInput, this.value);
 	});
 
 	// Custom options per channel: Dropdown menu: Youtube Video Id input
 	domElements.channelCustomOptionsVideoIdOptionInput.addEventListener("focusout", async function () {
-		// Update the configSync in case the channel was changed after the event listener was added
-		configSync = await fetchConfigSync();
-
 		// If an ID was entered, make sure it is valid, i.e. consists of 11 characters
 		if (this.value.length === 11) {
 			// In case we previously had an invalid input, reset the placeholder
@@ -323,14 +303,11 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			}, 1500);
 		}
 
-		manageDependents(domElements, domElements.channelCustomOptionsVideoIdOptionInput, this.value, configSync);
+		manageDependents(domElements, domElements.channelCustomOptionsVideoIdOptionInput, this.value);
 	});
 
 	// Custom options per channel: Dropdown menu: Percentage input
 	domElements.channelCustomOptionsPercentageOptionInput.addEventListener("focusout", async function () {
-		// Update the configSync in case the channel was changed after the event listener was added
-		configSync = await fetchConfigSync();
-
 		if (this.value === "") {
 			// Set the previous value if the input is empty, or set it to 100 if there is no previous value
 			this.value = configSync.channelSettings[configSync.currentChannelId]?.percentageValue ?? 100;
@@ -360,7 +337,7 @@ async function setDomElemenEventListeners(domElements, configSync) {
 			await removeChannelSetting(configSync.currentChannelId, "percentageValue");
 		}
 
-		manageDependents(domElements, domElements.channelCustomOptionsPercentageOptionInput, this.value, configSync);
+		manageDependents(domElements, domElements.channelCustomOptionsPercentageOptionInput, this.value);
 	});
 
 	// Popup shuffle button
@@ -372,56 +349,34 @@ async function setDomElemenEventListeners(domElements, configSync) {
 
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
-		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version, configSync);
+		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
 		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
 		// Close the popup
 		window.close();
 	});
 }
 
-async function updateFYIDiv(domElements, configSync) {
-	// ----- FYI: Number of shuffled videos text -----
-	// Use toLocaleString() to add commas/periods to large numbers
-	const numShuffledVideosTotal = configSync.numShuffledVideosTotal.toLocaleString();
-	domElements.numberOfShuffledVideosText.innerText = `You have shuffled ${numShuffledVideosTotal} video${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""} until now.`;
-
-	// ----- Daily quota notice -----
-	await getUserQuotaRemainingToday(configSync);
-
-	// ----- Daily quota notice: Text -----
-	// We set the value first to prevent the default value from being displayed for a split second
-	domElements.dailyQuotaNoticeText.innerText = configSync.userQuotaRemainingToday;
-
-	// ----- FYI: Daily quota notice div -----
-	// If the user has a custom API key, the daily quota notice is not relevant. So we only display it if the user is not providing a custom API key
-	if (!configSync.customYoutubeApiKey || !configSync.useCustomApiKeyOption) {
-		domElements.dailyQuotaNoticeDiv.classList.remove("hidden");
-	} else {
-		domElements.dailyQuotaNoticeDiv.classList.add("hidden");
-	}
-}
-
 // Responsible for all DOM elements that need a reference to the current channel
-async function updateDomElementsDependentOnChannel(domElements, configSync) {
+async function updateDomElementsDependentOnChannel(domElements) {
 	// ----- Custom options per channel: Channel name and description -----
 	domElements.channelCustomOptionsHeader.innerText = `Channel Settings: ${configSync.currentChannelName}`;
 
 	// ----- Custom options per channel: Dropdown menu -----
-	updateChannelSettingsDropdownMenu(domElements, configSync);
+	updateChannelSettingsDropdownMenu(domElements);
 
 	// ----- Popup shuffle button -----
 	domElements.popupShuffleButton.innerText = `Shuffle from: ${configSync.currentChannelName}`;
 }
 
-async function updateChannelSettingsDropdownMenu(domElements, configSync) {
+async function updateChannelSettingsDropdownMenu(domElements) {
 	// ----- Custom options per channel: Dropdown menu -----
 	// Set the dropdown menu to the active option chosen by the user
 	// The default value is "allVideosOption"
-	channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "allVideosOption";
-	channelCustomOptionsDropdown.style.width = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].getAttribute("option-width");
-	channelCustomOptionsDropdown.title = channelCustomOptionsDropdown.options[channelCustomOptionsDropdown.selectedIndex].title;
+	domElements.channelCustomOptionsDropdown.value = configSync.channelSettings[configSync.currentChannelId]?.activeOption ?? "allVideosOption";
+	domElements.channelCustomOptionsDropdown.style.width = domElements.channelCustomOptionsDropdown.options[domElements.channelCustomOptionsDropdown.selectedIndex].getAttribute("option-width");
+	domElements.channelCustomOptionsDropdown.title = domElements.channelCustomOptionsDropdown.options[domElements.channelCustomOptionsDropdown.selectedIndex].title;
 
-	switch (channelCustomOptionsDropdown.value) {
+	switch (domElements.channelCustomOptionsDropdown.value) {
 		case "allVideosOption":
 			// Hide all inputs
 			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
@@ -455,3 +410,29 @@ async function updateChannelSettingsDropdownMenu(domElements, configSync) {
 			break;
 	}
 }
+
+// ----- Helpers -----
+// Toggle animations in the popup
+async function toggleAnimations(domElements) {
+	if (domElements.body.classList.contains("no-transitions")) {
+		// Small delay to make sure running animations cannot be seen
+		await delay(100);
+		domElements.body.classList.remove("no-transitions");
+	} else {
+		domElements.body.classList.add("no-transitions");
+	}
+}
+
+// ----- Message handler -----
+// IMPORTANT: Only one message handler can send a response. This is the one in the background script for this extension, so we CANNOT send a response here!
+chrome.runtime.onMessage.addListener(async function (request) {
+	switch (request.command) {
+		case "updateCurrentChannel":
+			// We need to update the relevant DOM elements with the new channel name
+			updateDomElementsDependentOnChannel(domElements);
+			break;
+		default:
+			console.log(`Unknown command: ${request.command} (popup). Hopefully another message listener will handle it.`);
+			break;
+	}
+});

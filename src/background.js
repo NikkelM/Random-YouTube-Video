@@ -1,10 +1,9 @@
-// Background script for the extension, which is run ("started") on extension initialization
-// Handles communication between the extension and the content script as well as firebase
-
-let configSync = null;
+// Background service worker for the extension, which is run ("started") on extension initialization
+// Handles communication between the extension and the content script as well as Firebase interactions
+import { configSync, setSyncStorageValue } from "./utils.js";
+import { configSyncDefaults } from "./config.js";
 
 // ---------- Initialization/Chrome event listeners ----------
-
 // On Chrome startup, we make sure we are not using too much local storage
 chrome.runtime.onStartup.addListener(async function () {
 	// If over 90% of the storage quota for playlists is used, remove playlists that have not been accessed in a long time
@@ -93,7 +92,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 
 	// v1.3.0 removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
 	if (previousVersion < "1.3.0") {
-		consolelog("Updating local storage to v1.3.0 format...");
+		console.log("Updating local storage to v1.3.0 format...");
 		const localStorageContents = await chrome.storage.local.get();
 		// Delete the youtubeAPIKey from local storage if it exists
 		if (localStorageContents["youtubeAPIKey"]) {
@@ -102,44 +101,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 	}
 }
 
-// Remember to update this default config in the tests as well
 async function validateConfigSync() {
-	// All keys regarding user settings and their defaults
-	const configSyncDefaults = {
-		// If the user has enabled the custom API key option
-		"useCustomApiKeyOption": false,
-		// The custom API key the user has provided. This key is already validated.
-		"customYoutubeApiKey": null,
-		// If the user has enabled sharing video ID's with the database
-		"databaseSharingEnabledOption": true,
-		// These properties influence the behavior of the "Shuffle" button
-		"shuffleOpenInNewTabOption": true,
-		"shuffleReUseNewTabOption": true,
-		"shuffleIgnoreShortsOption": false,
-		"shuffleOpenAsPlaylistOption": true,
-		// How many random videos to add to a playlist
-		"shuffleNumVideosInPlaylist": 10,
-		// If shuffled videos are opened in a new tab, save the tab ID of that tab here to reuse the tab when the user shuffles again
-		"shuffleTabId": null,
-		// channelSettings is a dictionary of channelID -> Dictionary of channel settings
-		"channelSettings": {},
-		// These two properties are used by the popup to determine which channel's settings to show
-		"currentChannelId": null,
-		"currentChannelName": null,
-		// The number of videos the user has shuffled so far
-		"numShuffledVideosTotal": 0,
-		// These two properties determine the amount of quota remaining today, and the time at which the quota will next reset (daily resets at midnight)
-		"userQuotaRemainingToday": 200,
-		// The default reset time is midnight of the next day
-		"userQuotaResetTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(),
-		// We want to regularly check if there are new API keys available (weekly)
-		"nextAPIKeysCheckTime": new Date(new Date().setHours(168, 0, 0, 0)).getTime(),
-		// The last version for which the user has viewed the changelog
-		"lastViewedChangelogVersion": "0",
-		// For april fools: Will be the number of the year in which the user was last rickrolled (we only want to rickroll the user once per year)
-		"wasLastRickRolledInYear": "1970",
-	};
-
 	const configSyncValues = await chrome.storage.sync.get();
 
 	// Set default values for config values that do not exist in sync storage
@@ -181,20 +143,24 @@ function reloadServiceWorker() {
 }
 
 // ---------- Message handler ----------
-
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	switch (request.command) {
-		// Tries to get the playlist from Firebase
+		// Simple connection test from the content script
+		case "connectionTest":
+			sendResponse("Connection to background script successful.");
+			break;
+		// Tries to get a playlist from Firebase
 		case "getPlaylistFromDB":
 			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
 			break;
-		// Updates (without overwriting videos) the playlist in Firebase 
+		// Updates (not overwriting videos) a playlist in Firebase 
 		case "updatePlaylistInfoInDB":
 			updatePlaylistInfoInDB(request.data.key, request.data.val, false).then(sendResponse);
 			break;
-		// Updates (with overwriting videos, as some were deleted and we do not grant 'delete' permissions) the playlist in Firebase
+		// Updates (overwriting videos) a playlist in Firebase
 		case "overwritePlaylistInfoInDB":
 			updatePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
+			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":
 			getAPIKey(false, request.data.useAPIKeyAtIndex).then(sendResponse);
@@ -202,11 +168,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		// Gets the default API keys saved in the database
 		case "getDefaultAPIKeys":
 			getAPIKey(true, null).then(sendResponse);
-			break;
-		// A new configSync should be set
-		case "newConfigSync":
-			configSync = request.data;
-			sendResponse("New configSync set.");
 			break;
 		case "getCurrentTabId":
 			getCurrentTabId().then(sendResponse);
@@ -226,8 +187,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ---------- Firebase ----------
-
-self.importScripts('../firebase/firebase-compat.js');
+import { initializeApp } from 'firebase/app';
+import { getDatabase, ref, child, update, get } from 'firebase/database';
 
 const firebaseConfig = {
 	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
@@ -239,24 +200,24 @@ const firebaseConfig = {
 	databaseURL: "https://random-youtube-video-ex-chrome-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
-const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.database(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos) {
 	if (overwriteVideos) {
 		console.log("Setting playlistInfo in the database...");
 		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested within the playlist
-		db.ref(playlistId).update(playlistInfo);
+		update(ref(db, playlistId), playlistInfo);
 	} else {
 		console.log("Updating playlistInfo in the database...");
 		// Contains all properties except the videos
 		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => key !== "videos"));
 
 		// Upload the 'metadata'
-		db.ref(playlistId).update(playlistInfoWithoutVideos);
+		update(ref(db, playlistId), playlistInfoWithoutVideos);
 
-		// Update the videos separately to not overwrite the existing videos
-		db.ref(playlistId + "/videos").update(playlistInfo.videos);
+		// Update the videos separately to not overwrite existing videos
+		update(ref(db, playlistId + "/videos"), playlistInfo.videos);
 	}
 
 	return "PlaylistInfo was sent to database.";
@@ -265,7 +226,8 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 // Prefers to get cached data instead of sending a request to the database
 async function readDataOnce(key) {
 	console.log(`Reading data for key ${key} from database...`);
-	const res = await db.ref(key).once("value").then((snapshot) => {
+
+	const res = get(child(ref(getDatabase()), key)).then((snapshot) => {
 		return snapshot.val();
 	});
 
@@ -273,10 +235,7 @@ async function readDataOnce(key) {
 }
 
 // ---------- Helpers ----------
-
 async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
-	await fetchConfigSync();
-
 	// List of API keys that are stored in the database/locally
 	let availableAPIKeys = null;
 
@@ -301,12 +260,11 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 
 		// The API keys get scrambled and stored locally
 		availableAPIKeys = availableAPIKeys.map(key => rot13(key, true));
-		setLocalStorage("youtubeAPIKeys", availableAPIKeys);
+		setInLocalStorage("youtubeAPIKeys", availableAPIKeys);
 
 		console.log("API keys were fetched. Next check will be in one week.");
 		// Set the next time to check for API keys to one week from now
-		configSync.nextAPIKeysCheckTime = new Date(new Date().setHours(168, 0, 0, 0)).getTime();
-		await setSyncStorageValue("nextAPIKeysCheckTime", configSync.nextAPIKeysCheckTime);
+		await setSyncStorageValue("nextAPIKeysCheckTime", new Date(new Date().setHours(168, 0, 0, 0)).getTime());
 	}
 
 	if (forceDefault) {
@@ -365,7 +323,6 @@ async function openVideoInTabWithId(tabId, videoUrl) {
 }
 
 // ---------- Local storage ----------
-
 async function getFromLocalStorage(key) {
 	return await chrome.storage.local.get([key]).then((result) => {
 		if (result[key]) {
@@ -375,24 +332,7 @@ async function getFromLocalStorage(key) {
 	});
 }
 
-async function setLocalStorage(key, value) {
+async function setInLocalStorage(key, value) {
 	await chrome.storage.local.set({ [key]: value });
 	return value;
-}
-
-// ---------- Sync storage ----------
-
-async function fetchConfigSync() {
-	configSync = await chrome.storage.sync.get().then((result) => {
-		return result;
-	});
-
-	return configSync;
-}
-
-// This function also exists in utils.js
-async function setSyncStorageValue(key, value) {
-	configSync[key] = value;
-
-	await chrome.storage.sync.set({ [key]: value });
 }

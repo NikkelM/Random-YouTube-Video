@@ -1,31 +1,22 @@
 // Shared utility functions for the various HTML pages' logic
+import { shufflingHints } from "../config.js";
 
+// ---------- Public ----------
 // ----- Shuffling Hints -----
-let shufflingHintJsonData = null;
-
-async function initShufflingHints() {
-	const shufflingHintJsonUrl = chrome.runtime.getURL('data/shufflingHints.json');
-	shufflingHintJsonData = await loadJsonFile(shufflingHintJsonUrl);
-}
-
-async function displayShufflingHint(displayElement, currentHintIndex = null) {
-	if (shufflingHintJsonData === null) {
-		await initShufflingHints();
-	}
-
+export async function displayShufflingHint(displayElement, currentHintIndex = null) {
 	// Choose a (new) random hint from the JSON file and display it
 	let randomHintIndex = currentHintIndex;
 	while (randomHintIndex === currentHintIndex) {
-		randomHintIndex = Math.floor(Math.random() * shufflingHintJsonData.length);
+		randomHintIndex = Math.floor(Math.random() * shufflingHints.length);
 	}
 
-	displayElement.innerText = shufflingHintJsonData[randomHintIndex];
+	displayElement.innerText = shufflingHints[randomHintIndex];
 
 	return randomHintIndex;
 }
 
 // ----- Other utility functions -----
-function focusOrOpenTab(tabUrl) {
+export function focusOrOpenTab(tabUrl) {
 	chrome.tabs.query({}, function (tabs) {
 		let mustOpenTab = true;
 		for (let i = 0; i <= tabs.length - 1; i++) {
