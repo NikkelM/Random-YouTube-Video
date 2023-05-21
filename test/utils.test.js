@@ -1,26 +1,25 @@
-const expect = require('expect.js');
-
-const utils = require('../src/utils.js');
+import expect from 'expect.js';
+import { isVideoUrl, isEmpty, getLength, addHours, RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
 
 describe('utils.js', function () {
 	context('URL helpers', function () {
 
 		context('isVideoUrl()', function () {
 			it('should not break if no URL is provided', function () {
-				expect(utils.isVideoUrl(null)).to.be(false);
-				expect(utils.isVideoUrl(undefined)).to.be(false);
-				expect(utils.isVideoUrl("")).to.be(false);
+				expect(isVideoUrl(null)).to.be(false);
+				expect(isVideoUrl(undefined)).to.be(false);
+				expect(isVideoUrl("")).to.be(false);
 			});
 
 			it('should identify a YouTube video URL', function () {
-				expect(utils.isVideoUrl("https://www.youtube.com/watch?v=12345678901")).to.be(true);
+				expect(isVideoUrl("https://www.youtube.com/watch?v=12345678901")).to.be(true);
 			});
 
 			it('should identify a YouTube non-video URL', function () {
-				expect(utils.isVideoUrl("https://www.youtube.com/channel/myChannelID")).to.be(false);
-				expect(utils.isVideoUrl("https://www.youtube.com/@Username")).to.be(false);
-				expect(utils.isVideoUrl("https://www.youtube.com")).to.be(false);
-				expect(utils.isVideoUrl("https://www.youtube.com/playlist?list=PL1234567890")).to.be(false);
+				expect(isVideoUrl("https://www.youtube.com/channel/myChannelID")).to.be(false);
+				expect(isVideoUrl("https://www.youtube.com/@Username")).to.be(false);
+				expect(isVideoUrl("https://www.youtube.com")).to.be(false);
+				expect(isVideoUrl("https://www.youtube.com/playlist?list=PL1234567890")).to.be(false);
 			});
 
 		});
@@ -30,52 +29,52 @@ describe('utils.js', function () {
 
 		context('isEmpty()', function () {
 			it('should return true for empty objects', function () {
-				expect(utils.isEmpty({})).to.be(true);
+				expect(isEmpty({})).to.be(true);
 			});
 
 			it('should return false for non-empty objects', function () {
-				expect(utils.isEmpty({ "test": "test" })).to.be(false);
+				expect(isEmpty({ "test": "test" })).to.be(false);
 			});
 
 			it('should return true for empty arrays', function () {
-				expect(utils.isEmpty([])).to.be(true);
+				expect(isEmpty([])).to.be(true);
 			});
 
 			it('should return false for non-empty arrays', function () {
-				expect(utils.isEmpty(["test"])).to.be(false);
+				expect(isEmpty(["test"])).to.be(false);
 			});
 		});
 
 		context('getLength()', function () {
 			it('should return 0 for empty objects', function () {
-				expect(utils.getLength({})).to.be(0);
+				expect(getLength({})).to.be(0);
 			});
 
 			it('should return the number of keys for non-empty objects', function () {
-				expect(utils.getLength({ "test": "test" })).to.be(1);
-				expect(utils.getLength({ "test": "test", "test2": "test2" })).to.be(2);
+				expect(getLength({ "test": "test" })).to.be(1);
+				expect(getLength({ "test": "test", "test2": "test2" })).to.be(2);
 			});
 
 			it('should return 0 for empty arrays', function () {
-				expect(utils.getLength([])).to.be(0);
+				expect(getLength([])).to.be(0);
 			});
 
 			it('should return the number of elements for non-empty arrays', function () {
-				expect(utils.getLength(["test"])).to.be(1);
-				expect(utils.getLength(["test", "test2"])).to.be(2);
+				expect(getLength(["test"])).to.be(1);
+				expect(getLength(["test", "test2"])).to.be(2);
 			});
 		});
 
 		context('addHours()', function () {
 			it('should add hours to a date', function () {
 				let date = new Date("2019-01-01T00:00:00Z");
-				date = utils.addHours(date, 1);
+				date = addHours(date, 1);
 				expect(date.toISOString()).to.be("2019-01-01T01:00:00.000Z");
 			});
 
 			it('should add negative hours to a date', function () {
 				let date = new Date("2019-01-01T00:00:00Z");
-				date = utils.addHours(date, -1);
+				date = addHours(date, -1);
 				expect(date.toISOString()).to.be("2018-12-31T23:00:00.000Z");
 			});
 		});
@@ -85,19 +84,19 @@ describe('utils.js', function () {
 
 		context('RandomYoutubeVideoError', function () {
 			it('should be an instance of Error', function () {
-				const e = new utils.RandomYoutubeVideoError({});
+				const e = new RandomYoutubeVideoError({});
 
 				expect(e).to.be.an(Error);
 			});
 
 			it('should have the correct name', function () {
-				const e = new utils.RandomYoutubeVideoError({});
+				const e = new RandomYoutubeVideoError({});
 
 				expect(e.name).to.equal('RandomYoutubeVideoError');
 			});
 
 			it('should have the correct properties', function () {
-				const e = new utils.RandomYoutubeVideoError({
+				const e = new RandomYoutubeVideoError({
 					code: "RYV-test",
 					message: 'test message',
 					solveHint: 'test solveHint',
@@ -118,20 +117,20 @@ describe('utils.js', function () {
 
 		context('YoutubeAPIError', function () {
 			it('should be an instance of Error', function () {
-				const e = new utils.YoutubeAPIError();
+				const e = new YoutubeAPIError();
 
 				expect(e).to.be.an(Error);
-				expect(e).to.be.an(utils.RandomYoutubeVideoError);
+				expect(e).to.be.an(RandomYoutubeVideoError);
 			});
 
 			it('should have the correct name', function () {
-				const e = new utils.YoutubeAPIError();
+				const e = new YoutubeAPIError();
 
 				expect(e.name).to.equal('YoutubeAPIError');
 			});
 
 			it('should have the correct properties', function () {
-				const e = new utils.YoutubeAPIError("RYV-test", 'test message', 'test reason', 'test solveHint', true);
+				const e = new YoutubeAPIError("RYV-test", 'test message', 'test reason', 'test solveHint', true);
 
 				expect(e).to.have.property('code');
 				expect(e).to.have.property('message');
