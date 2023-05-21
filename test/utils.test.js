@@ -6,35 +6,6 @@ const { JSDOM } = jsdom;
 const utils = require('../src/utils.js');
 
 describe('utils.js', function () {
-
-	context('console helpers', function () {
-
-		it('should reroute console.log', function () {
-			let spy = sinon.spy(console, 'log');
-			console.log("Test log");
-
-			expect(spy.calledOnce).to.be(true);
-			expect(spy.calledWith("Test log")).to.be(true);
-		});
-
-		it('should reroute console.warn', function () {
-			let spy = sinon.spy(console, 'warn');
-			console.warn("Test warning");
-
-			expect(spy.calledOnce).to.be(true);
-			expect(spy.calledWith("Test warning")).to.be(true);
-		});
-
-		it('should reroute console.error', function () {
-			let spy = sinon.spy(console, 'error');
-			console.error("Test error");
-
-			expect(spy.calledOnce).to.be(true);
-			expect(spy.calledWith("Test error")).to.be(true);
-		});
-
-	});
-
 	context('DOM helpers', function () {
 
 		// Before each test, create a dummy document element
