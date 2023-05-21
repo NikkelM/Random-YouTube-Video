@@ -7,9 +7,9 @@
     "build": "webpack --config webpack.prod.cjs",
     "lint": "eslint --ext .ts,.js --max-warnings=0 .",
     "prettier": "prettier --write",
-    "test": "nyc --reporter=lcov --reporter=text mocha --require @babel/register ./test/testSetup.js ./test/**/*.test.js"
+    "test": "c8 --reporter=lcov --reporter=text mocha --require @babel/register ./test/testSetup.js ./test/**/*.test.js"
   },
-	"type": "module",
+  "type": "module",
   "devDependencies": {
     "@babel/core": "^7.21.8",
     "@babel/plugin-transform-runtime": "^7.18.6",
@@ -20,6 +20,7 @@
     "@typescript-eslint/eslint-plugin": "^5.30.5",
     "@typescript-eslint/parser": "^5.30.5",
     "babel-loader": "^8.2.5",
+    "c8": "^7.13.0",
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.1",
     "dotenv-webpack": "^8.0.0",
@@ -29,7 +30,6 @@
     "expect.js": "^0.3.1",
     "lint-staged": "^13.0.3",
     "mocha": "^10.2.0",
-    "nyc": "^15.1.0",
     "prettier": "^2.7.1",
     "sinon": "^15.1.0",
     "sinon-chrome": "^3.0.1",
