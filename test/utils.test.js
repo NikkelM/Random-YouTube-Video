@@ -6,16 +6,6 @@ const { JSDOM } = jsdom;
 const utils = require('../src/utils.js');
 
 describe('utils.js', function () {
-	context('DOM helpers', function () {
-
-		// Before each test, create a dummy document element
-		var dom;
-		beforeEach(function () {
-			dom = new JSDOM(`<!DOCTYPE html><body><span id="test-span"></span></body>`);
-			dom.window.document.getElementById("test-span").innerText = "Before";
-		});
-	});
-
 	context('URL helpers', function () {
 
 		context('isVideoUrl()', function () {
