@@ -1,7 +1,4 @@
 const expect = require('expect.js');
-const sinon = require('sinon');
-const jsdom = require('jsdom');
-const { JSDOM } = jsdom;
 
 const utils = require('../src/utils.js');
 
