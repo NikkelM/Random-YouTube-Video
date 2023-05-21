@@ -33,7 +33,7 @@ jobs:
         uses: EndBug/version-check@v2
         with:
           diff-search: true
-          file-name: ./extension/manifest.json
+          file-name: ./static/manifest.json
 
       - name: Log version change
         if: steps.check_version.outputs.changed == 'true'
@@ -50,9 +50,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build extension
+        run: npm run build
+
       - name: Create .zip of required files 
         run: |
-          cd extension
+          cd dist
           zip -r ../Random.Youtube.Video.zip *
 
       - name: Create Release notes

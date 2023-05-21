@@ -1,19 +1,26 @@
-// Handles everything concerning the shuffling of videos, including sending messages to the backend database and the YouTube API
-
-let configSync = null;
+// Handles everything concerning the shuffling of videos, including fetching data from the YouTube API
+import {
+	configSync,
+	isEmpty,
+	addHours,
+	getLength,
+	isVideoUrl,
+	setSyncStorageValue,
+	getUserQuotaRemainingToday,
+	RandomYoutubeVideoError,
+	YoutubeAPIError
+} from "./utils.js";
 
 // For cases in which the playlist in the database has the old Array format (before v1.0.0), we need to overwrite it
 let mustOverwriteDatabase = false;
 
+// --------------- Public ---------------
 // Chooses a random video uploaded on the current YouTube channel
-async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
+export async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
 	try {
-		// Make sure we have the latest config
-		await fetchConfigSync();
-
 		// Each user has a set amount of quota they can use per day.
 		// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.
-		let userQuotaRemainingToday = await getUserQuotaRemainingToday(configSync);
+		let userQuotaRemainingToday = await getUserQuotaRemainingToday();
 
 		// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
 		let shouldUpdateDatabase = false;
@@ -89,6 +96,7 @@ async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement)
 		// Update the remaining user quota in the configSync
 		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
 
+		let chosenVideos, encounteredDeletedVideos;
 		({ chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
 
 		if (shouldUpdateDatabase && databaseSharing) {
@@ -118,7 +126,7 @@ async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement)
 		playlistInfo["videos"] = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
 
 		// Only save the wanted keys
-		playlistInfoForLocalStorage = {
+		const playlistInfoForLocalStorage = {
 			// Remember the last time the playlist was accessed locally (==now)
 			"lastAccessedLocally": new Date().toISOString(),
 			"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
@@ -128,8 +136,7 @@ async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement)
 
 		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
-		configSync.numShuffledVideosTotal += 1;
-		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal);
+		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
 
 		playVideo(chosenVideos, firedFromPopup);
 	} catch (error) {
@@ -138,8 +145,8 @@ async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement)
 	}
 }
 
+// --------------- Private ---------------
 // ---------- Database ----------
-
 // Try to get the playlist from the database. If it does not exist, return an empty dictionary.
 async function tryGetPlaylistFromDB(playlistId) {
 	const msg = {
@@ -200,7 +207,6 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsP
 }
 
 // ---------- YouTube API ----------
-
 async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemainingToday, progressTextElement) {
 	// Get an API key
 	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyAtIndex);
@@ -390,6 +396,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 	let apiResponse = null;
 
 	// We wrap this in a while block to simulate a retry mechanism until we get a valid response
+	/*eslint no-constant-condition: ["error", { "checkLoops": false }]*/
 	while (true) {
 		try {
 			console.log("Getting snippet from YouTube API...");
@@ -400,9 +407,11 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 
 			if (apiResponse["error"]) {
 				throw new YoutubeAPIError(
-					code = apiResponse["error"]["code"],
-					message = apiResponse["error"]["message"],
-					reason = apiResponse["error"]["errors"][0]["reason"]
+					apiResponse["error"]["code"],
+					apiResponse["error"]["message"],
+					`Reason: ${apiResponse["error"]["errors"][0]["reason"]}`,
+					"",
+					false
 				);
 			}
 
@@ -478,7 +487,6 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 }
 
 // ---------- Utility ----------
-
 async function testVideoExistence(videoId) {
 	let response = await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`, {
 		method: "HEAD"
@@ -648,13 +656,14 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		chosenVideos.push(randomVideo);
 		videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 	}
-	console.log(`${chosenVideos.length} random videos have been chosen: [${chosenVideos}]`);
+	console.log(`${chosenVideos.length} random video${chosenVideos.length > 1 ? "s have" : " has"} been chosen: [${chosenVideos}]`);
 
 	return { chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
 }
 
 // Applies a filter to the playlist object, based on the setting set in the popup
 function chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue) {
+	let videosToShuffle;
 	switch (activeShuffleFilterOption) {
 		case "allVideosOption":
 			// For this option, no additional filtering is needed
@@ -683,7 +692,7 @@ function chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOptio
 			// Take only videos that were released after the specified video
 			// The videos are already sorted by date, so we can just take the videos that are after the specified video in the list
 			// If the specified video does not exist, we alert the user
-			const videoIndex = videosByDate.indexOf(activeOptionValue);
+			var videoIndex = videosByDate.indexOf(activeOptionValue);
 			if (videoIndex === -1) {
 				throw new RandomYoutubeVideoError(
 					{
@@ -800,7 +809,6 @@ async function aprilFoolsJoke() {
 }
 
 // ---------- Local storage ----------
-
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
 async function tryGetPlaylistFromLocalStorage(playlistId) {
 	return await chrome.storage.local.get([playlistId]).then((result) => {

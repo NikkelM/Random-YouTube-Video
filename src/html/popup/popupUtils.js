@@ -1,8 +1,9 @@
-// This file contains helper functions for the popup
+// Helper functions for the popup
+import { configSync, getLength, setSyncStorageValue, getUserQuotaRemainingToday} from "../../utils.js";
 
-// ----- Dependency management -----
-
-async function manageDependents(domElements, parent, value, configSync) {
+// ---------- Dependency management ----------
+// ----- Public -----
+export async function manageDependents(domElements, parent, value) {
 	switch (parent) {
 		// Custom API key: Option toggle
 		case domElements.useCustomApiKeyOptionToggle:
@@ -20,19 +21,19 @@ async function manageDependents(domElements, parent, value, configSync) {
 					domElements.customApiKeyHowToGetDiv.classList.add("hidden");
 				}
 
-				manageDbOptOutOption(domElements, configSync);
+				manageDbOptOutOption(domElements);
 			} else {
 				// The user must share data with the database
 				domElements.dbSharingOptionToggle.checked = true;
 				configSync.databaseSharingEnabledOption = true;
-				await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
 
-				manageDbOptOutOption(domElements, configSync);
+				manageDbOptOutOption(domElements);
 
 				// Hide input field for custom API key
 				domElements.customApiKeyInputDiv.classList.add("hidden");
 			}
-			updateFYIDiv(domElements, configSync);
+			updateFYIDiv(domElements);
 			break;
 
 		case domElements.customApiKeySubmitButton:
@@ -45,7 +46,7 @@ async function manageDependents(domElements, parent, value, configSync) {
 
 			// This is called after validation of a provided API key
 			// Depending on whether or not it is valid, we need to update the FYI div
-			updateFYIDiv(domElements, configSync);
+			updateFYIDiv(domElements);
 			break;
 
 		case domElements.shuffleOpenInNewTabOptionToggle:
@@ -57,7 +58,7 @@ async function manageDependents(domElements, parent, value, configSync) {
 			} else {
 				// If the open in a new tab option gets disabled, we also want to disable the reuse tab option to avoid confusion
 				domElements.shuffleReUseNewTabOptionToggle.checked = false;
-				await setSyncStorageValue("shuffleReUseNewTabOption", false, configSync);
+				await setSyncStorageValue("shuffleReUseNewTabOption", false);
 				domElements.shuffleReUseNewTabOptionToggle.parentElement.classList.add("disabled");
 			}
 			break;
@@ -76,8 +77,26 @@ async function manageDependents(domElements, parent, value, configSync) {
 	}
 }
 
-async function checkDbOptOutOptionEligibility(configSync) {
-	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
+export async function manageDbOptOutOption(domElements) {
+	// If useCustomApiKeyOption is not checked, the user must share data with the database
+	if (await checkDbOptOutOptionEligibility()) {
+		domElements.dbSharingOptionToggle.parentElement.classList.remove("disabled");
+	} else {
+		domElements.dbSharingOptionToggle.parentElement.classList.add("disabled");
+	}
+
+	// If the user may not opt out of database sharing but the latest record shows they would like to, make sure it's set correctly in sync storage
+	if (!(await checkDbOptOutOptionEligibility()) && !configSync.databaseSharingEnabledOption) {
+		configSync.databaseSharingEnabledOption = true;
+		await setSyncStorageValue("databaseSharingEnabledOption", true);
+	}
+	domElements.dbSharingOptionToggle.checked = configSync.databaseSharingEnabledOption;
+}
+
+// ----- Private -----
+async function checkDbOptOutOptionEligibility() {
+	let { APIKey } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
+	console.log(APIKey)
 
 	if (!APIKey) {
 		APIKey = [];
@@ -89,28 +108,38 @@ async function checkDbOptOutOptionEligibility(configSync) {
 	return (configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey && !defaultAPIKeys.includes(configSync.customYoutubeApiKey));
 }
 
-async function manageDbOptOutOption(domElements, configSync) {
-	// If useCustomApiKeyOption is not checked, the user must share data with the database
-	if (await checkDbOptOutOptionEligibility(configSync)) {
-		domElements.dbSharingOptionToggle.parentElement.classList.remove("disabled");
-	} else {
-		domElements.dbSharingOptionToggle.parentElement.classList.add("disabled");
-	}
+// ---------- Helpers ----------
+// ----- Public -----
+// Contains information such as number of shuffled videos so far, daily quota notice, etc.
+export async function updateFYIDiv(domElements) {
+	// ----- FYI: Number of shuffled videos text -----
+	// Use toLocaleString() to add commas/periods to large numbers
+	const numShuffledVideosTotal = configSync.numShuffledVideosTotal.toLocaleString();
+	domElements.numberOfShuffledVideosText.innerText = `You have shuffled ${numShuffledVideosTotal} video${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""} until now.`;
 
-	// If the user may not opt out of database sharing but the latest record shows they would like to, make sure it's set correctly in sync storage
-	if (!(await checkDbOptOutOptionEligibility(configSync)) && !configSync.databaseSharingEnabledOption) {
-		configSync.databaseSharingEnabledOption = true;
-		await setSyncStorageValue("databaseSharingEnabledOption", true, configSync);
+	// ----- Daily quota notice -----
+	await getUserQuotaRemainingToday();
+
+	// ----- Daily quota notice: Text -----
+	// We set the value first to prevent the default value from being displayed for a split second
+	domElements.dailyQuotaNoticeText.innerText = configSync.userQuotaRemainingToday;
+
+	// ----- FYI: Daily quota notice div -----
+	// If the user has a custom API key, the daily quota notice is not relevant. So we only display it if the user is not providing a custom API key
+	if (!configSync.customYoutubeApiKey || !configSync.useCustomApiKeyOption) {
+		domElements.dailyQuotaNoticeDiv.classList.remove("hidden");
+	} else {
+		domElements.dailyQuotaNoticeDiv.classList.add("hidden");
 	}
-	domElements.dbSharingOptionToggle.checked = configSync.databaseSharingEnabledOption;
 }
 
-// ---------- Helper functions ----------
-
+// ---------- Storage ----------
+// ----- Public -----
 // Validates a YouTube API key by sending a short request
-async function validateApiKey(customAPIKey, domElements) {
+export async function validateApiKey(customAPIKey, domElements) {
 	// APIKey is actually an array of objects here, despite the naming
-	let { APIKey, isCustomKey, keyIndex } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
+	let { APIKey } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
+	console.log(APIKey)
 
 	if (!APIKey) {
 		APIKey = [];
@@ -140,18 +169,17 @@ async function validateApiKey(customAPIKey, domElements) {
 	return true;
 }
 
-async function setChannelSetting(channelId, setting, value) {
+export async function setChannelSetting(channelId, setting, value) {
 	let channelSettings = configSync.channelSettings;
 	if (!channelSettings[channelId]) {
 		channelSettings[channelId] = {};
 	}
 	channelSettings[channelId][setting] = value;
 
-	configSync.channelSettings = channelSettings;
-	await setSyncStorageValue("channelSettings", channelSettings, configSync);
+	await setSyncStorageValue("channelSettings", channelSettings);
 }
 
-async function removeChannelSetting(channelId, setting) {
+export async function removeChannelSetting(channelId, setting) {
 	let channelSettings = configSync.channelSettings;
 	if (!channelSettings[channelId]) {
 		return;
@@ -163,6 +191,5 @@ async function removeChannelSetting(channelId, setting) {
 		delete channelSettings[channelId];
 	}
 
-	configSync.channelSettings = channelSettings;
-	await setSyncStorageValue("channelSettings", channelSettings, configSync);
+	await setSyncStorageValue("channelSettings", channelSettings);
 }

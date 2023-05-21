@@ -1,6 +1,10 @@
-// Builds the shuffle-buttons that are used by the extension
+// Builds the 'Shuffle' buttons that are used by the extension
 
-function buildShuffleButton(pageType, channelId) {
+// ----- Public -----
+export let shuffleButton = null;
+export let shuffleButtonTextElement = null;
+
+export function buildShuffleButton(pageType, channelId, clickHandler) {
 	let buttonDivID = "youtube-random-video-shuffle-button";
 	let buttonDivExtraStyle = "";
 	let buttonDivOwner = null;
@@ -75,7 +79,7 @@ function buildShuffleButton(pageType, channelId) {
 		var shuffleButton = buttonDivOwner.children.namedItem(buttonDivID);
 		if (shuffleButton.children.length > 0) {
 			me.disconnect(); // Stop observing
-			finalizeButton(pageType, channelId);
+			finalizeButton(pageType, channelId, clickHandler);
 			return;
 		}
 	});
@@ -87,7 +91,8 @@ function buildShuffleButton(pageType, channelId) {
 	});
 }
 
-function finalizeButton(pageType, channelId) {
+// ----- Private -----
+function finalizeButton(pageType, channelId, clickHandler) {
 	let buttonDivID = "youtube-random-video-shuffle-button";
 	let buttonDivOwner = null;
 
@@ -147,5 +152,5 @@ function finalizeButton(pageType, channelId) {
 	shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[1].children[0];
 
 	// Add the event listener that shuffles the videos to the button
-	shuffleButton.addEventListener("click", shuffleVideos);
+	shuffleButton.addEventListener("click", clickHandler);
 }
