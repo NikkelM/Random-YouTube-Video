@@ -1,15 +1,13 @@
 // Handles everything concerning the shuffling of videos, including fetching data from the YouTube API
 import {
-	configSync,
 	isEmpty,
 	addHours,
 	getLength,
 	isVideoUrl,
-	setSyncStorageValue,
-	getUserQuotaRemainingToday,
 	RandomYoutubeVideoError,
 	YoutubeAPIError
 } from "./utils.js";
+import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from "./chromeStorage.js";
 
 // For cases in which the playlist in the database has the old Array format (before v1.0.0), we need to overwrite it
 let mustOverwriteDatabase = false;

@@ -1,5 +1,6 @@
 // Contains logic for the "shufflingPage" that is opened when the user clicks the "Shuffle" button from the popup
-import { configSync, delay, setSyncStorageValue } from "../utils.js";
+import { delay } from "../utils.js";
+import { configSync, setSyncStorageValue } from "../chromeStorage.js";
 import { displayShufflingHint, focusOrOpenTab } from "./htmlUtils.js";
 import { chooseRandomVideo } from "../shuffleVideo.js";
 

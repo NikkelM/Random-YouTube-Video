@@ -1,5 +1,6 @@
 // Helper functions for the popup
-import { configSync, getLength, setSyncStorageValue, getUserQuotaRemainingToday} from "../../utils.js";
+import { getLength } from "../../utils.js";
+import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from "../../chromeStorage.js";
 
 // ---------- Dependency management ----------
 // ----- Public -----

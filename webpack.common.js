@@ -13,6 +13,7 @@ module.exports = {
 		content: './src/content.js',
 		shuffleVideo: './src/shuffleVideo.js',
 		utils: './src/utils.js',
+		chromeStorage: './src/chromeStorage.js',
 		// HTML
 		changelog: './src/html/changelog.js',
 		htmlUtils: './src/html/htmlUtils.js',

@@ -1,6 +1,6 @@
 // Background service worker for the extension, which is run ("started") on extension initialization
 // Handles communication between the extension and the content script as well as Firebase interactions
-import { configSync, setSyncStorageValue } from "./utils.js";
+import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 import { configSyncDefaults } from "./config.js";
 
 // ---------- Initialization/Chrome event listeners ----------

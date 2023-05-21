@@ -1,5 +1,6 @@
 // Entry point for the popup page
-import { configSync, delay, setSyncStorageValue } from "../../utils.js";
+import { delay } from "../../utils.js";
+import { configSync, setSyncStorageValue } from "../../chromeStorage.js";
 import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv } from "./popupUtils.js";
 import { focusOrOpenTab } from "../htmlUtils.js";
 

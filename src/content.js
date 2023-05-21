@@ -1,5 +1,6 @@
 // Content script that is injected into YouTube pages
-import { delay, configSync, isVideoUrl, setSyncStorageValue, RandomYoutubeVideoError } from "./utils.js";
+import { delay, isVideoUrl, RandomYoutubeVideoError } from "./utils.js";
+import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 import { buildShuffleButton, shuffleButton, shuffleButtonTextElement } from "./buildShuffleButton.js";
 import { chooseRandomVideo } from "./shuffleVideo.js";
 
