@@ -1,5 +1,6 @@
 import expect from 'expect.js';
-import { isVideoUrl, isEmpty, getLength, addHours, RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
+import sinon from 'sinon';
+import { isVideoUrl, isEmpty, getLength, addHours, delay, RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
 
 describe('utils.js', function () {
 	context('URL helpers', function () {
@@ -78,6 +79,37 @@ describe('utils.js', function () {
 				expect(date.toISOString()).to.be("2018-12-31T23:00:00.000Z");
 			});
 		});
+
+		context('delay()', function () {
+			let clock;
+
+			beforeEach(() => {
+				clock = sinon.useFakeTimers();
+			});
+
+			afterEach(() => {
+				clock.restore();
+			});
+
+			it('should resolve after the specified delay', async () => {
+				let hasResolved = false;
+				
+				delay(1000).then(() => {
+					hasResolved = true;
+				});
+
+				expect(hasResolved).to.be(false);
+
+				await clock.tickAsync(999);
+
+				expect(hasResolved).to.be(false);
+
+				await clock.tickAsync(1);
+				
+				expect(hasResolved).to.be(true);
+			});
+		});
+
 	});
 
 	context('custom errors', function () {
