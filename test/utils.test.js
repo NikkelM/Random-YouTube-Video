@@ -99,13 +99,9 @@ describe('utils.js', function () {
 				});
 
 				expect(hasResolved).to.be(false);
-
 				await clock.tickAsync(999);
-
 				expect(hasResolved).to.be(false);
-
-				await clock.tickAsync(1);
-				
+				await clock.tickAsync(1);	
 				expect(hasResolved).to.be(true);
 			});
 		});

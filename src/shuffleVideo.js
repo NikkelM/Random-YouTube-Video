@@ -39,7 +39,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			);
 		}
 
-		console.log(`Choosing a random video from playlist/channel: ${uploadsPlaylistId}`);
+		console.log(`Shuffling from playlist/channel: ${uploadsPlaylistId}`);
 
 		// Check if the playlist is already saved in local storage, so we don't need to access the database
 		let playlistInfo = await tryGetPlaylistFromLocalStorage(uploadsPlaylistId);
