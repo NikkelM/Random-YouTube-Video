@@ -39,7 +39,11 @@ function setUpMockResponses(mockResponses) {
 
 describe('shuffleVideo', function () {
 
-	this.afterEach(function () {
+	beforeEach(function () {
+		chrome.runtime.sendMessage.resetHistory();
+	});
+
+	afterEach(function () {
 		delete global.fetch;
 	});
 
@@ -64,14 +68,28 @@ describe('shuffleVideo', function () {
 			});
 		});
 
-		context('playlists with different up-to-date states', function () {
+		// Test the function for different playlist states:
+		context('playlists with different states', function () {
+
+			// There are three modifiers to the playlist state, which influence what chooseRandomVideo() does:
+			// 1. Whether the playlist has been fetched from the database recently
+			// 2. Whether the playlist is up-to-date in the database
+			// 3. Whether the playlist has been accessed locally recently
+			// These correspond to the following entries in the playlist object:
+			// 1. lastFetchedFromDB 		(saved locally only)
+			// 2. lastUpdatedDBAt				(saved in DB only)	
+			// 3. lastAccessedLocally		(saved locally only)
+			// The mocked local storage and db entries are set up to reflect these states
+
 			context('DB up-to-date and recently accessed playlist', function () {
-				const playlistId = "UU-DBUpToDateAccessedRecently";
+				const channelId = "UC-DBRecentlyFetchedDBUpToDateLocallyAccessedRecently";
+				const playlistId = "UU-DBRecentlyFetchedDBUpToDateLocallyAccessedRecently";
 
 				it('should have a valid test playlist set up', async function () {
 					// The playlist tested in this context is up-to-date in the database and has been accessed locally recently
 					expect(await getKeyFromLocalStorage(playlistId)).to.be.ok();
 					const testedPlaylist = await getKeyFromLocalStorage(playlistId);
+					console.log(testedPlaylist)
 					expect(testedPlaylist.lastAccessedLocally).to.be.greaterThan(daysAgoMinusOffset(0));
 					expect(testedPlaylist.lastFetchedFromDB).to.be.greaterThan(daysAgoMinusOffset(0));
 					expect(testedPlaylist.lastVideoPublishedAt).to.be.greaterThan(daysAgoMinusOffset(3));
@@ -84,7 +102,7 @@ describe('shuffleVideo', function () {
 					setUpMockResponses(mockResponses);
 
 					const playlistInfoBefore = await getKeyFromLocalStorage(playlistId);
-					await chooseRandomVideo(playlistId, false, null);
+					await chooseRandomVideo(channelId, false, null);
 					const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
 
 					// expect the playlist last accessed to be more recent, and all others to be the same
@@ -98,12 +116,38 @@ describe('shuffleVideo', function () {
 						{ status: 200 }
 					];
 					setUpMockResponses(mockResponses);
-					
+
 					const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-					await chooseRandomVideo(playlistId, false, null);
+					await chooseRandomVideo(channelId, false, null);
 					const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
 
 					expect(userQuotaRemainingTodayAfter).to.be(userQuotaRemainingTodayBefore);
+				});
+
+				it('should only send the correct messages to the background script', async function () {
+					const mockResponses = [
+						{ status: 200 }
+					];
+					setUpMockResponses(mockResponses);
+
+					await chooseRandomVideo(channelId, false, null);
+
+					expect(chrome.runtime.sendMessage.calledOnce).to.be(true);
+					expect(chrome.runtime.sendMessage.calledWith({ command: "getAllYouTubeTabs" })).to.be(true);
+				});
+
+				it('should not interact with the database', async function () {
+					const mockResponses = [
+						{ status: 200 }
+					];
+					setUpMockResponses(mockResponses);
+
+					await chooseRandomVideo(channelId, false, null);
+
+					expect(chrome.runtime.sendMessage.calledOnce).to.be(true);
+					expect(chrome.runtime.sendMessage.calledWith({ command: "getPlaylistFromDB" })).to.be(false);
+					expect(chrome.runtime.sendMessage.calledWith({ command: "updatePlaylistInfoInDB" })).to.be(false);
+					expect(chrome.runtime.sendMessage.calledWith({ command: "overwritePlaylistInfoInDB" })).to.be(false);
 				});
 
 			});
