@@ -3,11 +3,20 @@ function daysAgo(x) {
 	return new Date(Date.now() - x * 24 * 60 * 60 * 1000);
 }
 
-const threeDaysAgo = daysAgo(3).toISOString();
+const zeroDaysAgo = daysAgo(0).toISOString();
 const oneDayAgo = daysAgo(1).toISOString();
+const threeDaysAgo = daysAgo(3).toISOString();
+const fourteenDaysAgo = daysAgo(14).toISOString();
+
+export const times = {
+	zeroDaysAgo,
+	oneDayAgo,
+	threeDaysAgo,
+	fourteenDaysAgo
+}
 
 // TODO: Also add case for deleted videos in the playlist
-const playlistModifiers = [
+export const playlistModifiers = [
 	[
 		'DBRecentlyFetched',
 		'DBNotRecentlyFetched'
@@ -42,8 +51,8 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 	for (let j = 0; j < playlistModifiers[1].length; j++) {
 		for (let k = 0; k < playlistModifiers[2].length; k++) {
 			playlistId = (`UU-${playlistModifiers[0][i]}${playlistModifiers[1][j]}${playlistModifiers[2][k]}`);
-			lastAccessedLocally = (playlistModifiers[2][k] === "LocallyAccessedRecently") ? daysAgo(0).toISOString() : daysAgo(14).toISOString();
-			lastFetchedFromDB = (playlistModifiers[0][i] === "DBRecentlyFetched") ? daysAgo(0).toISOString() : daysAgo(14).toISOString();
+			lastAccessedLocally = (playlistModifiers[2][k] === "LocallyAccessedRecently") ? zeroDaysAgo : fourteenDaysAgo;
+			lastFetchedFromDB = (playlistModifiers[0][i] === "DBRecentlyFetched") ? zeroDaysAgo : fourteenDaysAgo;
 			lastVideoPublishedAt = threeDaysAgo;
 			videos = defaultVideos;
 
@@ -60,22 +69,22 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 const databasePermutationPresets = [
 	// DBUpToDate, No new videos
 	{
-		lastUpdatedDBAt: daysAgo(0).toISOString(),
+		lastUpdatedDBAt: zeroDaysAgo,
 		lastVideoPublishedAt: threeDaysAgo
 	},
 	// DBUpToDate, New videos
 	{
-		lastUpdatedDBAt: daysAgo(0).toISOString(),
+		lastUpdatedDBAt: zeroDaysAgo,
 		lastVideoPublishedAt: oneDayAgo
 	},
 	// DBNotUpToDate, No new videos
 	{
-		lastUpdatedDBAt: daysAgo(14).toISOString(),
+		lastUpdatedDBAt: fourteenDaysAgo,
 		lastVideoPublishedAt: threeDaysAgo
 	},
 	// DBNotUpToDate, New videos
 	{
-		lastUpdatedDBAt: daysAgo(14).toISOString(),
+		lastUpdatedDBAt: fourteenDaysAgo,
 		lastVideoPublishedAt: oneDayAgo
 	}
 ];

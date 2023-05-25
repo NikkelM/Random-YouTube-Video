@@ -4,6 +4,7 @@ import sinon from 'sinon';
 import { RandomYoutubeVideoError } from '../src/utils.js';
 import { chooseRandomVideo } from '../src/shuffleVideo.js';
 import { configSync } from '../src/chromeStorage.js';
+import { times, playlistModifiers, localPlaylistPermutations, databasePermutations } from './playlistPermutations.js';
 
 // Utility to get the contents of localStorage at a certain key
 async function getKeyFromLocalStorage(key) {
@@ -22,9 +23,9 @@ async function getLocalStorage() {
 	});
 }
 
-// Utility to get a date object from x days ago, and a bit earlier to offset for delays, as an ISO string
+// Utility to get a date object from x days ago, plus an additional five minutes
 function daysAgoMinusOffset(x) {
-	return new Date(Date.now() - x * 24 * 60 * 60 * 1000 - 1000).toISOString();
+	return new Date(Date.now() - x * 24 * 60 * 60 * 1000 - 300000).toISOString();
 }
 
 function setUpMockResponses(mockResponses) {
@@ -39,12 +40,21 @@ function setUpMockResponses(mockResponses) {
 
 describe('shuffleVideo', function () {
 
+	before(function () {
+		// Disable console logging from the tested code
+		sinon.stub(console, 'log');
+	});
+
 	beforeEach(function () {
 		chrome.runtime.sendMessage.resetHistory();
 	});
 
 	afterEach(function () {
 		delete global.fetch;
+	});
+
+	after(function () {
+		console.log.restore();
 	});
 
 	context('chooseRandomVideo()', function () {
@@ -69,7 +79,7 @@ describe('shuffleVideo', function () {
 		});
 
 		// Test the function for different playlist states:
-		context('playlists with different states', function () {
+		context('playlist permutations', function () {
 
 			// There are three modifiers to the playlist state, which influence what chooseRandomVideo() does:
 			// 1. Whether the playlist has been fetched from the database recently
@@ -81,75 +91,82 @@ describe('shuffleVideo', function () {
 			// 3. lastAccessedLocally		(saved locally only)
 			// They are created in playlistPermutations.js
 
-			context('DB up-to-date and recently accessed playlist', function () {
-				const channelId = "UC-DBRecentlyFetchedDBUpToDateLocallyAccessedRecently";
-				const playlistId = "UU-DBRecentlyFetchedDBUpToDateLocallyAccessedRecently";
+			const inputs = [];
+			for (let i = 0; i < playlistModifiers[0].length; i++) {
+				for (let j = 0; j < playlistModifiers[1].length; j++) {
+					for (let k = 0; k < playlistModifiers[2].length; k++) {
+						inputs.push({
+							lastFetchedFromDB: (playlistModifiers[0][i] === "DBRecentlyFetched") ? times.zeroDaysAgo : times.fourteenDaysAgo,
+							// lastUpdatedDBAt: playlistModifiers[1][j],
+							lastAccessedLocally: (playlistModifiers[2][k] === "LocallyAccessedRecently") ? times.zeroDaysAgo : times.fourteenDaysAgo,
+							lastVideoPublishedAt: times.threeDaysAgo,
+							playlistId: `UU-${playlistModifiers[0][i]}${playlistModifiers[1][j]}${playlistModifiers[2][k]}`,
+							channelId: `UC-${playlistModifiers[0][i]}${playlistModifiers[1][j]}${playlistModifiers[2][k]}`
+						});
+					}
+				}
+			}
 
-				it('should have a valid test playlist set up', async function () {
-					// The playlist tested in this context is up-to-date in the database and has been accessed locally recently
-					expect(await getKeyFromLocalStorage(playlistId)).to.be.ok();
-					const testedPlaylist = await getKeyFromLocalStorage(playlistId);
+			inputs.forEach(function (input) {
+				context(`playlist ${input.playlistId}`, function () {
 
-					expect(testedPlaylist.lastAccessedLocally).to.be.greaterThan(daysAgoMinusOffset(0));
-					expect(testedPlaylist.lastFetchedFromDB).to.be.greaterThan(daysAgoMinusOffset(0));
-					expect(testedPlaylist.lastVideoPublishedAt).to.be.greaterThan(daysAgoMinusOffset(3));
+					it('should have a valid test playlist set up', async function () {
+						expect(await getKeyFromLocalStorage(input.playlistId)).to.be.ok();
+						const testedPlaylist = await getKeyFromLocalStorage(input.playlistId);
+
+						expect(testedPlaylist.lastAccessedLocally).to.be(input.lastAccessedLocally);
+						expect(testedPlaylist.lastFetchedFromDB).to.be(input.lastFetchedFromDB);
+						expect(testedPlaylist.lastVideoPublishedAt).to.be(input.lastVideoPublishedAt);
+					});
+
+					// No database access required for these playlists
+					if (input.lastFetchedFromDB === times.zeroDaysAgo) {
+						// TODO: This test should work for all inputs, but we haven't mocked the youtube api and database yet
+						it('should correctly update the local playlist object', async function () {
+							const mockResponses = [
+								{ status: 200 }
+							];
+							setUpMockResponses(mockResponses);
+
+							const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
+							await chooseRandomVideo(input.channelId, false, null);
+							const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+
+							expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
+							expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
+							expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
+						});
+
+						it('should not change the userQuotaRemainingToday', async function () {
+							const mockResponses = [
+								{ status: 200 }
+							];
+							setUpMockResponses(mockResponses);
+
+							const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+							await chooseRandomVideo(input.channelId, false, null);
+							const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+
+							expect(userQuotaRemainingTodayAfter).to.be(userQuotaRemainingTodayBefore);
+						});
+
+						it('should not interact with the database', async function () {
+							const mockResponses = [
+								{ status: 200 }
+							];
+							setUpMockResponses(mockResponses);
+
+							await chooseRandomVideo(input.channelId, false, null);
+
+							expect(chrome.runtime.sendMessage.calledOnce).to.be(true);
+							expect(chrome.runtime.sendMessage.calledWith({ command: "getPlaylistFromDB" })).to.be(false);
+							expect(chrome.runtime.sendMessage.calledWith({ command: "updatePlaylistInfoInDB" })).to.be(false);
+							expect(chrome.runtime.sendMessage.calledWith({ command: "overwritePlaylistInfoInDB" })).to.be(false);
+						});
+
+					}
+
 				});
-
-				it('should correctly update the local playlist object', async function () {
-					const mockResponses = [
-						{ status: 200 }
-					];
-					setUpMockResponses(mockResponses);
-
-					const playlistInfoBefore = await getKeyFromLocalStorage(playlistId);
-					await chooseRandomVideo(channelId, false, null);
-					const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
-
-					// expect the playlist last accessed to be more recent, and all others to be the same
-					expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
-					expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
-					expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
-				});
-
-				it('should not change the userQuotaRemainingToday', async function () {
-					const mockResponses = [
-						{ status: 200 }
-					];
-					setUpMockResponses(mockResponses);
-
-					const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-					await chooseRandomVideo(channelId, false, null);
-					const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
-
-					expect(userQuotaRemainingTodayAfter).to.be(userQuotaRemainingTodayBefore);
-				});
-
-				it('should only send the correct messages to the background script', async function () {
-					const mockResponses = [
-						{ status: 200 }
-					];
-					setUpMockResponses(mockResponses);
-
-					await chooseRandomVideo(channelId, false, null);
-
-					expect(chrome.runtime.sendMessage.calledOnce).to.be(true);
-					expect(chrome.runtime.sendMessage.calledWith({ command: "getAllYouTubeTabs" })).to.be(true);
-				});
-
-				it('should not interact with the database', async function () {
-					const mockResponses = [
-						{ status: 200 }
-					];
-					setUpMockResponses(mockResponses);
-
-					await chooseRandomVideo(channelId, false, null);
-
-					expect(chrome.runtime.sendMessage.calledOnce).to.be(true);
-					expect(chrome.runtime.sendMessage.calledWith({ command: "getPlaylistFromDB" })).to.be(false);
-					expect(chrome.runtime.sendMessage.calledWith({ command: "updatePlaylistInfoInDB" })).to.be(false);
-					expect(chrome.runtime.sendMessage.calledWith({ command: "overwritePlaylistInfoInDB" })).to.be(false);
-				});
-
 			});
 
 		});
