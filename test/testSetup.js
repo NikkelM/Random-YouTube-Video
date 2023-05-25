@@ -20,11 +20,6 @@ chrome.storage.sync.clear.callsFake(() => {
 	return Promise.resolve();
 });
 
-// Utility to get a date object from x days ago
-function daysAgo(x) {
-	return new Date(Date.now() - x * 24 * 60 * 60 * 1000);
-}
-
 // ---------- Local storage ----------
 const defaultLocalStorage = {
 	"UU-DBUpToDateAccessedRecently": {
@@ -63,7 +58,29 @@ chrome.storage.local.clear.callsFake(() => {
 	return Promise.resolve();
 });
 
+// ---------- Chrome runtime message listener ----------
+chrome.runtime.sendMessage.callsFake((request) => {
+	switch (request.command) {
+		case 'getAllYouTubeTabs':
+			// Return a list of tabs with a YouTube URL
+			return Promise.resolve([
+				{
+					id: 1,
+					url: 'https://www.youtube.com/watch?v=00000000001'
+				},
+				{
+					id: 2,
+					url: 'https://www.youtube.com/watch?v=00000000002'
+				}
+			]);
 
+		default:
+			console.log(`Please implement this command: ${request.command}`);
+			break;
+	}
+});
+
+// ---------- Test setup and teardown ----------
 beforeEach(() => {
 	chrome.storage.sync.set(configSyncDefaults);
 	chrome.storage.local.set(defaultLocalStorage);
@@ -73,3 +90,9 @@ afterEach(async function () {
 	await chrome.storage.sync.clear();
 	await chrome.storage.local.clear();
 });
+
+// ---------- General utilities ----------
+// Utility to get a date object from x days ago
+function daysAgo(x) {
+	return new Date(Date.now() - x * 24 * 60 * 60 * 1000);
+}

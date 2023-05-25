@@ -66,11 +66,12 @@ describe('shuffleVideo', function () {
 
 		context('playlists with different up-to-date states', function () {
 			context('DB up-to-date and recently accessed playlist', function () {
+				const playlistId = "UU-DBUpToDateAccessedRecently";
 
 				it('should have a valid test playlist set up', async function () {
 					// The playlist tested in this context is up-to-date in the database and has been accessed locally recently
-					expect(await getKeyFromLocalStorage('UU-DBUpToDateAccessedRecently')).to.be.ok();
-					const testedPlaylist = await getKeyFromLocalStorage('UU-DBUpToDateAccessedRecently');
+					expect(await getKeyFromLocalStorage(playlistId)).to.be.ok();
+					const testedPlaylist = await getKeyFromLocalStorage(playlistId);
 					expect(testedPlaylist.lastAccessedLocally).to.be.greaterThan(daysAgoMinusOffset(0));
 					expect(testedPlaylist.lastFetchedFromDB).to.be.greaterThan(daysAgoMinusOffset(0));
 					expect(testedPlaylist.lastVideoPublishedAt).to.be.greaterThan(daysAgoMinusOffset(3));
@@ -82,14 +83,27 @@ describe('shuffleVideo', function () {
 					];
 					setUpMockResponses(mockResponses);
 
-					const playlistInfoBefore = await getKeyFromLocalStorage('UU-DBUpToDateAccessedRecently');
-					await chooseRandomVideo("UC-DBUpToDateAccessedRecently", false, null);
-					const playlistInfoAfter = await getKeyFromLocalStorage('UU-DBUpToDateAccessedRecently');
+					const playlistInfoBefore = await getKeyFromLocalStorage(playlistId);
+					await chooseRandomVideo(playlistId, false, null);
+					const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
 
 					// expect the playlist last accessed to be more recent, and all others to be the same
 					expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
 					expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
 					expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
+				});
+
+				it('should not change the userQuotaRemainingToday', async function () {
+					const mockResponses = [
+						{ status: 200 }
+					];
+					setUpMockResponses(mockResponses);
+					
+					const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+					await chooseRandomVideo(playlistId, false, null);
+					const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+
+					expect(userQuotaRemainingTodayAfter).to.be(userQuotaRemainingTodayBefore);
 				});
 
 			});
