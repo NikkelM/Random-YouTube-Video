@@ -79,7 +79,7 @@ describe('shuffleVideo', function () {
 			// 1. lastFetchedFromDB 		(saved locally only)
 			// 2. lastUpdatedDBAt				(saved in DB only)	
 			// 3. lastAccessedLocally		(saved locally only)
-			// The mocked local storage and db entries are set up to reflect these states
+			// They are created in playlistPermutations.js
 
 			context('DB up-to-date and recently accessed playlist', function () {
 				const channelId = "UC-DBRecentlyFetchedDBUpToDateLocallyAccessedRecently";

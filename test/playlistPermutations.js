@@ -3,181 +3,27 @@ function daysAgo(x) {
 	return new Date(Date.now() - x * 24 * 60 * 60 * 1000);
 }
 
-const lastPublishThreeDaysAgo = daysAgo(3).toISOString();
-const lastPublishOneDayAgo = daysAgo(1).toISOString();
+const threeDaysAgo = daysAgo(3).toISOString();
+const oneDayAgo = daysAgo(1).toISOString();
 
-export const localPlaylistPermutations = {
-	"UU-DBRecentlyFetchedDBUpToDateLocallyAccessedRecently": {
-			lastAccessedLocally: daysAgo(0).toISOString(),
-			lastFetchedFromDB: daysAgo(0).toISOString(),
-			lastVideoPublishedAt: lastPublishThreeDaysAgo,
-			videos: {
-					"00000000001": lastPublishThreeDaysAgo,
-					"00000000002": daysAgo(4).toISOString(),
-					"00000000003": daysAgo(5).toISOString(),
-					"00000000004": daysAgo(6).toISOString(),
-					"00000000005": daysAgo(7).toISOString(),
-					"00000000006": daysAgo(8).toISOString(),
-					"00000000007": daysAgo(9).toISOString(),
-					"00000000008": daysAgo(10).toISOString(),
-					"00000000009": daysAgo(11).toISOString(),
-					"00000000010": daysAgo(12).toISOString(),
-					"00000000011": daysAgo(13).toISOString()
-			}
-	},
+// TODO: Also add case for deleted videos in the playlist
+const playlistModifiers = [
+	[
+		'DBRecentlyFetched',
+		'DBNotRecentlyFetched'
+	],
+	[
+		'DBUpToDate',
+		'DBNotUpToDate'
+	],
+	[
+		'LocallyAccessedRecently',
+		'NotLocallyAccessedRecently'
+	]
+]
 
-	"UU-DBRecentlyFetchedDBUpToDateNotLocallyAccessedRecently": {
-			lastAccessedLocally: daysAgo(14).toISOString(),
-			lastFetchedFromDB: daysAgo(0).toISOString(),
-			lastVideoPublishedAt: lastPublishThreeDaysAgo,
-			videos: {
-					"00000000001": lastPublishThreeDaysAgo,
-					"00000000002": daysAgo(4).toISOString(),
-					"00000000003": daysAgo(5).toISOString(),
-					"00000000004": daysAgo(6).toISOString(),
-					"00000000005": daysAgo(7).toISOString(),
-					"00000000006": daysAgo(8).toISOString(),
-					"00000000007": daysAgo(9).toISOString(),
-					"00000000008": daysAgo(10).toISOString(),
-					"00000000009": daysAgo(11).toISOString(),
-					"00000000010": daysAgo(12).toISOString(),
-					"00000000011": daysAgo(13).toISOString()
-			}
-	},
-
-	"UU-DBRecentlyFetchedDBNotUpToDateLocallyAccessedRecently": {
-			lastAccessedLocally: daysAgo(0).toISOString(),
-			lastFetchedFromDB: daysAgo(0).toISOString(),
-			lastVideoPublishedAt: lastPublishThreeDaysAgo,
-			videos: {
-					"00000000001": lastPublishThreeDaysAgo,
-					"00000000002": daysAgo(4).toISOString(),
-					"00000000003": daysAgo(5).toISOString(),
-					"00000000004": daysAgo(6).toISOString(),
-					"00000000005": daysAgo(7).toISOString(),
-					"00000000006": daysAgo(8).toISOString(),
-					"00000000007": daysAgo(9).toISOString(),
-					"00000000008": daysAgo(10).toISOString(),
-					"00000000009": daysAgo(11).toISOString(),
-					"00000000010": daysAgo(12).toISOString(),
-					"00000000011": daysAgo(13).toISOString()
-			}
-	},
-
-	"UU-DBRecentlyFetchedDBNotUpToDateNotLocallyAccessedRecently": {
-			lastAccessedLocally: daysAgo(14).toISOString(),
-			lastFetchedFromDB: daysAgo(0).toISOString(),
-			lastVideoPublishedAt: lastPublishThreeDaysAgo,
-			videos: {
-					"00000000001": lastPublishThreeDaysAgo,
-					"00000000002": daysAgo(4).toISOString(),
-					"00000000003": daysAgo(5).toISOString(),
-					"00000000004": daysAgo(6).toISOString(),
-					"00000000005": daysAgo(7).toISOString(),
-					"00000000006": daysAgo(8).toISOString(),
-					"00000000007": daysAgo(9).toISOString(),
-					"00000000008": daysAgo(10).toISOString(),
-					"00000000009": daysAgo(11).toISOString(),
-					"00000000010": daysAgo(12).toISOString(),
-					"00000000011": daysAgo(13).toISOString()
-			}
-	},
-
-	"UU-DBNotRecentlyFetchedDBUpToDateLocallyAccessedRecently": {
-			lastAccessedLocally: daysAgo(0).toISOString(),
-			lastFetchedFromDB: daysAgo(14).toISOString(),
-			lastVideoPublishedAt: lastPublishThreeDaysAgo,
-			videos: {
-					"00000000001": lastPublishThreeDaysAgo,
-					"00000000002": daysAgo(4).toISOString(),
-					"00000000003": daysAgo(5).toISOString(),
-					"00000000004": daysAgo(6).toISOString(),
-					"00000000005": daysAgo(7).toISOString(),
-					"00000000006": daysAgo(8).toISOString(),
-					"00000000007": daysAgo(9).toISOString(),
-					"00000000008": daysAgo(10).toISOString(),
-					"00000000009": daysAgo(11).toISOString(),
-					"00000000010": daysAgo(12).toISOString(),
-					"00000000011": daysAgo(13).toISOString()
-			}
-	},
-	"UU-DBNotRecentlyFetchedDBUpToDateNotLocallyAccessedRecently": {
-			lastAccessedLocally: daysAgo(14).toISOString(),
-			lastFetchedFromDB: daysAgo(14).toISOString(),
-			lastVideoPublishedAt: lastPublishThreeDaysAgo,
-			videos: {
-					"00000000001": lastPublishThreeDaysAgo,
-					"00000000002": daysAgo(4).toISOString(),
-					"00000000003": daysAgo(5).toISOString(),
-					"00000000004": daysAgo(6).toISOString(),
-					"00000000005": daysAgo(7).toISOString(),
-					"00000000006": daysAgo(8).toISOString(),
-					"00000000007": daysAgo(9).toISOString(),
-					"00000000008": daysAgo(10).toISOString(),
-					"00000000009": daysAgo(11).toISOString(),
-					"00000000010": daysAgo(12).toISOString(),
-					"00000000011": daysAgo(13).toISOString()
-			}
-	},
-	"UU-DBNotRecentlyFetchedDBNotUpToDateLocallyAccessedRecently": {
-			lastAccessedLocally: daysAgo(0).toISOString(),
-			lastFetchedFromDB: daysAgo(14).toISOString(),
-			lastVideoPublishedAt: lastPublishThreeDaysAgo,
-			videos: {
-					"00000000001": lastPublishThreeDaysAgo,
-					"00000000002": daysAgo(4).toISOString(),
-					"00000000003": daysAgo(5).toISOString(),
-					"00000000004": daysAgo(6).toISOString(),
-					"00000000005": daysAgo(7).toISOString(),
-					"00000000006": daysAgo(8).toISOString(),
-					"00000000007": daysAgo(9).toISOString(),
-					"00000000008": daysAgo(10).toISOString(),
-					"00000000009": daysAgo(11).toISOString(),
-					"00000000010": daysAgo(12).toISOString(),
-					"00000000011": daysAgo(13).toISOString()
-			}
-	},
-	"UU-DBNotRecentlyFetchedDBNotUpToDateNotLocallyAccessedRecently": {
-			lastAccessedLocally: daysAgo(14).toISOString(),
-			lastFetchedFromDB: daysAgo(14).toISOString(),
-			lastVideoPublishedAt: lastPublishThreeDaysAgo,
-			videos: {
-					"00000000001": lastPublishThreeDaysAgo,
-					"00000000002": daysAgo(4).toISOString(),
-					"00000000003": daysAgo(5).toISOString(),
-					"00000000004": daysAgo(6).toISOString(),
-					"00000000005": daysAgo(7).toISOString(),
-					"00000000006": daysAgo(8).toISOString(),
-					"00000000007": daysAgo(9).toISOString(),
-					"00000000008": daysAgo(10).toISOString(),
-					"00000000009": daysAgo(11).toISOString(),
-					"00000000010": daysAgo(12).toISOString(),
-					"00000000011": daysAgo(13).toISOString()
-			}
-	}
-};
-
-const databasePermutationPresets = [
-	{
-		lastUpdatedDBAt: daysAgo(0).toISOString(),
-		lastVideoPublishedAt: lastPublishThreeDaysAgo
-	},
-	{
-		lastUpdatedDBAt: daysAgo(0).toISOString(),
-		lastVideoPublishedAt: lastPublishOneDayAgo
-	},
-	{
-		lastUpdatedDBAt: daysAgo(14).toISOString(),
-		lastVideoPublishedAt: lastPublishThreeDaysAgo
-	},
-	{
-		lastUpdatedDBAt: daysAgo(14).toISOString(),
-		lastVideoPublishedAt: lastPublishOneDayAgo
-	}
-];
-
-const databaseVideos = {
-	"00000000001": lastPublishThreeDaysAgo,
+const defaultVideos = {
+	"00000000001": threeDaysAgo,
 	"00000000002": daysAgo(4).toISOString(),
 	"00000000003": daysAgo(5).toISOString(),
 	"00000000004": daysAgo(6).toISOString(),
@@ -188,21 +34,64 @@ const databaseVideos = {
 	"00000000009": daysAgo(11).toISOString(),
 	"00000000010": daysAgo(12).toISOString(),
 	"00000000011": daysAgo(13).toISOString()
-};
+}
 
+export let localPlaylistPermutations = {};
+let playlistId, lastAccessedLocally, lastFetchedFromDB, lastVideoPublishedAt, videos;
+for (let i = 0; i < playlistModifiers[0].length; i++) {
+	for (let j = 0; j < playlistModifiers[1].length; j++) {
+		for (let k = 0; k < playlistModifiers[2].length; k++) {
+			playlistId = (`UU-${playlistModifiers[0][i]}${playlistModifiers[1][j]}${playlistModifiers[2][k]}`);
+			lastAccessedLocally = (playlistModifiers[2][k] === "LocallyAccessedRecently") ? daysAgo(0).toISOString() : daysAgo(14).toISOString();
+			lastFetchedFromDB = (playlistModifiers[0][i] === "DBRecentlyFetched") ? daysAgo(0).toISOString() : daysAgo(14).toISOString();
+			lastVideoPublishedAt = threeDaysAgo;
+			videos = defaultVideos;
 
-// TODO: These permutations need the correct playlist IDs
-export const databasePermutations = [];
+			localPlaylistPermutations[playlistId] = {
+				lastAccessedLocally,
+				lastFetchedFromDB,
+				lastVideoPublishedAt,
+				videos
+			}
+		}
+	}
+}
+
+const databasePermutationPresets = [
+	// DBUpToDate, No new videos
+	{
+		lastUpdatedDBAt: daysAgo(0).toISOString(),
+		lastVideoPublishedAt: threeDaysAgo
+	},
+	// DBUpToDate, New videos
+	{
+		lastUpdatedDBAt: daysAgo(0).toISOString(),
+		lastVideoPublishedAt: oneDayAgo
+	},
+	// DBNotUpToDate, No new videos
+	{
+		lastUpdatedDBAt: daysAgo(14).toISOString(),
+		lastVideoPublishedAt: threeDaysAgo
+	},
+	// DBNotUpToDate, New videos
+	{
+		lastUpdatedDBAt: daysAgo(14).toISOString(),
+		lastVideoPublishedAt: oneDayAgo
+	}
+];
+
+// TODO: These permutations need the correct playlist IDs as keys
+export let databasePermutations = [];
 
 for (const permutation of databasePermutationPresets) {
 	let newPermutation = {
 		lastUpdatedDBAt: permutation.lastUpdatedDBAt,
 		lastVideoPublishedAt: permutation.lastVideoPublishedAt,
-		videos: { ...databaseVideos }
+		videos: { ...defaultVideos }
 	};
 
-	if (permutation.lastVideoPublishedAt === lastPublishOneDayAgo) {
-		newPermutation.videos["00000000000"] = lastPublishOneDayAgo;
+	if (permutation.lastVideoPublishedAt === oneDayAgo) {
+		newPermutation.videos["00000000012"] = oneDayAgo;
 	}
 
 	databasePermutations.push(newPermutation);
