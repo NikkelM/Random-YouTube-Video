@@ -1,5 +1,6 @@
 // Global utilities
 // ---------- Console rerouting ----------
+/* c8 ignore start - These are console reroutings, which cannot be tested correctly*/
 var oldLog = console.log;
 console.log = function () {
 	if (arguments[0] !== "[random-youtube-video]:") {
@@ -15,6 +16,7 @@ console.error = function () {
 	}
 	oldError.apply(this, arguments);
 }
+/* c8 ignore stop */
 
 // ---------- Utility functions ----------
 

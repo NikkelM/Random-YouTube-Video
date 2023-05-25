@@ -2,6 +2,7 @@
 // ----- Storage -----
 export let configSync = await fetchConfigSync();
 
+/* c8 ignore start - This event listener cannot really be tested*/
 // Whenever someone changes a value in sync storage, we need to be notified to update the global configSync object
 chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	// We only care about changes to the sync storage
@@ -12,6 +13,7 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 		configSync[key] = value.newValue;
 	}
 });
+/* c8 ignore stop*/
 
 // This function also exists in background.js
 export async function setSyncStorageValue(key, value) {
