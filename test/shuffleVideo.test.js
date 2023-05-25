@@ -89,7 +89,7 @@ describe('shuffleVideo', function () {
 					// The playlist tested in this context is up-to-date in the database and has been accessed locally recently
 					expect(await getKeyFromLocalStorage(playlistId)).to.be.ok();
 					const testedPlaylist = await getKeyFromLocalStorage(playlistId);
-					console.log(testedPlaylist)
+
 					expect(testedPlaylist.lastAccessedLocally).to.be.greaterThan(daysAgoMinusOffset(0));
 					expect(testedPlaylist.lastFetchedFromDB).to.be.greaterThan(daysAgoMinusOffset(0));
 					expect(testedPlaylist.lastVideoPublishedAt).to.be.greaterThan(daysAgoMinusOffset(3));
