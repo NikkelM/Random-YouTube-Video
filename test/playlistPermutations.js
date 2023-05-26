@@ -53,7 +53,7 @@ const playlistModifiers = [
 	]
 ];
 
-const defaultVideos = {
+export const defaultLocalVideos = {
 	"LOCAL000001": threeDaysAgo.substring(0, 10),
 	"LOCAL000002": daysAgo(4).substring(0, 10),
 	"LOCAL000003": daysAgo(5).substring(0, 10),
@@ -123,9 +123,9 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 						localLastVideoPublishedAt = threeDaysAgo;
 
 						if (playlistModifiers[3][l] === "LocalPlaylistContainsDeletedVideos") {
-							localVideos = { ...defaultVideos, "local00DEL1": fourteenDaysAgo.substring(0, 10) };
+							localVideos = { ...defaultLocalVideos, "DEL_LOCAL01": fourteenDaysAgo.substring(0, 10) };
 						} else if (playlistModifiers[3][l] === "LocalPlaylistContainsNoDeletedVideos") {
-							localVideos = { ...defaultVideos };
+							localVideos = { ...defaultLocalVideos };
 						} else if (playlistModifiers[2][k] === "PlaylistDoesNotExistLocally") {
 							localVideos = null;
 						} else {
@@ -136,10 +136,10 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 						// This only gets values if !DBEntryDoesNotExist
 						if (playlistModifiers[1][j] !== "DBEntryDoesNotExist") {
 							if (playlistModifiers[5][n] === "DBContainsVideosNotInLocalPlaylist") {
-								dbVideos = { ...defaultVideos, "DB000000001": twoDaysAgo.substring(0, 10) };
+								dbVideos = { ...defaultLocalVideos, "DB000000001": twoDaysAgo.substring(0, 10) };
 								dbLastVideoPublishedAt = twoDaysAgo;
 							} else if (playlistModifiers[5][n] === "DBContainsNoVideosNotInLocalPlaylist") {
-								dbVideos = { ...defaultVideos };
+								dbVideos = { ...defaultLocalVideos };
 								dbLastVideoPublishedAt = localLastVideoPublishedAt;
 							} else {
 								throw new Error(`Invalid playlist modifier combination: ${playlistModifiers[5][n]}`);

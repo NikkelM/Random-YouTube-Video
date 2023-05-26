@@ -23,7 +23,6 @@ chrome.storage.sync.clear.callsFake(() => {
 });
 
 // ---------- Local storage ----------
-
 let mockedLocalStorage = {};
 
 chrome.storage.local.get.callsFake(() => {
@@ -49,10 +48,11 @@ chrome.runtime.sendMessage.callsFake((request) => {
 
 		// With our mocked database, both commands have the same effect
 		case 'updatePlaylistInfoInDB':
+			request.data.val.videos = { ...mockedDatabase[request.data.key]?.videos ?? {}, ...request.data.val.videos };
 		case 'overwritePlaylistInfoInDB':
-			// Update a playlist in the database
+			// Update/Overwrite a playlist in the database
 			mockedDatabase[request.data.key] = request.data.val;
-			return "PlaylistInfo was sent to database."
+			return "PlaylistInfo was sent to database.";
 
 		case "getAPIKey":
 			return getAPIKey(false, request.data.useAPIKeyAtIndex);
@@ -90,10 +90,11 @@ function clearMockedDatabase() {
 
 // ---------- Test setup and teardown ----------
 beforeEach(() => {
-	chrome.storage.sync.set(configSyncDefaults);
-	chrome.storage.local.set(localPlaylistPermutations);
+	chrome.storage.sync.set(JSON.parse(JSON.stringify(configSyncDefaults)));
+	chrome.storage.local.set(JSON.parse(JSON.stringify(localPlaylistPermutations)));
 
-	mockedDatabase = Object.assign({}, databasePermutations);
+	// Create a proper copy of the database
+	mockedDatabase = JSON.parse(JSON.stringify(databasePermutations));
 });
 
 afterEach(async function () {

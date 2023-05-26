@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { RandomYoutubeVideoError } from '../src/utils.js';
 import { chooseRandomVideo } from '../src/shuffleVideo.js';
 import { configSync } from '../src/chromeStorage.js';
-import { times, playlistPermutations, localPlaylistPermutations, databasePermutations } from './playlistPermutations.js';
+import { databasePermutations, playlistPermutations } from './playlistPermutations.js';
 
 // Utility to get the contents of localStorage at a certain key
 async function getKeyFromLocalStorage(key) {
@@ -20,6 +20,10 @@ async function getLocalStorage() {
 	});
 }
 
+async function getPlaylistFromDatabase(key) {
+	return await chrome.runtime.sendMessage({ command: "getPlaylistFromDB", data: key });
+}
+
 function setUpMockResponses(mockResponses) {
 	// Repeats the last response if there are no more responses set up
 	global.fetch = sinon.stub().callsFake((url) => {
@@ -29,12 +33,16 @@ function setUpMockResponses(mockResponses) {
 		if (validResponsesForUrl.length > 1) {
 			return Promise.resolve(validResponsesForUrl.shift());
 		}
-		// console.log("Repeating last response");
+		// console.log("Repeating last response for url: " + url);
 		return Promise.resolve(validResponsesForUrl[0]);
 	});
 }
 
 describe('shuffleVideo', function () {
+
+	before(function () {
+		// sinon.stub(console, 'log');
+	});
 
 	beforeEach(function () {
 		chrome.runtime.sendMessage.resetHistory();
@@ -42,6 +50,10 @@ describe('shuffleVideo', function () {
 
 	afterEach(function () {
 		delete global.fetch;
+	});
+
+	after(function () {
+		// console.log.restore();
 	});
 
 	context('chooseRandomVideo()', function () {
@@ -67,6 +79,8 @@ describe('shuffleVideo', function () {
 
 		// TODO: Test for different user settings, not needed to test for every permutation, as we assume we have local data
 		// Of course, we do need to test that we do not send a request to the database if the user has opted out of database sharing
+
+		// TODO: Test for more than one page being returned from the YouTube API
 
 		// Test chooseRandomVideo() for different playlist states:
 		context('playlist permutations', function () {
@@ -102,6 +116,36 @@ describe('shuffleVideo', function () {
 
 			playlistPermutations.forEach(function (input) {
 				context(`playlist ${input.playlistId}`, function () {
+					let YTAPIItems;
+
+					beforeEach(function () {
+						// Combine the local, db and newVideos into one object, but remove locally deleted videos, whose key starts with DEL_LOCAL
+						const allVideos = { ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos, };
+						for (const [videoId, publishTime] of Object.entries(allVideos)) {
+							if (videoId.startsWith('DEL_LOCAL')) {
+								delete allVideos[videoId];
+							}
+							// Convert all publishTimes to format 2023-03-24T00:00:00Z
+							// All publish times currently have format 2023-03-24
+							else {
+								allVideos[videoId] = publishTime + 'T00:00:00Z';
+							}
+						}
+
+						YTAPIItems = [];
+						// The order of these is important, as the YouTube API will put the newest ones first, so sort by publishTime
+						for (const [videoId, publishTime] of Object.entries(allVideos).sort((a, b) => b[1].localeCompare(a[1]))) {
+							YTAPIItems.push({
+								"kind": "youtube#playlistItem",
+								"etag": "tag",
+								"id": "id",
+								"contentDetails": {
+									"videoId": videoId,
+									"videoPublishedAt": publishTime
+								}
+							});
+						}
+					});
 
 					it('should have a valid localStorage setup', async function () {
 						const testedPlaylistLocally = await getKeyFromLocalStorage(input.playlistId);
@@ -136,12 +180,15 @@ describe('shuffleVideo', function () {
 						}
 					});
 
-					// This test only works for playlists that exist locally anyways
+					// These tests only work for playlists that exist locally, as they compare entries in localStorage
 					if (input.playlistModifiers.lastAccessedLocally !== 'PlaylistDoesNotExistLocally') {
+
 						// For all playlists that do not need to interact with the YouTube API
-						if (input.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsUpToDate') {
+						if (input.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsUpToDate' ||
+							input.playlistModifiers.lastFetchedFromDB === 'LocalPlaylistFetchedDBRecently' ||
+							input.playlistModifiers.lastAccessedLocally === 'LocalPlaylistFetchedRecently') {
 							it('should correctly update the local playlist object', async function () {
-								let mockResponses = {
+								const mockResponses = {
 									// These mock responses will be used for testing video existence
 									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=': [{ status: 200 }]
 								};
@@ -169,10 +216,80 @@ describe('shuffleVideo', function () {
 									}
 								}
 							});
+
+							it('should not change the userQuotaRemainingToday', async function () {
+								const mockResponses = {
+									// These mock responses will be used for testing video existence
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=': [{ status: 200 }]
+								};
+								setUpMockResponses(mockResponses);
+
+								const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+								await chooseRandomVideo(input.channelId, false, null);
+								const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+
+								expect(userQuotaRemainingTodayAfter).to.be(userQuotaRemainingTodayBefore);
+							});
 						}
-						
+
 						// For playlists that need to interact with the YouTube API
 						else if (input.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsNotUpToDate' || input.playlistModifiers.lastUpdatedDBAt === 'DBEntryDoesNotExist') {
+							it('should correctly update the local playlist object', async function () {
+								const mockResponses = {
+									// These mock responses will be used for testing video existence
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=': [{ status: 200 }],
+									// These mock responses contain the results of the YouTube API call to get a playlistInfo
+									'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
+										new Response(JSON.stringify(
+											{
+												"kind": "youtube#playlistItemListResponse",
+												"etag": "tag",
+												"nextPageToken": null,
+												"items": YTAPIItems,
+												"pageInfo": {
+													"totalResults": YTAPIItems.length,
+													"resultsPerPage": 50
+												}
+											}
+										))
+									]
+								};
+								setUpMockResponses(mockResponses);
+
+								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
+								await chooseRandomVideo(input.channelId, false, null);
+								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+
+							});
+
+							it('should correctly update the userQuotaRemainingToday', async function () {
+								const mockResponses = {
+									// These mock responses will be used for testing video existence
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=': [{ status: 200 }],
+									// These mock responses contain the results of the YouTube API call to get a playlistInfo
+									'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
+										new Response(JSON.stringify(
+											{
+												"kind": "youtube#playlistItemListResponse",
+												"etag": "tag",
+												"nextPageToken": null,
+												"items": YTAPIItems,
+												"pageInfo": {
+													"totalResults": YTAPIItems.length,
+													"resultsPerPage": 50
+												}
+											}
+										))
+									]
+								};
+								setUpMockResponses(mockResponses);
+
+								const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+								await chooseRandomVideo(input.channelId, false, null);
+								const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+
+								expect(userQuotaRemainingTodayAfter).to.be.lessThan(userQuotaRemainingTodayBefore);
+							});
 
 						} else {
 							throw new Error('Unknown lastUpdatedDBAt value');
@@ -188,21 +305,6 @@ describe('shuffleVideo', function () {
 
 			// 		// No database access required for these playlists
 			// 		if (input.lastFetchedFromDB === times.zeroDaysAgo) {
-			// 			// TODO: This test should work for all inputs, but we haven't mocked the youtube api and database yet
-			// 			it('should correctly update the local playlist object', async function () {
-			// 				const mockResponses = [
-			// 					{ status: 200 }
-			// 				];
-			// 				setUpMockResponses(mockResponses);
-
-			// 				const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
-			// 				await chooseRandomVideo(input.channelId, false, null);
-			// 				const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
-
-			// 				expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
-			// 				expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
-			// 				expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
-			// 			});
 
 			// 			it('should not change the userQuotaRemainingToday', async function () {
 			// 				const mockResponses = [
