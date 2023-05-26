@@ -106,11 +106,11 @@ afterEach(async function () {
 // ----- Helpers -----
 // Reimplementation of the function in the background script
 async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
-	const defaultAPIKeys = {
-		0: "testAPIKey0",
-		1: "testAPIKey1",
-		2: "testAPIKey2",
-	}
+	const defaultAPIKeys = [
+		"testAPIKey0",
+		"testAPIKey1",
+		"testAPIKey2",
+	];
 
 	// List of API keys that are stored in the database/locally
 	let availableAPIKeys = null;

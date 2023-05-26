@@ -1,13 +1,13 @@
 // Utility to get a date object from x days ago
 function daysAgo(x) {
-	return new Date(Date.now() - x * 24 * 60 * 60 * 1000);
+	return new Date(Date.now() - x * 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
 }
 
-const zeroDaysAgo = daysAgo(0).toISOString();
-const oneDayAgo = daysAgo(1).toISOString();
-const twoDaysAgo = daysAgo(2).toISOString();
-const threeDaysAgo = daysAgo(3).toISOString();
-const fourteenDaysAgo = daysAgo(14).toISOString();
+const zeroDaysAgo = daysAgo(0);
+const oneDayAgo = daysAgo(1);
+const twoDaysAgo = daysAgo(2);
+const threeDaysAgo = daysAgo(3);
+const fourteenDaysAgo = daysAgo(14);
 
 export const times = {
 	zeroDaysAgo,
@@ -51,21 +51,21 @@ const playlistModifiers = [
 		'DBContainsVideosNotInLocalPlaylist',
 		'DBContainsNoVideosNotInLocalPlaylist'
 	]
-]
+];
 
 const defaultVideos = {
 	"LOCAL000001": threeDaysAgo,
-	"LOCAL000002": daysAgo(4).toISOString(),
-	"LOCAL000003": daysAgo(5).toISOString(),
-	"LOCAL000004": daysAgo(6).toISOString(),
-	"LOCAL000005": daysAgo(7).toISOString(),
-	"LOCAL000006": daysAgo(8).toISOString(),
-	"LOCAL000007": daysAgo(9).toISOString(),
-	"LOCAL000008": daysAgo(10).toISOString(),
-	"LOCAL000009": daysAgo(11).toISOString(),
-	"LOCAL000010": daysAgo(12).toISOString(),
-	"LOCAL000011": daysAgo(13).toISOString()
-}
+	"LOCAL000002": daysAgo(4),
+	"LOCAL000003": daysAgo(5),
+	"LOCAL000004": daysAgo(6),
+	"LOCAL000005": daysAgo(7),
+	"LOCAL000006": daysAgo(8),
+	"LOCAL000007": daysAgo(9),
+	"LOCAL000008": daysAgo(10),
+	"LOCAL000009": daysAgo(11),
+	"LOCAL000010": daysAgo(12),
+	"LOCAL000011": daysAgo(13)
+};
 
 export let playlistPermutations = [];
 let playlistId, channelId, lastAccessedLocally, lastUpdatedDBAt, lastFetchedFromDB, localLastVideoPublishedAt, dbLastVideoPublishedAt, newUploadedVideos, newLastVideoPublishedAt, localVideos, dbVideos;
@@ -216,15 +216,3 @@ export const databasePermutations = playlistPermutations.reduce((acc, playlist) 
 	}
 	return acc;
 }, {});
-
-// console.log(playlistPermutations)
-// console.log('-------------------------------------------')
-// console.log(playlistPermutations.length)
-// console.log('-------------------------------------------')
-// console.log('-------------------------------------------')
-// console.log(localPlaylistPermutations)
-// console.log(Object.keys(localPlaylistPermutations).length)
-// console.log('-------------------------------------------')
-// console.log('-------------------------------------------')
-// console.log(databaseEntries)
-// console.log(Object.keys(databaseEntries).length)
