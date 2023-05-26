@@ -54,6 +54,12 @@ chrome.runtime.sendMessage.callsFake((request) => {
 			mockedDatabase[request.data.key] = request.data.val;
 			return "PlaylistInfo was sent to database."
 
+		case "getAPIKey":
+			return getAPIKey(false, request.data.useAPIKeyAtIndex);
+
+		case "getDefaultAPIKeys":
+			return getAPIKey(true, null);
+
 		case 'getAllYouTubeTabs':
 			// Return a list of tabs with a YouTube URL
 			return Promise.resolve([
@@ -96,3 +102,52 @@ afterEach(async function () {
 
 	clearMockedDatabase();
 });
+
+// ----- Helpers -----
+// Reimplementation of the function in the background script
+async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
+	const defaultAPIKeys = {
+		0: "testAPIKey0",
+		1: "testAPIKey1",
+		2: "testAPIKey2",
+	}
+
+	// List of API keys that are stored in the database/locally
+	let availableAPIKeys = null;
+
+	// If the user has opted to use a custom API key, use that instead of the default one
+	if (!forceDefault && mockedConfigSync.useCustomApiKeyOption && mockedConfigSync.customYoutubeApiKey) {
+		return {
+			APIKey: mockedConfigSync.customYoutubeApiKey,
+			isCustomKey: true,
+			keyIndex: null
+		};
+	} else {
+		availableAPIKeys = defaultAPIKeys;
+	}
+
+	if (forceDefault) {
+		// Return a list of all API keys
+		return { APIKey: availableAPIKeys, isCustomKey: false, keyIndex: null };
+	}
+
+	let usedIndex = null;
+	let chosenAPIKey = null;
+	if (useAPIKeyAtIndex === null) {
+		// Choose a random one of the available API keys to evenly distribute the quotas
+		usedIndex = Math.floor(Math.random() * availableAPIKeys.length);
+		chosenAPIKey = availableAPIKeys[usedIndex];
+	} else {
+		// Use the API key at the specified index, using the first one if the index is out of bounds
+		// This variable is set when a previously chosen key already exceeded its quota
+		usedIndex = availableAPIKeys[useAPIKeyAtIndex] ? useAPIKeyAtIndex : 0;
+		chosenAPIKey = availableAPIKeys[usedIndex];
+	}
+
+	// Return the API key, whether or not it is a custom one, and the index of the API key that was used
+	return {
+		APIKey: chosenAPIKey,
+		isCustomKey: false,
+		keyIndex: usedIndex
+	};
+}
