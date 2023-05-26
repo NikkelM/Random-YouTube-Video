@@ -17,7 +17,7 @@ export const times = {
 }
 
 // ----- Local storage -----
-export const playlistModifiers = [
+const playlistModifiers = [
 	// lastFetchedFromDB: If the data was recently fetched from the database
 	[
 		'LocalPlaylistFetchedDBRecently',

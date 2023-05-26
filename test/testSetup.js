@@ -45,7 +45,7 @@ chrome.runtime.sendMessage.callsFake((request) => {
 	switch (request.command) {
 		case 'getPlaylistFromDB':
 			// Return a playlist from the database
-			return Promise.resolve(mockedDatabase[request.data]);
+			return Promise.resolve(mockedDatabase[request.data] ?? null);
 
 		// With our mocked database, both commands have the same effect
 		case 'updatePlaylistInfoInDB':
