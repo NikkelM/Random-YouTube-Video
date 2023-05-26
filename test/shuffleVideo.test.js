@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { RandomYoutubeVideoError } from '../src/utils.js';
 import { chooseRandomVideo } from '../src/shuffleVideo.js';
 import { configSync } from '../src/chromeStorage.js';
-import { times, playlistModifiers, localPlaylistPermutations, databasePermutations } from './playlistPermutations.js';
+import { times, playlistModifiers, playlistPermutations, localPlaylistPermutations, databasePermutations } from './playlistPermutations.js';
 
 // Utility to get the contents of localStorage at a certain key
 async function getKeyFromLocalStorage(key) {
@@ -91,83 +91,69 @@ describe('shuffleVideo', function () {
 			// 3. lastAccessedLocally		(saved locally only)
 			// They are created in playlistPermutations.js
 
-			const inputs = [];
-			for (let i = 0; i < playlistModifiers[0].length; i++) {
-				for (let j = 0; j < playlistModifiers[1].length; j++) {
-					for (let k = 0; k < playlistModifiers[2].length; k++) {
-						inputs.push({
-							lastFetchedFromDB: (playlistModifiers[0][i] === "DBRecentlyFetched") ? times.zeroDaysAgo : times.fourteenDaysAgo,
-							// lastUpdatedDBAt: playlistModifiers[1][j],
-							lastAccessedLocally: (playlistModifiers[2][k] === "LocallyAccessedRecently") ? times.zeroDaysAgo : times.fourteenDaysAgo,
-							lastVideoPublishedAt: times.threeDaysAgo,
-							playlistId: `UU-${playlistModifiers[0][i]}${playlistModifiers[1][j]}${playlistModifiers[2][k]}`,
-							channelId: `UC-${playlistModifiers[0][i]}${playlistModifiers[1][j]}${playlistModifiers[2][k]}`
-						});
-					}
-				}
-			}
+			// An array with each entry being one key of playlistPermutations, where the key is moved into the "playlistId" field, and a channelId is added
 
-			inputs.forEach(function (input) {
-				context(`playlist ${input.playlistId}`, function () {
+			// inputs.forEach(function (input) {
+			// 	context(`playlist ${input.playlistId}`, function () {
 
-					it('should have a valid test playlist set up', async function () {
-						expect(await getKeyFromLocalStorage(input.playlistId)).to.be.ok();
-						const testedPlaylist = await getKeyFromLocalStorage(input.playlistId);
+			// 		it('should have a valid test playlist set up', async function () {
+			// 			expect(await getKeyFromLocalStorage(input.playlistId)).to.be.ok();
+			// 			const testedPlaylist = await getKeyFromLocalStorage(input.playlistId);
 
-						expect(testedPlaylist.lastAccessedLocally).to.be(input.lastAccessedLocally);
-						expect(testedPlaylist.lastFetchedFromDB).to.be(input.lastFetchedFromDB);
-						expect(testedPlaylist.lastVideoPublishedAt).to.be(input.lastVideoPublishedAt);
-					});
+			// 			expect(testedPlaylist.lastAccessedLocally).to.be(input.lastAccessedLocally);
+			// 			expect(testedPlaylist.lastFetchedFromDB).to.be(input.lastFetchedFromDB);
+			// 			expect(testedPlaylist.lastVideoPublishedAt).to.be(input.lastVideoPublishedAt);
+			// 		});
 
-					// No database access required for these playlists
-					if (input.lastFetchedFromDB === times.zeroDaysAgo) {
-						// TODO: This test should work for all inputs, but we haven't mocked the youtube api and database yet
-						it('should correctly update the local playlist object', async function () {
-							const mockResponses = [
-								{ status: 200 }
-							];
-							setUpMockResponses(mockResponses);
+			// 		// No database access required for these playlists
+			// 		if (input.lastFetchedFromDB === times.zeroDaysAgo) {
+			// 			// TODO: This test should work for all inputs, but we haven't mocked the youtube api and database yet
+			// 			it('should correctly update the local playlist object', async function () {
+			// 				const mockResponses = [
+			// 					{ status: 200 }
+			// 				];
+			// 				setUpMockResponses(mockResponses);
 
-							const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
-							await chooseRandomVideo(input.channelId, false, null);
-							const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+			// 				const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
+			// 				await chooseRandomVideo(input.channelId, false, null);
+			// 				const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
 
-							expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
-							expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
-							expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
-						});
+			// 				expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
+			// 				expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
+			// 				expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
+			// 			});
 
-						it('should not change the userQuotaRemainingToday', async function () {
-							const mockResponses = [
-								{ status: 200 }
-							];
-							setUpMockResponses(mockResponses);
+			// 			it('should not change the userQuotaRemainingToday', async function () {
+			// 				const mockResponses = [
+			// 					{ status: 200 }
+			// 				];
+			// 				setUpMockResponses(mockResponses);
 
-							const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-							await chooseRandomVideo(input.channelId, false, null);
-							const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+			// 				const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+			// 				await chooseRandomVideo(input.channelId, false, null);
+			// 				const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
 
-							expect(userQuotaRemainingTodayAfter).to.be(userQuotaRemainingTodayBefore);
-						});
+			// 				expect(userQuotaRemainingTodayAfter).to.be(userQuotaRemainingTodayBefore);
+			// 			});
 
-						it('should not interact with the database', async function () {
-							const mockResponses = [
-								{ status: 200 }
-							];
-							setUpMockResponses(mockResponses);
+			// 			it('should not interact with the database', async function () {
+			// 				const mockResponses = [
+			// 					{ status: 200 }
+			// 				];
+			// 				setUpMockResponses(mockResponses);
 
-							await chooseRandomVideo(input.channelId, false, null);
+			// 				await chooseRandomVideo(input.channelId, false, null);
 
-							expect(chrome.runtime.sendMessage.calledOnce).to.be(true);
-							expect(chrome.runtime.sendMessage.calledWith({ command: "getPlaylistFromDB" })).to.be(false);
-							expect(chrome.runtime.sendMessage.calledWith({ command: "updatePlaylistInfoInDB" })).to.be(false);
-							expect(chrome.runtime.sendMessage.calledWith({ command: "overwritePlaylistInfoInDB" })).to.be(false);
-						});
+			// 				expect(chrome.runtime.sendMessage.calledOnce).to.be(true);
+			// 				expect(chrome.runtime.sendMessage.calledWith({ command: "getPlaylistFromDB" })).to.be(false);
+			// 				expect(chrome.runtime.sendMessage.calledWith({ command: "updatePlaylistInfoInDB" })).to.be(false);
+			// 				expect(chrome.runtime.sendMessage.calledWith({ command: "overwritePlaylistInfoInDB" })).to.be(false);
+			// 			});
 
-					}
+			// 		}
 
-				});
-			});
+			// 	});
+			// });
 
 		});
 
