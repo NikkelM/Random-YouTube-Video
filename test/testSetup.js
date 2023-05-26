@@ -62,13 +62,18 @@ chrome.runtime.sendMessage.callsFake((request) => {
 	}
 });
 
+// ---------- Database mock object ----------
+let mockedDatabase = {};
+
 // ---------- Test setup and teardown ----------
 beforeEach(() => {
 	chrome.storage.sync.set(configSyncDefaults);
 	chrome.storage.local.set(localPlaylistPermutations);
+	mockedDatabase = databasePermutations;
 });
 
 afterEach(async function () {
 	await chrome.storage.sync.clear();
 	await chrome.storage.local.clear();
+	mockedDatabase = {};
 });
