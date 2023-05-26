@@ -196,7 +196,7 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsP
 		// mustOverwriteDatabase: In case the data is still in an old format, we need to overwrite it instead of updating
 		command: (mustOverwriteDatabase || encounteredDeletedVideos) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
 		data: {
-			key: 'uploadsPlaylists/' + uploadsPlaylistId,
+			key: uploadsPlaylistId,
 			val: playlistInfoForDatabase
 		}
 	};

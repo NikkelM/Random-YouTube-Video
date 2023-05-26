@@ -43,6 +43,17 @@ chrome.storage.local.clear.callsFake(() => {
 // ---------- Chrome runtime message listener ----------
 chrome.runtime.sendMessage.callsFake((request) => {
 	switch (request.command) {
+		case 'getPlaylistFromDB':
+			// Return a playlist from the database
+			return Promise.resolve(mockedDatabase[request.data]);
+
+		// With our mocked database, both commands have the same effect
+		case 'updatePlaylistInfoInDB':
+		case 'overwritePlaylistInfoInDB':
+			// Update a playlist in the database
+			mockedDatabase[request.data.key] = request.data.val;
+			return "PlaylistInfo was sent to database."
+
 		case 'getAllYouTubeTabs':
 			// Return a list of tabs with a YouTube URL
 			return Promise.resolve([
@@ -65,15 +76,23 @@ chrome.runtime.sendMessage.callsFake((request) => {
 // ---------- Database mock object ----------
 let mockedDatabase = {};
 
+function clearMockedDatabase() {
+	for (const key in mockedDatabase) {
+		delete mockedDatabase[key];
+	}
+}
+
 // ---------- Test setup and teardown ----------
 beforeEach(() => {
 	chrome.storage.sync.set(configSyncDefaults);
 	chrome.storage.local.set(localPlaylistPermutations);
-	mockedDatabase = databasePermutations;
+
+	mockedDatabase = Object.assign({}, databasePermutations);
 });
 
 afterEach(async function () {
 	await chrome.storage.sync.clear();
 	await chrome.storage.local.clear();
-	mockedDatabase = {};
+
+	clearMockedDatabase();
 });

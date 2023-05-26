@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { RandomYoutubeVideoError } from '../src/utils.js';
 import { chooseRandomVideo } from '../src/shuffleVideo.js';
 import { configSync } from '../src/chromeStorage.js';
-import { times, playlistModifiers, playlistPermutations, localPlaylistPermutations } from './playlistPermutations.js';
+import { times, playlistModifiers, playlistPermutations, localPlaylistPermutations, databasePermutations } from './playlistPermutations.js';
 
 // Utility to get the contents of localStorage at a certain key
 async function getKeyFromLocalStorage(key) {
@@ -40,21 +40,12 @@ function setUpMockResponses(mockResponses) {
 
 describe('shuffleVideo', function () {
 
-	before(function () {
-		// Disable console logging from the tested code
-		sinon.stub(console, 'log');
-	});
-
 	beforeEach(function () {
 		chrome.runtime.sendMessage.resetHistory();
 	});
 
 	afterEach(function () {
 		delete global.fetch;
-	});
-
-	after(function () {
-		console.log.restore();
 	});
 
 	context('chooseRandomVideo()', function () {
