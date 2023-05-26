@@ -20,18 +20,17 @@ async function getLocalStorage() {
 	});
 }
 
-// Utility to get a date object from x days ago, plus an additional five minutes
-function daysAgoMinusOffset(x) {
-	return new Date(Date.now() - x * 24 * 60 * 60 * 1000 - 300000).toISOString();
-}
-
 function setUpMockResponses(mockResponses) {
 	// Repeats the last response if there are no more responses set up
-	global.fetch = sinon.stub().callsFake(() => {
-		if (mockResponses.length > 1) {
-			return Promise.resolve(mockResponses.shift());
+	global.fetch = sinon.stub().callsFake((url) => {
+		// Find the first response that is contained within the url
+		const validResponsesForUrl = mockResponses[Object.keys(mockResponses).find((key) => url.includes(key))] || [{ status: 400 }];
+
+		if (validResponsesForUrl.length > 1) {
+			return Promise.resolve(validResponsesForUrl.shift());
 		}
-		return Promise.resolve(mockResponses[0]);
+		// console.log("Repeating last response");
+		return Promise.resolve(validResponsesForUrl[0]);
 	});
 }
 
@@ -66,9 +65,11 @@ describe('shuffleVideo', function () {
 			});
 		});
 
-		// Test the function for different playlist states:
-		context('playlist permutations', function () {
+		// TODO: Test for different user settings, not needed to test for every permutation, as we assume we have local data
+		// Of course, we do need to test that we do not send a request to the database if the user has opted out of database sharing
 
+		// Test chooseRandomVideo() for different playlist states:
+		context('playlist permutations', function () {
 			// playlistPermutations.js creates a permutation for each possible playlist state
 			// The locally stored playlists are given in localPlaylistPermutations, those stored in the database in databasePermutations
 			// Permutations look like this:
@@ -79,7 +80,8 @@ describe('shuffleVideo', function () {
 						lastUpdatedDBAt: playlistModifiers[1][j],
 						lastAccessedLocally: playlistModifiers[2][k],
 						containsDeletedVideos: playlistModifiers[3][l],
-						newUploadedVideos: playlistModifiers[4][m]
+						newUploadedVideos: playlistModifiers[4][m],
+						dbContainsNewVideos: playlistModifiers[5][n]
 					},
 					playlistId,
 					channelId,
@@ -134,22 +136,48 @@ describe('shuffleVideo', function () {
 						}
 					});
 
-					// TODO: Undo only for playlists that do not need to be updated from the database and exist locally
-					if (input.playlistModifiers.lastFetchedFromDB === 'LocalPlaylistFetchedDBRecently' && input.playlistModifiers.lastAccessedLocally !== 'PlaylistDoesNotExistLocally') {
-						it('should correctly update the local playlist object', async function () {
-							const mockResponses = [
-								{ status: 200 }
-							];
-							setUpMockResponses(mockResponses);
+					// This test only works for playlists that exist locally anyways
+					if (input.playlistModifiers.lastAccessedLocally !== 'PlaylistDoesNotExistLocally') {
+						// For all playlists that do not need to interact with the YouTube API
+						if (input.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsUpToDate') {
+							it('should correctly update the local playlist object', async function () {
+								let mockResponses = {
+									// These mock responses will be used for testing video existence
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=': [{ status: 200 }]
+								};
+								setUpMockResponses(mockResponses);
 
-							const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
-							await chooseRandomVideo(input.channelId, false, null);
-							const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
+								await chooseRandomVideo(input.channelId, false, null);
+								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
 
-							expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
-							expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
-							expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
-						});
+								// If we have not had to update the local playlist, the lastAccessedLocally should be updated but all other values should remain the same
+								if (input.playlistModifiers.lastFetchedFromDB === 'LocalPlaylistFetchedDBRecently') {
+									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
+									expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
+									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
+								} else if (input.playlistModifiers.lastFetchedFromDB === 'LocalPlaylistDidNotFetchDBRecently') {
+									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
+									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
+									// If there is a new video uploaded, the lastVideoPublishedAt should be updated
+									if (input.playlistModifiers.newUploadedVideos === 'NoNewVideoUploaded' && input.playlistModifiers.dbContainsNewVideos !== 'DBContainsVideosNotInLocalPlaylist') {
+										expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
+									} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsVideosNotInLocalPlaylist') {
+										expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
+									} else {
+										expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
+									}
+								}
+							});
+						}
+						
+						// For playlists that need to interact with the YouTube API
+						else if (input.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsNotUpToDate' || input.playlistModifiers.lastUpdatedDBAt === 'DBEntryDoesNotExist') {
+
+						} else {
+							throw new Error('Unknown lastUpdatedDBAt value');
+						}
+
 					}
 
 				});

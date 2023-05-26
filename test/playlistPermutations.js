@@ -1,6 +1,6 @@
 // Utility to get a date object from x days ago
 function daysAgo(x) {
-	return new Date(Date.now() - x * 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
+	return new Date(Date.now() - x * 24 * 60 * 60 * 1000).toISOString();
 }
 
 const zeroDaysAgo = daysAgo(0);
@@ -46,7 +46,7 @@ const playlistModifiers = [
 		'MultipleNewVideosUploaded',
 		'NoNewVideoUploaded'
 	],
-	// dbVideos: Only if !DBEntryDoesNotExist: If the database contains videos that are not in the local playlist
+	// dbContainsNewVideos: Only if !DBEntryDoesNotExist: If the database contains videos that are not in the local playlist
 	[
 		'DBContainsVideosNotInLocalPlaylist',
 		'DBContainsNoVideosNotInLocalPlaylist'
@@ -54,17 +54,17 @@ const playlistModifiers = [
 ];
 
 const defaultVideos = {
-	"LOCAL000001": threeDaysAgo,
-	"LOCAL000002": daysAgo(4),
-	"LOCAL000003": daysAgo(5),
-	"LOCAL000004": daysAgo(6),
-	"LOCAL000005": daysAgo(7),
-	"LOCAL000006": daysAgo(8),
-	"LOCAL000007": daysAgo(9),
-	"LOCAL000008": daysAgo(10),
-	"LOCAL000009": daysAgo(11),
-	"LOCAL000010": daysAgo(12),
-	"LOCAL000011": daysAgo(13)
+	"LOCAL000001": threeDaysAgo.substring(0, 10),
+	"LOCAL000002": daysAgo(4).substring(0, 10),
+	"LOCAL000003": daysAgo(5).substring(0, 10),
+	"LOCAL000004": daysAgo(6).substring(0, 10),
+	"LOCAL000005": daysAgo(7).substring(0, 10),
+	"LOCAL000006": daysAgo(8).substring(0, 10),
+	"LOCAL000007": daysAgo(9).substring(0, 10),
+	"LOCAL000008": daysAgo(10).substring(0, 10),
+	"LOCAL000009": daysAgo(11).substring(0, 10),
+	"LOCAL000010": daysAgo(12).substring(0, 10),
+	"LOCAL000011": daysAgo(13).substring(0, 10)
 };
 
 export let playlistPermutations = [];
@@ -123,7 +123,7 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 						localLastVideoPublishedAt = threeDaysAgo;
 
 						if (playlistModifiers[3][l] === "LocalPlaylistContainsDeletedVideos") {
-							localVideos = { ...defaultVideos, "local00DEL1": fourteenDaysAgo };
+							localVideos = { ...defaultVideos, "local00DEL1": fourteenDaysAgo.substring(0, 10) };
 						} else if (playlistModifiers[3][l] === "LocalPlaylistContainsNoDeletedVideos") {
 							localVideos = { ...defaultVideos };
 						} else if (playlistModifiers[2][k] === "PlaylistDoesNotExistLocally") {
@@ -136,7 +136,7 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 						// This only gets values if !DBEntryDoesNotExist
 						if (playlistModifiers[1][j] !== "DBEntryDoesNotExist") {
 							if (playlistModifiers[5][n] === "DBContainsVideosNotInLocalPlaylist") {
-								dbVideos = { ...defaultVideos, "DB000000001": twoDaysAgo };
+								dbVideos = { ...defaultVideos, "DB000000001": twoDaysAgo.substring(0, 10) };
 								dbLastVideoPublishedAt = twoDaysAgo;
 							} else if (playlistModifiers[5][n] === "DBContainsNoVideosNotInLocalPlaylist") {
 								dbVideos = { ...defaultVideos };
@@ -154,10 +154,10 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 						// This only gets video values if DBEntryIsNotUpToDate is true
 						if (playlistModifiers[1][j] === "DBEntryIsNotUpToDate") {
 							if (playlistModifiers[4][m] === "OneNewVideoUploaded") {
-								newUploadedVideos = { "YT000000001": zeroDaysAgo };
+								newUploadedVideos = { "YT000000001": zeroDaysAgo.substring(0, 10) };
 								newLastVideoPublishedAt = zeroDaysAgo;
 							} else if (playlistModifiers[4][m] === "MultipleNewVideosUploaded") {
-								newUploadedVideos = { "YT000000001": zeroDaysAgo, "YT00000002": zeroDaysAgo, "YT00000003": zeroDaysAgo };
+								newUploadedVideos = { "YT000000001": zeroDaysAgo.substring(0, 10), "YT00000002": zeroDaysAgo.substring(0, 10), "YT00000003": zeroDaysAgo.substring(0, 10) };
 								newLastVideoPublishedAt = zeroDaysAgo;
 							} else if (playlistModifiers[4][m] === "NoNewVideoUploaded") {
 								newUploadedVideos = {};
@@ -177,7 +177,8 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 								lastUpdatedDBAt: playlistModifiers[1][j],
 								lastAccessedLocally: playlistModifiers[2][k],
 								containsDeletedVideos: playlistModifiers[3][l],
-								newUploadedVideos: playlistModifiers[4][m]
+								newUploadedVideos: playlistModifiers[4][m],
+								dbContainsNewVideos: playlistModifiers[5][n]
 							},
 							playlistId,
 							channelId,
