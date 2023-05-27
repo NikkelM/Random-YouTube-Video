@@ -7,7 +7,7 @@
     "build": "webpack --config webpack.prod.cjs",
     "lint": "eslint --ext .ts,.js --max-warnings=0 .",
     "prettier": "prettier --write",
-    "test": "c8 --reporter=lcov --reporter=text mocha ./test/testSetup.js ./test/**/*.test.js"
+    "test": "c8 --reporter=lcov --reporter=text mocha ./test/testSetup.js ./test/**/*.test.js --require mocha-suppress-logs"
   },
   "type": "module",
   "devDependencies": {
@@ -30,6 +30,7 @@
     "jsdom": "^22.1.0",
     "lint-staged": "^13.0.3",
     "mocha": "^10.2.0",
+    "mocha-suppress-logs": "^0.3.1",
     "prettier": "^2.7.1",
     "sinon": "^15.1.0",
     "sinon-chrome": "^3.0.1",

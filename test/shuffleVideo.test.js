@@ -14,17 +14,6 @@ async function getKeyFromLocalStorage(key) {
 	});
 }
 
-// Get all local storage contents
-async function getLocalStorage() {
-	return await chrome.storage.local.get(null).then((result) => {
-		return result;
-	});
-}
-
-async function getPlaylistFromDatabase(key) {
-	return await chrome.runtime.sendMessage({ command: "getPlaylistFromDB", data: key });
-}
-
 function setUpMockResponses(mockResponses) {
 	// Repeats the last response if there are no more responses set up
 	global.fetch = sinon.stub().callsFake((url) => {
@@ -41,20 +30,12 @@ function setUpMockResponses(mockResponses) {
 
 describe('shuffleVideo', function () {
 
-	before(function () {
-		// sinon.stub(console, 'log');
-	});
-
 	beforeEach(function () {
 		chrome.runtime.sendMessage.resetHistory();
 	});
 
 	afterEach(function () {
 		delete global.fetch;
-	});
-
-	after(function () {
-		// console.log.restore();
 	});
 
 	context('chooseRandomVideo()', function () {
