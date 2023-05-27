@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { RandomYoutubeVideoError } from '../src/utils.js';
 import { chooseRandomVideo } from '../src/shuffleVideo.js';
 import { configSync } from '../src/chromeStorage.js';
-import { databasePermutations, playlistPermutations } from './playlistPermutations.js';
+import { databasePermutations, playlistPermutations, needsDBInteraction, needsYTAPIInteraction } from './playlistPermutations.js';
 
 // Utility to get the contents of localStorage at a certain key
 async function getKeyFromLocalStorage(key) {
@@ -181,9 +181,7 @@ describe('shuffleVideo', function () {
 					if (input.playlistModifiers.lastAccessedLocally !== 'PlaylistDoesNotExistLocally') {
 
 						// For all playlists that do not need to interact with the YouTube API
-						if (input.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsUpToDate' ||
-							input.playlistModifiers.lastFetchedFromDB === 'LocalPlaylistFetchedDBRecently' ||
-							input.playlistModifiers.lastAccessedLocally === 'LocalPlaylistFetchedRecently') {
+						if (!needsYTAPIInteraction(input)) {
 							it('should correctly update the local playlist object', async function () {
 								const mockResponses = {
 									// These mock responses will be used for testing video existence
@@ -230,7 +228,7 @@ describe('shuffleVideo', function () {
 						}
 
 						// For playlists that need to interact with the YouTube API
-						else if (input.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsNotUpToDate' || input.playlistModifiers.lastUpdatedDBAt === 'DBEntryDoesNotExist') {
+						else {
 							it('should correctly update the local playlist object', async function () {
 								const mockResponses = {
 									// These mock responses will be used for testing video existence
@@ -289,8 +287,6 @@ describe('shuffleVideo', function () {
 								expect(userQuotaRemainingTodayAfter).to.be.lessThan(userQuotaRemainingTodayBefore);
 							});
 
-						} else {
-							throw new Error('Unknown lastUpdatedDBAt value');
 						}
 
 					}
