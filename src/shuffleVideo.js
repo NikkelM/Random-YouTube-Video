@@ -136,7 +136,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 
 		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
 
-		playVideo(chosenVideos, firedFromPopup);
+		await playVideo(chosenVideos, firedFromPopup);
 	} catch (error) {
 		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, configSync.userQuotaRemainingToday - 1));
 		throw error;
@@ -748,7 +748,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 		// Video page: Pause the current video if it is playing
 		if (isVideoUrl(window.location.href)) {
 			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
-			if (player.classList.contains('playing-mode')) {
+			if (player && player.classList.contains('playing-mode')) {
 				player.children[0].click();
 			}
 		} else {
