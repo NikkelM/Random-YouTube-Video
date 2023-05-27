@@ -212,7 +212,7 @@ describe('shuffleVideo', function () {
 					it('should correctly update the configSync object', async function () {
 						const configSyncBefore = deepCopy(configSync);
 
-						await chooseRandomVideo(input.channelId, false, domElement);						
+						await chooseRandomVideo(input.channelId, false, domElement);
 
 						const configSyncAfter = deepCopy(configSync);
 
@@ -222,14 +222,139 @@ describe('shuffleVideo', function () {
 						expect(configSyncBefore.shuffleTabId).to.be(null);
 						expect(configSyncAfter.shuffleTabId).to.be(1);
 
-						if(!needsYTAPIInteraction(input)) {
+						if (!needsYTAPIInteraction(input)) {
 							expect(configSyncBefore.userQuotaRemainingToday).to.be(configSyncAfter.userQuotaRemainingToday);
 						} else {
 							expect(configSyncBefore.userQuotaRemainingToday).to.be.greaterThan(configSyncAfter.userQuotaRemainingToday);
 						}
-
-						// expect(windowOpenStub.calledOnce).to.be(true);
 					});
+
+					// TODO: This test can also be done only once
+					// it('should open a new tab with the correct URL', async function () {
+					// 	await chooseRandomVideo(input.channelId, false, domElement);
+
+					// 	expect(windowOpenStub.calledOnce).to.be(true);
+					// 	expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
+
+					// });
+
+					if (!needsDBInteraction(input)) {
+						it('should only interact with the database to remove deleted videos', async function () {
+							await chooseRandomVideo(input.channelId, false, domElement);
+
+							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+
+							// callCount is 2 if we didn't choose a deleted video, 3 else
+							expect(chrome.runtime.sendMessage.callCount).to.be.within(2, 3);
+
+							expect(commands).to.contain('getAllYouTubeTabs');
+							expect(commands).to.contain('getCurrentTabId');
+
+							if (chrome.runtime.sendMessage.callCount === 3) {
+								expect(commands).to.contain('overwritePlaylistInfoInDB');
+							}
+
+						});
+					} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos') {
+						it('should update the database if no deleted videos were chosen, or overwrite it if a deleted video was found', async function () {
+							await chooseRandomVideo(input.channelId, false, domElement);
+							const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+
+							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+
+							if (needsYTAPIInteraction(input)) {
+								expect(chrome.runtime.sendMessage.callCount).to.be(5);
+							} else {
+								expect(chrome.runtime.sendMessage.callCount).to.be.within(3, 4);
+							}
+
+							expect(commands).to.contain('getPlaylistFromDB');
+							expect(commands).to.contain('getAllYouTubeTabs');
+							expect(commands).to.contain('getCurrentTabId');
+
+							const numDeletedVideosBefore = Object.keys(input.dbDeletedVideos).filter(videoId => videoId.includes('DEL')).length;
+							const numDeletedVideosAfter = Object.keys(playlistInfoAfter.videos).filter(videoId => videoId.includes('DEL')).length;
+
+							// Callcount:
+							// 5 if we need to fetch from the YT API, with update or overwrite depending on if a video was deleted
+							// 4 if we don't need to fetch from the YT API, but need to overwrite the playlist in the DB
+							// 3 if we dont need to overwrite the playlist in the DB
+							switch (chrome.runtime.sendMessage.callCount) {
+								case 3:
+									expect(numDeletedVideosBefore).to.be(numDeletedVideosAfter);
+									break;
+								case 4:
+									expect(commands).to.contain('overwritePlaylistInfoInDB');
+									expect(numDeletedVideosBefore).to.be.greaterThan(numDeletedVideosAfter);
+									break;
+								case 5:
+									expect(commands).to.contain('getAPIKey');
+									if (numDeletedVideosBefore > numDeletedVideosAfter) {
+										expect(commands).to.contain('overwritePlaylistInfoInDB');
+									} else {
+										expect(commands).to.contain('updatePlaylistInfoInDB');
+									}
+									break;
+								default:
+									expect(false).to.be(true);
+							}
+						});
+					} else if (input.playlistModifiers.containsDeletedVideos === 'LocalPlaylistContainsDeletedVideos') {
+						it('should update the database after interacting with the YouTube API and overwrite local deleted videos', async function () {
+							await chooseRandomVideo(input.channelId, false, domElement);
+							const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+
+							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+
+							// Callcount:
+							// 5 if we need to fetch from the YT API, we consequently need to update the DB
+							// 3 if we dont need to fetch from the YT API
+							if (needsYTAPIInteraction(input)) {
+								expect(chrome.runtime.sendMessage.callCount).to.be(5);
+								expect(commands).to.contain('getAPIKey');
+								expect(commands).to.contain('updatePlaylistInfoInDB');
+							} else {
+								expect(chrome.runtime.sendMessage.callCount).to.be(3);
+							}
+
+							expect(commands).to.contain('getPlaylistFromDB');
+							expect(commands).to.contain('getAllYouTubeTabs');
+							expect(commands).to.contain('getCurrentTabId');
+
+							const numDeletedVideosAfter = Object.keys(playlistInfoAfter.videos).filter(videoId => videoId.includes('DEL')).length;
+
+							expect(numDeletedVideosAfter).to.be(0);
+						});
+					} else if (input.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsUpToDate') {
+						it('should only fetch data from the database', async function () {
+							await chooseRandomVideo(input.channelId, false, domElement);
+
+							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+
+							// 3 because we only need to fetch from the DB
+							expect(chrome.runtime.sendMessage.callCount).to.be(3);
+
+							expect(commands).to.contain('getPlaylistFromDB');
+							expect(commands).to.contain('getAllYouTubeTabs');
+							expect(commands).to.contain('getCurrentTabId');
+						});
+						// For all other cases, the DB entry either doesn't exist, or is out of date, so we need to fetch from the YT API
+					} else {
+						it('should update the database', async function () {
+							await chooseRandomVideo(input.channelId, false, domElement);
+
+							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+
+							// 5 because we need to fetch from the DB, fetch from the YT API, and update the DB
+							expect(chrome.runtime.sendMessage.callCount).to.be(5);
+
+							expect(commands).to.contain('getPlaylistFromDB');
+							expect(commands).to.contain('getAllYouTubeTabs');
+							expect(commands).to.contain('getCurrentTabId');
+							expect(commands).to.contain('getAPIKey');
+							expect(commands).to.contain('updatePlaylistInfoInDB');
+						});
+					}
 
 					// For all playlists that do not need to interact with the YouTube API
 					if (!needsYTAPIInteraction(input)) {
@@ -279,10 +404,8 @@ describe('shuffleVideo', function () {
 								expect({ ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(videosAfter)
 							}
 						});
-					}
-
-					// For playlists that need to interact with the YouTube API
-					else {
+						// For playlists that need to interact with the YouTube API
+					} else {
 						it('should correctly update the local playlist object', async function () {
 							const timeBefore = new Date(Date.now() - 300000).toISOString(); // Add a small offset to be able to compare with greaterThan
 							const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
@@ -329,45 +452,6 @@ describe('shuffleVideo', function () {
 					}
 				});
 			});
-
-			// inputs.forEach(function (input) {
-			// 	context(`playlist ${input.playlistId}`, function () {
-
-			// 		// No database access required for these playlists
-			// 		if (input.lastFetchedFromDB === times.zeroDaysAgo) {
-
-			// 			it('should not change the userQuotaRemainingToday', async function () {
-			// 				const mockResponses = [
-			// 					{ status: 200 }
-			// 				];
-			// 				setUpMockResponses(mockResponses);
-
-			// 				const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-			// 				await chooseRandomVideo(input.channelId, false, null);
-			// 				const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
-
-			// 				expect(userQuotaRemainingTodayAfter).to.be(userQuotaRemainingTodayBefore);
-			// 			});
-
-			// 			it('should not interact with the database', async function () {
-			// 				const mockResponses = [
-			// 					{ status: 200 }
-			// 				];
-			// 				setUpMockResponses(mockResponses);
-
-			// 				await chooseRandomVideo(input.channelId, false, null);
-
-			// 				expect(chrome.runtime.sendMessage.calledOnce).to.be(true);
-			// 				expect(chrome.runtime.sendMessage.calledWith({ command: "getPlaylistFromDB" })).to.be(false);
-			// 				expect(chrome.runtime.sendMessage.calledWith({ command: "updatePlaylistInfoInDB" })).to.be(false);
-			// 				expect(chrome.runtime.sendMessage.calledWith({ command: "overwritePlaylistInfoInDB" })).to.be(false);
-			// 			});
-
-			// 		}
-
-			// 	});
-			// });
-
 		});
 
 	});
