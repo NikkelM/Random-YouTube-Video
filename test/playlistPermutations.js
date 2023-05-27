@@ -153,6 +153,17 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 				for (let m = 0; m < playlistModifiers[4].length; m++) {
 					for (let n = 0; n < playlistModifiers[5].length; n++) {
 						for (let o = 0; o < playlistModifiers[6].length; o++) {
+							// Skip permutations that are not possible
+							if ((playlistModifiers[2][k] === "LocalPlaylistDoesNotExist") && (playlistModifiers[3][l] === "LocalPlaylistContainsDeletedVideos" || playlistModifiers[0][i] === "LocalPlaylistFetchedDBRecently")) {
+								continue;
+							}
+							if ((playlistModifiers[1][j] === "DBEntryDoesNotExist") && (playlistModifiers[5][n] !== "DBContainsNoVideosNotInLocalPlaylist")) {
+								continue;
+							}
+							if ((playlistModifiers[1][j] === "DBEntryIsUpToDate") && (playlistModifiers[4][m] !== "NoNewVideoUploaded")) {
+								continue;
+							}
+
 							// The playlist ID always exists
 							playlistId = (`UU_${playlistModifiers[0][i]}_${playlistModifiers[1][j]}_${playlistModifiers[2][k]}_${playlistModifiers[3][l]}_${playlistModifiers[4][m]}_${playlistModifiers[5][n]}`);
 							channelId = playlistId.replace("UU", "UC");
@@ -207,25 +218,20 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 							}
 
 							// Does the db contain videos unknown to the local playlist
-							if (playlistModifiers[1][j] !== "DBEntryDoesNotExist") {
-								if (playlistModifiers[5][n] === "DBContainsVideosNotInLocalPlaylist") {
-									dbVideos = deepCopy({ ...defaultLocalVideos, ...defaultDBVideos });
-									dbDeletedVideos = null;
-									dbLastVideoPublishedAt = twoDaysAgo;
-								} else if (playlistModifiers[5][n] === "DBContainsNoVideosNotInLocalPlaylist") {
-									dbVideos = deepCopy(defaultLocalVideos);
-									dbDeletedVideos = null;
-									dbLastVideoPublishedAt = localLastVideoPublishedAt;
-								} else if (playlistModifiers[5][n] === "DBContainsDeletedVideos") {
-									dbVideos = deepCopy({ ...defaultLocalVideos, ...defaultDBVideos });
-									dbDeletedVideos = deepCopy(defaultDBDeletedVideos);
-									dbLastVideoPublishedAt = twoDaysAgo;
-								} else {
-									throw new Error(`Invalid playlist modifier combination: ${playlistModifiers[5][n]}`);
-								}
-							} else {
-								dbVideos = null;
+							if (playlistModifiers[5][n] === "DBContainsVideosNotInLocalPlaylist") {
+								dbVideos = deepCopy({ ...defaultLocalVideos, ...defaultDBVideos });
+								dbDeletedVideos = null;
+								dbLastVideoPublishedAt = twoDaysAgo;
+							} else if (playlistModifiers[5][n] === "DBContainsNoVideosNotInLocalPlaylist") {
+								dbVideos = deepCopy(defaultLocalVideos);
+								dbDeletedVideos = null;
 								dbLastVideoPublishedAt = localLastVideoPublishedAt;
+							} else if (playlistModifiers[5][n] === "DBContainsDeletedVideos") {
+								dbVideos = deepCopy(defaultLocalVideos);
+								dbDeletedVideos = deepCopy(defaultDBDeletedVideos);
+								dbLastVideoPublishedAt = localLastVideoPublishedAt;
+							} else {
+								throw new Error(`Invalid playlist modifier combination: ${playlistModifiers[5][n]}`);
 							}
 
 							// Was a new video uploaded since the last time we fetched data from the YouTube API
@@ -238,7 +244,7 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 									newUploadedVideos = deepCopy(multipleNewYTAPIVideos);
 									newLastVideoPublishedAt = zeroDaysAgo;
 								} else if (playlistModifiers[4][m] === "NoNewVideoUploaded") {
-									newUploadedVideos = {};
+									newUploadedVideos = null;
 									newLastVideoPublishedAt = dbLastVideoPublishedAt;
 								} else {
 									throw new Error(`Invalid playlist modifier combination: ${playlistModifiers[4][m]}`);

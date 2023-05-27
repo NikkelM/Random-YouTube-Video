@@ -93,7 +93,6 @@ beforeEach(() => {
 	chrome.storage.sync.set(deepCopy(configSyncDefaults));
 	chrome.storage.local.set(deepCopy(localPlaylistPermutations));
 
-	// Create a proper copy of the database
 	mockedDatabase = deepCopy(databasePermutations);
 });
 

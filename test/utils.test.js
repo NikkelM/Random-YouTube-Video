@@ -23,6 +23,12 @@ describe('utils.js', function () {
 				expect(isVideoUrl("https://www.youtube.com/playlist?list=PL1234567890")).to.be(false);
 			});
 
+			it('should identify a non-YouTube URL', function () {
+				expect(isVideoUrl("https://www.google.com")).to.be(false);
+				expect(isVideoUrl("https://www.google.com/search?q=youtube")).to.be(false);
+				expect(isVideoUrl("about:blank")).to.be(false);
+			});
+
 		});
 	});
 

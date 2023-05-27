@@ -6,7 +6,7 @@ const { window } = new JSDOM('<!doctype html><html><body></body></html>');
 import { RandomYoutubeVideoError } from '../src/utils.js';
 import { chooseRandomVideo } from '../src/shuffleVideo.js';
 import { configSync } from '../src/chromeStorage.js';
-import { deepCopy, databasePermutations, playlistPermutations, needsDBInteraction, needsYTAPIInteraction } from './playlistPermutations.js';
+import { deepCopy, playlistPermutations, needsDBInteraction, needsYTAPIInteraction } from './playlistPermutations.js';
 
 // Utility to get the contents of localStorage at a certain key
 async function getKeyFromLocalStorage(key) {
@@ -230,18 +230,21 @@ describe('shuffleVideo', function () {
 							const videosAfter = Object.keys(playlistInfoAfter.videos);
 
 							if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
+								expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
 								// If we have not had to update the local playlist, the lastAccessedLocally should be updated but all other values should remain the same
 								if (!needsDBInteraction(input)) {
-									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
 									expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
 									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
 									expect(playlistInfoBefore.videos).to.have.keys(videosAfter);
 									// If the database contains videos not in the local playlist
 								} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsVideosNotInLocalPlaylist' ||
 									input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos') {
-									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
 									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
-									expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
+									if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsVideosNotInLocalPlaylist') {
+										expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
+									} else {
+										expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
+									}
 									if (input.localDeletedVideos) {
 										// By fetching the videos from the database, any locally deleted videos should have been removed from the local playlist
 										expect(playlistInfoAfter.videos).to.not.have.keys(Object.keys(input.localDeletedVideos));
@@ -249,7 +252,6 @@ describe('shuffleVideo', function () {
 									expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(videosAfter);
 									// The database and local playlist are in sync already
 								} else {
-									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
 									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
 									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
 									// By fetching the videos from the database, any deleted videos should have been removed from the local playlist
@@ -291,13 +293,25 @@ describe('shuffleVideo', function () {
 							}
 
 							if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
-								// If there are no new videos at all
-								if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsNoNewVideos' && input.playlistModifiers.newUploadedVideos === 'NoNewUploadedVideos') {
-									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
-									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
-									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
-									expect(playlistInfoBefore.videos).to.be(playlistInfoAfter.videos);
-									// If there were new videos 
+								expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
+								expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
+								// If there are no *new* videos
+								if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsNoVideosNotInLocalPlaylist' && input.playlistModifiers.newUploadedVideos === 'NoNewVideoUploaded') {
+									expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(playlistInfoBefore.lastVideoPublishedAt.substring(0, 10));
+									if (input.playlistModifiers.containsDeletedVideos === 'LocalPlaylistContainsDeletedVideos') {
+										expect(playlistInfoAfter.videos).to.have.keys(Object.keys({ ...input.localVideos, ...input.dbVideos }));
+									} else {
+										expect(playlistInfoAfter.videos).to.eql(playlistInfoBefore.videos);
+									}
+									// If there are deleted videos, but no new videos
+								} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos' && input.playlistModifiers.newUploadedVideos === 'NoNewVideoUploaded') {
+									expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(playlistInfoBefore.lastVideoPublishedAt.substring(0, 10));
+									expect(playlistInfoAfter.videos).to.have.keys(Object.keys(input.localVideos));
+									expect({...playlistInfoAfter.videos, ...input.dbDeletedVideos}).to.have.keys(Object.keys(playlistInfoAfter.videos));
+									// If there were new videos, either in the DB or uploaded
+								} else {
+									expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
+									expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos, ...input.newUploadedVideos }).to.have.keys(videosAfter);
 								}
 							} else {
 								// If the playlist did not exist locally before, it should now
