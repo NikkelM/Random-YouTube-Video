@@ -73,6 +73,9 @@ chrome.runtime.sendMessage.callsFake((request) => {
 				}
 			]);
 
+		case 'getCurrentTabId':
+			return Promise.resolve(1);
+
 		default:
 			console.log(`Please implement this command: ${request.command}`);
 			break;

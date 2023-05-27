@@ -115,7 +115,7 @@ describe('shuffleVideo', function () {
 
 			playlistPermutations.forEach(function (input) {
 				context(`playlist ${input.playlistId}`, function () {
-					let domElement;
+					let domElement, windowOpenStub;
 					const videoExistenceMockResponses = {
 						'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOCAL': [{ status: 200 }],
 						'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
@@ -128,6 +128,9 @@ describe('shuffleVideo', function () {
 						// Initialize the window with a given url
 						const { window } = new JSDOM('<!doctype html><html><body></body></html>', { url: 'https://www.youtube.com/watch?v=00000000001' });
 						global.window = window;
+						global.document = window.document;
+
+						windowOpenStub = sinon.stub(window, 'open').returns({ focus: sinon.stub() });
 
 						domElement = global.window.document.createElement('div');
 
@@ -188,6 +191,7 @@ describe('shuffleVideo', function () {
 					afterEach(function () {
 						domElement = undefined;
 
+						windowOpenStub.restore();
 						delete global.window;
 					});
 
@@ -224,7 +228,27 @@ describe('shuffleVideo', function () {
 						}
 					});
 
-					// These tests only work for playlists that exist locally, as they compare entries in localStorage
+					it('should correctly update the configSync object', async function () {
+						const configSyncBefore = deepCopy(configSync);
+
+						await chooseRandomVideo(input.channelId, false, domElement);						
+
+						const configSyncAfter = deepCopy(configSync);
+
+						expect(configSyncBefore.numShuffledVideosTotal).to.be(0);
+						expect(configSyncAfter.numShuffledVideosTotal).to.be(1);
+
+						expect(configSyncBefore.shuffleTabId).to.be(null);
+						expect(configSyncAfter.shuffleTabId).to.be(1);
+
+						if(!needsYTAPIInteraction(input)) {
+							expect(configSyncBefore.userQuotaRemainingToday).to.be(configSyncAfter.userQuotaRemainingToday);
+						} else {
+							expect(configSyncBefore.userQuotaRemainingToday).to.be.greaterThan(configSyncAfter.userQuotaRemainingToday);
+						}
+
+						// expect(windowOpenStub.calledOnce).to.be(true);
+					});
 
 					// For all playlists that do not need to interact with the YouTube API
 					if (!needsYTAPIInteraction(input)) {
@@ -274,15 +298,6 @@ describe('shuffleVideo', function () {
 								expect({ ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(videosAfter)
 							}
 						});
-
-						it('should not change the userQuotaRemainingToday', async function () {
-							const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-							await chooseRandomVideo(input.channelId, false, domElement);
-							const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
-
-							// As we do not need to interact with the YouTube API, the userQuotaRemainingToday should not change, no matter if the playlist exists locally or not
-							expect(userQuotaRemainingTodayAfter).to.be(userQuotaRemainingTodayBefore);
-						});
 					}
 
 					// For playlists that need to interact with the YouTube API
@@ -329,14 +344,6 @@ describe('shuffleVideo', function () {
 								expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos, ...input.newUploadedVideos }).to.have.keys(videosAfter)
 							}
 
-						});
-
-						it('should correctly update the userQuotaRemainingToday', async function () {
-							const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-							await chooseRandomVideo(input.channelId, false, domElement);
-							const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
-
-							expect(userQuotaRemainingTodayAfter).to.be.lessThan(userQuotaRemainingTodayBefore);
 						});
 					}
 				});
