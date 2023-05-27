@@ -117,10 +117,17 @@ describe('shuffleVideo', function () {
 			playlistPermutations.forEach(function (input) {
 				context(`playlist ${input.playlistId}`, function () {
 					let YTResponses, domElement;
+					let videoExistenceMockResponses = {
+						'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOCAL': [{ status: 200 }],
+						'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
+						'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=YT': [{ status: 200 }],
+						'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DEL': [{ status: 400 }]
+					};
 
 					beforeEach(function () {
 						domElement = window.document.createElement('div');
 
+						// ---------- Fetch mock responses ----------
 						// ----- YT API responses -----
 						// Combine the local, db and newVideos into one object, but remove locally deleted videos, as they do not exist in the YT API anymore
 						const allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos });
@@ -253,13 +260,7 @@ describe('shuffleVideo', function () {
 							});
 
 							it('should not change the userQuotaRemainingToday', async function () {
-								const mockResponses = {
-									// These mock responses will be used for testing video existence
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOCAL': [{ status: 200 }],
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=YT': [{ status: 200 }],
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DEL': [{ status: 400 }]
-								};
+								const mockResponses = videoExistenceMockResponses;
 								setUpMockResponses(mockResponses);
 
 								const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
@@ -274,12 +275,7 @@ describe('shuffleVideo', function () {
 						else {
 							it('should correctly update the local playlist object', async function () {
 								const mockResponses = {
-									// These mock responses will be used for testing video existence
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOCAL': [{ status: 200 }],
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=YT': [{ status: 200 }],
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DEL': [{ status: 400 }],
-									// These mock responses contain the results of the YouTube API call to get a playlistInfo
+									...videoExistenceMockResponses,
 									'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses
 								};
 								setUpMockResponses(mockResponses);
@@ -304,12 +300,7 @@ describe('shuffleVideo', function () {
 
 							it('should correctly update the userQuotaRemainingToday', async function () {
 								const mockResponses = {
-									// These mock responses will be used for testing video existence
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOCAL': [{ status: 200 }],
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=YT': [{ status: 200 }],
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DEL': [{ status: 400 }],
-									// These mock responses contain the results of the YouTube API call to get a playlistInfo
+									...videoExistenceMockResponses,
 									'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses
 								};
 								setUpMockResponses(mockResponses);
