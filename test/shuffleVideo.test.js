@@ -124,10 +124,7 @@ describe('shuffleVideo', function () {
 						for (const [videoId, publishTime] of Object.entries(allVideos)) {
 							if (videoId.startsWith('DEL_LOCAL')) {
 								delete allVideos[videoId];
-							}
-							// Convert all publishTimes to format 2023-03-24T00:00:00Z
-							// All publish times currently have format 2023-03-24
-							else {
+							} else {
 								allVideos[videoId] = publishTime + 'T00:00:00Z';
 							}
 						}
@@ -259,6 +256,7 @@ describe('shuffleVideo', function () {
 								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
 								await chooseRandomVideo(input.channelId, false, null);
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+								// TODO
 
 							});
 

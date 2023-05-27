@@ -1,8 +1,21 @@
+// ----- Utility functions -----
 // Utility to get a date object from x days ago
 function daysAgo(x) {
 	return new Date(Date.now() - x * 24 * 60 * 60 * 1000).toISOString();
 }
 
+// Create a deep copy of an object
+export function deepCopy(obj) {
+	return JSON.parse(JSON.stringify(obj));
+}
+
+// Determine whether or not a permutation needs to interact with the database
+export function needsDBInteraction(permutation) {
+}
+
+// Determine whether or not a permutation needs to interact with the YouTube API
+
+// Keep these in sync with the values compared against in the tests
 const zeroDaysAgo = daysAgo(0);
 const oneDayAgo = daysAgo(1);
 const twoDaysAgo = daysAgo(2);
@@ -67,6 +80,24 @@ export const defaultLocalVideos = {
 	"LOCAL000011": daysAgo(13).substring(0, 10)
 };
 
+const oneNewYTAPIVideo = {
+	"YT000000001": zeroDaysAgo.substring(0, 10)
+};
+
+const multipleNewYTAPIVideos = {
+	"YT000000001": zeroDaysAgo.substring(0, 10),
+	"YT00000002": zeroDaysAgo.substring(0, 10),
+	"YT00000003": zeroDaysAgo.substring(0, 10),
+	"YT00000004": zeroDaysAgo.substring(0, 10),
+	"YT00000005": zeroDaysAgo.substring(0, 10),
+	"YT00000006": zeroDaysAgo.substring(0, 10),
+	"YT00000007": zeroDaysAgo.substring(0, 10),
+	"YT00000008": zeroDaysAgo.substring(0, 10),
+	"YT00000009": zeroDaysAgo.substring(0, 10),
+	"YT00000010": zeroDaysAgo.substring(0, 10),
+	"YT00000011": zeroDaysAgo.substring(0, 10)
+};
+
 export let playlistPermutations = [];
 let playlistId, channelId, lastAccessedLocally, lastUpdatedDBAt, lastFetchedFromDB, localLastVideoPublishedAt, dbLastVideoPublishedAt, newUploadedVideos, newLastVideoPublishedAt, localVideos, dbVideos;
 
@@ -119,13 +150,13 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 						}
 
 						// When was the last locally known video published
-						// TODO: Local vs db
 						localLastVideoPublishedAt = threeDaysAgo;
 
 						if (playlistModifiers[3][l] === "LocalPlaylistContainsDeletedVideos") {
-							localVideos = { ...defaultLocalVideos, "DEL_LOCAL01": fourteenDaysAgo.substring(0, 10) };
+							localVideos = deepCopy(defaultLocalVideos);
+							localVideos["DEL_LOCAL01"] = fourteenDaysAgo.substring(0, 10);
 						} else if (playlistModifiers[3][l] === "LocalPlaylistContainsNoDeletedVideos") {
-							localVideos = { ...defaultLocalVideos };
+							localVideos = deepCopy(defaultLocalVideos);
 						} else if (playlistModifiers[2][k] === "PlaylistDoesNotExistLocally") {
 							localVideos = null;
 						} else {
@@ -136,10 +167,11 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 						// This only gets values if !DBEntryDoesNotExist
 						if (playlistModifiers[1][j] !== "DBEntryDoesNotExist") {
 							if (playlistModifiers[5][n] === "DBContainsVideosNotInLocalPlaylist") {
-								dbVideos = { ...defaultLocalVideos, "DB000000001": twoDaysAgo.substring(0, 10) };
+								dbVideos = deepCopy(defaultLocalVideos);
+								dbVideos["DB000000001"] = twoDaysAgo.substring(0, 10);
 								dbLastVideoPublishedAt = twoDaysAgo;
 							} else if (playlistModifiers[5][n] === "DBContainsNoVideosNotInLocalPlaylist") {
-								dbVideos = { ...defaultLocalVideos };
+								dbVideos = deepCopy(defaultLocalVideos);
 								dbLastVideoPublishedAt = localLastVideoPublishedAt;
 							} else {
 								throw new Error(`Invalid playlist modifier combination: ${playlistModifiers[5][n]}`);
@@ -154,10 +186,9 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 						// This only gets video values if DBEntryIsNotUpToDate is true
 						if (playlistModifiers[1][j] === "DBEntryIsNotUpToDate") {
 							if (playlistModifiers[4][m] === "OneNewVideoUploaded") {
-								newUploadedVideos = { "YT000000001": zeroDaysAgo.substring(0, 10) };
-								newLastVideoPublishedAt = zeroDaysAgo;
+								newLastVideoPublishedAt = deepCopy(oneNewYTAPIVideo);
 							} else if (playlistModifiers[4][m] === "MultipleNewVideosUploaded") {
-								newUploadedVideos = { "YT000000001": zeroDaysAgo.substring(0, 10), "YT00000002": zeroDaysAgo.substring(0, 10), "YT00000003": zeroDaysAgo.substring(0, 10) };
+								newUploadedVideos = deepCopy(multipleNewYTAPIVideos);
 								newLastVideoPublishedAt = zeroDaysAgo;
 							} else if (playlistModifiers[4][m] === "NoNewVideoUploaded") {
 								newUploadedVideos = {};
@@ -204,15 +235,18 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 
 export const localPlaylistPermutations = playlistPermutations.reduce((acc, playlist) => {
 	if (playlist.playlistModifiers.lastAccessedLocally !== "PlaylistDoesNotExistLocally") {
-		const { playlistId, lastAccessedLocally, lastFetchedFromDB, localLastVideoPublishedAt, localVideos } = playlist;
+		const playlistCopy = deepCopy(playlist);
+		const { playlistId, lastAccessedLocally, lastFetchedFromDB, localLastVideoPublishedAt, localVideos } = playlistCopy;
 		acc[playlistId] = { lastAccessedLocally, lastFetchedFromDB, lastVideoPublishedAt: localLastVideoPublishedAt, videos: localVideos };
 	}
 	return acc;
 }, {});
 
+// ----- Database -----
 export const databasePermutations = playlistPermutations.reduce((acc, playlist) => {
 	if (playlist.playlistModifiers.lastUpdatedDBAt !== "DBEntryDoesNotExist") {
-		const { playlistId, lastUpdatedDBAt, dbLastVideoPublishedAt, dbVideos } = playlist;
+		const playlistCopy = deepCopy(playlist);
+		const { playlistId, lastUpdatedDBAt, dbLastVideoPublishedAt, dbVideos } = playlistCopy;
 		acc[playlistId] = { lastUpdatedDBAt, lastVideoPublishedAt: dbLastVideoPublishedAt, videos: dbVideos };
 	}
 	return acc;

@@ -1,7 +1,7 @@
 import sinonChrome from 'sinon-chrome';
 
 import { configSyncDefaults } from '../src/config.js';
-import { localPlaylistPermutations, databasePermutations } from './playlistPermutations.js';
+import { deepCopy, localPlaylistPermutations, databasePermutations } from './playlistPermutations.js';
 
 global.chrome = sinonChrome;
 
@@ -90,11 +90,11 @@ function clearMockedDatabase() {
 
 // ---------- Test setup and teardown ----------
 beforeEach(() => {
-	chrome.storage.sync.set(JSON.parse(JSON.stringify(configSyncDefaults)));
-	chrome.storage.local.set(JSON.parse(JSON.stringify(localPlaylistPermutations)));
+	chrome.storage.sync.set(deepCopy(configSyncDefaults));
+	chrome.storage.local.set(deepCopy(localPlaylistPermutations));
 
 	// Create a proper copy of the database
-	mockedDatabase = JSON.parse(JSON.stringify(databasePermutations));
+	mockedDatabase = deepCopy(databasePermutations);
 });
 
 afterEach(async function () {
