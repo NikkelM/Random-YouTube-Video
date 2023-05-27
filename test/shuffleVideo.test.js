@@ -135,7 +135,7 @@ describe('shuffleVideo', function () {
 							if (videoId.startsWith('DEL_LOCAL')) {
 								delete allVideos[videoId];
 							} else {
-								allVideos[videoId] = publishTime + 'T00:00:00Z';
+								allVideos[videoId] = publishTime;
 							}
 						}
 
@@ -176,8 +176,8 @@ describe('shuffleVideo', function () {
 							'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses,
 						};
 
-						const mockResponses = {...videoExistenceMockResponses, ...YTMockResponses};
-						
+						const mockResponses = { ...videoExistenceMockResponses, ...YTMockResponses };
+
 						setUpMockResponses(mockResponses);
 					});
 
@@ -219,16 +219,17 @@ describe('shuffleVideo', function () {
 					});
 
 					// These tests only work for playlists that exist locally, as they compare entries in localStorage
-					if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
 
-						// For all playlists that do not need to interact with the YouTube API
-						if (!needsYTAPIInteraction(input)) {
-							it('should correctly update the local playlist object', async function () {
-								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
-								await chooseRandomVideo(input.channelId, false, domElement);
-								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
-								const videosAfter = Object.keys(playlistInfoAfter.videos);
+					// For all playlists that do not need to interact with the YouTube API
+					if (!needsYTAPIInteraction(input)) {
+						it('should correctly update the local playlist object', async function () {
+							const timeBefore = new Date(Date.now() - 300000).toISOString(); // Add a small offset to be able to compare with greaterThan
+							const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
+							await chooseRandomVideo(input.channelId, false, domElement);
+							const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+							const videosAfter = Object.keys(playlistInfoAfter.videos);
 
+							if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
 								// If we have not had to update the local playlist, the lastAccessedLocally should be updated but all other values should remain the same
 								if (!needsDBInteraction(input)) {
 									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
@@ -255,50 +256,69 @@ describe('shuffleVideo', function () {
 									// We also know that here, the db did not contain any deleted videos
 									expect(playlistInfoAfter.videos).to.have.keys(Object.keys({ ...input.localVideos, ...input.dbVideos }));
 								}
-							});
+							} else {
+								// If the playlist did not exist locally before, it should now
+								// Reminder: We did not interact with the YouTube API
+								expect(playlistInfoAfter).to.be.an('object');
+								expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(timeBefore);
+								expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(timeBefore);
+								expect(playlistInfoAfter.lastVideoPublishedAt).to.be(input.dbLastVideoPublishedAt);
+								expect({ ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(videosAfter)
+							}
+						});
 
-							it('should not change the userQuotaRemainingToday', async function () {
-								const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-								await chooseRandomVideo(input.channelId, false, domElement);
-								const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+						it('should not change the userQuotaRemainingToday', async function () {
+							const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+							await chooseRandomVideo(input.channelId, false, domElement);
+							const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
 
-								expect(userQuotaRemainingTodayAfter).to.be(userQuotaRemainingTodayBefore);
-							});
-						}
+							// As we do not need to interact with the YouTube API, the userQuotaRemainingToday should not change, no matter if the playlist exists locally or not
+							expect(userQuotaRemainingTodayAfter).to.be(userQuotaRemainingTodayBefore);
+						});
+					}
 
-						// For playlists that need to interact with the YouTube API
-						else {
-							it('should correctly update the local playlist object', async function () {
-								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
-								await chooseRandomVideo(input.channelId, false, domElement);
-								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+					// For playlists that need to interact with the YouTube API
+					else {
+						it('should correctly update the local playlist object', async function () {
+							const timeBefore = new Date(Date.now() - 300000).toISOString(); // Add a small offset to be able to compare with greaterThan
+							const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
+							await chooseRandomVideo(input.channelId, false, domElement);
+							const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+							const videosAfter = Object.keys(playlistInfoAfter.videos);
 
-								if (!needsDBInteraction(input)) {
-									throw new Error('This test should not be run for playlists that do not need to interact with the database. If they are, this means we are now using different configSync objects.');
-								}
+							if (!needsDBInteraction(input)) {
+								throw new Error('This test should not be run for playlists that do not need to interact with the database. If they are, this means we are now using different configSync objects.');
+							}
 
+							if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
 								// If there are no new videos at all
 								if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsNoNewVideos' && input.playlistModifiers.newUploadedVideos === 'NoNewUploadedVideos') {
 									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
 									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
 									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
+									expect(playlistInfoBefore.videos).to.be(playlistInfoAfter.videos);
 									// If there were new videos 
 								}
+							} else {
+								// If the playlist did not exist locally before, it should now
+								// Reminder: We interacted with the YouTube API
+								expect(playlistInfoAfter).to.be.an('object');
+								expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(timeBefore);
+								expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(timeBefore);
+								expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(input.newLastVideoPublishedAt.substring(0, 10));
+								expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos, ...input.newUploadedVideos }).to.have.keys(videosAfter)
+							}
 
-							});
+						});
 
-							it('should correctly update the userQuotaRemainingToday', async function () {
-								const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-								await chooseRandomVideo(input.channelId, false, domElement);
-								const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+						it('should correctly update the userQuotaRemainingToday', async function () {
+							const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+							await chooseRandomVideo(input.channelId, false, domElement);
+							const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
 
-								expect(userQuotaRemainingTodayAfter).to.be.lessThan(userQuotaRemainingTodayBefore);
-							});
-
-						}
-
+							expect(userQuotaRemainingTodayAfter).to.be.lessThan(userQuotaRemainingTodayBefore);
+						});
 					}
-
 				});
 			});
 

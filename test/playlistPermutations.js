@@ -118,15 +118,16 @@ const defaultDBDeletedVideos = {
 	"DEL_DB03": fourteenDaysAgo.substring(0, 10)
 };
 
+// The YT API returns a full-length timestamp
 const oneNewYTAPIVideo = {
-	"YT000000001": zeroDaysAgo.substring(0, 10)
+	"YT000000001": zeroDaysAgo
 };
 
 // Get over the 50 per page API limit, and get to more than one additional page for the inner while loop
 const multipleNewYTAPIVideos = {};
 for (let i = 1; i <= 105; i++) {
 	const key = `YT${String(i).padStart(8, '0')}`;
-	multipleNewYTAPIVideos[key] = zeroDaysAgo.substring(0, 10);
+	multipleNewYTAPIVideos[key] = zeroDaysAgo;
 }
 
 export let playlistPermutations = [];
@@ -206,7 +207,6 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 							}
 
 							// Does the db contain videos unknown to the local playlist
-							// This only gets values if !DBEntryDoesNotExist
 							if (playlistModifiers[1][j] !== "DBEntryDoesNotExist") {
 								if (playlistModifiers[5][n] === "DBContainsVideosNotInLocalPlaylist") {
 									dbVideos = deepCopy({ ...defaultLocalVideos, ...defaultDBVideos });
@@ -225,14 +225,15 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 								}
 							} else {
 								dbVideos = null;
-								dbLastVideoPublishedAt = null;
+								dbLastVideoPublishedAt = localLastVideoPublishedAt;
 							}
 
 							// Was a new video uploaded since the last time we fetched data from the YouTube API
 							// newLastVideoPublishedAt is the new date that should be in the database and locally after the update
 							if (playlistModifiers[1][j] !== "DBEntryIsUpToDate") {
 								if (playlistModifiers[4][m] === "OneNewVideoUploaded") {
-									newLastVideoPublishedAt = deepCopy(oneNewYTAPIVideo);
+									newUploadedVideos = deepCopy(oneNewYTAPIVideo);
+									newLastVideoPublishedAt = zeroDaysAgo;
 								} else if (playlistModifiers[4][m] === "MultipleNewVideosUploaded") {
 									newUploadedVideos = deepCopy(multipleNewYTAPIVideos);
 									newLastVideoPublishedAt = zeroDaysAgo;
@@ -244,7 +245,7 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 								}
 							} else {
 								newUploadedVideos = null;
-								newLastVideoPublishedAt = null;
+								newLastVideoPublishedAt = dbLastVideoPublishedAt;
 							}
 
 							if (playlistModifiers[6][o] === "DefaultConfigSync") {
