@@ -116,8 +116,8 @@ describe('shuffleVideo', function () {
 
 			playlistPermutations.forEach(function (input) {
 				context(`playlist ${input.playlistId}`, function () {
-					let YTResponses, domElement;
-					let videoExistenceMockResponses = {
+					let domElement;
+					const videoExistenceMockResponses = {
 						'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOCAL': [{ status: 200 }],
 						'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
 						'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=YT': [{ status: 200 }],
@@ -154,7 +154,7 @@ describe('shuffleVideo', function () {
 						}
 
 						// Put 50 items into one response each, as that is the maximum number of items that can be returned by the YouTube API
-						YTResponses = [];
+						let YTResponses = [];
 						const totalResults = YTAPIItems.length;
 						while (YTAPIItems.length > 0) {
 							const items = YTAPIItems.splice(0, 50);
@@ -171,10 +171,17 @@ describe('shuffleVideo', function () {
 								}
 							)));
 						}
+
+						const YTMockResponses = {
+							'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses,
+						};
+
+						const mockResponses = {...videoExistenceMockResponses, ...YTMockResponses};
+						
+						setUpMockResponses(mockResponses);
 					});
 
 					afterEach(function () {
-						YTResponses = undefined;
 						domElement = undefined;
 					});
 
@@ -217,15 +224,6 @@ describe('shuffleVideo', function () {
 						// For all playlists that do not need to interact with the YouTube API
 						if (!needsYTAPIInteraction(input)) {
 							it('should correctly update the local playlist object', async function () {
-								const mockResponses = {
-									// These mock responses will be used for testing video existence
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOCAL': [{ status: 200 }],
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=YT': [{ status: 200 }],
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DEL': [{ status: 400 }]
-								};
-								setUpMockResponses(mockResponses);
-
 								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
 								await chooseRandomVideo(input.channelId, false, domElement);
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
@@ -260,9 +258,6 @@ describe('shuffleVideo', function () {
 							});
 
 							it('should not change the userQuotaRemainingToday', async function () {
-								const mockResponses = videoExistenceMockResponses;
-								setUpMockResponses(mockResponses);
-
 								const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
 								await chooseRandomVideo(input.channelId, false, domElement);
 								const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
@@ -274,12 +269,6 @@ describe('shuffleVideo', function () {
 						// For playlists that need to interact with the YouTube API
 						else {
 							it('should correctly update the local playlist object', async function () {
-								const mockResponses = {
-									...videoExistenceMockResponses,
-									'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses
-								};
-								setUpMockResponses(mockResponses);
-
 								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
 								await chooseRandomVideo(input.channelId, false, domElement);
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
@@ -299,12 +288,6 @@ describe('shuffleVideo', function () {
 							});
 
 							it('should correctly update the userQuotaRemainingToday', async function () {
-								const mockResponses = {
-									...videoExistenceMockResponses,
-									'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses
-								};
-								setUpMockResponses(mockResponses);
-
 								const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
 								await chooseRandomVideo(input.channelId, false, domElement);
 								const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
