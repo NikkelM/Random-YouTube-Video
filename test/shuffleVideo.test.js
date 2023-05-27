@@ -123,7 +123,7 @@ describe('shuffleVideo', function () {
 
 						// ----- YT API responses -----
 						// Combine the local, db and newVideos into one object, but remove locally deleted videos, as they do not exist in the YT API anymore
-						const allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos, });
+						const allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos });
 						for (const [videoId, publishTime] of Object.entries(allVideos)) {
 							if (videoId.startsWith('DEL_LOCAL')) {
 								delete allVideos[videoId];
@@ -175,7 +175,7 @@ describe('shuffleVideo', function () {
 						const testedPlaylistLocally = await getKeyFromLocalStorage(input.playlistId);
 
 						// Only for playlists that should exist locally
-						if (input.playlistModifiers.lastAccessedLocally !== 'PlaylistDoesNotExistLocally') {
+						if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
 							expect(testedPlaylistLocally).to.be.an('object');
 							expect(testedPlaylistLocally.lastAccessedLocally).to.be(input.lastAccessedLocally);
 							expect(testedPlaylistLocally.lastFetchedFromDB).to.be(input.lastFetchedFromDB);
@@ -205,7 +205,7 @@ describe('shuffleVideo', function () {
 					});
 
 					// These tests only work for playlists that exist locally, as they compare entries in localStorage
-					if (input.playlistModifiers.lastAccessedLocally !== 'PlaylistDoesNotExistLocally') {
+					if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
 
 						// For all playlists that do not need to interact with the YouTube API
 						if (!needsYTAPIInteraction(input)) {
@@ -221,21 +221,20 @@ describe('shuffleVideo', function () {
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
 
 								// If we have not had to update the local playlist, the lastAccessedLocally should be updated but all other values should remain the same
-								if (input.playlistModifiers.lastFetchedFromDB === 'LocalPlaylistFetchedDBRecently') {
+								if (!needsDBInteraction(input)) {
 									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
 									expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
 									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
-								} else if (input.playlistModifiers.lastFetchedFromDB === 'LocalPlaylistDidNotFetchDBRecently') {
+									// If the database contains new videos not yet in the local playlist
+								} else if(input.playlistModifiers.dbContainsNewVideos === 'DBContainsVideosNotInLocalPlaylist') {
 									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
 									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
-									// If there is a new video uploaded, the lastVideoPublishedAt should be updated
-									if (input.playlistModifiers.newUploadedVideos === 'NoNewVideoUploaded' && input.playlistModifiers.dbContainsNewVideos !== 'DBContainsVideosNotInLocalPlaylist') {
-										expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
-									} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsVideosNotInLocalPlaylist') {
-										expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
-									} else {
-										expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
-									}
+									expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
+									// The database and local playlist are in sync
+								} else {
+									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
+									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
+									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
 								}
 							});
 
@@ -268,7 +267,10 @@ describe('shuffleVideo', function () {
 								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
 								await chooseRandomVideo(input.channelId, false, domElement);
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
-								// TODO
+
+								if(!needsDBInteraction(input)) {
+									throw new Error('This test should not be run for playlists that do not need to interact with the database. If they are, this means we are now using different configSync objects.');
+								}
 
 							});
 
