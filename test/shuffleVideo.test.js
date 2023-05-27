@@ -1,7 +1,6 @@
 import expect from 'expect.js';
 import sinon from 'sinon';
 import { JSDOM } from 'jsdom';
-const { window } = new JSDOM('<!doctype html><html><body></body></html>');
 
 import { RandomYoutubeVideoError } from '../src/utils.js';
 import { chooseRandomVideo } from '../src/shuffleVideo.js';
@@ -125,7 +124,12 @@ describe('shuffleVideo', function () {
 					};
 
 					beforeEach(function () {
-						domElement = window.document.createElement('div');
+						// ---------- DOM ----------
+						// Initialize the window with a given url
+						const { window } = new JSDOM('<!doctype html><html><body></body></html>', { url: 'https://www.youtube.com/watch?v=00000000001' });
+						global.window = window;
+
+						domElement = global.window.document.createElement('div');
 
 						// ---------- Fetch mock responses ----------
 						// ----- YT API responses -----
@@ -183,6 +187,8 @@ describe('shuffleVideo', function () {
 
 					afterEach(function () {
 						domElement = undefined;
+
+						delete global.window;
 					});
 
 					it('should have a valid localStorage setup', async function () {
@@ -307,7 +313,7 @@ describe('shuffleVideo', function () {
 								} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos' && input.playlistModifiers.newUploadedVideos === 'NoNewVideoUploaded') {
 									expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(playlistInfoBefore.lastVideoPublishedAt.substring(0, 10));
 									expect(playlistInfoAfter.videos).to.have.keys(Object.keys(input.localVideos));
-									expect({...playlistInfoAfter.videos, ...input.dbDeletedVideos}).to.have.keys(Object.keys(playlistInfoAfter.videos));
+									expect({ ...playlistInfoAfter.videos, ...input.dbDeletedVideos }).to.have.keys(Object.keys(playlistInfoAfter.videos));
 									// If there were new videos, either in the DB or uploaded
 								} else {
 									expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
