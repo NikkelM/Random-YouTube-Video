@@ -14,8 +14,8 @@
 <a href="https://github.com/NikkelM/Random-YouTube-Video/tree/main/CHANGELOG.md">
   <img src="https://img.shields.io/badge/view-changelog-blue"
     alt="View changelog"></a>
-<a href='https://coveralls.io/github/NikkelM/Random-YouTube-Video?branch=tests'>
-	<img src='https://coveralls.io/repos/github/NikkelM/Random-YouTube-Video/badge.svg?branch=tests' 
+<a href='https://coveralls.io/github/NikkelM/Random-YouTube-Video?branch=main'>
+	<img src='https://coveralls.io/repos/github/NikkelM/Random-YouTube-Video/badge.svg?branch=main' 
 		alt='Coverage Status' /></a>
 </p>
 
