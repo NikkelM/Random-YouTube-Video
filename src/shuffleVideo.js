@@ -1,15 +1,13 @@
 // Handles everything concerning the shuffling of videos, including fetching data from the YouTube API
 import {
-	configSync,
 	isEmpty,
 	addHours,
 	getLength,
 	isVideoUrl,
-	setSyncStorageValue,
-	getUserQuotaRemainingToday,
 	RandomYoutubeVideoError,
 	YoutubeAPIError
 } from "./utils.js";
+import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from "./chromeStorage.js";
 
 // For cases in which the playlist in the database has the old Array format (before v1.0.0), we need to overwrite it
 let mustOverwriteDatabase = false;
@@ -41,7 +39,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			);
 		}
 
-		console.log(`Choosing a random video from playlist/channel: ${uploadsPlaylistId}`);
+		console.log(`Shuffling from playlist/channel: ${uploadsPlaylistId}`);
 
 		// Check if the playlist is already saved in local storage, so we don't need to access the database
 		let playlistInfo = await tryGetPlaylistFromLocalStorage(uploadsPlaylistId);
@@ -73,7 +71,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			// The playlist exists locally, but may be outdated. Update it from the database. If needed, update the database values as well.
 		} else if ((databaseSharing && ((playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString())) ||
 			(!databaseSharing && ((playlistInfo["lastAccessedLocally"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()))) {
-			console.log(`Local uploads playlist for this channel may be outdated. ${databaseSharing ? "Updating from the database..." : ""}`);
+			console.log(`Local uploads playlist for this channel may be outdated.${databaseSharing ? " Updating from the database..." : ""}`);
 
 			playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId) : {};
 
@@ -138,7 +136,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 
 		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
 
-		playVideo(chosenVideos, firedFromPopup);
+		await playVideo(chosenVideos, firedFromPopup);
 	} catch (error) {
 		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, configSync.userQuotaRemainingToday - 1));
 		throw error;
@@ -198,7 +196,7 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsP
 		// mustOverwriteDatabase: In case the data is still in an old format, we need to overwrite it instead of updating
 		command: (mustOverwriteDatabase || encounteredDeletedVideos) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
 		data: {
-			key: 'uploadsPlaylists/' + uploadsPlaylistId,
+			key: uploadsPlaylistId,
 			val: playlistInfoForDatabase
 		}
 	};
@@ -750,7 +748,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 		// Video page: Pause the current video if it is playing
 		if (isVideoUrl(window.location.href)) {
 			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
-			if (player.classList.contains('playing-mode')) {
+			if (player && player.classList.contains('playing-mode')) {
 				player.children[0].click();
 			}
 		} else {

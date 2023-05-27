@@ -1,6 +1,6 @@
 // Background service worker for the extension, which is run ("started") on extension initialization
 // Handles communication between the extension and the content script as well as Firebase interactions
-import { configSync, setSyncStorageValue } from "./utils.js";
+import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 import { configSyncDefaults } from "./config.js";
 
 // ---------- Initialization/Chrome event listeners ----------
@@ -155,11 +155,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			break;
 		// Updates (not overwriting videos) a playlist in Firebase 
 		case "updatePlaylistInfoInDB":
-			updatePlaylistInfoInDB(request.data.key, request.data.val, false).then(sendResponse);
+			updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, false).then(sendResponse);
 			break;
 		// Updates (overwriting videos) a playlist in Firebase
 		case "overwritePlaylistInfoInDB":
-			updatePlaylistInfoInDB(request.data.key, request.data.val, true).then(sendResponse);
+			updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, true).then(sendResponse);
 			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":

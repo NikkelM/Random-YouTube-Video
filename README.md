@@ -14,6 +14,9 @@
 <a href="https://github.com/NikkelM/Random-YouTube-Video/tree/main/CHANGELOG.md">
   <img src="https://img.shields.io/badge/view-changelog-blue"
     alt="View changelog"></a>
+<a href='https://coveralls.io/github/NikkelM/Random-YouTube-Video?branch=main'>
+	<img src='https://coveralls.io/repos/github/NikkelM/Random-YouTube-Video/badge.svg?branch=main' 
+		alt='Coverage Status' /></a>
 </p>
 
 You can download the extension on the [Chrome Web Store](https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf) or the [Microsoft Edge Add-ons Store](https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe). The Chrome Web Store version can be installed on any Chromium-based browser, including Edge, Brave and more.

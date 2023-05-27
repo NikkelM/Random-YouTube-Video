@@ -1,9 +1,7 @@
 const path = require('path');
 
-const DotenvPlugin = require('dotenv-webpack');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
 	entry: {
@@ -13,6 +11,7 @@ module.exports = {
 		content: './src/content.js',
 		shuffleVideo: './src/shuffleVideo.js',
 		utils: './src/utils.js',
+		chromeStorage: './src/chromeStorage.js',
 		// HTML
 		changelog: './src/html/changelog.js',
 		htmlUtils: './src/html/htmlUtils.js',
@@ -27,10 +26,6 @@ module.exports = {
 				test: /\.(js|ts)x?$/,
 				use: ['babel-loader'],
 				exclude: /node_modules/,
-			},
-			{
-				test: /\.(scss|css)$/,
-				use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader'],
 			},
 		],
 	},

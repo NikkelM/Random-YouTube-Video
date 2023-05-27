@@ -19,6 +19,10 @@
 	border-radius: 4px;
 }
 
+::-webkit-scrollbar-thumb:hover {
+	background-color: #555;
+}
+
 /*
  * Generic utilities
  */
