@@ -1,10 +1,12 @@
 import expect from 'expect.js';
 import sinon from 'sinon';
+import { JSDOM } from 'jsdom';
+const { window } = new JSDOM('<!doctype html><html><body></body></html>');
 
 import { RandomYoutubeVideoError } from '../src/utils.js';
 import { chooseRandomVideo } from '../src/shuffleVideo.js';
 import { configSync } from '../src/chromeStorage.js';
-import { databasePermutations, playlistPermutations, needsDBInteraction, needsYTAPIInteraction } from './playlistPermutations.js';
+import { deepCopy, databasePermutations, playlistPermutations, needsDBInteraction, needsYTAPIInteraction } from './playlistPermutations.js';
 
 // Utility to get the contents of localStorage at a certain key
 async function getKeyFromLocalStorage(key) {
@@ -80,8 +82,6 @@ describe('shuffleVideo', function () {
 		// TODO: Test for different user settings, not needed to test for every permutation, as we assume we have local data
 		// Of course, we do need to test that we do not send a request to the database if the user has opted out of database sharing
 
-		// TODO: Test for more than one page being returned from the YouTube API
-
 		// Test chooseRandomVideo() for different playlist states:
 		context('playlist permutations', function () {
 			// playlistPermutations.js creates a permutation for each possible playlist state
@@ -116,11 +116,14 @@ describe('shuffleVideo', function () {
 
 			playlistPermutations.forEach(function (input) {
 				context(`playlist ${input.playlistId}`, function () {
-					let YTAPIItems;
+					let YTResponses, domElement;
 
 					beforeEach(function () {
-						// Combine the local, db and newVideos into one object, but remove locally deleted videos, whose key starts with DEL_LOCAL
-						const allVideos = { ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos, };
+						domElement = window.document.createElement('div');
+
+						// ----- YT API responses -----
+						// Combine the local, db and newVideos into one object, but remove locally deleted videos, as they do not exist in the YT API anymore
+						const allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos, });
 						for (const [videoId, publishTime] of Object.entries(allVideos)) {
 							if (videoId.startsWith('DEL_LOCAL')) {
 								delete allVideos[videoId];
@@ -129,7 +132,7 @@ describe('shuffleVideo', function () {
 							}
 						}
 
-						YTAPIItems = [];
+						let YTAPIItems = [];
 						// The order of these is important, as the YouTube API will put the newest ones first, so sort by publishTime
 						for (const [videoId, publishTime] of Object.entries(allVideos).sort((a, b) => b[1].localeCompare(a[1]))) {
 							YTAPIItems.push({
@@ -142,6 +145,30 @@ describe('shuffleVideo', function () {
 								}
 							});
 						}
+
+						// Put 50 items into one response each, as that is the maximum number of items that can be returned by the YouTube API
+						YTResponses = [];
+						const totalResults = YTAPIItems.length;
+						while (YTAPIItems.length > 0) {
+							const items = YTAPIItems.splice(0, 50);
+							YTResponses.push(new Response(JSON.stringify(
+								{
+									"kind": "youtube#playlistItemListResponse",
+									"etag": "tag",
+									"nextPageToken": YTAPIItems.length > 0 ? 'nextPageToken' : undefined,
+									"items": items,
+									"pageInfo": {
+										"totalResults": totalResults,
+										"resultsPerPage": 50
+									}
+								}
+							)));
+						}
+					});
+
+					afterEach(function () {
+						YTResponses = undefined;
+						domElement = undefined;
 					});
 
 					it('should have a valid localStorage setup', async function () {
@@ -190,7 +217,7 @@ describe('shuffleVideo', function () {
 								setUpMockResponses(mockResponses);
 
 								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
-								await chooseRandomVideo(input.channelId, false, null);
+								await chooseRandomVideo(input.channelId, false, domElement);
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
 
 								// If we have not had to update the local playlist, the lastAccessedLocally should be updated but all other values should remain the same
@@ -220,7 +247,7 @@ describe('shuffleVideo', function () {
 								setUpMockResponses(mockResponses);
 
 								const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-								await chooseRandomVideo(input.channelId, false, null);
+								await chooseRandomVideo(input.channelId, false, domElement);
 								const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
 
 								expect(userQuotaRemainingTodayAfter).to.be(userQuotaRemainingTodayBefore);
@@ -234,25 +261,12 @@ describe('shuffleVideo', function () {
 									// These mock responses will be used for testing video existence
 									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=': [{ status: 200 }],
 									// These mock responses contain the results of the YouTube API call to get a playlistInfo
-									'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
-										new Response(JSON.stringify(
-											{
-												"kind": "youtube#playlistItemListResponse",
-												"etag": "tag",
-												"nextPageToken": null,
-												"items": YTAPIItems,
-												"pageInfo": {
-													"totalResults": YTAPIItems.length,
-													"resultsPerPage": 50
-												}
-											}
-										))
-									]
+									'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses
 								};
 								setUpMockResponses(mockResponses);
 
 								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
-								await chooseRandomVideo(input.channelId, false, null);
+								await chooseRandomVideo(input.channelId, false, domElement);
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
 								// TODO
 
@@ -263,25 +277,12 @@ describe('shuffleVideo', function () {
 									// These mock responses will be used for testing video existence
 									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=': [{ status: 200 }],
 									// These mock responses contain the results of the YouTube API call to get a playlistInfo
-									'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
-										new Response(JSON.stringify(
-											{
-												"kind": "youtube#playlistItemListResponse",
-												"etag": "tag",
-												"nextPageToken": null,
-												"items": YTAPIItems,
-												"pageInfo": {
-													"totalResults": YTAPIItems.length,
-													"resultsPerPage": 50
-												}
-											}
-										))
-									]
+									'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses
 								};
 								setUpMockResponses(mockResponses);
 
 								const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-								await chooseRandomVideo(input.channelId, false, null);
+								await chooseRandomVideo(input.channelId, false, domElement);
 								const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
 
 								expect(userQuotaRemainingTodayAfter).to.be.lessThan(userQuotaRemainingTodayBefore);

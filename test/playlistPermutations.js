@@ -102,19 +102,12 @@ const oneNewYTAPIVideo = {
 	"YT000000001": zeroDaysAgo.substring(0, 10)
 };
 
-const multipleNewYTAPIVideos = {
-	"YT000000001": zeroDaysAgo.substring(0, 10),
-	"YT00000002": zeroDaysAgo.substring(0, 10),
-	"YT00000003": zeroDaysAgo.substring(0, 10),
-	"YT00000004": zeroDaysAgo.substring(0, 10),
-	"YT00000005": zeroDaysAgo.substring(0, 10),
-	"YT00000006": zeroDaysAgo.substring(0, 10),
-	"YT00000007": zeroDaysAgo.substring(0, 10),
-	"YT00000008": zeroDaysAgo.substring(0, 10),
-	"YT00000009": zeroDaysAgo.substring(0, 10),
-	"YT00000010": zeroDaysAgo.substring(0, 10),
-	"YT00000011": zeroDaysAgo.substring(0, 10)
-};
+// Get over the 50 per page API limit
+const multipleNewYTAPIVideos = {};
+for (let i = 1; i <= 55; i++) {
+  const key = `YT${String(i).padStart(8, '0')}`;
+  multipleNewYTAPIVideos[key] = zeroDaysAgo.substring(0, 10);
+}
 
 export let playlistPermutations = [];
 let playlistId,
