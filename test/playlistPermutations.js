@@ -67,16 +67,17 @@ const playlistModifiers = [
 		'LocalPlaylistContainsDeletedVideos',
 		'LocalPlaylistContainsNoDeletedVideos'
 	],
-	// newUploadedVideos: Only if DBEntryIsNotUpToDate: If a new video has since been uploaded
+	// newUploadedVideos: If a new video has since been uploaded
 	[
 		'OneNewVideoUploaded',
 		'MultipleNewVideosUploaded',
 		'NoNewVideoUploaded'
 	],
-	// dbContainsNewVideos: Only if !DBEntryDoesNotExist: If the database contains videos that are not in the local playlist
+	// dbContainsNewVideos: If the database contains videos that are not in the local playlist
 	[
 		'DBContainsVideosNotInLocalPlaylist',
-		'DBContainsNoVideosNotInLocalPlaylist'
+		'DBContainsNoVideosNotInLocalPlaylist',
+		'DBContainsDeletedVideos'
 	],
 	// configSync: What configSync does this permutation use
 	[
@@ -84,7 +85,7 @@ const playlistModifiers = [
 	]
 ];
 
-export const defaultLocalVideos = {
+const defaultLocalVideos = {
 	"LOCAL000001": threeDaysAgo.substring(0, 10),
 	"LOCAL000002": daysAgo(4).substring(0, 10),
 	"LOCAL000003": daysAgo(5).substring(0, 10),
@@ -98,6 +99,25 @@ export const defaultLocalVideos = {
 	"LOCAL000011": daysAgo(13).substring(0, 10)
 };
 
+const defaultLocalDeletedVideos = {
+	"DEL_LOCAL01": fourteenDaysAgo.substring(0, 10),
+	"DEL_LOCAL02": fourteenDaysAgo.substring(0, 10),
+	"DEL_LOCAL03": fourteenDaysAgo.substring(0, 10),
+	"DEL_LOCAL04": fourteenDaysAgo.substring(0, 10),
+	"DEL_LOCAL05": fourteenDaysAgo.substring(0, 10)
+};
+
+const defaultDBVideos = {
+	"DB00000001": twoDaysAgo.substring(0, 10),
+	"DB00000002": twoDaysAgo.substring(0, 10)
+};
+
+const defaultDBDeletedVideos = {
+	"DEL_DB01": fourteenDaysAgo.substring(0, 10),
+	"DEL_DB02": fourteenDaysAgo.substring(0, 10),
+	"DEL_DB03": fourteenDaysAgo.substring(0, 10)
+};
+
 const oneNewYTAPIVideo = {
 	"YT000000001": zeroDaysAgo.substring(0, 10)
 };
@@ -105,8 +125,8 @@ const oneNewYTAPIVideo = {
 // Get over the 50 per page API limit, and get to more than one additional page for the inner while loop
 const multipleNewYTAPIVideos = {};
 for (let i = 1; i <= 105; i++) {
-  const key = `YT${String(i).padStart(8, '0')}`;
-  multipleNewYTAPIVideos[key] = zeroDaysAgo.substring(0, 10);
+	const key = `YT${String(i).padStart(8, '0')}`;
+	multipleNewYTAPIVideos[key] = zeroDaysAgo.substring(0, 10);
 }
 
 export let playlistPermutations = [];
@@ -120,7 +140,9 @@ let playlistId,
 	newUploadedVideos,
 	newLastVideoPublishedAt,
 	localVideos,
+	localDeletedVideos,
 	dbVideos,
+	dbDeletedVideos,
 	configSync;
 
 for (let i = 0; i < playlistModifiers[0].length; i++) {
@@ -172,11 +194,13 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 
 							if (playlistModifiers[3][l] === "LocalPlaylistContainsDeletedVideos") {
 								localVideos = deepCopy(defaultLocalVideos);
-								localVideos["DEL_LOCAL01"] = fourteenDaysAgo.substring(0, 10);
+								localDeletedVideos = deepCopy(defaultLocalDeletedVideos);
 							} else if (playlistModifiers[3][l] === "LocalPlaylistContainsNoDeletedVideos") {
 								localVideos = deepCopy(defaultLocalVideos);
+								localDeletedVideos = null;
 							} else if (playlistModifiers[2][k] === "LocalPlaylistDoesNotExist") {
 								localVideos = null;
+								localDeletedVideos = null;
 							} else {
 								throw new Error(`Invalid playlist modifier combination: ${playlistModifiers[3][l]}`);
 							}
@@ -185,12 +209,17 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 							// This only gets values if !DBEntryDoesNotExist
 							if (playlistModifiers[1][j] !== "DBEntryDoesNotExist") {
 								if (playlistModifiers[5][n] === "DBContainsVideosNotInLocalPlaylist") {
-									dbVideos = deepCopy(defaultLocalVideos);
-									dbVideos["DB000000001"] = twoDaysAgo.substring(0, 10);
+									dbVideos = deepCopy({ ...defaultLocalVideos, ...defaultDBVideos });
+									dbDeletedVideos = null;
 									dbLastVideoPublishedAt = twoDaysAgo;
 								} else if (playlistModifiers[5][n] === "DBContainsNoVideosNotInLocalPlaylist") {
 									dbVideos = deepCopy(defaultLocalVideos);
+									dbDeletedVideos = null;
 									dbLastVideoPublishedAt = localLastVideoPublishedAt;
+								} else if (playlistModifiers[5][n] === "DBContainsDeletedVideos") {
+									dbVideos = deepCopy({ ...defaultLocalVideos, ...defaultDBVideos });
+									dbDeletedVideos = deepCopy(defaultDBDeletedVideos);
+									dbLastVideoPublishedAt = twoDaysAgo;
 								} else {
 									throw new Error(`Invalid playlist modifier combination: ${playlistModifiers[5][n]}`);
 								}
@@ -241,9 +270,11 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 								lastAccessedLocally,
 								lastFetchedFromDB,
 								localVideos,
+								localDeletedVideos,
 								localLastVideoPublishedAt,
 								// DB
 								dbVideos,
+								dbDeletedVideos,
 								lastUpdatedDBAt,
 								dbLastVideoPublishedAt,
 								// "YT API" (actually DB)
@@ -263,8 +294,8 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 export const localPlaylistPermutations = playlistPermutations.reduce((acc, playlist) => {
 	if (playlist.playlistModifiers.lastAccessedLocally !== "LocalPlaylistDoesNotExist") {
 		const playlistCopy = deepCopy(playlist);
-		const { playlistId, lastAccessedLocally, lastFetchedFromDB, localLastVideoPublishedAt, localVideos } = playlistCopy;
-		acc[playlistId] = { lastAccessedLocally, lastFetchedFromDB, lastVideoPublishedAt: localLastVideoPublishedAt, videos: localVideos };
+		const { playlistId, lastAccessedLocally, lastFetchedFromDB, localLastVideoPublishedAt, localVideos, localDeletedVideos } = playlistCopy;
+		acc[playlistId] = { lastAccessedLocally, lastFetchedFromDB, lastVideoPublishedAt: localLastVideoPublishedAt, videos: deepCopy({ ...localVideos, ...localDeletedVideos }) };
 	}
 	return acc;
 }, {});
@@ -273,8 +304,8 @@ export const localPlaylistPermutations = playlistPermutations.reduce((acc, playl
 export const databasePermutations = playlistPermutations.reduce((acc, playlist) => {
 	if (playlist.playlistModifiers.lastUpdatedDBAt !== "DBEntryDoesNotExist") {
 		const playlistCopy = deepCopy(playlist);
-		const { playlistId, lastUpdatedDBAt, dbLastVideoPublishedAt, dbVideos } = playlistCopy;
-		acc[playlistId] = { lastUpdatedDBAt, lastVideoPublishedAt: dbLastVideoPublishedAt, videos: dbVideos };
+		const { playlistId, lastUpdatedDBAt, dbLastVideoPublishedAt, dbVideos, dbDeletedVideos } = playlistCopy;
+		acc[playlistId] = { lastUpdatedDBAt, lastVideoPublishedAt: dbLastVideoPublishedAt, videos: deepCopy({ ...dbVideos, ...dbDeletedVideos }) };
 	}
 	return acc;
 }, {});

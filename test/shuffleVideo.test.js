@@ -181,7 +181,7 @@ describe('shuffleVideo', function () {
 							expect(testedPlaylistLocally.lastFetchedFromDB).to.be(input.lastFetchedFromDB);
 							expect(testedPlaylistLocally.lastVideoPublishedAt).to.be(input.localLastVideoPublishedAt);
 							expect(testedPlaylistLocally.videos).to.be.an('object');
-							expect(testedPlaylistLocally.videos).to.eql(input.localVideos);
+							expect(testedPlaylistLocally.videos).to.eql({ ...input.localVideos, ...input.localDeletedVideos });
 						} else {
 							// For non-existent playlists, the local storage should be empty
 							expect(testedPlaylistLocally).to.be(undefined);
@@ -197,7 +197,7 @@ describe('shuffleVideo', function () {
 							expect(testedPlaylistInDB.lastUpdatedDBAt).to.be(input.lastUpdatedDBAt);
 							expect(testedPlaylistInDB.lastVideoPublishedAt).to.be(input.dbLastVideoPublishedAt);
 							expect(testedPlaylistInDB.videos).to.be.an('object');
-							expect(testedPlaylistInDB.videos).to.eql(input.dbVideos);
+							expect(testedPlaylistInDB.videos).to.eql({ ...input.dbVideos, ...input.dbDeletedVideos });
 						} else {
 							// For non-existent playlists, the database should not contain an entry
 							expect(testedPlaylistInDB).to.be(null);
@@ -212,36 +212,53 @@ describe('shuffleVideo', function () {
 							it('should correctly update the local playlist object', async function () {
 								const mockResponses = {
 									// These mock responses will be used for testing video existence
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=': [{ status: 200 }]
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOCAL': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=YT': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DEL': [{ status: 400 }]
 								};
 								setUpMockResponses(mockResponses);
 
 								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
 								await chooseRandomVideo(input.channelId, false, domElement);
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+								const videosAfter = Object.keys(playlistInfoAfter.videos);
 
 								// If we have not had to update the local playlist, the lastAccessedLocally should be updated but all other values should remain the same
 								if (!needsDBInteraction(input)) {
 									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
 									expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
 									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
-									// If the database contains new videos not yet in the local playlist
-								} else if(input.playlistModifiers.dbContainsNewVideos === 'DBContainsVideosNotInLocalPlaylist') {
+									expect(playlistInfoBefore.videos).to.have.keys(videosAfter);
+									// If the database contains videos not in the local playlist
+								} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsVideosNotInLocalPlaylist' ||
+									input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos') {
 									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
 									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
 									expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
-									// The database and local playlist are in sync
+									if (input.localDeletedVideos) {
+										// By fetching the videos from the database, any locally deleted videos should have been removed from the local playlist
+										expect(playlistInfoAfter.videos).to.not.have.keys(Object.keys(input.localDeletedVideos));
+									}
+									expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(videosAfter);
+									// The database and local playlist are in sync already
 								} else {
 									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
 									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
 									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
+									// By fetching the videos from the database, any deleted videos should have been removed from the local playlist
+									// We also know that here, the db did not contain any deleted videos
+									expect(playlistInfoAfter.videos).to.have.keys(Object.keys({ ...input.localVideos, ...input.dbVideos }));
 								}
 							});
 
 							it('should not change the userQuotaRemainingToday', async function () {
 								const mockResponses = {
 									// These mock responses will be used for testing video existence
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=': [{ status: 200 }]
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOCAL': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=YT': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DEL': [{ status: 400 }]
 								};
 								setUpMockResponses(mockResponses);
 
@@ -258,7 +275,10 @@ describe('shuffleVideo', function () {
 							it('should correctly update the local playlist object', async function () {
 								const mockResponses = {
 									// These mock responses will be used for testing video existence
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOCAL': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=YT': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DEL': [{ status: 400 }],
 									// These mock responses contain the results of the YouTube API call to get a playlistInfo
 									'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses
 								};
@@ -268,8 +288,16 @@ describe('shuffleVideo', function () {
 								await chooseRandomVideo(input.channelId, false, domElement);
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
 
-								if(!needsDBInteraction(input)) {
+								if (!needsDBInteraction(input)) {
 									throw new Error('This test should not be run for playlists that do not need to interact with the database. If they are, this means we are now using different configSync objects.');
+								}
+
+								// If there are no new videos at all
+								if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsNoNewVideos' && input.playlistModifiers.newUploadedVideos === 'NoNewUploadedVideos') {
+									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
+									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
+									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
+									// If there were new videos 
 								}
 
 							});
@@ -277,7 +305,10 @@ describe('shuffleVideo', function () {
 							it('should correctly update the userQuotaRemainingToday', async function () {
 								const mockResponses = {
 									// These mock responses will be used for testing video existence
-									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOCAL': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=YT': [{ status: 200 }],
+									'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DEL': [{ status: 400 }],
 									// These mock responses contain the results of the YouTube API call to get a playlistInfo
 									'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses
 								};
