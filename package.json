@@ -4,6 +4,7 @@
   "description": "Play a random video uploaded on the current YouTube channel.",
   "scripts": {
     "start": "webpack --env browser=chrome --watch --config webpack.dev.cjs",
+    "build": "npm run build:chrome && npm run build:firefox",
     "build:chrome": "webpack --env browser=chrome --config webpack.prod.cjs",
     "build:firefox": "webpack --env browser=firefox --config webpack.prod.cjs",
     "lint": "eslint --ext .ts,.js --max-warnings=0 . --ignore-path .eslintignore",
