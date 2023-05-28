@@ -539,7 +539,8 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			activeOptionValue = configSync.channelSettings[channelId]?.videoIdValue;
 			break;
 		case "percentageOption":
-			activeOptionValue = configSync.channelSettings[channelId]?.percentageValue;
+			// The default is 100%, and we remove the setting from storage if it is 100% to save space
+			activeOptionValue = configSync.channelSettings[channelId]?.percentageValue ?? 100;
 			break;
 	}
 
