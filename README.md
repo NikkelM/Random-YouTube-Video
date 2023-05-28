@@ -40,9 +40,39 @@ Highlighted Features:<br>
 
 Do you have ideas for new features or have encountered a bug? Please [open an issue](https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose).
 
-<!-- The `main` branch of this repository *should* always be stable. If you want to test the newest unreleased features, simply load the `extension` folder as an unpacked extension in your browser of choice.
+The `main` branch of this repository *should* always be stable. If you want to test the newest unreleased features, follow the steps below to create a version of the extension you can add to your browser.
 <br>
-You can find out what new changes are coming with the unreleased version in the [changelog](https://github.com/NikkelM/Random-YouTube-Video/blob/main/CHANGELOG.md).
-Did you find any bugs with the version you tested? Please let me know by [opening an issue](https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose)! -->
+You can find out what new changes are coming with the newest unreleased version in the [changelog](https://github.com/NikkelM/Random-YouTube-Video/blob/main/CHANGELOG.md).
+Did you find any bugs with the version you tested? Please let me know by [opening an issue](https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose)!
+
+### Installation
+
+- Install the required dependencies by running `npm install` in the root directory of the project.
+- Run `npm run build` to build a distribution for each browser environment.
+	- Run `npm run build:chromium` to build a distribution for Chrome/Chromium only.
+	- Run `npm run build:firefox` to build a distribution for Firefox only.
+- The bundled extension files will be placed in the `dist` folder.
+	- The `chromium` folder contains the distribution for Chrome/Chromium.
+	- The `firefox` folder contains the distribution for Firefox.
+- You can load the extension in your browser by following the instructions below.
+
+#### Chrome/Chromium
+
+- Open the Extension Management page by navigating to `chrome://extensions`.
+- Make sure that you have enabled developer mode.
+- Click `Load unpacked` and choose the `dist/chromium` folder.
+
+Loading the extension like this will persist it until you remove it manually.
+
+#### Firefox
+
+- Open the Add-ons page by navigating to `about:addons`.
+- Click the cog icon and select `Debug Add-ons`.
+- Click `Load Temporary Add-on...` and choose the `dist/firefox/manifest.json` file.
+
+Loading the extension like this will persist it only *until you restart Firefox*. 
+You may also test the extension with Firefox by running `npm run dev:firefox`, which uses `web-ext` to load the extension in a temporary Firefox profile. 
+
+---
 
 If you enjoy this extension and want to say thanks, consider buying me a [coffee](https://ko-fi.com/nikkelm), or [sponsoring](https://github.com/sponsors/NikkelM) this project.
