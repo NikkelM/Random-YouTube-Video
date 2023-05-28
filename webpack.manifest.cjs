@@ -4,7 +4,7 @@ const fs = require('fs');
 
 const manifest = require("./static/manifest.json");
 const firefoxManifestExtra = require("./static/firefox-manifest-extra.json");
-const chromeManifestExtra = require("./static/chrome-manifest-extra.json");
+const chromiumManifestExtra = require("./static/chromium-manifest-extra.json");
 
 class BuildManifest {
 	constructor(options = {}) {
@@ -18,8 +18,8 @@ class BuildManifest {
 		// Add missing manifest elements
 		if (this.options.browser.toLowerCase() === "firefox") {
 			mergeObjects(manifest, firefoxManifestExtra);
-		} else if (this.options.browser.toLowerCase() === "chrome") {
-			mergeObjects(manifest, chromeManifestExtra);
+		} else if (this.options.browser.toLowerCase() === "chromium") {
+			mergeObjects(manifest, chromiumManifestExtra);
 		}
 
 		let result = JSON.stringify(manifest, null, 2);
