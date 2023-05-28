@@ -4,9 +4,9 @@
   "description": "Play a random video uploaded on the current YouTube channel.",
   "scripts": {
     "start": "webpack --watch --config webpack.dev.cjs",
-    "build": "webpack --config webpack.prod.cjs",
-    "lint": "eslint --ext .ts,.js --max-warnings=0 .",
-    "prettier": "prettier --write",
+    "build:chrome": "webpack --env browser=chrome --config webpack.prod.cjs",
+    "build:firefox": "webpack --env browser=firefox --config webpack.prod.cjs",
+    "lint": "eslint --ext .ts,.js --max-warnings=0 . --ignore-path .eslintignore",
     "test": "c8 --reporter=lcov --reporter=text mocha ./test/testSetup.js ./test/**/*.test.js --require mocha-suppress-logs"
   },
   "type": "module",

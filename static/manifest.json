@@ -3,9 +3,6 @@
 	"description": "Play a random video uploaded on the current YouTube channel.",
 	"version": "2.0.0",
 	"manifest_version": 3,
-	"background": {
-		"service_worker": "background.js"
-	},
 	"content_scripts": [
 		{
 			"js": [
