@@ -9,7 +9,7 @@
     "build:firefox": "webpack --env browser=firefox --config webpack.prod.cjs",
     "dev:firefox": "web-ext run --source-dir ./dist/firefox",
     "lint": "eslint --ext .ts,.js --max-warnings=0 . --ignore-path .eslintignore",
-    "test": "c8 --reporter=lcov --reporter=text mocha ./test/testSetup.js ./test/**/*.test.js --require mocha-suppress-logs"
+    "test": "c8 --reporter=lcov --reporter=text mocha ./test/testSetup.js ./test/chromeStorage.test.js ./test/**/*.test.js --require mocha-suppress-logs"
   },
   "type": "module",
   "devDependencies": {
