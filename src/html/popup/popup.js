@@ -2,7 +2,7 @@
 import { delay } from "../../utils.js";
 import { configSync, setSyncStorageValue } from "../../chromeStorage.js";
 import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv } from "./popupUtils.js";
-import { focusOrOpenTab } from "../htmlUtils.js";
+import { tryFocusingTab } from "../htmlUtils.js";
 
 const domElements = getPopupDomElements();
 await setPopupDomElementValuesFromConfig(domElements);
@@ -342,8 +342,13 @@ async function setPopupDomElemenEventListeners(domElements) {
 	});
 
 	// Popup shuffle button
-	domElements.popupShuffleButton.addEventListener("click", function () {
-		focusOrOpenTab(chrome.runtime.getURL("html/shufflingPage.html"));
+	domElements.popupShuffleButton.addEventListener("click", async function () {
+		const tabUrl = chrome.runtime.getURL("html/shufflingPage.html");
+		let mustOpenTab = await tryFocusingTab(tabUrl);
+		if (mustOpenTab) {
+			window.open(tabUrl, "_blank");
+		}
+
 		// Close the popup
 		window.close();
 	});
@@ -351,7 +356,13 @@ async function setPopupDomElemenEventListeners(domElements) {
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
-		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
+
+		const tabUrl = chrome.runtime.getURL("html/changelog.html");
+		let mustOpenTab = await tryFocusingTab(tabUrl);
+		if (mustOpenTab) {
+			window.open(tabUrl, "_blank");
+		}
+
 		// Close the popup
 		window.close();
 	});

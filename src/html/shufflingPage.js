@@ -1,7 +1,7 @@
 // Contains logic for the "shufflingPage" that is opened when the user clicks the "Shuffle" button from the popup
 import { delay } from "../utils.js";
 import { configSync, setSyncStorageValue } from "../chromeStorage.js";
-import { displayShufflingHint, focusOrOpenTab } from "./htmlUtils.js";
+import { displayShufflingHint, tryFocusingTab } from "./htmlUtils.js";
 import { chooseRandomVideo } from "../shuffleVideo.js";
 
 // ----- Setup -----
@@ -51,7 +51,12 @@ async function setDomElemenEventListeners(domElements) {
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
-		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
+
+		const tabUrl = chrome.runtime.getURL("html/changelog.html");
+		let mustOpenTab = await tryFocusingTab(tabUrl);
+		if (mustOpenTab) {
+			window.open(tabUrl, "_blank");
+		}
 	});
 }
 
