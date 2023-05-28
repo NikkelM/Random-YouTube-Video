@@ -3,6 +3,10 @@
 ## v2.0.1 (Unreleased)
 
 <!--Releasenotes start-->
+- The extension is now available for Firefox as well.
+- Fixed a bug where you were unable to shuffle when using the 'percentage' filtering option with a value of 100%.
+- Fixed a bug where it was possible that the default user settings would not get initialized correctly when first installing the extension.
+- Fixed a bug where new tabs opened by the extension would sometimes be opened in a new window instead.
 - Fixed some cosmetic issues across the extension.
 - Made the internal handling of user settings more robust.
 - The extension is now bundled using Webpack, which makes it faster and easier to maintain.
