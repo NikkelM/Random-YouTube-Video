@@ -1,5 +1,10 @@
 // Contains all interaction with the Chrome storage API
+import { configSyncDefaults } from "./config.js";
+
 // ----- Storage -----
+// Validate the config in sync storage
+await validateConfigSync();
+
 export let configSync = await fetchConfigSync();
 
 /* c8 ignore start - This event listener cannot really be tested*/
@@ -39,4 +44,25 @@ async function fetchConfigSync() {
 	});
 
 	return configSync;
+}
+
+async function validateConfigSync() {
+	const configSyncValues = await chrome.storage.sync.get();
+
+	// Set default values for config values that do not exist in sync storage
+	for (const [key, value] of Object.entries(configSyncDefaults)) {
+		if (configSyncValues[key] === undefined) {
+			console.log(`Config value (setting) "${key}" does not exist in sync storage. Setting default:`);
+			console.log(value);
+			await chrome.storage.sync.set({ [key]: value });
+		}
+	}
+
+	// Remove old config values from sync storage
+	for (const [key, value] of Object.entries(configSyncValues)) {
+		if (configSyncDefaults[key] === undefined) {
+			console.log(`Config value (setting) "${key}" is not used anymore (was removed with the most recent update). Removing it from sync storage...`);
+			await chrome.storage.sync.remove(key);
+		}
+	}
 }

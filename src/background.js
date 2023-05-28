@@ -1,7 +1,6 @@
 // Background service worker for the extension, which is run ("started") on extension initialization
 // Handles communication between the extension and the content script as well as Firebase interactions
 import { configSync, setSyncStorageValue } from "./chromeStorage.js";
-import { configSyncDefaults } from "./config.js";
 
 // ---------- Initialization/Chrome event listeners ----------
 // On Chrome startup, we make sure we are not using too much local storage
@@ -44,9 +43,6 @@ chrome.runtime.onInstalled.addListener(async function (details) {
 	} else if (details.reason == "install") {
 		await handleExtensionInstall(manifestData);
 	}
-
-	// Validate the config in sync storage
-	await validateConfigSync();
 });
 
 async function handleExtensionInstall(manifestData) {
@@ -97,27 +93,6 @@ async function handleVersionSpecificUpdates(previousVersion) {
 		// Delete the youtubeAPIKey from local storage if it exists
 		if (localStorageContents["youtubeAPIKey"]) {
 			await chrome.storage.local.remove("youtubeAPIKey");
-		}
-	}
-}
-
-async function validateConfigSync() {
-	const configSyncValues = await chrome.storage.sync.get();
-
-	// Set default values for config values that do not exist in sync storage
-	for (const [key, value] of Object.entries(configSyncDefaults)) {
-		if (configSyncValues[key] === undefined) {
-			console.log(`Config value (setting) "${key}" does not exist in sync storage. Setting default:`);
-			console.log(value);
-			await chrome.storage.sync.set({ [key]: value });
-		}
-	}
-
-	// Remove old config values from sync storage
-	for (const [key, value] of Object.entries(configSyncValues)) {
-		if (configSyncDefaults[key] === undefined) {
-			console.log(`Config value (setting) "${key}" is not used anymore (was removed with the most recent update). Removing it from sync storage...`);
-			await chrome.storage.sync.remove(key);
 		}
 	}
 }
