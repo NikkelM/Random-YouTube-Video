@@ -160,7 +160,7 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 							if ((playlistModifiers[1][j] === "DBEntryDoesNotExist") && (playlistModifiers[5][n] !== "DBContainsNoVideosNotInLocalPlaylist")) {
 								continue;
 							}
-							if ((playlistModifiers[1][j] === "DBEntryIsUpToDate") && (playlistModifiers[4][m] !== "NoNewVideoUploaded")) {
+							if ((playlistModifiers[1][j] === "DBEntryIsUpToDate" || playlistModifiers[0][i] === "LocalPlaylistFetchedDBRecently") && (playlistModifiers[4][m] !== "NoNewVideoUploaded")) {
 								continue;
 							}
 

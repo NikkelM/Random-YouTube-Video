@@ -154,6 +154,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 	let playlistInfo = await chrome.runtime.sendMessage(msg);
 
+	/* c8 ignore start - These are legacy conversions we do not need to test */
 	// In case the playlist is still in the old Array format (before v1.0.0) in the database, convert it to the new format
 	if (playlistInfo && playlistInfo["videos"] && Array.isArray(playlistInfo["videos"])) {
 		console.log("The playlist was found in the database, but it is in an old format (before v1.0.0). Removing...");
@@ -172,6 +173,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 		await uploadPlaylistToDatabase(playlistInfo, playlistInfo["videos"], playlistId, true, false);
 	}
+	/* c8 ignore stop */
 
 	if (!playlistInfo) {
 		return {};

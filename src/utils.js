@@ -1,6 +1,6 @@
 // Global utilities
 
-/* c8 ignore start - The console reroutings cannot be tested correctly*/
+/* c8 ignore start - The console reroutings cannot be tested correctly */
 // ---------- Console rerouting ----------
 var oldLog = console.log;
 console.log = function () {
