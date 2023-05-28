@@ -1,20 +1,5 @@
 // Background service worker for the extension, which is run ("started") on extension initialization
 // Handles communication between the extension and the content script as well as Firebase interactions
-
-// Check whether a new version was installed
-chrome.runtime.onInstalled.addListener(async function (details) {
-	const manifestData = chrome.runtime.getManifest();
-
-	if (details.reason == "update" && details.previousVersion !== manifestData.version) {
-		await handleExtensionUpdate(manifestData, details.previousVersion);
-	} else if (details.reason == "install") {
-		await handleExtensionInstall(manifestData);
-	}
-
-	// Validate the config in sync storage
-	await validateConfigSync();
-});
-
 import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 import { configSyncDefaults } from "./config.js";
 
@@ -48,6 +33,20 @@ chrome.runtime.onStartup.addListener(async function () {
 			chrome.storage.local.remove(playlistId);
 		}
 	}
+});
+
+// Check whether a new version was installed
+chrome.runtime.onInstalled.addListener(async function (details) {
+	const manifestData = chrome.runtime.getManifest();
+
+	if (details.reason == "update" && details.previousVersion !== manifestData.version) {
+		await handleExtensionUpdate(manifestData, details.previousVersion);
+	} else if (details.reason == "install") {
+		await handleExtensionInstall(manifestData);
+	}
+
+	// Validate the config in sync storage
+	await validateConfigSync();
 });
 
 async function handleExtensionInstall(manifestData) {
