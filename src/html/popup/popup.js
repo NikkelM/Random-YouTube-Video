@@ -4,6 +4,9 @@ import { configSync, setSyncStorageValue } from "../../chromeStorage.js";
 import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv } from "./popupUtils.js";
 import { tryFocusingTab } from "../htmlUtils.js";
 
+// Firefox: Restart the background script if it was stopped to prevent a flash of an error page when shuffling
+chrome.runtime.sendMessage({ command: "connectionTest" });
+
 const domElements = getPopupDomElements();
 await setPopupDomElementValuesFromConfig(domElements);
 await setPopupDomElemenEventListeners(domElements);
@@ -12,8 +15,8 @@ await setPopupDomElemenEventListeners(domElements);
 // --- Private ---
 // Get relevant DOM elements
 function getPopupDomElements() {
-	/*global customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv*/
-	/*eslint no-undef: "error"*/
+	/* global customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv */
+	/* eslint no-undef: "error" */
 	return {
 		// Body element
 		body: document.body,

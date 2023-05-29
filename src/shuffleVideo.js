@@ -15,6 +15,10 @@ let mustOverwriteDatabase = false;
 // --------------- Public ---------------
 // Chooses a random video uploaded on the current YouTube channel
 export async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
+	// Firefox: The background worker will get stopped after 30 seconds
+	// This request will cause a "Receiving end does not exist" error at first, but will start the worker again
+	// We need it alive to send messages, e.g. "getAllYouTubeTabs"
+	chrome.runtime.sendMessage({ command: "connectionTest" });
 	try {
 		// Each user has a set amount of quota they can use per day.
 		// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.
@@ -749,18 +753,18 @@ async function playVideo(chosenVideos, firedFromPopup) {
 		// Video page: Pause the current video if it is playing
 		if (isVideoUrl(window.location.href)) {
 			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
-			if (player && player.classList.contains('playing-mode')) {
+			if (player && player.classList.contains('playing-mode') && !player.classList.contains('unstarted-mode')) {
 				player.children[0].click();
 			}
 		} else {
 			// Channel page: Pause the featured video if it exists and is playing
 			const featuredPlayer = document.querySelector('ytd-player#player')?.children[0]?.children[0];
-			if (featuredPlayer && featuredPlayer.classList.contains('playing-mode')) {
+			if (featuredPlayer && featuredPlayer.classList.contains('playing-mode') && !featuredPlayer.classList.contains('unstarted-mode')) {
 				featuredPlayer.children[0].click();
 			}
 			// Any page: Pause the miniplayer if it exists and is playing
 			const miniPlayer = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
-			if (miniPlayer && miniPlayer.classList.contains('playing-mode')) {
+			if (miniPlayer && miniPlayer.classList.contains('playing-mode') && !miniPlayer.classList.contains('unstarted-mode')) {
 				miniPlayer.children[0].click();
 			}
 		}
