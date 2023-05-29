@@ -12,6 +12,15 @@ iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChil
 document.head.appendChild(iconFont);
 
 // ---------- DOM ----------
+// The only way for a button to already exist when the content script is loaded is if the extension was reloaded in the background
+// That will cause the content script to be re-injected into the page, but the DOM will not be reloaded
+// That in turn will disconnect the event listener (on Firefox), which will make the button not work
+const videoShuffleButton = document.getElementById("youtube-random-video-shuffle-button-video");
+const channelShuffleButton = document.getElementById("youtube-random-video-shuffle-button-channel");
+if (videoShuffleButton || channelShuffleButton) {
+	window.location.reload();
+}
+
 // After every navigation event, we need to check if this page needs a 'Shuffle' button
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 

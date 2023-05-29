@@ -451,6 +451,9 @@ chrome.runtime.onMessage.addListener(async function (request) {
 			break;
 		default:
 			console.log(`Unknown command: ${request.command} (popup). Hopefully another message listener will handle it.`);
+			// Add a small delay here to make sure we don't send a response before the background script has had a chance to respond
+			// This is an issue on Firefox
+			await delay(100);
 			break;
 	}
 });

@@ -738,7 +738,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 	}
 
 	// Get all tab IDs
-	const currentYouTubeTabs = await chrome.runtime.sendMessage({ command: "getAllYouTubeTabs" });
+	const currentYouTubeTabs = await chrome.runtime.sendMessage({ command: "getAllYouTubeTabs" }) ?? [];
 	// Find out if the reusable tab is still open (and on a youtube.com page)
 	const reusableTabExists = currentYouTubeTabs.find((tab) => tab.id === configSync.shuffleTabId);
 

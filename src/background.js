@@ -111,7 +111,7 @@ chrome.runtime.onConnect.addListener(function (port) {
 	}
 });
 
-// This will reload the service orker, which will invalidate the extension context for all YouTube tabs
+// This will reload the service worker, which will invalidate the extension context for all YouTube tabs
 function reloadServiceWorker() {
 	console.log("Shuffling page was closed before the shuffle was completed. Reloading service worker to prevent freezing...");
 	chrome.runtime.reload();
