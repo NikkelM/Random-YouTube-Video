@@ -4,6 +4,7 @@
 
 <!--Releasenotes start-->
 - The extension is now available for Firefox as well.
+- The extension's background service worker will no longer reload if an error was encountered when shuffling using the button in the popup.
 - Fixed a bug where you were unable to shuffle when using the 'percentage' filtering option with a value of 100%.
 - Fixed a bug where it was possible that the default user settings would not get initialized correctly when first installing the extension.
 - Fixed a bug where new tabs opened by the extension would sometimes be opened in a new window instead.

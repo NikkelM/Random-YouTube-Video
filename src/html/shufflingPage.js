@@ -118,6 +118,9 @@ async function shuffleButtonClicked() {
 
 		// We don't need to wait to show the contents of the page as we have encountered an error
 		domElements.randomYoutubeVideo.classList.remove("hidden");
+
+		// Remove the port's onDisconnect listener, as the shuffle process has stopped
+		port.postMessage({ command: "shuffleComplete" });
 		return;
 	}
 }
