@@ -46,6 +46,9 @@ chrome.storage.local.clear.callsFake(() => {
 // ---------- Chrome runtime message listener ----------
 chrome.runtime.sendMessage.callsFake((request) => {
 	switch (request.command) {
+		case "connectionTest":
+			return Promise.resolve("Connection test successful.");
+
 		case 'getPlaylistFromDB':
 			// Return a playlist from the database
 			return Promise.resolve(mockedDatabase[request.data] ?? null);
