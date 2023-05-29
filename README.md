@@ -48,12 +48,11 @@ Did you find any bugs with the version you tested? Please let me know by [openin
 ### Installation
 
 - Install the required dependencies by running `npm install` in the root directory of the project.
-- Run `npm run build` to build a distribution for each browser environment.
-	- Run `npm run build:chromium` to build a distribution for Chrome/Chromium only.
-	- Run `npm run build:firefox` to build a distribution for Firefox only.
-- The bundled extension files will be placed in the `dist` folder.
-	- The `chromium` folder contains the distribution for Chrome/Chromium.
-	- The `firefox` folder contains the distribution for Firefox.
+- Use `npm run build` to build a distribution for each browser environment.
+	- `npm run build:chromium` builds a distribution for Chrome/Chromium only.
+	- `npm run build:firefox` builds a distribution for Firefox only.
+	- Replace `build` with `dev` in the above commands to build a development version of the extension that updates automatically when you make changes to the code.
+- The bundled extension files will be placed in the `dist/<browser>` directories.
 - You can load the extension in your browser by following the instructions below.
 
 #### Chrome/Chromium
