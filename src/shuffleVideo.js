@@ -340,8 +340,9 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 		console.log("No new videos have been published since the last check.");
 
 		// Make sure that we are not missing any videos in the database
-		if (totalNumVideosOnChannel > getLength(playlistInfo["videos"]) + (getLength(playlistInfo["newVideos"] ?? {}))) {
-			console.log("There are less videos saved in the database than are uploaded on the channel, so some videos are missing. Refetching all videos...");
+		const numVideosInDatabase = getLength(playlistInfo["videos"]) + (getLength(playlistInfo["newVideos"] ?? {}));
+		if (totalNumVideosOnChannel > numVideosInDatabase) {
+			console.log(`There are less videos saved in the database than are uploaded on the channel (${numVideosInDatabase}/${totalNumVideosOnChannel}), so some videos are missing. Refetching all videos...`);
 			return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement);
 		}
 
@@ -384,8 +385,9 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	playlistInfo["newVideos"] = newVideos;
 
 	// Make sure that we are not missing any videos in the database
-	if (totalNumVideosOnChannel > getLength(playlistInfo["videos"]) + (getLength(playlistInfo["newVideos"] ?? {}))) {
-		console.log("There are less videos saved in the database than are uploaded on the channel, so some videos are missing. Refetching all videos...");
+	const numVideosInDatabase = getLength(playlistInfo["videos"]) + (getLength(playlistInfo["newVideos"] ?? {}));
+	if (totalNumVideosOnChannel > numVideosInDatabase) {
+		console.log(`There are less videos saved in the database than are uploaded on the channel (${numVideosInDatabase}/${totalNumVideosOnChannel}), so some videos are missing. Refetching all videos...`);
 		return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement);
 	}
 
