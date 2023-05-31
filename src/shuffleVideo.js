@@ -235,7 +235,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 
 	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
 	const totalResults = apiResponse["pageInfo"]["totalResults"];
-	if (totalResults / 50 >= userQuotaRemainingToday + 199 && !isCustomKey) {
+	if (totalResults / 50 >= userQuotaRemainingToday + 50 && !isCustomKey) {
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-4B",
@@ -309,14 +309,16 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, "", APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 	const totalNumVideosOnChannel = apiResponse["pageInfo"]["totalResults"];
-	const totalNewResults = totalNumVideosOnChannel - getLength(playlistInfo["videos"]);
+	// If the channel has already reached the API cap, we don't know how many new videos there are, so we put an estimate to show the user something
+	// The difference could be negative if there are more videos saved in the database than exist in the playlist, e.g videos were deleted
+	const totalExpectedNewResults = totalNumVideosOnChannel > 19999 ? 1000 : Math.max(totalNumVideosOnChannel - getLength(playlistInfo["videos"]), 0);
 
 	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
-	if (totalNewResults / 50 >= userQuotaRemainingToday + 199 && !isCustomKey) {
+	if (totalExpectedNewResults / 50 >= userQuotaRemainingToday + 50 && !isCustomKey) {
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-4B",
-				message: `The channel you are shuffling from has too many new uploads (${totalNewResults}) for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.`,
+				message: `The channel you are shuffling from has too many new uploads (${totalExpectedNewResults}) for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.`,
 				solveHint: "To shuffle from channels with more uploads, please use a custom API key.",
 				showTrace: false
 			}
@@ -327,8 +329,8 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	let resultsFetchedCount = apiResponse["items"].length;
 
 	// If there are less than 50 new videos, we don't need to show a progress percentage
-	if (totalNewResults > 50) {
-		progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalNewResults * 100), 100)}%`;
+	if (totalExpectedNewResults > 50) {
+		progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100)}%`;
 	}
 
 	// Update the "last video published at" date (only for the most recent video)
@@ -370,7 +372,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 				// Set the current progress as text for the shuffle button/info text
 				// We never get to this code part if there are less than or exactly 50 new videos, so we don't need to check for that
 				resultsFetchedCount += apiResponse["items"].length;
-				progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalNewResults * 100), 100)}%`;
+				progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100)}%`;
 
 				currVideo = 0;
 				// Else, we have checked all videos
@@ -400,7 +402,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 	let apiResponse = null;
 
 	// We wrap this in a while block to simulate a retry mechanism until we get a valid response
-	/*eslint no-constant-condition: ["error", { "checkLoops": false }]*/
+	/* eslint no-constant-condition: ["error", { "checkLoops": false }] */
 	while (true) {
 		try {
 			console.log("Getting snippet from YouTube API...");
@@ -625,10 +627,28 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		// Sending a request to the oembed API is significantly faster than sending a request to https://www.youtube.com/shorts/${randomVideo}
 		if (configSync.shuffleIgnoreShortsOption) {
 			let response;
-			await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
-				method: "GET"
-			}).then(res => res.json())
-				.then(res => response = res);
+			try {
+				await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
+					method: "GET"
+				}).then(res => res.json())
+					.then(res => response = res);
+				// We get an 'Unauthorized' response if the video cannot be embedded, which cannot be parsed as JSON
+			} catch (error) {
+				await fetch(`https://www.youtube.com/shorts/${randomVideo}`)
+					.then(res => {
+						if (res.redirected) {
+							// The video is a short, so we do not want to choose it
+							// Workaround to simulate a response from the oembed API
+							response = {
+								thumbnail_url: `https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`
+							};
+						} else {
+							response = {
+								thumbnail_url: `https://i.ytimg.com/vi/${randomVideo}/hqdefault.jpg`
+							};
+						}
+					});
+			}
 
 			// For shorts, the thumbnail url ends in "hq2.jpg", for normal videos it ends in "hqdefault.jpg"
 			while (response.thumbnail_url === (`https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`)) {
@@ -650,10 +670,28 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 					)
 				}
 
-				await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
-					method: "GET"
-				}).then(res => res.json())
-					.then(res => response = res);
+				try {
+					await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
+						method: "GET"
+					}).then(res => res.json())
+						.then(res => response = res);
+					// We get an 'Unauthorized' response if the video cannot be embedded, which cannot be parsed as JSON
+				} catch (error) {
+					await fetch(`https://www.youtube.com/shorts/${randomVideo}`)
+						.then(res => {
+							if (res.redirected) {
+								// The video is a short, so we do not want to choose it
+								// Workaround to simulate a response from the oembed API
+								response = {
+									thumbnail_url: `https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`
+								};
+							} else {
+								response = {
+									thumbnail_url: `https://i.ytimg.com/vi/${randomVideo}/hqdefault.jpg`
+								};
+							}
+						});
+				}
 			}
 		}
 
