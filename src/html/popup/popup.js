@@ -4,12 +4,6 @@ import { configSync, setSyncStorageValue } from "../../chromeStorage.js";
 import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv } from "./popupUtils.js";
 import { tryFocusingTab } from "../htmlUtils.js";
 
-// Restart the background script if it was stopped to prevent a flash of an error page when shuffling
-// We don't want to wait for the response, as that would cause a small stutter when opening the popup
-chrome.runtime.sendMessage({ command: "connectionTest" }).catch(() => {
-	console.log("The background worker was stopped and had to be restarted.");
-});
-
 const domElements = getPopupDomElements();
 await setPopupDomElementValuesFromConfig(domElements);
 await setPopupDomElemenEventListeners(domElements);

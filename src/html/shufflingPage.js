@@ -5,6 +5,13 @@ import { displayShufflingHint, tryFocusingTab } from "./htmlUtils.js";
 import { chooseRandomVideo } from "../shuffleVideo.js";
 
 // ----- Setup -----
+// Restart the background script if it was stopped to prevent a flash of an error page when shuffling
+try {
+	await chrome.runtime.sendMessage({ command: "connectionTest" });
+} catch (error) {
+	console.log("The background worker was stopped and had to be restarted.");
+}
+
 // Open a port to the background script
 // By default, the port will cause the background script to reload when it is closed (== when this page is closed/URL changes)
 // However, if the shuffle completes successfully, this script will send a message to the port that will disconnect that listener
