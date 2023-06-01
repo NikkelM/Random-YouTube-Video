@@ -655,7 +655,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 
 			// For shorts, the thumbnail url ends in "hq2.jpg", for normal videos it ends in "hqdefault.jpg"
 			while (response.thumbnail_url === (`https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`)) {
-				console.log(`A chosen video was a short (${randomVideo}), but shorts are ignored. Choosing a new random video.`);
+				console.log('A chosen video was a short, but shorts are ignored. Choosing a new random video.');
 
 				// Remove the video from videosToShuffle to not choose it again
 				// Do not remove it from the playlistInfo object, as we do not want to delete it from the database
