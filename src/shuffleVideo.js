@@ -639,7 +639,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			} catch (error) {
 				await fetch(`https://www.youtube.com/shorts/${randomVideo}`)
 					.then(res => {
-						if (res.redirected) {
+						if (!res.redirected) {
 							// The video is a short, so we do not want to choose it
 							// Workaround to simulate a response from the oembed API
 							response = {
@@ -662,15 +662,9 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 				randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
 
+				// No more non-short videos available
 				if (randomVideo === undefined) {
-					throw new RandomYoutubeVideoError(
-						{
-							code: "RYV-6D",
-							message: "Your settings indicate to ignore shorts, but there are only shorts available to shuffle from, or not enough non-short videos to fill the playlist.",
-							solveHint: "This may be due to your filters, e.g. only shuffling from the most recent videos. Revise your filters or turn off the option tp ignore shorts.",
-							showTrace: false
-						}
-					)
+					break;
 				}
 
 				try {
@@ -682,7 +676,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 				} catch (error) {
 					await fetch(`https://www.youtube.com/shorts/${randomVideo}`)
 						.then(res => {
-							if (res.redirected) {
+							if (!res.redirected) {
 								// The video is a short, so we do not want to choose it
 								// Workaround to simulate a response from the oembed API
 								response = {
