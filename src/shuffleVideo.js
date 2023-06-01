@@ -15,10 +15,13 @@ let mustOverwriteDatabase = false;
 // --------------- Public ---------------
 // Chooses a random video uploaded on the current YouTube channel
 export async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
-	// Firefox: The background worker will get stopped after 30 seconds
-	// This request will cause a "Receiving end does not exist" error at first, but will start the worker again
-	// We need it alive to send messages, e.g. "getAllYouTubeTabs"
-	chrome.runtime.sendMessage({ command: "connectionTest" });
+	try {
+		// The background worker will get stopped after 30 seconds
+		// This request will cause a "Receiving end does not exist" error, but starts the worker again as well
+		await chrome.runtime.sendMessage({ command: "connectionTest" });
+	} catch (error) {
+		console.log("The background worker was stopped and had to be restarted.");
+	}
 	try {
 		// Each user has a set amount of quota they can use per day.
 		// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.

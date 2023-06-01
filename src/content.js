@@ -83,7 +83,7 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 	// We can get an error here if the extension context was invalidated and the user navigates without reloading the page
 	try {
 		// If we are still connected to the background worker, we can send a message to test the connection
-		chrome.runtime.sendMessage({ command: "connectionTest" });
+		await chrome.runtime.sendMessage({ command: "connectionTest" });
 	} catch (error) {
 		// If the extension's background worker was reloaded, we need to reload the page to re-connect to the background worker
 		if (error.message === 'Extension context invalidated.') {
@@ -102,7 +102,7 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 
 	// Update the channel name in the popup in case it was opened while the navigation was still going on
 	// If we don't do this, the configSync and displayed value might diverge
-	chrome.runtime.sendMessage({ command: "updateCurrentChannel" });
+	await chrome.runtime.sendMessage({ command: "updateCurrentChannel" });
 
 	buildShuffleButton(pageType, channelId, shuffleVideos);
 }
