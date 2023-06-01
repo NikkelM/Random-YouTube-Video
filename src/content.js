@@ -18,7 +18,7 @@ document.head.appendChild(iconFont);
 const videoShuffleButton = document.getElementById("youtube-random-video-shuffle-button-video");
 const channelShuffleButton = document.getElementById("youtube-random-video-shuffle-button-channel");
 if (videoShuffleButton || channelShuffleButton) {
-	window.location.reload();
+	window.location.reload(true);
 }
 
 // After every navigation event, we need to check if this page needs a 'Shuffle' button
