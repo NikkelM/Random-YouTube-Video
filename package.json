@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Play a random video uploaded on the current YouTube channel.",
   "scripts": {
-		"dev": "concurrently --kill-others \"npm run dev:chromium\" \"npm run dev:firefox\"",
+		"dev": "concurrently \"npm run dev:chromium\" \"npm run dev:firefox\"",
     "dev:chromium": "webpack --env browser=chromium --watch --config webpack.dev.cjs",
     "dev:firefox": "concurrently --kill-others \"webpack --env browser=firefox --watch --config webpack.dev.cjs\" \"web-ext run --source-dir ./dist/firefox\"",
     "build": "npm run build:chromium && npm run build:firefox",
