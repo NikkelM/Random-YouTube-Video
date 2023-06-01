@@ -137,7 +137,7 @@ async function shuffleVideos() {
 		}
 
 		// We need this variable to make sure the button text is only changed if the shuffle hasn't finished within the time limit
-		let hasBeenShuffled = false;
+		var hasBeenShuffled = false;
 		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Shuffling...", 1000, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffle" && !hasBeenShuffled); });
 		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still on it...", 5000, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffling..." && !hasBeenShuffled); });
 
@@ -163,8 +163,8 @@ async function shuffleVideos() {
 
 		// Special case: If the extension's background worker was reloaded, we need to reload the page to get the correct reference to the shuffle function again
 		if (error.message === 'Extension context invalidated.') {
-			// We don't want the button text to quickly change before the page is reloaded
-			displayText = `Shuffle`;
+			// We don't want the button text to change before the page is reloaded
+			hasBeenShuffled = true;
 
 			// Inform the user about what has happened
 			alert(`Random YouTube Video:
