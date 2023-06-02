@@ -1,5 +1,5 @@
 // Contains logic for the "shufflingPage" that is opened when the user clicks the "Shuffle" button from the popup
-import { delay } from "../utils.js";
+import { delay, setDOMTextWithDelay } from "../utils.js";
 import { configSync, setSyncStorageValue } from "../chromeStorage.js";
 import { displayShufflingHint, tryFocusingTab } from "./htmlUtils.js";
 import { chooseRandomVideo } from "../shuffleVideo.js";
@@ -83,6 +83,9 @@ let currentHint = await displayShufflingHint(domElements.shufflingHintP);
 async function shuffleButtonClicked() {
 	try {
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
+
+		setDOMTextWithDelay(domElements.fetchPercentageNotice, "Applying filters...", 3000, () => { return (domElements.fetchPercentageNotice.innerText === "Please wait..."); });
+		setDOMTextWithDelay(domElements.fetchPercentageNotice, "Should be done soon...", 10000, () => { return (domElements.fetchPercentageNotice.innerText === "Applying filters..."); });
 
 		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
 
