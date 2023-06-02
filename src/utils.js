@@ -21,6 +21,17 @@ export function isVideoUrl(url) {
 	return urlParts[3]?.startsWith("watch?v=") ?? false;
 }
 
+// ----- DOM -----
+export function setDOMTextWithDelay(textElement, newText, delayMS, predicate = () => { return true; }) {
+	// Sets the innerHTML of a (text) DOM element after a delay, if a predicate evaluates to true
+	// If no predicate is passed, this function will always set the text after the delay
+	delay(delayMS).then(() => {
+		if (predicate()) {
+			textElement.innerText = newText;
+		}
+	});
+}
+
 // ----- Small utilities -----
 // Waits for a certain amount of milliseconds
 export function delay(ms) {

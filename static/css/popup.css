@@ -14,10 +14,10 @@
 /*
  * Scrollbar
  */
-/* ::-webkit-scrollbar {
+::-webkit-scrollbar {
 	width: 6px;
 	height: 6px;
-} */
+}
 
 ::-webkit-scrollbar-thumb {
 	background-color: #666;

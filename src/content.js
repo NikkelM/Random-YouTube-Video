@@ -1,5 +1,5 @@
 // Content script that is injected into YouTube pages
-import { delay, isVideoUrl, RandomYoutubeVideoError } from "./utils.js";
+import { setDOMTextWithDelay, isVideoUrl, RandomYoutubeVideoError } from "./utils.js";
 import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 import { buildShuffleButton, shuffleButton, shuffleButtonTextElement } from "./buildShuffleButton.js";
 import { chooseRandomVideo } from "./shuffleVideo.js";
@@ -105,16 +105,6 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 	await chrome.runtime.sendMessage({ command: "updateCurrentChannel" });
 
 	buildShuffleButton(pageType, channelId, shuffleVideos);
-}
-
-function setDOMTextWithDelay(textElement, newText, delayMS, predicate = () => { return true; }) {
-	// Sets the innerHTML of a (text) DOM element after a delay, if a predicate evaluates to true
-	// If no predicate is passed, this function will always set the text after the delay
-	delay(delayMS).then(() => {
-		if (predicate()) {
-			textElement.innerText = newText;
-		}
-	});
 }
 
 // ---------- Shuffle ----------

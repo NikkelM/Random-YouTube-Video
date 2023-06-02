@@ -1,5 +1,5 @@
 // Contains logic for the "shufflingPage" that is opened when the user clicks the "Shuffle" button from the popup
-import { delay } from "../utils.js";
+import { delay, setDOMTextWithDelay } from "../utils.js";
 import { configSync, setSyncStorageValue } from "../chromeStorage.js";
 import { displayShufflingHint, tryFocusingTab } from "./htmlUtils.js";
 import { chooseRandomVideo } from "../shuffleVideo.js";
@@ -10,6 +10,8 @@ try {
 	await chrome.runtime.sendMessage({ command: "connectionTest" });
 } catch (error) {
 	console.log("The background worker was stopped and had to be restarted.");
+	// Wait a bit to make sure the background script has time to restart and we don't get an error when connecting the port
+	await delay(10);
 }
 
 // Open a port to the background script
@@ -83,6 +85,9 @@ let currentHint = await displayShufflingHint(domElements.shufflingHintP);
 async function shuffleButtonClicked() {
 	try {
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
+
+		setDOMTextWithDelay(domElements.fetchPercentageNotice, "Applying filters...", 3000, () => { return (domElements.fetchPercentageNotice.innerText === "Please wait..."); });
+		setDOMTextWithDelay(domElements.fetchPercentageNotice, "Should be done soon...", 10000, () => { return (domElements.fetchPercentageNotice.innerText === "Applying filters..."); });
 
 		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
 
