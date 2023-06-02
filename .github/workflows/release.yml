@@ -59,12 +59,12 @@ jobs:
       - name: Create .zip of chromium build
         run: |
           cd dist/chromium
-          zip -r ../Random.Youtube.Video.chromium.zip *
+          zip -r ../../Random.Youtube.Video.chromium.zip *
 
       - name: Create .zip of firefox build
         run: |
           cd dist/firefox
-          zip -r ../Random.Youtube.Video.firefox.zip *
+          zip -r ../../Random.Youtube.Video.firefox.zip *
 
       - name: Create Release notes
         run: |
