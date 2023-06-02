@@ -1,6 +1,8 @@
 import expect from 'expect.js';
 import sinon from 'sinon';
-import { isVideoUrl, isEmpty, getLength, addHours, delay, RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
+import { JSDOM } from 'jsdom';
+
+import { isVideoUrl, isEmpty, getLength, addHours, delay, setDOMTextWithDelay, RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
 
 describe('utils.js', function () {
 	context('URL helpers', function () {
@@ -29,6 +31,57 @@ describe('utils.js', function () {
 				expect(isVideoUrl("about:blank")).to.be(false);
 			});
 
+		});
+	});
+
+	context('DOM', function () {
+
+		// Before each test, create a dummy document element
+		var dom;
+		beforeEach(function () {
+			dom = new JSDOM(`<!DOCTYPE html><body><span id="test-span"></span></body>`);
+			dom.window.document.getElementById("test-span").innerText = "Before";
+		});
+
+		context('setDOMTextWithDelay()', function () {
+			it('should replace DOM text with default predicate', async function () {
+				expect(dom.window.document.getElementById("test-span").innerText).to.be("Before");
+
+				setDOMTextWithDelay(dom.window.document.getElementById("test-span"), "After", 30);
+
+				await new Promise(r => setTimeout(r, 10));
+				expect(dom.window.document.getElementById("test-span").innerText).to.be("Before");
+
+				await new Promise(r => setTimeout(r, 30));
+				expect(dom.window.document.getElementById("test-span").innerText).to.be("After");
+			});
+
+			it('should replace DOM text if custom predicate is true', async function () {
+				const someBoolean = true;
+				const predicate = () => { return dom.window.document.getElementById("test-span").innerText === "Before" && someBoolean; };
+
+				expect(dom.window.document.getElementById("test-span").innerText).to.be("Before");
+
+				setDOMTextWithDelay(dom.window.document.getElementById("test-span"), "After", 30, predicate);
+
+				await new Promise(r => setTimeout(r, 10));
+				expect(dom.window.document.getElementById("test-span").innerText).to.be("Before");
+
+				await new Promise(r => setTimeout(r, 30));
+				expect(dom.window.document.getElementById("test-span").innerText).to.be("After");
+			});
+
+			it('should not replace DOM text if predicate is false', async function () {
+				const someBoolean = false;
+				const predicate = () => { return dom.window.document.getElementById("test-span").innerText === "Before" && someBoolean; };
+
+				expect(dom.window.document.getElementById("test-span").innerText).to.be("Before");
+
+				setDOMTextWithDelay(dom.window.document.getElementById("test-span"), "After", 20, predicate);
+
+				await new Promise(r => setTimeout(r, 30));
+				expect(dom.window.document.getElementById("test-span").innerText).to.be("Before");
+			});
 		});
 	});
 
