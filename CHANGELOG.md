@@ -3,8 +3,8 @@
 ## v2.1.1 (Unreleased)
 
 <!--Releasenotes start-->
-- Fixed the scrollbar on Chromium browser not being styled correctly.
-- Added links to the various extension stores to the popup.
+- Fixed the scrollbar on Chromium browsers not being styled correctly.
+- Added links to browser store pages to the popup.
 - The shuffle page opened by the popup will now inform you if a shuffle takes a bit longer than expected.
 - Fixed a bug where the shuffling page opened by the popup would sometimes incorrectly show an error message for a brief moment.
 <!--Releasenotes end-->
