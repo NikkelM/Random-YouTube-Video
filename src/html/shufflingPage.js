@@ -10,6 +10,8 @@ try {
 	await chrome.runtime.sendMessage({ command: "connectionTest" });
 } catch (error) {
 	console.log("The background worker was stopped and had to be restarted.");
+	// Wait a bit to make sure the background script has time to restart and we don't get an error when connecting the port
+	await delay(10);
 }
 
 // Open a port to the background script
