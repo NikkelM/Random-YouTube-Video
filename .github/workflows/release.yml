@@ -56,10 +56,15 @@ jobs:
       - name: Build extension
         run: npm run build
 
-      - name: Create .zip of required files 
+      - name: Create .zip of chromium build
         run: |
-          cd dist
-          zip -r ../Random.Youtube.Video.zip *
+          cd dist/chromium
+          zip -r ../Random.Youtube.Video.chromium.zip *
+
+      - name: Create .zip of firefox build
+        run: |
+          cd dist/firefox
+          zip -r ../Random.Youtube.Video.firefox.zip *
 
       - name: Create Release notes
         run: |
@@ -78,5 +83,7 @@ jobs:
         with:
           tag_name: v${{ needs.CheckVersion.outputs.newVersion }}
           name: v${{ needs.CheckVersion.outputs.newVersion }}
-          files: Random.Youtube.Video.zip
+          files: |
+            Random.Youtube.Video.chromium.zip
+            Random.Youtube.Video.firefox.zip
           body_path: RELEASE_NOTES.md

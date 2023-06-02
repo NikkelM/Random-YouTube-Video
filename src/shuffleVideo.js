@@ -16,6 +16,13 @@ let mustOverwriteDatabase = false;
 // Chooses a random video uploaded on the current YouTube channel
 export async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
 	try {
+		// The background worker will get stopped after 30 seconds
+		// This request will cause a "Receiving end does not exist" error, but starts the worker again as well
+		await chrome.runtime.sendMessage({ command: "connectionTest" });
+	} catch (error) {
+		console.log("The background worker was stopped and had to be restarted.");
+	}
+	try {
 		// Each user has a set amount of quota they can use per day.
 		// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.
 		let userQuotaRemainingToday = await getUserQuotaRemainingToday();
@@ -231,7 +238,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 
 	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
 	const totalResults = apiResponse["pageInfo"]["totalResults"];
-	if (totalResults / 50 >= userQuotaRemainingToday + 199 && !isCustomKey) {
+	if (totalResults / 50 >= userQuotaRemainingToday + 50 && !isCustomKey) {
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-4B",
@@ -305,14 +312,16 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, "", APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 	const totalNumVideosOnChannel = apiResponse["pageInfo"]["totalResults"];
-	const totalNewResults = totalNumVideosOnChannel - getLength(playlistInfo["videos"]);
+	// If the channel has already reached the API cap, we don't know how many new videos there are, so we put an estimate to show the user something
+	// The difference could be negative if there are more videos saved in the database than exist in the playlist, e.g videos were deleted
+	const totalExpectedNewResults = totalNumVideosOnChannel > 19999 ? 1000 : Math.max(totalNumVideosOnChannel - getLength(playlistInfo["videos"]), 0);
 
 	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
-	if (totalNewResults / 50 >= userQuotaRemainingToday + 199 && !isCustomKey) {
+	if (totalExpectedNewResults / 50 >= userQuotaRemainingToday + 50 && !isCustomKey) {
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-4B",
-				message: `The channel you are shuffling from has too many new uploads (${totalNewResults}) for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.`,
+				message: `The channel you are shuffling from has too many new uploads (${totalExpectedNewResults}) for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.`,
 				solveHint: "To shuffle from channels with more uploads, please use a custom API key.",
 				showTrace: false
 			}
@@ -323,8 +332,8 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	let resultsFetchedCount = apiResponse["items"].length;
 
 	// If there are less than 50 new videos, we don't need to show a progress percentage
-	if (totalNewResults > 50) {
-		progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalNewResults * 100), 100)}%`;
+	if (totalExpectedNewResults > 50) {
+		progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100)}%`;
 	}
 
 	// Update the "last video published at" date (only for the most recent video)
@@ -336,8 +345,9 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 		console.log("No new videos have been published since the last check.");
 
 		// Make sure that we are not missing any videos in the database
-		if (totalNumVideosOnChannel > getLength(playlistInfo["videos"]) + (getLength(playlistInfo["newVideos"] ?? {}))) {
-			console.log("There are less videos saved in the database than are uploaded on the channel, so some videos are missing. Refetching all videos...");
+		const numVideosInDatabase = getLength(playlistInfo["videos"]) + (getLength(playlistInfo["newVideos"] ?? {}));
+		if (totalNumVideosOnChannel > numVideosInDatabase) {
+			console.log(`There are less videos saved in the database than are uploaded on the channel (${numVideosInDatabase}/${totalNumVideosOnChannel}), so some videos are missing. Refetching all videos...`);
 			return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement);
 		}
 
@@ -365,7 +375,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 				// Set the current progress as text for the shuffle button/info text
 				// We never get to this code part if there are less than or exactly 50 new videos, so we don't need to check for that
 				resultsFetchedCount += apiResponse["items"].length;
-				progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalNewResults * 100), 100)}%`;
+				progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100)}%`;
 
 				currVideo = 0;
 				// Else, we have checked all videos
@@ -380,8 +390,9 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	playlistInfo["newVideos"] = newVideos;
 
 	// Make sure that we are not missing any videos in the database
-	if (totalNumVideosOnChannel > getLength(playlistInfo["videos"]) + (getLength(playlistInfo["newVideos"] ?? {}))) {
-		console.log("There are less videos saved in the database than are uploaded on the channel, so some videos are missing. Refetching all videos...");
+	const numVideosInDatabase = getLength(playlistInfo["videos"]) + (getLength(playlistInfo["newVideos"] ?? {}));
+	if (totalNumVideosOnChannel > numVideosInDatabase) {
+		console.log(`There are less videos saved in the database than are uploaded on the channel (${numVideosInDatabase}/${totalNumVideosOnChannel}), so some videos are missing. Refetching all videos...`);
 		return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement);
 	}
 
@@ -394,7 +405,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 	let apiResponse = null;
 
 	// We wrap this in a while block to simulate a retry mechanism until we get a valid response
-	/*eslint no-constant-condition: ["error", { "checkLoops": false }]*/
+	/* eslint no-constant-condition: ["error", { "checkLoops": false }] */
 	while (true) {
 		try {
 			console.log("Getting snippet from YouTube API...");
@@ -539,7 +550,8 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			activeOptionValue = configSync.channelSettings[channelId]?.videoIdValue;
 			break;
 		case "percentageOption":
-			activeOptionValue = configSync.channelSettings[channelId]?.percentageValue;
+			// The default is 100%, and we remove the setting from storage if it is 100% to save space
+			activeOptionValue = configSync.channelSettings[channelId]?.percentageValue ?? 100;
 			break;
 	}
 
@@ -618,35 +630,65 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		// Sending a request to the oembed API is significantly faster than sending a request to https://www.youtube.com/shorts/${randomVideo}
 		if (configSync.shuffleIgnoreShortsOption) {
 			let response;
-			await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
-				method: "GET"
-			}).then(res => res.json())
-				.then(res => response = res);
+			try {
+				await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
+					method: "GET"
+				}).then(res => res.json())
+					.then(res => response = res);
+				// We get an 'Unauthorized' response if the video cannot be embedded, which cannot be parsed as JSON
+			} catch (error) {
+				await fetch(`https://www.youtube.com/shorts/${randomVideo}`)
+					.then(res => {
+						if (!res.redirected) {
+							// The video is a short, so we do not want to choose it
+							// Workaround to simulate a response from the oembed API
+							response = {
+								thumbnail_url: `https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`
+							};
+						} else {
+							response = {
+								thumbnail_url: `https://i.ytimg.com/vi/${randomVideo}/hqdefault.jpg`
+							};
+						}
+					});
+			}
 
 			// For shorts, the thumbnail url ends in "hq2.jpg", for normal videos it ends in "hqdefault.jpg"
 			while (response.thumbnail_url === (`https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`)) {
-				console.log("A chosen video was a short, but shorts are ignored. Choosing a new random video.");
+				console.log('A chosen video was a short, but shorts are ignored. Choosing a new random video.');
 
 				// Remove the video from videosToShuffle to not choose it again
 				// Do not remove it from the playlistInfo object, as we do not want to delete it from the database
 				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 				randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
 
+				// No more non-short videos available
 				if (randomVideo === undefined) {
-					throw new RandomYoutubeVideoError(
-						{
-							code: "RYV-6D",
-							message: "Your settings indicate to ignore shorts, but there are only shorts available to shuffle from, or not enough non-short videos to fill the playlist.",
-							solveHint: "This may be due to your filters, e.g. only shuffling from the most recent videos. Revise your filters or turn off the option tp ignore shorts.",
-							showTrace: false
-						}
-					)
+					break;
 				}
 
-				await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
-					method: "GET"
-				}).then(res => res.json())
-					.then(res => response = res);
+				try {
+					await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
+						method: "GET"
+					}).then(res => res.json())
+						.then(res => response = res);
+					// We get an 'Unauthorized' response if the video cannot be embedded, which cannot be parsed as JSON
+				} catch (error) {
+					await fetch(`https://www.youtube.com/shorts/${randomVideo}`)
+						.then(res => {
+							if (!res.redirected) {
+								// The video is a short, so we do not want to choose it
+								// Workaround to simulate a response from the oembed API
+								response = {
+									thumbnail_url: `https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`
+								};
+							} else {
+								response = {
+									thumbnail_url: `https://i.ytimg.com/vi/${randomVideo}/hqdefault.jpg`
+								};
+							}
+						});
+				}
 			}
 		}
 
@@ -737,7 +779,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 	}
 
 	// Get all tab IDs
-	const currentYouTubeTabs = await chrome.runtime.sendMessage({ command: "getAllYouTubeTabs" });
+	const currentYouTubeTabs = await chrome.runtime.sendMessage({ command: "getAllYouTubeTabs" }) ?? [];
 	// Find out if the reusable tab is still open (and on a youtube.com page)
 	const reusableTabExists = currentYouTubeTabs.find((tab) => tab.id === configSync.shuffleTabId);
 
@@ -748,18 +790,18 @@ async function playVideo(chosenVideos, firedFromPopup) {
 		// Video page: Pause the current video if it is playing
 		if (isVideoUrl(window.location.href)) {
 			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
-			if (player && player.classList.contains('playing-mode')) {
+			if (player && player.classList.contains('playing-mode') && !player.classList.contains('unstarted-mode')) {
 				player.children[0].click();
 			}
 		} else {
 			// Channel page: Pause the featured video if it exists and is playing
 			const featuredPlayer = document.querySelector('ytd-player#player')?.children[0]?.children[0];
-			if (featuredPlayer && featuredPlayer.classList.contains('playing-mode')) {
+			if (featuredPlayer && featuredPlayer.classList.contains('playing-mode') && !featuredPlayer.classList.contains('unstarted-mode')) {
 				featuredPlayer.children[0].click();
 			}
 			// Any page: Pause the miniplayer if it exists and is playing
 			const miniPlayer = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
-			if (miniPlayer && miniPlayer.classList.contains('playing-mode')) {
+			if (miniPlayer && miniPlayer.classList.contains('playing-mode') && !miniPlayer.classList.contains('unstarted-mode')) {
 				miniPlayer.children[0].click();
 			}
 		}

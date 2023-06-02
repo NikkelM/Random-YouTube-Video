@@ -12,6 +12,15 @@ iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChil
 document.head.appendChild(iconFont);
 
 // ---------- DOM ----------
+// The only way for a button to already exist when the content script is loaded is if the extension was reloaded in the background
+// That will cause the content script to be re-injected into the page, but the DOM will not be reloaded
+// That in turn will disconnect the event listener (on Firefox), which will make the button not work
+const videoShuffleButton = document.getElementById("youtube-random-video-shuffle-button-video");
+const channelShuffleButton = document.getElementById("youtube-random-video-shuffle-button-channel");
+if (videoShuffleButton || channelShuffleButton) {
+	window.location.reload(true);
+}
+
 // After every navigation event, we need to check if this page needs a 'Shuffle' button
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
@@ -74,7 +83,7 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 	// We can get an error here if the extension context was invalidated and the user navigates without reloading the page
 	try {
 		// If we are still connected to the background worker, we can send a message to test the connection
-		chrome.runtime.sendMessage({ command: "connectionTest" });
+		await chrome.runtime.sendMessage({ command: "connectionTest" });
 	} catch (error) {
 		// If the extension's background worker was reloaded, we need to reload the page to re-connect to the background worker
 		if (error.message === 'Extension context invalidated.') {
@@ -93,7 +102,7 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 
 	// Update the channel name in the popup in case it was opened while the navigation was still going on
 	// If we don't do this, the configSync and displayed value might diverge
-	chrome.runtime.sendMessage({ command: "updateCurrentChannel" });
+	await chrome.runtime.sendMessage({ command: "updateCurrentChannel" });
 
 	buildShuffleButton(pageType, channelId, shuffleVideos);
 }
@@ -128,7 +137,7 @@ async function shuffleVideos() {
 		}
 
 		// We need this variable to make sure the button text is only changed if the shuffle hasn't finished within the time limit
-		let hasBeenShuffled = false;
+		var hasBeenShuffled = false;
 		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Shuffling...", 1000, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffle" && !hasBeenShuffled); });
 		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still on it...", 5000, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffling..." && !hasBeenShuffled); });
 
@@ -154,8 +163,8 @@ async function shuffleVideos() {
 
 		// Special case: If the extension's background worker was reloaded, we need to reload the page to get the correct reference to the shuffle function again
 		if (error.message === 'Extension context invalidated.') {
-			// We don't want the button text to quickly change before the page is reloaded
-			displayText = `Shuffle`;
+			// We don't want the button text to change before the page is reloaded
+			hasBeenShuffled = true;
 
 			// Inform the user about what has happened
 			alert(`Random YouTube Video:

@@ -4,15 +4,20 @@
 	--randomYoutubeVideo-fg-color: #fff;
 	--randomYoutubeVideo-grey-fg-color: #999;
 	--randomYoutubeVideo-grey-bg-color: #333;
+
+	/* Firefox */
+	scrollbar-width: thin;
+	scrollbar-color: #666 #555;
+	overflow-x: hidden;
 }
 
 /*
  * Scrollbar
  */
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
 	width: 6px;
 	height: 6px;
-}
+} */
 
 ::-webkit-scrollbar-thumb {
 	background-color: #666;
@@ -221,6 +226,12 @@
 	margin: 0;
 }
 
+/* Remove the up and down arrows from the number input for firefox */
+.optionTextInput input.numberInput.noArrows[type=number] {
+	appearance: none;
+	-moz-appearance: textfield;
+}
+
 .optionTextInput input:focus {
 	outline: none;
 }
@@ -280,7 +291,7 @@ select:hover {
 /*
  * Links
  */
- /* A link whose text is white and turns grey when hovered over */
+/* A link whose text is white and turns grey when hovered over */
 .whiteGreyLink {
 	color: var(--randomYoutubeVideo-fg-color);
 	display: inline-block;

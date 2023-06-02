@@ -15,6 +15,10 @@ chrome.storage.sync.set.callsFake((obj) => {
 	Object.assign(mockedConfigSync, obj);
 	return Promise.resolve();
 });
+chrome.storage.sync.remove.callsFake((key) => {
+	delete mockedConfigSync[key];
+	return Promise.resolve();
+});
 chrome.storage.sync.clear.callsFake(() => {
 	for (const key in mockedConfigSync) {
 		delete mockedConfigSync[key];
@@ -42,6 +46,9 @@ chrome.storage.local.clear.callsFake(() => {
 // ---------- Chrome runtime message listener ----------
 chrome.runtime.sendMessage.callsFake((request) => {
 	switch (request.command) {
+		case "connectionTest":
+			return Promise.resolve("Connection test successful.");
+
 		case 'getPlaylistFromDB':
 			// Return a playlist from the database
 			return Promise.resolve(mockedDatabase[request.data] ?? null);
@@ -92,6 +99,11 @@ function clearMockedDatabase() {
 }
 
 // ---------- Test setup and teardown ----------
+// Setup before the import of configSync in the first test
+// To pass the first test, this needs to be done outside any before hooks
+// The first test will check that this key was removed during validation
+chrome.storage.sync.set({ "thisKeyShouldBeRemoved": "thisValueShouldBeRemoved" });
+
 beforeEach(() => {
 	chrome.storage.sync.set(deepCopy(configSyncDefaults));
 	chrome.storage.local.set(deepCopy(localPlaylistPermutations));

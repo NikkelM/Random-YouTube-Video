@@ -1,8 +1,16 @@
 # Changelog
 
-## v2.0.1 (Unreleased)
+## v2.1.0
 
 <!--Releasenotes start-->
+- The extension is now available for Firefox as well.
+- The extension's background service worker will no longer reload if an error was encountered when shuffling using the button in the popup.
+- Fixed a bug where a fatal error would be encountered if the extension was choosing a non-embeddable video and shorts were ignored.
+- Fixed a bug where the 'Shuffle' button could sometimes show a negative fetch percentage when updating a channel's videos.
+- Fixed a bug where you were unable to shuffle when using the 'percentage' filtering option with a value of 100%.
+- Fixed a bug where it was possible that the default user settings would not get initialized correctly when first installing the extension.
+- Fixed a bug where new tabs opened by the extension would sometimes be opened in a new window instead.
+- Fixed a number of bugs related to internal message passing that may have occurred when using the extension on Firefox.
 - Fixed some cosmetic issues across the extension.
 - Made the internal handling of user settings more robust.
 - The extension is now bundled using Webpack, which makes it faster and easier to maintain.

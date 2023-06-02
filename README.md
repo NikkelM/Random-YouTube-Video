@@ -11,15 +11,19 @@
   <img src="https://img.shields.io/chrome-web-store/users/kijgnjhogkjodpakfmhgleobifempckf"
     alt="Chrome web store users"></a>
 <br>
-<a href="https://github.com/NikkelM/Random-YouTube-Video/tree/main/CHANGELOG.md">
-  <img src="https://img.shields.io/badge/view-changelog-blue"
-    alt="View changelog"></a>
+<img alt="GitHub Workflow Status - Tests" src="https://img.shields.io/github/actions/workflow/status/NikkelM/Random-YouTube-Video/test.yml?branch=main&label=tests">
 <a href='https://coveralls.io/github/NikkelM/Random-YouTube-Video?branch=main'>
 	<img src='https://coveralls.io/repos/github/NikkelM/Random-YouTube-Video/badge.svg?branch=main' 
 		alt='Coverage Status' /></a>
+<br>
+<a href="https://github.com/NikkelM/Random-YouTube-Video/tree/main/CHANGELOG.md">
+  <img src="https://img.shields.io/badge/view-changelog-blue"
+    alt="View changelog"></a>
 </p>
 
-You can download the extension on the [Chrome Web Store](https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf) or the [Microsoft Edge Add-ons Store](https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe). The Chrome Web Store version can be installed on any Chromium-based browser, including Edge, Brave and more.
+Download the extension for [Chrome/Chromium](https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf) | [Edge](https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe). 
+
+The Chrome Web Store version can be installed on any Chromium-based browser, such as Edge, Brave, Opera...
 
 ---
 
@@ -36,9 +40,38 @@ Highlighted Features:<br>
 
 Do you have ideas for new features or have encountered a bug? Please [open an issue](https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose).
 
-<!-- The `main` branch of this repository *should* always be stable. If you want to test the newest unreleased features, simply load the `extension` folder as an unpacked extension in your browser of choice.
+The `main` branch of this repository *should* always be stable. If you want to test the newest unreleased features, follow the steps below to create a version of the extension you can add to your browser.
 <br>
-You can find out what new changes are coming with the unreleased version in the [changelog](https://github.com/NikkelM/Random-YouTube-Video/blob/main/CHANGELOG.md).
-Did you find any bugs with the version you tested? Please let me know by [opening an issue](https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose)! -->
+You can find out what new changes are coming with the newest unreleased version in the [changelog](https://github.com/NikkelM/Random-YouTube-Video/blob/main/CHANGELOG.md).
+Did you find any bugs with the version you tested? Please let me know by [opening an issue](https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose)!
+
+### Installation
+
+- Install the required dependencies by running `npm install` in the root directory of the project.
+- Use `npm run build` to build a distribution for each browser environment.
+	- `npm run build:chromium` builds a distribution for Chrome/Chromium only.
+	- `npm run build:firefox` builds a distribution for Firefox only.
+	- Replace `build` with `dev` in the above commands to build a development version of the extension that updates automatically when you make changes to the code.
+- The bundled extension files will be placed in the `dist/<browser>` directories.
+- You can load the extension in your browser by following the instructions below.
+
+#### Chrome/Chromium
+
+- Open the Extension Management page by navigating to `chrome://extensions`.
+- Make sure that you have enabled developer mode.
+- Click `Load unpacked` and choose the `dist/chromium` folder.
+
+Loading the extension like this will persist it until you remove it manually.
+
+#### Firefox
+
+- Open the Add-ons page by navigating to `about:addons`.
+- Click the cog icon and select `Debug Add-ons`.
+- Click `Load Temporary Add-on...` and choose the `dist/firefox/manifest.json` file.
+
+Loading the extension like this will persist it only *until you restart Firefox*. 
+You may also test the extension with Firefox by running `npm run dev:firefox`, which uses `web-ext` to load the extension in a temporary Firefox profile. 
+
+---
 
 If you enjoy this extension and want to say thanks, consider buying me a [coffee](https://ko-fi.com/nikkelm), or [sponsoring](https://github.com/sponsors/NikkelM) this project.

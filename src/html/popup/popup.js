@@ -2,7 +2,7 @@
 import { delay } from "../../utils.js";
 import { configSync, setSyncStorageValue } from "../../chromeStorage.js";
 import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv } from "./popupUtils.js";
-import { focusOrOpenTab } from "../htmlUtils.js";
+import { tryFocusingTab } from "../htmlUtils.js";
 
 const domElements = getPopupDomElements();
 await setPopupDomElementValuesFromConfig(domElements);
@@ -12,8 +12,8 @@ await setPopupDomElemenEventListeners(domElements);
 // --- Private ---
 // Get relevant DOM elements
 function getPopupDomElements() {
-	/*global customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv*/
-	/*eslint no-undef: "error"*/
+	/* global customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv */
+	/* eslint no-undef: "error" */
 	return {
 		// Body element
 		body: document.body,
@@ -219,32 +219,35 @@ async function setPopupDomElemenEventListeners(domElements) {
 	});
 
 	// Shuffling: Number of videos in playlist input
-	domElements.shuffleNumVideosInPlaylistInput.addEventListener("focusout", async function () {
-		if (this.value === "") {
-			// Set the previous value if the input is empty, or set it to 10 if there is no previous value
-			this.value = configSync.shuffleNumVideosInPlaylist ?? 10;
+	// Add an event listener for both using the arrows and manually typing in a value
+	"change focusout".split(" ").forEach(function (event) {
+		domElements.shuffleNumVideosInPlaylistInput.addEventListener(event, async function () {
+			if (this.value === "") {
+				// Set the previous value if the input is empty, or set it to 10 if there is no previous value
+				this.value = configSync.shuffleNumVideosInPlaylist ?? 10;
 
-			this.classList.add('invalid-input');
-			setTimeout(() => {
-				this.classList.remove('invalid-input');
-			}, 1500);
-		}
+				this.classList.add('invalid-input');
+				setTimeout(() => {
+					this.classList.remove('invalid-input');
+				}, 1500);
+			}
 
-		// Clamp the value to the range [1, 50]
-		const minValue = parseInt(this.getAttribute("min"));
-		const maxValue = parseInt(this.getAttribute("max"));
-		if (this.value < minValue || this.value > maxValue) {
-			this.value = Math.min(Math.max(Math.round(this.value), minValue), maxValue);
+			// Clamp the value to the range [1, 50]
+			const minValue = parseInt(this.getAttribute("min"));
+			const maxValue = parseInt(this.getAttribute("max"));
+			if (this.value < minValue || this.value > maxValue) {
+				this.value = Math.min(Math.max(Math.round(this.value), minValue), maxValue);
 
-			this.classList.add('invalid-input');
-			setTimeout(() => {
-				this.classList.remove('invalid-input');
-			}, 1500);
-		}
+				this.classList.add('invalid-input');
+				setTimeout(() => {
+					this.classList.remove('invalid-input');
+				}, 1500);
+			}
 
-		await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value));
+			await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value));
 
-		manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value);
+			manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value);
+		})
 	});
 
 	// Custom options per channel: Dropdown menu
@@ -308,42 +311,50 @@ async function setPopupDomElemenEventListeners(domElements) {
 	});
 
 	// Custom options per channel: Dropdown menu: Percentage input
-	domElements.channelCustomOptionsPercentageOptionInput.addEventListener("focusout", async function () {
-		if (this.value === "") {
-			// Set the previous value if the input is empty, or set it to 100 if there is no previous value
-			this.value = configSync.channelSettings[configSync.currentChannelId]?.percentageValue ?? 100;
+	// Even though we have disabled the arrows, still add an event listener for it to be sure
+	"change focusout".split(" ").forEach(function (event) {
+		domElements.channelCustomOptionsPercentageOptionInput.addEventListener(event, async function () {
+			if (this.value === "") {
+				// Set the previous value if the input is empty, or set it to 100 if there is no previous value
+				this.value = configSync.channelSettings[configSync.currentChannelId]?.percentageValue ?? 100;
 
-			this.classList.add('invalid-input');
-			setTimeout(() => {
-				this.classList.remove('invalid-input');
-			}, 1500);
-		}
+				this.classList.add('invalid-input');
+				setTimeout(() => {
+					this.classList.remove('invalid-input');
+				}, 1500);
+			}
 
-		// Clamp the value to the range [1, 100]
-		const minValue = parseInt(this.getAttribute("min"));
-		const maxValue = parseInt(this.getAttribute("max"));
-		if (this.value < minValue || this.value > maxValue) {
-			this.value = Math.min(Math.max(Math.round(this.value), minValue), maxValue);
+			// Clamp the value to the range [1, 100]
+			const minValue = parseInt(this.getAttribute("min"));
+			const maxValue = parseInt(this.getAttribute("max"));
+			if (this.value < minValue || this.value > maxValue) {
+				this.value = Math.min(Math.max(Math.round(this.value), minValue), maxValue);
 
-			this.classList.add('invalid-input');
-			setTimeout(() => {
-				this.classList.remove('invalid-input');
-			}, 1500);
-		}
+				this.classList.add('invalid-input');
+				setTimeout(() => {
+					this.classList.remove('invalid-input');
+				}, 1500);
+			}
 
-		// We only need to save the value if it's not the default of 100. If we have already saved a different one, we want to remove it
-		if (this.value != 100) {
-			await setChannelSetting(configSync.currentChannelId, "percentageValue", parseInt(this.value));
-		} else {
-			await removeChannelSetting(configSync.currentChannelId, "percentageValue");
-		}
+			// We only need to save the value if it's not the default of 100. If we have already saved a different one, we want to remove it
+			if (this.value != 100) {
+				await setChannelSetting(configSync.currentChannelId, "percentageValue", parseInt(this.value));
+			} else {
+				await removeChannelSetting(configSync.currentChannelId, "percentageValue");
+			}
 
-		manageDependents(domElements, domElements.channelCustomOptionsPercentageOptionInput, this.value);
+			manageDependents(domElements, domElements.channelCustomOptionsPercentageOptionInput, this.value);
+		})
 	});
 
 	// Popup shuffle button
-	domElements.popupShuffleButton.addEventListener("click", function () {
-		focusOrOpenTab(chrome.runtime.getURL("html/shufflingPage.html"));
+	domElements.popupShuffleButton.addEventListener("click", async function () {
+		const tabUrl = chrome.runtime.getURL("html/shufflingPage.html");
+		let mustOpenTab = await tryFocusingTab(tabUrl);
+		if (mustOpenTab) {
+			window.open(tabUrl, "_blank");
+		}
+
 		// Close the popup
 		window.close();
 	});
@@ -351,7 +362,13 @@ async function setPopupDomElemenEventListeners(domElements) {
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
-		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
+
+		const tabUrl = chrome.runtime.getURL("html/changelog.html");
+		let mustOpenTab = await tryFocusingTab(tabUrl);
+		if (mustOpenTab) {
+			window.open(tabUrl, "_blank");
+		}
+
 		// Close the popup
 		window.close();
 	});
@@ -434,6 +451,9 @@ chrome.runtime.onMessage.addListener(async function (request) {
 			break;
 		default:
 			console.log(`Unknown command: ${request.command} (popup). Hopefully another message listener will handle it.`);
+			// Add a small delay here to make sure we don't send a response before the background script has had a chance to respond
+			// This is an issue on Firefox
+			await delay(100);
 			break;
 	}
 });
