@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.1.0 (Unreleased)
+## v2.1.0
 
 <!--Releasenotes start-->
 - The extension is now available for Firefox as well.
