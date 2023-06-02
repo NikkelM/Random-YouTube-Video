@@ -47,14 +47,6 @@ describe('shuffleVideo', function () {
 			'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DEL': [{ status: 400 }]
 		};
 
-		// Choose some representative playlists to test
-		// One that doesnt need any interaction with the database or YouTube API
-		// One that needs interaction with the database
-		// One that needs interaction with both the database and YouTube API
-		const localOnlyPlaylist = deepCopy(playlistPermutations.find((playlist) => !needsYTAPIInteraction(playlist) && !needsDBInteraction(playlist)));
-		const dbOnlyPlaylist = deepCopy(playlistPermutations.find((playlist) => !needsYTAPIInteraction(playlist) && needsDBInteraction(playlist)));
-		const ytAPIPlaylist = deepCopy(playlistPermutations.find((playlist) => needsYTAPIInteraction(playlist)));
-
 		beforeEach(function () {
 			// ---------- DOM ----------
 			// Initialize the window with a given url
@@ -74,108 +66,14 @@ describe('shuffleVideo', function () {
 			delete global.window;
 		});
 
-		context('error handling', function () {
-			beforeEach(function () {
-				// ---------- Fetch mock responses ----------
-				// ----- YT API responses -----
-				// Combine the local, db and newVideos into one object, but remove locally deleted videos, as they do not exist in the YT API anymore
-				// TODO: Make one of these for every playlist, and then setup the mock responses within each test, using the correct playlist?
-				const allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos });
-				for (const [videoId, publishTime] of Object.entries(allVideos)) {
-					if (videoId.startsWith('DEL_LOCAL')) {
-						delete allVideos[videoId];
-					} else {
-						allVideos[videoId] = publishTime;
-					}
-				}
+		// TODO: This test can also be done only once
+		// it('should open a new tab with the correct URL', async function () {
+		// 	await chooseRandomVideo(input.channelId, false, domElement);
 
-				let YTAPIItems = [];
-				// The order of these is important, as the YouTube API will put the newest ones first, so sort by publishTime
-				for (const [videoId, publishTime] of Object.entries(allVideos).sort((a, b) => b[1].localeCompare(a[1]))) {
-					YTAPIItems.push({
-						"kind": "youtube#playlistItem",
-						"etag": "tag",
-						"id": "id",
-						"contentDetails": {
-							"videoId": videoId,
-							"videoPublishedAt": publishTime
-						}
-					});
-				}
+		// 	expect(windowOpenStub.calledOnce).to.be(true);
+		// 	expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
 
-				// Put 50 items into one response each, as that is the maximum number of items that can be returned by the YouTube API
-				let YTResponses = [];
-				const totalResults = YTAPIItems.length;
-				while (YTAPIItems.length > 0) {
-					const items = YTAPIItems.splice(0, 50);
-					YTResponses.push(new Response(JSON.stringify(
-						{
-							"kind": "youtube#playlistItemListResponse",
-							"etag": "tag",
-							"nextPageToken": YTAPIItems.length > 0 ? 'nextPageToken' : undefined,
-							"items": items,
-							"pageInfo": {
-								"totalResults": totalResults,
-								"resultsPerPage": 50
-							}
-						}
-					)));
-				}
-
-				const YTMockResponses = {
-					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses,
-				};
-
-				const mockResponses = { ...videoExistenceMockResponses, ...YTMockResponses };
-
-				setUpMockResponses(mockResponses);
-			});
-
-			it('should throw an error if no channelId is given', async function () {
-				try {
-					await chooseRandomVideo(null, false, null);
-				} catch (error) {
-					expect(error).to.be.a(RandomYoutubeVideoError);
-					expect(error.code).to.be("RYV-1");
-				}
-			});
-
-			it('should reduce the userQuotaRemainingToday by one if an error is encountered', async function () {
-				expect(configSync.userQuotaRemainingToday).to.be(200);
-				try {
-					await chooseRandomVideo(null, false, null);
-				} catch (error) {
-				}
-				expect(configSync.userQuotaRemainingToday).to.be(199);
-			});
-
-			it('should throw an error if the userQuotaRemainingToday is 0 and a request to the YouTube API needs to be made', async function () {
-				configSync.userQuotaRemainingToday = 0;
-				try {
-					await chooseRandomVideo(ytAPIPlaylist.channelId, false, null);
-				} catch (error) {
-					expect(error).to.be.a(RandomYoutubeVideoError);
-					expect(error.code).to.be("RYV-4A");
-				}
-			});
-
-			it('should not throw an error if the userQuotaRemainingToday is 0 and no request to the YouTube API needs to be made', async function () {
-				configSync.userQuotaRemainingToday = 0;
-				await chooseRandomVideo(localOnlyPlaylist.channelId, false, null, true);
-			});
-
-			it('should throw an error if there is not enough quota remaining to fetch all required videos of a playlist', async function () {
-				// Set the quota to 1, so that we can't fetch all videos of the playlist
-				configSync.userQuotaRemainingToday = 1;
-
-				try {
-					await chooseRandomVideo(ytAPIPlaylist.channelId, false, null);
-				} catch (error) {
-					expect(error).to.be.a(RandomYoutubeVideoError);
-					expect(error.code).to.be("RYV-4B");
-				}
-			});
-		});
+		// });
 
 		// TODO: Test for different user settings, not needed to test for every permutation, as we assume we have local data
 		// Of course, we do need to test that we do not send a request to the database if the user has opted out of database sharing
@@ -322,15 +220,6 @@ describe('shuffleVideo', function () {
 							expect(configSyncBefore.userQuotaRemainingToday).to.be.greaterThan(configSyncAfter.userQuotaRemainingToday);
 						}
 					});
-
-					// TODO: This test can also be done only once
-					// it('should open a new tab with the correct URL', async function () {
-					// 	await chooseRandomVideo(input.channelId, false, domElement);
-
-					// 	expect(windowOpenStub.calledOnce).to.be(true);
-					// 	expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
-
-					// });
 
 					if (!needsDBInteraction(input)) {
 						it('should only interact with the database to remove deleted videos', async function () {
@@ -549,6 +438,63 @@ describe('shuffleVideo', function () {
 
 						});
 					}
+
+					context('error handling', function () {
+
+						it('should throw an error if no channelId is given', async function () {
+							try {
+								await chooseRandomVideo(null, false, domElement);
+							} catch (error) {
+								expect(error).to.be.a(RandomYoutubeVideoError);
+								expect(error.code).to.be("RYV-1");
+							}
+						});
+
+						context('userQuotaRemainingToday', function () {
+							it('should reduce the userQuotaRemainingToday by one if an error is encountered', async function () {
+								expect(configSync.userQuotaRemainingToday).to.be(200);
+								try {
+									// The error is that there is no channelId
+									await chooseRandomVideo(null, false, domElement);
+								} catch (error) {
+								}
+								expect(configSync.userQuotaRemainingToday).to.be(199);
+							});
+
+							if (needsYTAPIInteraction(input)) {
+								it('should throw an error if the userQuotaRemainingToday is 0 and a request to the YouTube API needs to be made', async function () {
+									configSync.userQuotaRemainingToday = 0;
+									try {
+										await chooseRandomVideo(input.channelId, false, domElement);
+									} catch (error) {
+										expect(error).to.be.a(RandomYoutubeVideoError);
+										expect(error.code).to.be("RYV-4A");
+									}
+								});
+
+								it('should throw an error if there is not enough quota remaining to fetch all required videos of a playlist', async function () {
+									// Set the quota to 1, so that we can't fetch all videos of the playlist
+									configSync.userQuotaRemainingToday = 1;
+
+									try {
+										await chooseRandomVideo(input.channelId, false, domElement);
+									} catch (error) {
+										expect(error).to.be.a(RandomYoutubeVideoError);
+										expect(error.code).to.be("RYV-4B");
+									}
+								});
+
+							} else {
+								it('should not throw an error if the userQuotaRemainingToday is 0 and no request to the YouTube API needs to be made', async function () {
+									configSync.userQuotaRemainingToday = 0;
+									await chooseRandomVideo(input.channelId, false, domElement);
+								});
+							}
+
+						});
+
+					});
+
 				});
 			});
 		});

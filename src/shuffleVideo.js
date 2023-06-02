@@ -15,6 +15,7 @@ let mustOverwriteDatabase = false;
 // --------------- Public ---------------
 // Chooses a random video uploaded on the current YouTube channel
 export async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
+	/* c8 ignore start */
 	try {
 		// The background worker will get stopped after 30 seconds
 		// This request will cause a "Receiving end does not exist" error, but starts the worker again as well
@@ -22,6 +23,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 	} catch (error) {
 		console.log("The background worker was stopped and had to be restarted.");
 	}
+	/* c8 ignore stop */
 	try {
 		// Each user has a set amount of quota they can use per day.
 		// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.
