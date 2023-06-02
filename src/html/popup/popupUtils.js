@@ -97,7 +97,6 @@ export async function manageDbOptOutOption(domElements) {
 // ----- Private -----
 async function checkDbOptOutOptionEligibility() {
 	let { APIKey } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
-	console.log(APIKey)
 
 	if (!APIKey) {
 		APIKey = [];
@@ -140,7 +139,6 @@ export async function updateFYIDiv(domElements) {
 export async function validateApiKey(customAPIKey, domElements) {
 	// APIKey is actually an array of objects here, despite the naming
 	let { APIKey } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
-	console.log(APIKey)
 
 	if (!APIKey) {
 		APIKey = [];

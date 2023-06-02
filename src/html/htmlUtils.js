@@ -16,20 +16,17 @@ export async function displayShufflingHint(displayElement, currentHintIndex = nu
 }
 
 // ----- Other utility functions -----
-export function focusOrOpenTab(tabUrl) {
-	chrome.tabs.query({}, function (tabs) {
-		let mustOpenTab = true;
-		for (let i = 0; i <= tabs.length - 1; i++) {
-			if (tabs[i].url === tabUrl) {
-				// An instance of the page already exists, so don't create a new one
-				mustOpenTab = false;
-				// Focus the existing tab
-				chrome.tabs.update(tabs[i].id, { active: true });
-				break;
-			}
+export async function tryFocusingTab(tabUrl) {
+	let mustOpenTab = true;
+	let tabs = await chrome.tabs.query({});
+	for (let i = 0; i <= tabs.length - 1; i++) {
+		if (tabs[i].url === tabUrl) {
+			// An instance of the page already exists, so don't create a new one
+			mustOpenTab = false;
+			// Focus the existing tab
+			chrome.tabs.update(tabs[i].id, { active: true });
+			break;
 		}
-		if (mustOpenTab) {
-			window.open(tabUrl);
-		}
-	});
+	}
+	return mustOpenTab;
 }

@@ -49,8 +49,10 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 		// Update the channelId
 		document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('channelId').innerText = channelId ?? "";
 
-		// Set the variable to the correct button type (channel vs. video page)
+		// Set the variables to the correct button reference (channel vs. video page)
 		shuffleButton = document.getElementById(buttonDivID);
+		shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[1].children[0];
+
 		return;
 	}
 
@@ -74,7 +76,7 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 		buttonDivOwner.appendChild(buttonDiv);
 	}
 
-	// Wait for the button renderer to get the child elements defined by the element type (YouTube thing...)
+	// Wait for the button renderer to get the child elements defined by the element type
 	var observer = new MutationObserver(function (mutations, me) {
 		var shuffleButton = buttonDivOwner.children.namedItem(buttonDivID);
 		if (shuffleButton.children.length > 0) {

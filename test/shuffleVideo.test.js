@@ -338,13 +338,14 @@ describe('shuffleVideo', function () {
 
 							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
 
-							// callCount is 2 if we didn't choose a deleted video, 3 else
-							expect(chrome.runtime.sendMessage.callCount).to.be.within(2, 3);
+							// callCount is 3 if we didn't choose a deleted video, 4 else
+							expect(chrome.runtime.sendMessage.callCount).to.be.within(3, 4);
 
+							expect(commands).to.contain('connectionTest');
 							expect(commands).to.contain('getAllYouTubeTabs');
 							expect(commands).to.contain('getCurrentTabId');
 
-							if (chrome.runtime.sendMessage.callCount === 3) {
+							if (chrome.runtime.sendMessage.callCount === 4) {
 								expect(commands).to.contain('overwritePlaylistInfoInDB');
 							}
 
@@ -357,11 +358,12 @@ describe('shuffleVideo', function () {
 							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
 
 							if (needsYTAPIInteraction(input)) {
-								expect(chrome.runtime.sendMessage.callCount).to.be(5);
+								expect(chrome.runtime.sendMessage.callCount).to.be(6);
 							} else {
-								expect(chrome.runtime.sendMessage.callCount).to.be.within(3, 4);
+								expect(chrome.runtime.sendMessage.callCount).to.be.within(4, 5);
 							}
 
+							expect(commands).to.contain('connectionTest');
 							expect(commands).to.contain('getPlaylistFromDB');
 							expect(commands).to.contain('getAllYouTubeTabs');
 							expect(commands).to.contain('getCurrentTabId');
@@ -370,18 +372,18 @@ describe('shuffleVideo', function () {
 							const numDeletedVideosAfter = Object.keys(playlistInfoAfter.videos).filter(videoId => videoId.includes('DEL')).length;
 
 							// Callcount:
-							// 5 if we need to fetch from the YT API, with update or overwrite depending on if a video was deleted
-							// 4 if we don't need to fetch from the YT API, but need to overwrite the playlist in the DB
-							// 3 if we dont need to overwrite the playlist in the DB
+							// 6 if we need to fetch from the YT API, with update or overwrite depending on if a video was deleted
+							// 5 if we don't need to fetch from the YT API, but need to overwrite the playlist in the DB
+							// 4 if we dont need to overwrite the playlist in the DB
 							switch (chrome.runtime.sendMessage.callCount) {
-								case 3:
+								case 4:
 									expect(numDeletedVideosBefore).to.be(numDeletedVideosAfter);
 									break;
-								case 4:
+								case 5:
 									expect(commands).to.contain('overwritePlaylistInfoInDB');
 									expect(numDeletedVideosBefore).to.be.greaterThan(numDeletedVideosAfter);
 									break;
-								case 5:
+								case 6:
 									expect(commands).to.contain('getAPIKey');
 									if (numDeletedVideosBefore > numDeletedVideosAfter) {
 										expect(commands).to.contain('overwritePlaylistInfoInDB');
@@ -400,20 +402,21 @@ describe('shuffleVideo', function () {
 
 							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
 
-							// Callcount:
-							// 5 if we need to fetch from the YT API, we consequently need to update the DB
-							// 3 if we dont need to fetch from the YT API
-							if (needsYTAPIInteraction(input)) {
-								expect(chrome.runtime.sendMessage.callCount).to.be(5);
-								expect(commands).to.contain('getAPIKey');
-								expect(commands).to.contain('updatePlaylistInfoInDB');
-							} else {
-								expect(chrome.runtime.sendMessage.callCount).to.be(3);
-							}
-
+							expect(commands).to.contain('connectionTest');
 							expect(commands).to.contain('getPlaylistFromDB');
 							expect(commands).to.contain('getAllYouTubeTabs');
 							expect(commands).to.contain('getCurrentTabId');
+
+							// Callcount:
+							// 6 if we need to fetch from the YT API, we consequently need to update the DB
+							// 4 if we dont need to fetch from the YT API
+							if (needsYTAPIInteraction(input)) {
+								expect(chrome.runtime.sendMessage.callCount).to.be(6);
+								expect(commands).to.contain('getAPIKey');
+								expect(commands).to.contain('updatePlaylistInfoInDB');
+							} else {
+								expect(chrome.runtime.sendMessage.callCount).to.be(4);
+							}
 
 							const numDeletedVideosAfter = Object.keys(playlistInfoAfter.videos).filter(videoId => videoId.includes('DEL')).length;
 
@@ -425,9 +428,10 @@ describe('shuffleVideo', function () {
 
 							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
 
-							// 3 because we only need to fetch from the DB
-							expect(chrome.runtime.sendMessage.callCount).to.be(3);
+							// 4 because we only need to fetch from the DB
+							expect(chrome.runtime.sendMessage.callCount).to.be(4);
 
+							expect(commands).to.contain('connectionTest');
 							expect(commands).to.contain('getPlaylistFromDB');
 							expect(commands).to.contain('getAllYouTubeTabs');
 							expect(commands).to.contain('getCurrentTabId');
@@ -439,9 +443,10 @@ describe('shuffleVideo', function () {
 
 							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
 
-							// 5 because we need to fetch from the DB, fetch from the YT API, and update the DB
-							expect(chrome.runtime.sendMessage.callCount).to.be(5);
+							// 6 because we need to fetch from the DB, fetch from the YT API, and update the DB
+							expect(chrome.runtime.sendMessage.callCount).to.be(6);
 
+							expect(commands).to.contain('connectionTest');
 							expect(commands).to.contain('getPlaylistFromDB');
 							expect(commands).to.contain('getAllYouTubeTabs');
 							expect(commands).to.contain('getCurrentTabId');

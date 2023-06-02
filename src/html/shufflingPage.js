@@ -1,10 +1,17 @@
 // Contains logic for the "shufflingPage" that is opened when the user clicks the "Shuffle" button from the popup
 import { delay } from "../utils.js";
 import { configSync, setSyncStorageValue } from "../chromeStorage.js";
-import { displayShufflingHint, focusOrOpenTab } from "./htmlUtils.js";
+import { displayShufflingHint, tryFocusingTab } from "./htmlUtils.js";
 import { chooseRandomVideo } from "../shuffleVideo.js";
 
 // ----- Setup -----
+// Restart the background script if it was stopped to prevent a flash of an error page when shuffling
+try {
+	await chrome.runtime.sendMessage({ command: "connectionTest" });
+} catch (error) {
+	console.log("The background worker was stopped and had to be restarted.");
+}
+
 // Open a port to the background script
 // By default, the port will cause the background script to reload when it is closed (== when this page is closed/URL changes)
 // However, if the shuffle completes successfully, this script will send a message to the port that will disconnect that listener
@@ -51,7 +58,12 @@ async function setDomElemenEventListeners(domElements) {
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
-		focusOrOpenTab(chrome.runtime.getURL("html/changelog.html"));
+
+		const tabUrl = chrome.runtime.getURL("html/changelog.html");
+		let mustOpenTab = await tryFocusingTab(tabUrl);
+		if (mustOpenTab) {
+			window.open(tabUrl, "_blank");
+		}
 	});
 }
 
@@ -113,6 +125,9 @@ async function shuffleButtonClicked() {
 
 		// We don't need to wait to show the contents of the page as we have encountered an error
 		domElements.randomYoutubeVideo.classList.remove("hidden");
+
+		// Remove the port's onDisconnect listener, as the shuffle process has stopped
+		port.postMessage({ command: "shuffleComplete" });
 		return;
 	}
 }
