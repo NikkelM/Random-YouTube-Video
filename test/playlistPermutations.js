@@ -216,12 +216,19 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 				for (let m = 0; m < playlistModifiers[4].length; m++) {
 					for (let n = 0; n < playlistModifiers[5].length; n++) {
 						// Skip permutations that are not possible
+						// If the local playlist recently fetched from the DB, it does not matter when the DB entry was last updated or if it contains any videos not in the local playlist, and we know the local playlist was recently accessed
+						if (playlistModifiers[0][i] === "LocalPlaylistFetchedDBRecently" && (playlistModifiers[1][j] !== "DBEntryIsUpToDate" || playlistModifiers[2][k] !== "LocalPlaylistRecentlyAccessed" || playlistModifiers[5][n] !== "DBContainsNoVideosNotInLocalPlaylist")) {
+							continue;
+						}
+						// If the local playlist does not exist, it cannot contain deleted videos, or have been updated from the DB recently
 						if ((playlistModifiers[2][k] === "LocalPlaylistDoesNotExist") && (playlistModifiers[3][l] === "LocalPlaylistContainsDeletedVideos" || playlistModifiers[0][i] === "LocalPlaylistFetchedDBRecently")) {
 							continue;
 						}
+						// If the DB entry does not exist, it cannot contain videos not in the local playlist
 						if ((playlistModifiers[1][j] === "DBEntryDoesNotExist") && (playlistModifiers[5][n] !== "DBContainsNoVideosNotInLocalPlaylist")) {
 							continue;
 						}
+						// If the DB entry is up-to-date or the local playlist is up-to-date, it does not matter if there are new videos uploaded
 						if ((playlistModifiers[1][j] === "DBEntryIsUpToDate" || playlistModifiers[0][i] === "LocalPlaylistFetchedDBRecently") && (playlistModifiers[4][m] !== "NoNewVideoUploaded")) {
 							continue;
 						}

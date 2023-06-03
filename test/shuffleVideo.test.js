@@ -97,14 +97,22 @@ describe('shuffleVideo', function () {
 		});
 
 		context('various user settings', function () {
-			// Choose one locally up-to-date playlist and one that needs to fetch everything from the YT API, and does not have a db entry
-			const localPlaylist = playlistPermutations.find((playlist) => !needsDBInteraction(playlist) && !needsYTAPIInteraction(playlist));
-			const YTAPIPlaylist = playlistPermutations.find((playlist) => needsYTAPIInteraction(playlist) && playlist.playlistModifiers.lastUpdatedDBAt === 'DBEntryDoesNotExist');
-			const playlists = [localPlaylist, YTAPIPlaylist];
-			const playlistNames = ['localPlaylist', 'YTAPIPlaylist'];
+			// Choose a number of playlists for which to test different user setting combinations
+			const playlists = [
+				// Locally up-to-date playlist with deleted videos
+				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist'),
+				// Locally up-to-date playlist without deleted videos
+				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist'),
+				// Playlist that has to be updated from the database, but not from the YT API
+				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist'),
+				// Playlist that has to be updated from the YT API as well, YT API has no new videos
+				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist'),
+				// Playlist that has to be updated from the YT API as well, YT API has new videos
+				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist')
+			];
 
-			playlists.forEach((input, index) => {
-				context(`playlist ${playlistNames[index]}`, function () {
+			playlists.forEach((input) => {
+				context(`playlist ${input.playlistId}`, function () {
 
 					beforeEach(function () {
 						// ---------- Fetch mock responses ----------
