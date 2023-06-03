@@ -89,9 +89,6 @@ describe('shuffleVideo', function () {
 			});
 		});
 
-		// TODO: Test for different user settings, not needed to test for every permutation, as we assume we have local data
-		// Of course, we do need to test that we do not send a request to the database if the user has opted out of database sharing
-
 		// Test chooseRandomVideo() for different playlist states:
 		context('playlist permutations', function () {
 			// playlistPermutations.js creates a permutation for each possible playlist state
@@ -527,6 +524,7 @@ describe('shuffleVideo', function () {
 						});
 					});
 
+					// TODO: Test for different user settings
 					context('opened video', function () {
 						if (input.configSync.shuffleOpenInNewTabOption) {
 							it('should open a new tab with the correct URL', async function () {
