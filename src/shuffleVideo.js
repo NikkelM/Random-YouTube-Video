@@ -431,7 +431,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 			// We allow users to go beyond the daily limit in case there are only a few more videos to be fetched.
 			// But if it goes too far, we need to cancel the operation.
 			userQuotaRemainingToday--;
-			if (userQuotaRemainingToday <= -200) {
+			if (userQuotaRemainingToday <= -50) {
 				throw new RandomYoutubeVideoError(
 					{
 						code: "RYV-4B",

@@ -66,14 +66,28 @@ describe('shuffleVideo', function () {
 			delete global.window;
 		});
 
-		// TODO: This test can also be done only once
-		// it('should open a new tab with the correct URL', async function () {
-		// 	await chooseRandomVideo(input.channelId, false, domElement);
+		context('general error handling', function () {
+			it('should throw an error if no channelId is given', async function () {
+				try {
+					await chooseRandomVideo(null, false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-1");
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
 
-		// 	expect(windowOpenStub.calledOnce).to.be(true);
-		// 	expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
-
-		// });
+			it('should reduce the userQuotaRemainingToday by one if an error is encountered', async function () {
+				expect(configSync.userQuotaRemainingToday).to.be(200);
+				try {
+					// The error is that there is no channelId
+					await chooseRandomVideo(null, false, domElement);
+				} catch (error) {
+				}
+				expect(configSync.userQuotaRemainingToday).to.be(199);
+			});
+		});
 
 		// TODO: Test for different user settings, not needed to test for every permutation, as we assume we have local data
 		// Of course, we do need to test that we do not send a request to the database if the user has opted out of database sharing
@@ -91,7 +105,8 @@ describe('shuffleVideo', function () {
 						lastAccessedLocally: playlistModifiers[2][k],
 						containsDeletedVideos: playlistModifiers[3][l],
 						newUploadedVideos: playlistModifiers[4][m],
-						dbContainsNewVideos: playlistModifiers[5][n]
+						dbContainsNewVideos: playlistModifiers[5][n],
+						configSync: playlistModifiers[6][o]
 					},
 					playlistId,
 					channelId,
@@ -106,7 +121,9 @@ describe('shuffleVideo', function () {
 					dbLastVideoPublishedAt,
 					// "YT API" (actually DB)
 					newUploadedVideos,
-					newLastVideoPublishedAt
+					newLastVideoPublishedAt,
+					// Config
+					configSync
 				}
 			*/
 
@@ -168,37 +185,39 @@ describe('shuffleVideo', function () {
 						setUpMockResponses(mockResponses);
 					});
 
-					it('should have a valid localStorage setup', async function () {
-						const testedPlaylistLocally = await getKeyFromLocalStorage(input.playlistId);
+					context('setup', function () {
+						it('should have a valid localStorage setup', async function () {
+							const testedPlaylistLocally = await getKeyFromLocalStorage(input.playlistId);
 
-						// Only for playlists that should exist locally
-						if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
-							expect(testedPlaylistLocally).to.be.an('object');
-							expect(testedPlaylistLocally.lastAccessedLocally).to.be(input.lastAccessedLocally);
-							expect(testedPlaylistLocally.lastFetchedFromDB).to.be(input.lastFetchedFromDB);
-							expect(testedPlaylistLocally.lastVideoPublishedAt).to.be(input.localLastVideoPublishedAt);
-							expect(testedPlaylistLocally.videos).to.be.an('object');
-							expect(testedPlaylistLocally.videos).to.eql({ ...input.localVideos, ...input.localDeletedVideos });
-						} else {
-							// For non-existent playlists, the local storage should be empty
-							expect(testedPlaylistLocally).to.be(undefined);
-						}
-					});
+							// Only for playlists that should exist locally
+							if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
+								expect(testedPlaylistLocally).to.be.an('object');
+								expect(testedPlaylistLocally.lastAccessedLocally).to.be(input.lastAccessedLocally);
+								expect(testedPlaylistLocally.lastFetchedFromDB).to.be(input.lastFetchedFromDB);
+								expect(testedPlaylistLocally.lastVideoPublishedAt).to.be(input.localLastVideoPublishedAt);
+								expect(testedPlaylistLocally.videos).to.be.an('object');
+								expect(testedPlaylistLocally.videos).to.eql({ ...input.localVideos, ...input.localDeletedVideos });
+							} else {
+								// For non-existent playlists, the local storage should be empty
+								expect(testedPlaylistLocally).to.be(undefined);
+							}
+						});
 
-					it('should have a valid database setup', async function () {
-						const testedPlaylistInDB = await chrome.runtime.sendMessage({ command: 'getPlaylistFromDB', data: input.playlistId });
+						it('should have a valid database setup', async function () {
+							const testedPlaylistInDB = await chrome.runtime.sendMessage({ command: 'getPlaylistFromDB', data: input.playlistId });
 
-						// Only for playlists that should exist in the database
-						if (input.playlistModifiers.lastUpdatedDBAt !== 'DBEntryDoesNotExist') {
-							expect(testedPlaylistInDB).to.be.an('object');
-							expect(testedPlaylistInDB.lastUpdatedDBAt).to.be(input.lastUpdatedDBAt);
-							expect(testedPlaylistInDB.lastVideoPublishedAt).to.be(input.dbLastVideoPublishedAt);
-							expect(testedPlaylistInDB.videos).to.be.an('object');
-							expect(testedPlaylistInDB.videos).to.eql({ ...input.dbVideos, ...input.dbDeletedVideos });
-						} else {
-							// For non-existent playlists, the database should not contain an entry
-							expect(testedPlaylistInDB).to.be(null);
-						}
+							// Only for playlists that should exist in the database
+							if (input.playlistModifiers.lastUpdatedDBAt !== 'DBEntryDoesNotExist') {
+								expect(testedPlaylistInDB).to.be.an('object');
+								expect(testedPlaylistInDB.lastUpdatedDBAt).to.be(input.lastUpdatedDBAt);
+								expect(testedPlaylistInDB.lastVideoPublishedAt).to.be(input.dbLastVideoPublishedAt);
+								expect(testedPlaylistInDB.videos).to.be.an('object');
+								expect(testedPlaylistInDB.videos).to.eql({ ...input.dbVideos, ...input.dbDeletedVideos });
+							} else {
+								// For non-existent playlists, the database should not contain an entry
+								expect(testedPlaylistInDB).to.be(null);
+							}
+						});
 					});
 
 					it('should correctly update the configSync object', async function () {
@@ -221,277 +240,313 @@ describe('shuffleVideo', function () {
 						}
 					});
 
-					if (!needsDBInteraction(input)) {
-						it('should only interact with the database to remove deleted videos', async function () {
-							await chooseRandomVideo(input.channelId, false, domElement);
+					context('database interaction', function () {
+						if (!needsDBInteraction(input)) {
+							it('should only interact with the database to remove deleted videos', async function () {
+								await chooseRandomVideo(input.channelId, false, domElement);
 
-							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+								const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
 
-							// callCount is 3 if we didn't choose a deleted video, 4 else
-							expect(chrome.runtime.sendMessage.callCount).to.be.within(3, 4);
+								// callCount is 3 if we didn't choose a deleted video, 4 else
+								expect(chrome.runtime.sendMessage.callCount).to.be.within(3, 4);
 
-							expect(commands).to.contain('connectionTest');
-							expect(commands).to.contain('getAllYouTubeTabs');
-							expect(commands).to.contain('getCurrentTabId');
+								expect(commands).to.contain('connectionTest');
+								expect(commands).to.contain('getAllYouTubeTabs');
+								expect(commands).to.contain('getCurrentTabId');
 
-							if (chrome.runtime.sendMessage.callCount === 4) {
-								expect(commands).to.contain('overwritePlaylistInfoInDB');
-							}
-
-						});
-					} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos') {
-						it('should update the database if no deleted videos were chosen, or overwrite it if a deleted video was found', async function () {
-							await chooseRandomVideo(input.channelId, false, domElement);
-							const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
-
-							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
-
-							if (needsYTAPIInteraction(input)) {
-								expect(chrome.runtime.sendMessage.callCount).to.be(6);
-							} else {
-								expect(chrome.runtime.sendMessage.callCount).to.be.within(4, 5);
-							}
-
-							expect(commands).to.contain('connectionTest');
-							expect(commands).to.contain('getPlaylistFromDB');
-							expect(commands).to.contain('getAllYouTubeTabs');
-							expect(commands).to.contain('getCurrentTabId');
-
-							const numDeletedVideosBefore = Object.keys(input.dbDeletedVideos).filter(videoId => videoId.includes('DEL')).length;
-							const numDeletedVideosAfter = Object.keys(playlistInfoAfter.videos).filter(videoId => videoId.includes('DEL')).length;
-
-							// Callcount:
-							// 6 if we need to fetch from the YT API, with update or overwrite depending on if a video was deleted
-							// 5 if we don't need to fetch from the YT API, but need to overwrite the playlist in the DB
-							// 4 if we dont need to overwrite the playlist in the DB
-							switch (chrome.runtime.sendMessage.callCount) {
-								case 4:
-									expect(numDeletedVideosBefore).to.be(numDeletedVideosAfter);
-									break;
-								case 5:
+								if (chrome.runtime.sendMessage.callCount === 4) {
 									expect(commands).to.contain('overwritePlaylistInfoInDB');
-									expect(numDeletedVideosBefore).to.be.greaterThan(numDeletedVideosAfter);
-									break;
-								case 6:
-									expect(commands).to.contain('getAPIKey');
-									if (numDeletedVideosBefore > numDeletedVideosAfter) {
+								}
+
+							});
+						} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos') {
+							it('should update the database if no deleted videos were chosen, or overwrite it if a deleted video was found', async function () {
+								await chooseRandomVideo(input.channelId, false, domElement);
+								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+
+								const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+
+								if (needsYTAPIInteraction(input)) {
+									expect(chrome.runtime.sendMessage.callCount).to.be(6);
+								} else {
+									expect(chrome.runtime.sendMessage.callCount).to.be.within(4, 5);
+								}
+
+								expect(commands).to.contain('connectionTest');
+								expect(commands).to.contain('getPlaylistFromDB');
+								expect(commands).to.contain('getAllYouTubeTabs');
+								expect(commands).to.contain('getCurrentTabId');
+
+								const numDeletedVideosBefore = Object.keys(input.dbDeletedVideos).filter(videoId => videoId.includes('DEL')).length;
+								const numDeletedVideosAfter = Object.keys(playlistInfoAfter.videos).filter(videoId => videoId.includes('DEL')).length;
+
+								// Callcount:
+								// 6 if we need to fetch from the YT API, with update or overwrite depending on if a video was deleted
+								// 5 if we don't need to fetch from the YT API, but need to overwrite the playlist in the DB
+								// 4 if we dont need to overwrite the playlist in the DB
+								switch (chrome.runtime.sendMessage.callCount) {
+									case 4:
+										expect(numDeletedVideosBefore).to.be(numDeletedVideosAfter);
+										break;
+									case 5:
 										expect(commands).to.contain('overwritePlaylistInfoInDB');
-									} else {
-										expect(commands).to.contain('updatePlaylistInfoInDB');
-									}
-									break;
-								default:
-									expect(false).to.be(true);
-							}
-						});
-					} else if (input.playlistModifiers.containsDeletedVideos === 'LocalPlaylistContainsDeletedVideos') {
-						it('should update the database after interacting with the YouTube API and overwrite local deleted videos', async function () {
-							await chooseRandomVideo(input.channelId, false, domElement);
-							const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+										expect(numDeletedVideosBefore).to.be.greaterThan(numDeletedVideosAfter);
+										break;
+									case 6:
+										expect(commands).to.contain('getAPIKey');
+										if (numDeletedVideosBefore > numDeletedVideosAfter) {
+											expect(commands).to.contain('overwritePlaylistInfoInDB');
+										} else {
+											expect(commands).to.contain('updatePlaylistInfoInDB');
+										}
+										break;
+									default:
+										expect().fail("Unexpected call count");
+								}
+							});
+						} else if (input.playlistModifiers.containsDeletedVideos === 'LocalPlaylistContainsDeletedVideos') {
+							it('should update the database after interacting with the YouTube API and overwrite local deleted videos', async function () {
+								await chooseRandomVideo(input.channelId, false, domElement);
+								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
 
-							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+								const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
 
-							expect(commands).to.contain('connectionTest');
-							expect(commands).to.contain('getPlaylistFromDB');
-							expect(commands).to.contain('getAllYouTubeTabs');
-							expect(commands).to.contain('getCurrentTabId');
+								expect(commands).to.contain('connectionTest');
+								expect(commands).to.contain('getPlaylistFromDB');
+								expect(commands).to.contain('getAllYouTubeTabs');
+								expect(commands).to.contain('getCurrentTabId');
 
-							// Callcount:
-							// 6 if we need to fetch from the YT API, we consequently need to update the DB
-							// 4 if we dont need to fetch from the YT API
-							if (needsYTAPIInteraction(input)) {
+								// Callcount:
+								// 6 if we need to fetch from the YT API, we consequently need to update the DB
+								// 4 if we dont need to fetch from the YT API
+								if (needsYTAPIInteraction(input)) {
+									expect(chrome.runtime.sendMessage.callCount).to.be(6);
+									expect(commands).to.contain('getAPIKey');
+									expect(commands).to.contain('updatePlaylistInfoInDB');
+								} else {
+									expect(chrome.runtime.sendMessage.callCount).to.be(4);
+								}
+
+								const numDeletedVideosAfter = Object.keys(playlistInfoAfter.videos).filter(videoId => videoId.includes('DEL')).length;
+
+								expect(numDeletedVideosAfter).to.be(0);
+							});
+						} else if (input.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsUpToDate') {
+							it('should only fetch data from the database', async function () {
+								await chooseRandomVideo(input.channelId, false, domElement);
+
+								const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+
+								// 4 because we only need to fetch from the DB
+								expect(chrome.runtime.sendMessage.callCount).to.be(4);
+
+								expect(commands).to.contain('connectionTest');
+								expect(commands).to.contain('getPlaylistFromDB');
+								expect(commands).to.contain('getAllYouTubeTabs');
+								expect(commands).to.contain('getCurrentTabId');
+							});
+							// For all other cases, the DB entry either doesn't exist, or is out of date, so we need to fetch from the YT API
+						} else {
+							it('should update the database', async function () {
+								await chooseRandomVideo(input.channelId, false, domElement);
+
+								const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+
+								// 6 because we need to fetch from the DB, fetch from the YT API, and update the DB
 								expect(chrome.runtime.sendMessage.callCount).to.be(6);
+
+								expect(commands).to.contain('connectionTest');
+								expect(commands).to.contain('getPlaylistFromDB');
+								expect(commands).to.contain('getAllYouTubeTabs');
+								expect(commands).to.contain('getCurrentTabId');
 								expect(commands).to.contain('getAPIKey');
 								expect(commands).to.contain('updatePlaylistInfoInDB');
-							} else {
-								expect(chrome.runtime.sendMessage.callCount).to.be(4);
-							}
+							});
+						}
+					});
 
-							const numDeletedVideosAfter = Object.keys(playlistInfoAfter.videos).filter(videoId => videoId.includes('DEL')).length;
+					context('locally stored playlist', function () {
+						// For all playlists that do not need to interact with the YouTube API
+						if (!needsYTAPIInteraction(input)) {
+							it('should correctly update the local playlist object', async function () {
+								const timeBefore = new Date(Date.now() - 300000).toISOString(); // Add a small offset to be able to compare with greaterThan
+								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
+								await chooseRandomVideo(input.channelId, false, domElement);
+								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+								const videosAfter = Object.keys(playlistInfoAfter.videos);
 
-							expect(numDeletedVideosAfter).to.be(0);
-						});
-					} else if (input.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsUpToDate') {
-						it('should only fetch data from the database', async function () {
-							await chooseRandomVideo(input.channelId, false, domElement);
-
-							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
-
-							// 4 because we only need to fetch from the DB
-							expect(chrome.runtime.sendMessage.callCount).to.be(4);
-
-							expect(commands).to.contain('connectionTest');
-							expect(commands).to.contain('getPlaylistFromDB');
-							expect(commands).to.contain('getAllYouTubeTabs');
-							expect(commands).to.contain('getCurrentTabId');
-						});
-						// For all other cases, the DB entry either doesn't exist, or is out of date, so we need to fetch from the YT API
-					} else {
-						it('should update the database', async function () {
-							await chooseRandomVideo(input.channelId, false, domElement);
-
-							const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
-
-							// 6 because we need to fetch from the DB, fetch from the YT API, and update the DB
-							expect(chrome.runtime.sendMessage.callCount).to.be(6);
-
-							expect(commands).to.contain('connectionTest');
-							expect(commands).to.contain('getPlaylistFromDB');
-							expect(commands).to.contain('getAllYouTubeTabs');
-							expect(commands).to.contain('getCurrentTabId');
-							expect(commands).to.contain('getAPIKey');
-							expect(commands).to.contain('updatePlaylistInfoInDB');
-						});
-					}
-
-					// For all playlists that do not need to interact with the YouTube API
-					if (!needsYTAPIInteraction(input)) {
-						it('should correctly update the local playlist object', async function () {
-							const timeBefore = new Date(Date.now() - 300000).toISOString(); // Add a small offset to be able to compare with greaterThan
-							const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
-							await chooseRandomVideo(input.channelId, false, domElement);
-							const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
-							const videosAfter = Object.keys(playlistInfoAfter.videos);
-
-							if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
-								expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
-								// If we have not had to update the local playlist, the lastAccessedLocally should be updated but all other values should remain the same
-								if (!needsDBInteraction(input)) {
-									expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
-									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
-									expect(playlistInfoBefore.videos).to.have.keys(videosAfter);
-									// If the database contains videos not in the local playlist
-								} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsVideosNotInLocalPlaylist' ||
-									input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos') {
-									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
-									if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsVideosNotInLocalPlaylist') {
-										expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
-									} else {
+								if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
+									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
+									// If we have not had to update the local playlist, the lastAccessedLocally should be updated but all other values should remain the same
+									if (!needsDBInteraction(input)) {
+										expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
 										expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
-									}
-									if (input.localDeletedVideos) {
-										// By fetching the videos from the database, any locally deleted videos should have been removed from the local playlist
-										expect(playlistInfoAfter.videos).to.not.have.keys(Object.keys(input.localDeletedVideos));
-									}
-									expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(videosAfter);
-									// The database and local playlist are in sync already
-								} else {
-									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
-									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
-									// By fetching the videos from the database, any deleted videos should have been removed from the local playlist
-									// We also know that here, the db did not contain any deleted videos
-									expect(playlistInfoAfter.videos).to.have.keys(Object.keys({ ...input.localVideos, ...input.dbVideos }));
-								}
-							} else {
-								// If the playlist did not exist locally before, it should now
-								// Reminder: We did not interact with the YouTube API
-								expect(playlistInfoAfter).to.be.an('object');
-								expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(timeBefore);
-								expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(timeBefore);
-								expect(playlistInfoAfter.lastVideoPublishedAt).to.be(input.dbLastVideoPublishedAt);
-								expect({ ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(videosAfter)
-							}
-						});
-						// For playlists that need to interact with the YouTube API
-					} else {
-						it('should correctly update the local playlist object', async function () {
-							const timeBefore = new Date(Date.now() - 300000).toISOString(); // Add a small offset to be able to compare with greaterThan
-							const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
-							await chooseRandomVideo(input.channelId, false, domElement);
-							const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
-							const videosAfter = Object.keys(playlistInfoAfter.videos);
-
-							if (!needsDBInteraction(input)) {
-								throw new Error('This test should not be run for playlists that do not need to interact with the database. If they are, this means we are now using different configSync objects.');
-							}
-
-							if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
-								expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
-								expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
-								// If there are no *new* videos
-								if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsNoVideosNotInLocalPlaylist' && input.playlistModifiers.newUploadedVideos === 'NoNewVideoUploaded') {
-									expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(playlistInfoBefore.lastVideoPublishedAt.substring(0, 10));
-									if (input.playlistModifiers.containsDeletedVideos === 'LocalPlaylistContainsDeletedVideos') {
-										expect(playlistInfoAfter.videos).to.have.keys(Object.keys({ ...input.localVideos, ...input.dbVideos }));
+										expect(playlistInfoBefore.videos).to.have.keys(videosAfter);
+										// If the database contains videos not in the local playlist
+									} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsVideosNotInLocalPlaylist' ||
+										input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos') {
+										expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
+										if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsVideosNotInLocalPlaylist') {
+											expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
+										} else {
+											expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
+										}
+										if (input.localDeletedVideos) {
+											// By fetching the videos from the database, any locally deleted videos should have been removed from the local playlist
+											expect(playlistInfoAfter.videos).to.not.have.keys(Object.keys(input.localDeletedVideos));
+										}
+										expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(videosAfter);
+										// The database and local playlist are in sync already
 									} else {
-										expect(playlistInfoAfter.videos).to.eql(playlistInfoBefore.videos);
+										expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
+										expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
+										// By fetching the videos from the database, any deleted videos should have been removed from the local playlist
+										// We also know that here, the db did not contain any deleted videos
+										expect(playlistInfoAfter.videos).to.have.keys(Object.keys({ ...input.localVideos, ...input.dbVideos }));
 									}
-									// If there are deleted videos, but no new videos
-								} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos' && input.playlistModifiers.newUploadedVideos === 'NoNewVideoUploaded') {
-									expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(playlistInfoBefore.lastVideoPublishedAt.substring(0, 10));
-									expect(playlistInfoAfter.videos).to.have.keys(Object.keys(input.localVideos));
-									expect({ ...playlistInfoAfter.videos, ...input.dbDeletedVideos }).to.have.keys(Object.keys(playlistInfoAfter.videos));
-									// If there were new videos, either in the DB or uploaded
 								} else {
-									expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
-									expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos, ...input.newUploadedVideos }).to.have.keys(videosAfter);
+									// If the playlist did not exist locally before, it should now
+									// Reminder: We did not interact with the YouTube API
+									expect(playlistInfoAfter).to.be.an('object');
+									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(timeBefore);
+									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(timeBefore);
+									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(input.dbLastVideoPublishedAt);
+									expect({ ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(videosAfter)
 								}
-							} else {
-								// If the playlist did not exist locally before, it should now
-								// Reminder: We interacted with the YouTube API
-								expect(playlistInfoAfter).to.be.an('object');
-								expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(timeBefore);
-								expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(timeBefore);
-								expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(input.newLastVideoPublishedAt.substring(0, 10));
-								expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos, ...input.newUploadedVideos }).to.have.keys(videosAfter)
-							}
+							});
+							// For playlists that need to interact with the YouTube API
+						} else {
+							it('should correctly update the local playlist object', async function () {
+								const timeBefore = new Date(Date.now() - 300000).toISOString(); // Add a small offset to be able to compare with greaterThan
+								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
+								await chooseRandomVideo(input.channelId, false, domElement);
+								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
+								const videosAfter = Object.keys(playlistInfoAfter.videos);
 
-						});
-					}
+								if (!needsDBInteraction(input)) {
+									throw new Error('This test should not be run for playlists that do not need to interact with the database. If they are, this means we are now using different configSync objects.');
+								}
+
+								if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
+									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
+									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
+									// If there are no *new* videos
+									if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsNoVideosNotInLocalPlaylist' && input.playlistModifiers.newUploadedVideos === 'NoNewVideoUploaded') {
+										expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(playlistInfoBefore.lastVideoPublishedAt.substring(0, 10));
+										if (input.playlistModifiers.containsDeletedVideos === 'LocalPlaylistContainsDeletedVideos') {
+											expect(playlistInfoAfter.videos).to.have.keys(Object.keys({ ...input.localVideos, ...input.dbVideos }));
+										} else {
+											expect(playlistInfoAfter.videos).to.eql(playlistInfoBefore.videos);
+										}
+										// If there are deleted videos, but no new videos
+									} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos' && input.playlistModifiers.newUploadedVideos === 'NoNewVideoUploaded') {
+										expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(playlistInfoBefore.lastVideoPublishedAt.substring(0, 10));
+										expect(playlistInfoAfter.videos).to.have.keys(Object.keys(input.localVideos));
+										expect({ ...playlistInfoAfter.videos, ...input.dbDeletedVideos }).to.have.keys(Object.keys(playlistInfoAfter.videos));
+										// If there were new videos, either in the DB or uploaded
+									} else {
+										expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
+										expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos, ...input.newUploadedVideos }).to.have.keys(videosAfter);
+									}
+								} else {
+									// If the playlist did not exist locally before, it should now
+									// Reminder: We interacted with the YouTube API
+									expect(playlistInfoAfter).to.be.an('object');
+									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(timeBefore);
+									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(timeBefore);
+									expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(input.newLastVideoPublishedAt.substring(0, 10));
+									expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos, ...input.newUploadedVideos }).to.have.keys(videosAfter)
+								}
+
+							});
+						}
+					});
 
 					context('error handling', function () {
-
-						it('should throw an error if no channelId is given', async function () {
-							try {
-								await chooseRandomVideo(null, false, domElement);
-							} catch (error) {
-								expect(error).to.be.a(RandomYoutubeVideoError);
-								expect(error.code).to.be("RYV-1");
-							}
-						});
-
 						context('userQuotaRemainingToday', function () {
-							it('should reduce the userQuotaRemainingToday by one if an error is encountered', async function () {
-								expect(configSync.userQuotaRemainingToday).to.be(200);
-								try {
-									// The error is that there is no channelId
-									await chooseRandomVideo(null, false, domElement);
-								} catch (error) {
-								}
-								expect(configSync.userQuotaRemainingToday).to.be(199);
-							});
-
 							if (needsYTAPIInteraction(input)) {
-								it('should throw an error if the userQuotaRemainingToday is 0 and a request to the YouTube API needs to be made', async function () {
+								it('should throw an error if the userQuotaRemainingToday is 0', async function () {
 									configSync.userQuotaRemainingToday = 0;
+
 									try {
 										await chooseRandomVideo(input.channelId, false, domElement);
 									} catch (error) {
 										expect(error).to.be.a(RandomYoutubeVideoError);
 										expect(error.code).to.be("RYV-4A");
+										return;
 									}
+									expect().fail("No error was thrown");
 								});
 
-								it('should throw an error if there is not enough quota remaining to fetch all required videos of a playlist', async function () {
-									// Set the quota to 1, so that we can't fetch all videos of the playlist
-									configSync.userQuotaRemainingToday = 1;
+								if (input.playlistModifiers.dbContainsNewVideos !== 'NoNewVideos') {
+									it('should throw an error if there is not enough quota remaining from the start to fetch all required videos of a playlist', async function () {
+										// Set the quota to -100, so that we can't fetch all videos of the playlist
+										// We need a negative value, as there is a leeway of 50
+										configSync.userQuotaRemainingToday = 1;
 
-									try {
-										await chooseRandomVideo(input.channelId, false, domElement);
-									} catch (error) {
-										expect(error).to.be.a(RandomYoutubeVideoError);
-										expect(error.code).to.be("RYV-4B");
-									}
-								});
+										// ---------- Fetch mock responses ----------
+										let YTResponses = [];
+										YTResponses.push(new Response(JSON.stringify(
+											{
+												"kind": "youtube#playlistItemListResponse",
+												"etag": "tag",
+												"nextPageToken": 'nextPageToken',
+												"items": [],
+												"pageInfo": {
+													"totalResults": 19000,
+													"resultsPerPage": 50
+												}
+											}
+										)));
 
+										const YTMockResponses = {
+											'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses,
+										};
+
+										const mockResponses = { ...videoExistenceMockResponses, ...YTMockResponses };
+
+										setUpMockResponses(mockResponses);
+
+										try {
+											await chooseRandomVideo(input.channelId, false, domElement);
+										} catch (error) {
+											expect(error).to.be.a(RandomYoutubeVideoError);
+											expect(error.code).to.be("RYV-4B");
+											return;
+										}
+										expect().fail("No error was thrown");
+									});
+								}
 							} else {
-								it('should not throw an error if the userQuotaRemainingToday is 0 and no request to the YouTube API needs to be made', async function () {
+								it('should not throw an error if the userQuotaRemainingToday is 0', async function () {
 									configSync.userQuotaRemainingToday = 0;
 									await chooseRandomVideo(input.channelId, false, domElement);
 								});
 							}
 
 						});
+					});
+
+					context('opened video', function () {
+						if (input.configSync.shuffleOpenInNewTabOption) {
+							it('should open a new tab with the correct URL', async function () {
+								await chooseRandomVideo(input.channelId, false, domElement);
+
+								expect(windowOpenStub.calledOnce).to.be(true);
+
+								if (input.configSync.shuffleOpenAsPlaylistOption) {
+									expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
+								} else {
+									expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch?v=');
+								}
+							});
+						} else {
+							it('should open the video in the same tab', async function () {
+								await chooseRandomVideo(input.channelId, false, domElement);
+
+								expect(windowOpenStub.callCount).to.be(0);
+							});
+						}
 
 					});
 
