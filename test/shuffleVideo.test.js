@@ -95,7 +95,7 @@ describe('shuffleVideo', function () {
 				expect(configSync.userQuotaRemainingToday).to.be(199);
 			});
 		});
- 
+
 		context('various user settings', function () {
 			// Choose a number of playlists for which to test different user setting combinations
 			const playlists = [
