@@ -95,10 +95,14 @@ describe('shuffleVideo', function () {
 				expect(configSync.userQuotaRemainingToday).to.be(199);
 			});
 		});
- 
+
 		context('various user settings', function () {
 			// Choose a number of playlists for which to test different user setting combinations
 			const playlists = [
+				// Playlist that does not exist locally, DB is outdated
+				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist'),
+				// Playlist that does not exist locally, DB is up-to-date
+				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist'),
 				// Locally up-to-date playlist with deleted videos
 				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist'),
 				// Locally up-to-date playlist without deleted videos
