@@ -5,7 +5,7 @@ import { JSDOM } from 'jsdom';
 import { RandomYoutubeVideoError } from '../src/utils.js';
 import { chooseRandomVideo } from '../src/shuffleVideo.js';
 import { configSync } from '../src/chromeStorage.js';
-import { deepCopy, playlistPermutations, needsDBInteraction, needsYTAPIInteraction } from './playlistPermutations.js';
+import { deepCopy, configSyncPermutations, playlistPermutations, needsDBInteraction, needsYTAPIInteraction } from './playlistPermutations.js';
 
 // Utility to get the contents of localStorage at a certain key
 async function getKeyFromLocalStorage(key) {
@@ -18,12 +18,15 @@ function setUpMockResponses(mockResponses) {
 	// Repeats the last response if there are no more responses set up
 	global.fetch = sinon.stub().callsFake((url) => {
 		// Find the first response that is contained within the url
-		const validResponsesForUrl = mockResponses[Object.keys(mockResponses).find((key) => url.includes(key))] || [{ status: 400 }];
+		const validResponsesForUrl = mockResponses[Object.keys(mockResponses).find((key) => url.includes(key))];
+		if (!validResponsesForUrl) {
+			throw new Error(`No valid response found for url: ${url}`);
+		}
 
 		if (validResponsesForUrl.length > 1) {
 			return Promise.resolve(validResponsesForUrl.shift());
 		}
-		// console.log("Repeating last response for url: " + url);
+		// console.log(`Repeating last response for url: ${url}`);
 		return Promise.resolve(validResponsesForUrl[0]);
 	});
 }
@@ -41,7 +44,7 @@ describe('shuffleVideo', function () {
 	context('chooseRandomVideo()', function () {
 		let domElement, windowOpenStub;
 		const videoExistenceMockResponses = {
-			'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOCAL': [{ status: 200 }],
+			'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOC': [{ status: 200 }],
 			'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
 			'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=YT': [{ status: 200 }],
 			'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DEL': [{ status: 400 }]
@@ -89,6 +92,124 @@ describe('shuffleVideo', function () {
 			});
 		});
 
+		context('various user settings', function () {
+			// Choose one locally up-to-date playlist and one that needs to fetch everything from the YT API, and does not have a db entry
+			const localPlaylist = playlistPermutations.find((playlist) => !needsDBInteraction(playlist) && !needsYTAPIInteraction(playlist));
+			const YTAPIPlaylist = playlistPermutations.find((playlist) => needsYTAPIInteraction(playlist) && playlist.playlistModifiers.lastUpdatedDBAt === 'DBEntryDoesNotExist');
+			const playlists = [localPlaylist, YTAPIPlaylist];
+			const playlistNames = ['localPlaylist', 'YTAPIPlaylist'];
+
+			playlists.forEach((input, index) => {
+				context(`playlist ${playlistNames[index]}`, function () {
+
+					beforeEach(function () {
+						// ---------- Fetch mock responses ----------
+						// ----- YT API responses -----
+						// Combine the local, db and newVideos into one object, but remove locally deleted videos, as they do not exist in the YT API anymore
+						const allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos });
+						for (const [videoId, publishTime] of Object.entries(allVideos)) {
+							if (videoId.startsWith('DEL_LOC')) {
+								delete allVideos[videoId];
+							} else {
+								allVideos[videoId] = publishTime;
+							}
+						}
+
+						let YTAPIItems = [];
+						// The order of these is important, as the YouTube API will put the newest ones first, so sort by publishTime
+						for (const [videoId, publishTime] of Object.entries(allVideos).sort((a, b) => b[1].localeCompare(a[1]))) {
+							YTAPIItems.push({
+								"kind": "youtube#playlistItem",
+								"etag": "tag",
+								"id": "id",
+								"contentDetails": {
+									"videoId": videoId,
+									"videoPublishedAt": publishTime
+								}
+							});
+						}
+
+						// Put 50 items into one response each, as that is the maximum number of items that can be returned by the YouTube API
+						let YTResponses = [];
+						const totalResults = YTAPIItems.length;
+						while (YTAPIItems.length > 0) {
+							const items = YTAPIItems.splice(0, 50);
+							YTResponses.push(new Response(JSON.stringify(
+								{
+									"kind": "youtube#playlistItemListResponse",
+									"etag": "tag",
+									"nextPageToken": YTAPIItems.length > 0 ? 'nextPageToken' : undefined,
+									"items": items,
+									"pageInfo": {
+										"totalResults": totalResults,
+										"resultsPerPage": 50
+									}
+								}
+							)));
+						}
+
+						const YTMockResponses = {
+							'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses,
+						};
+
+						// If the video id contains _S_, it is a short video, if it contains _V_, it is a normal video
+						// if it is a short, the thumbnail_url will be `https://i.ytimg.com/vi/${videoId}/hq2.jpg`
+						// We check the complete thumbnail_url in the function, so we need to mock each video's response individually
+						let videoIsShortMockResponses = {};
+						for (const [videoId, publishTime] of Object.entries(allVideos)) {
+							if (videoId.includes('_S_')) {
+								videoIsShortMockResponses[`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${videoId}&format=json`] = [new Response(JSON.stringify({
+									"thumbnail_url": `https://i.ytimg.com/vi/${videoId}/hq2.jpg`,
+								}))];
+							} else {
+								videoIsShortMockResponses[`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${videoId}&format=json`] = [new Response(JSON.stringify({
+									"thumbnail_url": `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+								}))];
+							}
+						}
+
+						const mockResponses = { ...videoExistenceMockResponses, ...YTMockResponses, ...videoIsShortMockResponses };
+
+						setUpMockResponses(mockResponses);
+					});
+
+					configSyncPermutations.forEach((config, index) => {
+						context(`configSyncPermutations[${index}]`, function () {
+
+							beforeEach(async function () {
+								// Clear the sync storage and set the new values
+								await chrome.storage.sync.clear();
+								await chrome.storage.sync.set(config);
+							});
+
+							if (config.shuffleOpenInNewTabOption) {
+								it('should open a new tab with the correct URL', async function () {
+									await chooseRandomVideo(input.channelId, false, domElement);
+
+									expect(windowOpenStub.calledOnce).to.be(true);
+
+									if (config.shuffleOpenAsPlaylistOption) {
+										expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
+									} else {
+										expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch?v=');
+									}
+								});
+							} else {
+								it('should not open the video in a new tab', async function () {
+									// Due to the way JSDOM works, we cannot stub or spy on window.location.assign, so we have to check that window.open was not called
+									await chooseRandomVideo(input.channelId, false, domElement);
+
+									expect(windowOpenStub.callCount).to.be(0);
+								});
+							}
+
+						});
+					});
+				});
+			});
+
+		});
+
 		// Test chooseRandomVideo() for different playlist states:
 		context('playlist permutations', function () {
 			// playlistPermutations.js creates a permutation for each possible playlist state
@@ -133,7 +254,7 @@ describe('shuffleVideo', function () {
 						// Combine the local, db and newVideos into one object, but remove locally deleted videos, as they do not exist in the YT API anymore
 						const allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos });
 						for (const [videoId, publishTime] of Object.entries(allVideos)) {
-							if (videoId.startsWith('DEL_LOCAL')) {
+							if (videoId.startsWith('DEL_LOC')) {
 								delete allVideos[videoId];
 							} else {
 								allVideos[videoId] = publishTime;
@@ -523,31 +644,6 @@ describe('shuffleVideo', function () {
 
 						});
 					});
-
-					// TODO: Test for different user settings
-					context('opened video', function () {
-						if (input.configSync.shuffleOpenInNewTabOption) {
-							it('should open a new tab with the correct URL', async function () {
-								await chooseRandomVideo(input.channelId, false, domElement);
-
-								expect(windowOpenStub.calledOnce).to.be(true);
-
-								if (input.configSync.shuffleOpenAsPlaylistOption) {
-									expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
-								} else {
-									expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch?v=');
-								}
-							});
-						} else {
-							it('should open the video in the same tab', async function () {
-								await chooseRandomVideo(input.channelId, false, domElement);
-
-								expect(windowOpenStub.callCount).to.be(0);
-							});
-						}
-
-					});
-
 				});
 			});
 		});
