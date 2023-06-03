@@ -587,10 +587,12 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 
 	console.log(`Choosing ${numVideosToChoose} random video${numVideosToChoose > 1 ? "s" : ""}.`);
 
+	// We use this label to break out of both the for loop and the while loop if there are no more videos after encountering deleted videos
+	outerLoop:
 	for (let i = 0; i < numVideosToChoose; i++) {
 		if (videosToShuffle.length === 0) {
 			// All available videos were chosen from, so we need to terminate the loop early
-			console.log(`No more videos to choose from (${numVideosToChoose - i} videos too few uploaded on channel).`);
+			console.log(`No more videos to choose from (${numVideosToChoose - i + 1} videos too few uploaded on channel).`);
 			break;
 		}
 
@@ -599,34 +601,37 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
 		if (!await testVideoExistence(randomVideo)) {
 			encounteredDeletedVideos = true;
+			// Update the database by removing the deleted videos there as well
+			shouldUpdateDatabase = true;
 			do {
 				// Remove the video from the local playlist object
 				// It will always be in the "videos" object, as we have just fetched the "newVideos" from the YouTube API
 				delete playlistInfo["videos"][randomVideo];
 
-				// Choose a new random video
-				allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
-				videosByDate = Object.keys(allVideos).sort((a, b) => {
-					return new Date(allVideos[b]) - new Date(allVideos[a]);
-				});
-
-				videosToShuffle = chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue);
+				// Remove the deleted video from the videosToShuffle array and choose a new random video
+				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 				randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
+
 				console.log(`The chosen video does not exist anymore, so it will be removed from the database. A new random video has been chosen: ${randomVideo}`);
 
 				if (randomVideo === undefined) {
-					throw new RandomYoutubeVideoError(
-						{
-							code: "RYV-6B",
-							message: "All previously uploaded videos on this channel were deleted - the channel does not have any uploads.",
-							showTrace: false
-						}
-					)
+					// If we haven't chosen any videos yet, the channel does not contain any videos
+					if (chosenVideos.length === 0) {
+						throw new RandomYoutubeVideoError(
+							{
+								code: "RYV-6B",
+								message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring shorts and the channel has only uploaded shorts.",
+								solveHint: "If you are ignoring shorts, disable the option in the popup to shuffle from this channel.",
+								showTrace: false
+							}
+						)
+						// If we have chosen at least one video, we just return those
+					} else {
+						console.log(`No more videos to choose from (${numVideosToChoose - i + 1} videos too few uploaded on channel).`);
+						break outerLoop;
+					}
 				}
 			} while (!await testVideoExistence(randomVideo))
-
-			// Update the database by removing the deleted videos there as well
-			shouldUpdateDatabase = true;
 		}
 
 		// If the user does not want to shuffle from shorts, test if the video is a short
@@ -658,47 +663,26 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			}
 
 			// For shorts, the thumbnail url ends in "hq2.jpg", for normal videos it ends in "hqdefault.jpg"
-			while (response.thumbnail_url === (`https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`)) {
+			if (response.thumbnail_url === (`https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`)) {
 				console.log('A chosen video was a short, but shorts are ignored. Choosing a new random video.');
 
 				// Remove the video from videosToShuffle to not choose it again
 				// Do not remove it from the playlistInfo object, as we do not want to delete it from the database
 				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
-				randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
 
-				// No more non-short videos available
-				if (randomVideo === undefined) {
-					break;
-				}
-
-				try {
-					await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
-						method: "GET"
-					}).then(res => res.json())
-						.then(res => response = res);
-					// We get an 'Unauthorized' response if the video cannot be embedded, which cannot be parsed as JSON
-				} catch (error) {
-					await fetch(`https://www.youtube.com/shorts/${randomVideo}`)
-						.then(res => {
-							if (!res.redirected) {
-								// The video is a short, so we do not want to choose it
-								// Workaround to simulate a response from the oembed API
-								response = {
-									thumbnail_url: `https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`
-								};
-							} else {
-								response = {
-									thumbnail_url: `https://i.ytimg.com/vi/${randomVideo}/hqdefault.jpg`
-								};
-							}
-						});
-				}
+				// We need to decrement i, as we did not choose a video
+				i--;
+			} else {
+				// The video is not a short, so add it to the list of chosen videos and remove it from the pool of videos to choose from
+				chosenVideos.push(randomVideo);
+				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 			}
-		}
 
-		// Add the video to the list of chosen videos and remove it from the pool of videos to choose from
-		chosenVideos.push(randomVideo);
-		videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
+		} else {
+			// We are not ignoring shorts and the video exists
+			chosenVideos.push(randomVideo);
+			videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
+		}
 	}
 	console.log(`${chosenVideos.length} random video${chosenVideos.length > 1 ? "s have" : " has"} been chosen: [${chosenVideos}]`);
 
@@ -837,7 +821,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 		// We need to open the rickroll first, as otherwise the function call doesn't happen, as we change the URL
 		aprilFoolsJoke();
 
-		window.location.href = randomVideoURL;
+		window.location.assign(randomVideoURL);
 	}
 }
 
