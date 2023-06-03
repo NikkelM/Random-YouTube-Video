@@ -42,7 +42,7 @@ describe('shuffleVideo', function () {
 	});
 
 	context('chooseRandomVideo()', function () {
-		let domElement, windowOpenStub;
+		let domElement, windowOpenStub, errorSpy;
 		const videoExistenceMockResponses = {
 			'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LOC': [{ status: 200 }],
 			'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=DB': [{ status: 200 }],
@@ -60,12 +60,16 @@ describe('shuffleVideo', function () {
 			windowOpenStub = sinon.stub(window, 'open').returns({ focus: sinon.stub() });
 
 			domElement = global.window.document.createElement('div');
+
+			// Spy on jsdom error output
+			errorSpy = sinon.spy(console, 'error');
 		});
 
 		afterEach(function () {
 			domElement = undefined;
 
 			windowOpenStub.restore();
+			errorSpy.resetHistory();
 			delete global.window;
 		});
 
@@ -200,6 +204,10 @@ describe('shuffleVideo', function () {
 									await chooseRandomVideo(input.channelId, false, domElement);
 
 									expect(windowOpenStub.callCount).to.be(0);
+									
+									// As a workaround, we check that JSDOM complains about window.location.assign not being implemented
+									expect(errorSpy.callCount).to.be(1);
+									expect(errorSpy.args[0][0]).to.contain('Error: Not implemented: navigation');
 								});
 							}
 
