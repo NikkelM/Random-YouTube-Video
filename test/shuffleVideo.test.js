@@ -186,7 +186,7 @@ describe('shuffleVideo', function () {
 								await chrome.storage.sync.set(config);
 							});
 
-							if (config.shuffleOpenInNewTabOption) {
+							if (config.shuffleOpenInNewTabOption && !(config.shuffleReUseNewTabOption && config.shuffleTabId !== null)) {
 								it('should open a new tab with the correct URL', async function () {
 									await chooseRandomVideo(input.channelId, false, domElement);
 
@@ -198,13 +198,38 @@ describe('shuffleVideo', function () {
 										expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch?v=');
 									}
 								});
-							} else {
-								it('should not open the video in a new tab', async function () {
+
+							} else if (config.shuffleReUseNewTabOption && config.shuffleTabId !== null) {
+								it('should open the video in the reusable tab', async function () {
 									// Due to the way JSDOM works, we cannot stub or spy on window.location.assign, so we have to check that window.open was not called
 									await chooseRandomVideo(input.channelId, false, domElement);
 
 									expect(windowOpenStub.callCount).to.be(0);
-									
+
+									const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+									console.log(commands)
+									console.log(chrome.runtime.sendMessage.callCount)
+									console.log(config)
+
+									if (needsYTAPIInteraction(input) && config.databaseSharingEnabledOption) {
+										expect(chrome.runtime.sendMessage.callCount).to.be(6);
+									} else if (needsYTAPIInteraction(input) && !config.databaseSharingEnabledOption) {
+										expect(chrome.runtime.sendMessage.callCount).to.be(4);
+									} else {
+										// 3 if we need to delete videos in the database, 4 if we don't
+										expect(chrome.runtime.sendMessage.callCount).to.be.within(3, 4);
+									}
+
+									expect(commands).to.contain('openVideoInTabWithId');
+								});
+
+							} else {
+								it('should open the video in the current tab', async function () {
+									// Due to the way JSDOM works, we cannot stub or spy on window.location.assign, so we have to check that window.open was not called
+									await chooseRandomVideo(input.channelId, false, domElement);
+
+									expect(windowOpenStub.callCount).to.be(0);
+
 									// As a workaround, we check that JSDOM complains about window.location.assign not being implemented
 									expect(errorSpy.callCount).to.be(1);
 									expect(errorSpy.args[0][0]).to.contain('Error: Not implemented: navigation');

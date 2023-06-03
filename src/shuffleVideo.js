@@ -62,7 +62,11 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 
 			// If the playlist does not exist in the database, get it from the API
 			if (isEmpty(playlistInfo)) {
-				console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
+				if (databaseSharing) {
+					console.log("Uploads playlist for this channel does not exist in the database. Fetching it from the YouTube API...");
+				} else {
+					console.log("Fetching the uploads playlist for this channel from the YouTube API...");
+				}
 				({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
 
 				shouldUpdateDatabase = true;

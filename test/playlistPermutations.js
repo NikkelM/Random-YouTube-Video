@@ -44,6 +44,11 @@ const configSyncModifiers = [
 		true,
 		false
 	],
+	// shuffleTabId
+	[
+		1,
+		null
+	],
 	// shuffleIgnoreShortsOption
 	[
 		true,
@@ -69,25 +74,29 @@ for (const useCustomApiKeyOption of configSyncModifiers[0]) {
 		for (const databaseSharingEnabledOption of configSyncModifiers[2]) {
 			for (const shuffleOpenInNewTabOption of configSyncModifiers[3]) {
 				for (const shuffleReUseNewTabOption of configSyncModifiers[4]) {
-					for (const shuffleIgnoreShortsOption of configSyncModifiers[5]) {
-						for (const shuffleOpenAsPlaylistOption of configSyncModifiers[6]) {
-							for (const shuffleNumVideosInPlaylist of configSyncModifiers[7]) {
-								// Exclude invalid combinations
-								if (!useCustomApiKeyOption && (customYoutubeApiKey !== null || databaseSharingEnabledOption)) continue;
-								if (!shuffleOpenInNewTabOption && shuffleReUseNewTabOption) continue;
-								if (!shuffleOpenAsPlaylistOption && shuffleNumVideosInPlaylist !== 10) continue;
+					for (const shuffleTabId of configSyncModifiers[5]) {
+						for (const shuffleIgnoreShortsOption of configSyncModifiers[6]) {
+							for (const shuffleOpenAsPlaylistOption of configSyncModifiers[7]) {
+								for (const shuffleNumVideosInPlaylist of configSyncModifiers[8]) {
+									// Exclude invalid combinations
+									if (!useCustomApiKeyOption && (customYoutubeApiKey !== null || databaseSharingEnabledOption)) continue;
+									if (!shuffleOpenInNewTabOption && shuffleReUseNewTabOption) continue;
+									if (!shuffleReUseNewTabOption && shuffleTabId !== null) continue;
+									if (!shuffleOpenAsPlaylistOption && shuffleNumVideosInPlaylist !== 10) continue;
 
-								let modifiedConfigSync = deepCopy(configSyncDefaults);
-								modifiedConfigSync.useCustomApiKeyOption = useCustomApiKeyOption;
-								modifiedConfigSync.customYoutubeApiKey = customYoutubeApiKey;
-								modifiedConfigSync.databaseSharingEnabledOption = databaseSharingEnabledOption;
-								modifiedConfigSync.shuffleOpenInNewTabOption = shuffleOpenInNewTabOption;
-								modifiedConfigSync.shuffleReUseNewTabOption = shuffleReUseNewTabOption;
-								modifiedConfigSync.shuffleIgnoreShortsOption = shuffleIgnoreShortsOption;
-								modifiedConfigSync.shuffleOpenAsPlaylistOption = shuffleOpenAsPlaylistOption;
-								modifiedConfigSync.shuffleNumVideosInPlaylist = shuffleNumVideosInPlaylist;
+									let modifiedConfigSync = deepCopy(configSyncDefaults);
+									modifiedConfigSync.useCustomApiKeyOption = useCustomApiKeyOption;
+									modifiedConfigSync.customYoutubeApiKey = customYoutubeApiKey;
+									modifiedConfigSync.databaseSharingEnabledOption = databaseSharingEnabledOption;
+									modifiedConfigSync.shuffleOpenInNewTabOption = shuffleOpenInNewTabOption;
+									modifiedConfigSync.shuffleReUseNewTabOption = shuffleReUseNewTabOption;
+									modifiedConfigSync.shuffleTabId = shuffleTabId;
+									modifiedConfigSync.shuffleIgnoreShortsOption = shuffleIgnoreShortsOption;
+									modifiedConfigSync.shuffleOpenAsPlaylistOption = shuffleOpenAsPlaylistOption;
+									modifiedConfigSync.shuffleNumVideosInPlaylist = shuffleNumVideosInPlaylist;
 
-								configSyncPermutations.push(modifiedConfigSync);
+									configSyncPermutations.push(modifiedConfigSync);
+								}
 							}
 						}
 					}
