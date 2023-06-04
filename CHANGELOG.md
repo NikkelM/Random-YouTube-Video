@@ -74,7 +74,6 @@
 
 ## v1.4.4
 
-- Unfortunately, an attacker has compromised the default API keys provided by the extension. You can read the statement [here](https://github.com/NikkelM/Random-YouTube-Video/issues/125). These keys have therefore been disabled. You can still use your own custom API key, which is never transmitted to the extension's database and can therefore not be stolen. If you do not have a custom API key, you can generate one [here](https://developers.google.com/youtube/v3/getting-started). I will be working on reworking the way in which the extension communicates with YouTube's API to prevent this from happening again. I apologize for the inconvenience.
 - Fixed a bug where the channel name displayed in the popup would sometimes not be synchronized with the one that is used in the backend.
 - Fixed a bug where it would not be possible to set the shuffle percentage to 100% if another value was previously set.
 
