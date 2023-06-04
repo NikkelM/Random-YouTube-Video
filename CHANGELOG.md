@@ -11,7 +11,7 @@
 
 ## v2.1.0
 
-- The extension is now available for [Firefox](https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/) as well.
+- The extension is now available for <a href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/">Firefox</a> as well.
 - The extension's background service worker will no longer reload if an error was encountered when shuffling using the button in the popup.
 - Fixed a bug where a fatal error would be encountered if the extension was choosing a non-embeddable video and shorts were ignored.
 - Fixed a bug where the 'Shuffle' button could sometimes show a negative fetch percentage when updating a channel's videos.
