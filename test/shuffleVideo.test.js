@@ -186,23 +186,22 @@ describe('shuffleVideo', function () {
 				expect(alertStub.calledWith('NOTICE: The channel you are shuffling from has a lot of uploads (20,000+). The YouTube API only allows fetching the most recent 20,000 videos, which means that older uploads will not be shuffled from. This limitation is in place no matter if you use a custom API key or not.\n\nThe extension will now fetch all videos it can get from the API.'));
 			});
 
-			it('should throw an error if the YouTube API response returns an error', async function () {
+			it('should throw an error if the YouTube API response returns an unhandled error', async function () {
 				const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
 				const YTMockResponses = {
 					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
 						new Response(JSON.stringify(
 							{
 								"error": {
-									"code": 403,
-									"message": "The request cannot be completed because you have exceeded your <a href=\"/youtube/v3/getting-started#quota\">quota</a>.",
+									"code": 400,
+									"message": "This is an unhandled error.",
 									"errors": [
 										{
-											"message": "The request cannot be completed because you have exceeded your <a href=\"/youtube/v3/getting-started#quota\">quota</a>.",
-											"domain": "youtube.quota",
-											"reason": "quotaExceeded"
+											"message": "This is an unhandled error.",
+											"domain": "youtube.something",
+											"reason": "unhandledError"
 										}
-									],
-									"status": "PERMISSION_DENIED"
+									]
 								}
 							}
 						))
@@ -216,8 +215,11 @@ describe('shuffleVideo', function () {
 					await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
 				} catch (error) {
 					expect(error).to.be.a(YoutubeAPIError);
-					expect(error.code).to.be(403);
-					expect(error.message).to.be("The request cannot be completed because you have exceeded your <a href=\"/youtube/v3/getting-started#quota\">quota</a>.");
+					expect(error.code).to.be(400);
+					expect(error.message).to.be("This is an unhandled error.");
+					expect(error.reason).to.be("unhandledError");
+
+					// If an error is encountered, the quota is only reduced by 1
 					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
 					return;
 				}
