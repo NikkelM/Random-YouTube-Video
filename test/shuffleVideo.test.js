@@ -2,7 +2,7 @@ import expect from 'expect.js';
 import sinon from 'sinon';
 import { JSDOM } from 'jsdom';
 
-import { RandomYoutubeVideoError } from '../src/utils.js';
+import { RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
 import { chooseRandomVideo } from '../src/shuffleVideo.js';
 import { configSync, setSyncStorageValue } from '../src/chromeStorage.js';
 import { deepCopy, configSyncPermutations, playlistPermutations, needsDBInteraction, needsYTAPIInteraction } from './playlistPermutations.js';
@@ -184,6 +184,44 @@ describe('shuffleVideo', function () {
 
 				expect(alertStub.calledOnce).to.be(true);
 				expect(alertStub.calledWith('NOTICE: The channel you are shuffling from has a lot of uploads (20,000+). The YouTube API only allows fetching the most recent 20,000 videos, which means that older uploads will not be shuffled from. This limitation is in place no matter if you use a custom API key or not.\n\nThe extension will now fetch all videos it can get from the API.'));
+			});
+
+			it('should throw an error if the YouTube API response returns an error', async function () {
+				const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+				const YTMockResponses = {
+					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
+						new Response(JSON.stringify(
+							{
+								"error": {
+									"code": 403,
+									"message": "The request cannot be completed because you have exceeded your <a href=\"/youtube/v3/getting-started#quota\">quota</a>.",
+									"errors": [
+										{
+											"message": "The request cannot be completed because you have exceeded your <a href=\"/youtube/v3/getting-started#quota\">quota</a>.",
+											"domain": "youtube.quota",
+											"reason": "quotaExceeded"
+										}
+									],
+									"status": "PERMISSION_DENIED"
+								}
+							}
+						))
+					]
+				};
+
+				setUpMockResponses(YTMockResponses);
+
+				// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
+				try {
+					await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(YoutubeAPIError);
+					expect(error.code).to.be(403);
+					expect(error.message).to.be("The request cannot be completed because you have exceeded your <a href=\"/youtube/v3/getting-started#quota\">quota</a>.");
+					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
+					return;
+				}
+				expect().fail("No error was thrown");
 			});
 		});
 
