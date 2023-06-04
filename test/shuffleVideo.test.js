@@ -109,6 +109,32 @@ describe('shuffleVideo', function () {
 				expect().fail("No error was thrown");
 			});
 
+			it('should throw an error if the channel has no uploads', async function () {
+				// Take a playlist with deleted videos
+				const testedPlaylist = await getKeyFromLocalStorage('UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist');
+
+				const newVideos = Object.keys(testedPlaylist.videos).reduce((acc, videoId) => {
+					if (videoId.includes('DEL')) {
+						acc[videoId] = testedPlaylist.videos[videoId];
+					}
+					return acc;
+				}, {});
+				testedPlaylist.videos = newVideos;
+
+				await chrome.storage.local.set({ [testedPlaylist.playlistId]: testedPlaylist });
+
+				setUpMockResponses(videoExistenceMockResponses);
+
+				try {
+					await chooseRandomVideo("UC_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist", false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-6B");
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
+
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [
@@ -165,19 +191,19 @@ describe('shuffleVideo', function () {
 			// Choose a number of playlists for which to test different user setting combinations
 			const playlists = [
 				// Playlist that does not exist locally, DB is outdated
-				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist'),
+				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist')),
 				// Playlist that does not exist locally, DB is up-to-date
-				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist'),
+				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist')),
 				// Locally up-to-date playlist with deleted videos
-				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist'),
+				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist')),
 				// Locally up-to-date playlist without deleted videos
-				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist'),
+				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist')),
 				// Playlist that has to be updated from the database, but not from the YT API
-				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist'),
+				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist')),
 				// Playlist that has to be updated from the YT API as well, YT API has no new videos
-				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist'),
+				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist')),
 				// Playlist that has to be updated from the YT API as well, YT API has new videos
-				playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist')
+				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist'))
 			];
 
 			playlists.forEach((input) => {
@@ -284,9 +310,6 @@ describe('shuffleVideo', function () {
 									expect(windowOpenStub.callCount).to.be(0);
 
 									const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
-									console.log(commands)
-									console.log(chrome.runtime.sendMessage.callCount)
-									console.log(config)
 
 									if (needsYTAPIInteraction(input) && config.databaseSharingEnabledOption) {
 										expect(chrome.runtime.sendMessage.callCount).to.be(6);
