@@ -312,6 +312,50 @@ describe('shuffleVideo', function () {
 				}
 				expect().fail("No error was thrown");
 			});
+
+			it('should throw an error if the YouTube API response returns a quotaExceeded error and a custom API key was used', async function () {
+				const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+				const YTMockResponses = {
+					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
+						new Response(JSON.stringify(
+							{
+								"error": {
+									"code": 403,
+									"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
+									"errors": [
+										{
+											"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
+											"domain": "youtube.quota",
+											"reason": "quotaExceeded"
+										}
+									]
+								}
+							}
+						))
+					]
+				};
+
+				setUpMockResponses(YTMockResponses);
+
+				// Set a custom API key in the config
+				configSync.useCustomApiKeyOption = true;
+				configSync.customYoutubeApiKey = "customAPIKey";
+
+				// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
+				try {
+					await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
+				} catch (error) {
+					// This error is caught separately and a RandomYoutubeVideoError is thrown instead
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-5");
+					expect(error.message).to.be("Your custom API key has reached its daily quota allocation.");
+
+					// If an error is encountered, the quota is only reduced by 1
+					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
 		});
 
 		context('various user settings', function () {
