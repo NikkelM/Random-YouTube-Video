@@ -199,7 +199,9 @@ describe('shuffleVideo', function () {
 										{
 											"message": "This is an unhandled error.",
 											"domain": "youtube.something",
-											"reason": "unhandledError"
+											"reason": "unhandledError",
+											"location": "somewhere",
+											"locationType": "something"
 										}
 									]
 								}
@@ -218,6 +220,48 @@ describe('shuffleVideo', function () {
 					expect(error.code).to.be(400);
 					expect(error.message).to.be("This is an unhandled error.");
 					expect(error.reason).to.be("unhandledError");
+
+					// If an error is encountered, the quota is only reduced by 1
+					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
+
+			it('should throw an error if the YouTube API response returns a playlistNotFound error', async function () {
+				const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+				const YTMockResponses = {
+					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
+						new Response(JSON.stringify(
+							{
+								"error": {
+									"code": 404,
+									"message": "The playlist identified with the request's \u003ccode\u003eplaylistId\u003c/code\u003e parameter cannot be found.",
+									"errors": [
+										{
+											"message": "The playlist identified with the request's \u003ccode\u003eplaylistId\u003c/code\u003e parameter cannot be found.",
+											"domain": "youtube.playlistItem",
+											"reason": "playlistNotFound",
+											"location": "playlistId",
+											"locationType": "parameter"
+										}
+									]
+								}
+							}
+						))
+					]
+				};
+
+				setUpMockResponses(YTMockResponses);
+
+				// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
+				try {
+					await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
+				} catch (error) {
+					// This error is caught separately and a RandomYoutubeVideoError is thrown instead
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-6A");
+					expect(error.message).to.be("This channel has not uploaded any videos.");
 
 					// If an error is encountered, the quota is only reduced by 1
 					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
@@ -373,6 +417,32 @@ describe('shuffleVideo', function () {
 									// As a workaround, we check that JSDOM complains about window.location.assign not being implemented
 									expect(errorSpy.callCount).to.be(1);
 									expect(errorSpy.args[0][0]).to.contain('Error: Not implemented: navigation');
+								});
+							}
+
+							if (config.useCustomApiKeyOption && config.customYoutubeApiKey) {
+								it('should not reduce the userQuotaRemainingToday', async function () {
+									const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+
+									await chooseRandomVideo(input.channelId, false, domElement);
+
+									const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+
+									expect(userQuotaRemainingTodayBefore).to.be(userQuotaRemainingTodayAfter);
+								});
+							} else {
+								it('should reduce the userQuotaRemainingToday if a request to the YouTube API has to be made', async function () {
+									const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+
+									await chooseRandomVideo(input.channelId, false, domElement);
+
+									const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+
+									if (needsYTAPIInteraction(input, config)) {
+										expect(userQuotaRemainingTodayBefore).to.be.greaterThan(userQuotaRemainingTodayAfter);
+									} else {
+										expect(userQuotaRemainingTodayBefore).to.be(userQuotaRemainingTodayAfter);
+									}
 								});
 							}
 

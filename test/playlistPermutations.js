@@ -395,9 +395,14 @@ export function needsDBInteraction(permutation) {
 }
 
 // Determine whether or not a permutation needs to interact with the YouTube API
-// We only test the default configSync with the permutations, so we can assume that the database sharing option is enabled
-export function needsYTAPIInteraction(permutation) {
-	return (needsDBInteraction(permutation) &&
-		(permutation.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsNotUpToDate' || permutation.playlistModifiers.lastUpdatedDBAt === 'DBEntryDoesNotExist')
-	);
+export function needsYTAPIInteraction(permutation, configSync = configSyncDefaults) {
+	const databaseSharing = configSync.databaseSharingEnabledOption;
+	if (databaseSharing) {
+		return (needsDBInteraction(permutation) &&
+			(permutation.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsNotUpToDate' || permutation.playlistModifiers.lastUpdatedDBAt === 'DBEntryDoesNotExist')
+		);
+	} else {
+		return (permutation.playlistModifiers.lastAccessedLocally === 'LocalPlaylistDoesNotExist' || permutation.playlistModifiers.lastAccessedLocally === 'LocalPlaylistNotRecentlyAccessed');
+	}
+
 }
