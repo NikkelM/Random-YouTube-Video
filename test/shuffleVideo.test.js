@@ -4,7 +4,7 @@ import { JSDOM } from 'jsdom';
 
 import { RandomYoutubeVideoError } from '../src/utils.js';
 import { chooseRandomVideo } from '../src/shuffleVideo.js';
-import { configSync } from '../src/chromeStorage.js';
+import { configSync, setSyncStorageValue } from '../src/chromeStorage.js';
 import { deepCopy, configSyncPermutations, playlistPermutations, needsDBInteraction, needsYTAPIInteraction } from './playlistPermutations.js';
 
 // Utility to get the contents of localStorage at a certain key
@@ -93,6 +93,57 @@ describe('shuffleVideo', function () {
 				} catch (error) {
 				}
 				expect(configSync.userQuotaRemainingToday).to.be(199);
+			});
+
+			it('should alert the user if the channel has too many uploads for the YouTube API to handle', async function () {
+				// Create a mock response with too many uploads
+				let YTResponses = [
+					new Response(JSON.stringify(
+						{
+							"kind": "youtube#playlistItemListResponse",
+							"etag": "tag",
+							"nextPageToken": 'nextPageToken',
+							"items": [
+								{
+									"kind": "youtube#playlistItem",
+									"etag": "tag",
+									"id": "id",
+									"contentDetails": {
+										"videoId": 'testVideoId',
+										"videoPublishedAt": new Date().toISOString()
+									}
+								}
+							],
+							"pageInfo": {
+								"totalResults": 25000,
+								"resultsPerPage": 50
+							}
+						}
+					))
+				];
+
+				const YTMockResponses = {
+					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': YTResponses,
+				};
+
+				setUpMockResponses(YTMockResponses);
+
+				// Add custom API key to the config to make sure we get to the alert
+				await setSyncStorageValue('useCustomApiKeyOption', true);
+				await setSyncStorageValue('customYoutubeApiKey', 'testApiKey');
+
+				const alertStub = sinon.stub(window, 'alert');
+
+				try {
+					// Playlist that does not exist locally, DB is outdated
+					await chooseRandomVideo('UU_LocalPlaylistDidNotFetchDBRecently_DBEntryDoesNotExist_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
+				} catch (error) {
+					// The error should be body was already consumed, as we did not provide enough mock responses
+					expect(error.message).to.be('The body has already been consumed.');
+				}
+
+				expect(alertStub.calledOnce).to.be(true);
+				expect(alertStub.calledWith('NOTICE: The channel you are shuffling from has a lot of uploads (20,000+). The YouTube API only allows fetching the most recent 20,000 videos, which means that older uploads will not be shuffled from. This limitation is in place no matter if you use a custom API key or not.\n\nThe extension will now fetch all videos it can get from the API.'));
 			});
 		});
 

@@ -260,7 +260,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	// The YouTube API limits the number of videos that can be fetched for uploads playlists to 20,000
 	// If it seems that such a limitation is in place, we want to alert the user to it
 	if (totalResults >= 19999) {
-		alert("NOTICE: The channel you are shuffling from has a lot of uploads (20,000+). The YouTube API only allows fetching the most recent 20,000 videos, which means that older uploads will not be shuffled from. This limitation is in place no matter if you use a custom API key or not.\n\nThe extension will now fetch all videos it can get from the API.");
+		window.alert("NOTICE: The channel you are shuffling from has a lot of uploads (20,000+). The YouTube API only allows fetching the most recent 20,000 videos, which means that older uploads will not be shuffled from. This limitation is in place no matter if you use a custom API key or not.\n\nThe extension will now fetch all videos it can get from the API.");
 	}
 
 	// Set the current progress as text for the shuffle button/info text
