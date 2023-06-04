@@ -89,4 +89,4 @@ You may also test the extension with Firefox by running `npm run dev:firefox`, w
 
 ---
 
-If you enjoy this extension and want to say thanks, consider buying me a [coffee](https://ko-fi.com/nikkelm), or [sponsoring](https://github.com/sponsors/NikkelM) this project.
+If you enjoy this extension and want to say thanks, consider buying me a [coffee](https://ko-fi.com/nikkelm) or [sponsoring](https://github.com/sponsors/NikkelM) this project.
