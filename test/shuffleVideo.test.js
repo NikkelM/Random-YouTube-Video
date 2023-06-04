@@ -269,6 +269,49 @@ describe('shuffleVideo', function () {
 				}
 				expect().fail("No error was thrown");
 			});
+
+			it('should throw an error if the YouTube API response returns a quotaExceeded error and no more keys are available', async function () {
+				const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+				const YTMockResponses = {
+					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
+						new Response(JSON.stringify(
+							{
+								"error": {
+									"code": 403,
+									"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
+									"errors": [
+										{
+											"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
+											"domain": "youtube.quota",
+											"reason": "quotaExceeded"
+										}
+									]
+								}
+							}
+						))
+					]
+				};
+
+				setUpMockResponses(YTMockResponses);
+
+				// Remove all but one API key from the database
+				await chrome.runtime.sendMessage({ command: "setKeyInDB", data: { key: "youtubeAPIKeys", val: ["defaultAPIKey1"] } });
+
+				// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
+				try {
+					await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
+				} catch (error) {
+					// This error is caught separately and a RandomYoutubeVideoError is thrown instead
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-2");
+					expect(error.message).to.be("All API keys have exceeded the allocated quota.");
+
+					// If an error is encountered, the quota is only reduced by 1
+					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
 		});
 
 		context('various user settings', function () {
