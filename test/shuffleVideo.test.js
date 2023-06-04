@@ -309,6 +309,13 @@ describe('shuffleVideo', function () {
 
 						// If an error is encountered, the quota is only reduced by 1
 						expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
+
+						// The only available API key should have been used
+						const fetchArguments = global.fetch.args;
+						expect(fetchArguments.length).to.be(1);
+
+						const apiKeys = fetchArguments.map((fetchArgument) => fetchArgument[0].split("&key=")[1]);
+						expect(apiKeys[0]).to.be("defaultAPIKey1");
 						return;
 					}
 					expect().fail("No error was thrown");
@@ -353,6 +360,13 @@ describe('shuffleVideo', function () {
 
 						// If an error is encountered, the quota is only reduced by 1
 						expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
+
+						// The custom API should have been used
+						const fetchArguments = global.fetch.args;
+						expect(fetchArguments.length).to.be(1);
+
+						const apiKeys = fetchArguments.map((fetchArgument) => fetchArgument[0].split("&key=")[1]);
+						expect(apiKeys[0]).to.be(configSync.customYoutubeApiKey);
 						return;
 					}
 					expect().fail("No error was thrown");
@@ -408,6 +422,13 @@ describe('shuffleVideo', function () {
 
 						// If an error is encountered, the quota is only reduced by 1
 						expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
+
+						// The first and second API key should be different
+						const fetchArguments = global.fetch.args;
+						expect(fetchArguments.length).to.be(2);
+
+						const apiKeys = fetchArguments.map((fetchArgument) => fetchArgument[0].split("&key=")[1]);
+						expect(apiKeys[0]).to.not.be(apiKeys[1]);
 						return;
 					}
 					expect().fail("No error was thrown");
