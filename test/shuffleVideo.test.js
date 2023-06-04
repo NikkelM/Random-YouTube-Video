@@ -95,7 +95,7 @@ describe('shuffleVideo', function () {
 				expect(configSync.userQuotaRemainingToday).to.be(199);
 			});
 
-			it('should alert the user if the channel has too many uploads for the YouTube API to handle', async function () {
+			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [
 					new Response(JSON.stringify(
