@@ -95,6 +95,20 @@ describe('shuffleVideo', function () {
 				expect(configSync.userQuotaRemainingToday).to.be(199);
 			});
 
+			it('should throw an error if there are no API keys in the database', async function () {
+				// Remove all API keys from the database
+				await chrome.runtime.sendMessage({ command: "setKeyInDB", data: { key: "youtubeAPIKeys", val: [] } });
+
+				try {
+					await chooseRandomVideo('testChannelId', false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-3");
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
+
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [

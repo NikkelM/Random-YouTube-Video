@@ -534,7 +534,7 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 			{
 				code: "RYV-3",
 				message: "There are no API keys available in the database. It may be that they were removed for security reasons.",
-				solveHint: "Please check back later if this has been resolved, otherwise contact the developer. You can always use the extension by providing your custom API key via the popup, which is never communicated to the extension's database.",
+				solveHint: "Please check back later if this has been resolved, otherwise contact the developer. You can always use the extension by providing your custom API key via the popup, which is never uploaded to the extension's database.",
 				showTrace: false
 			}
 		);

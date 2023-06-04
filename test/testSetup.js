@@ -61,6 +61,11 @@ chrome.runtime.sendMessage.callsFake((request) => {
 			mockedDatabase[request.data.key] = request.data.val;
 			return "PlaylistInfo was sent to database.";
 
+		// Only for the tests
+		case "setKeyInDB":
+			mockedDatabase[request.data.key] = request.data.val;
+			return "Key was removed from database.";
+
 		case "getAPIKey":
 			return getAPIKey(false, request.data.useAPIKeyAtIndex);
 
@@ -112,6 +117,11 @@ beforeEach(() => {
 	chrome.storage.local.set(deepCopy(localPlaylistPermutations));
 
 	mockedDatabase = deepCopy(databasePermutations);
+	mockedDatabase["youtubeAPIKeys"] = [
+		"testAPIKey0",
+		"testAPIKey1",
+		"testAPIKey2",
+	];
 });
 
 afterEach(async function () {
@@ -124,12 +134,6 @@ afterEach(async function () {
 // ----- Helpers -----
 // Reimplementation of the function in the background script
 async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
-	const defaultAPIKeys = [
-		"testAPIKey0",
-		"testAPIKey1",
-		"testAPIKey2",
-	];
-
 	// List of API keys that are stored in the database/locally
 	let availableAPIKeys = null;
 
@@ -141,7 +145,7 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 			keyIndex: null
 		};
 	} else {
-		availableAPIKeys = defaultAPIKeys;
+		availableAPIKeys = mockedDatabase["youtubeAPIKeys"];
 	}
 
 	if (forceDefault) {
