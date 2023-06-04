@@ -426,7 +426,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 				throw new YoutubeAPIError(
 					apiResponse["error"]["code"],
 					apiResponse["error"]["message"],
-					`Reason: ${apiResponse["error"]["errors"][0]["reason"]}`,
+					apiResponse["error"]["errors"][0]["reason"],
 					"",
 					false
 				);
