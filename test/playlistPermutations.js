@@ -64,7 +64,6 @@ const configSyncModifiers = [
 		10,
 		5
 	]
-	// TODO: Test the April Fools' Day option
 	// TODO for testing the popup: channelSettings, currentChannelId/currentChannelName, numShuffledVideosTotal, lastViewedChangelogVersion
 ];
 

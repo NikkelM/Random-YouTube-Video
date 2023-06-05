@@ -529,6 +529,61 @@ describe('shuffleVideo', function () {
 						setUpMockResponses(mockResponses);
 					});
 
+					context('April 1st joke', function () {
+						let clock, date;
+
+						beforeEach(function () {
+							date = new Date();
+							date.setMonth(3);
+							date.setDate(1);
+							clock = sinon.useFakeTimers(date.getTime());
+						});
+
+						afterEach(function () {
+							clock.restore();
+						});
+
+						it('should open a rickroll video if the user has not been rickrolled yet (openInNewTab option)', async function () {
+							// Set the last rickroll date to null, so the user has not been rickrolled yet
+							configSync.wasLastRickRolledInYear = '1970';
+							configSync.shuffleOpenInNewTabOption = true;
+
+							await chooseRandomVideo(input.playlistId, false, domElement);
+
+							expect(windowOpenStub.calledTwice).to.be(true);
+							expect(windowOpenStub.args[1][0]).to.be('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+
+							expect(configSync.wasLastRickRolledInYear).to.be(String(date.getFullYear()));
+						});
+
+						it('should open a rickroll video if the user has not been rickrolled yet (!openInNewTab option)', async function () {
+							// Set the last rickroll date to null, so the user has not been rickrolled yet
+							configSync.wasLastRickRolledInYear = '1970';
+							configSync.shuffleOpenInNewTabOption = false;
+
+							await chooseRandomVideo(input.playlistId, false, domElement);
+
+							expect(windowOpenStub.calledOnce).to.be(true);
+							expect(windowOpenStub.args[0][0]).to.be('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+
+							expect(configSync.wasLastRickRolledInYear).to.be(String(date.getFullYear()));
+						});
+
+						it('should not open a rickroll video if the user has already been rickrolled this year', async function () {
+							// Set the last rickroll date to this year, so the user has been rickrolled this year
+							configSync.wasLastRickRolledInYear = String(date.getFullYear());
+							configSync.shuffleOpenInNewTabOption = true;
+
+							await chooseRandomVideo(input.playlistId, false, domElement);
+
+							console.log(windowOpenStub.args);
+							expect(windowOpenStub.calledOnce).to.be(true);
+							expect(windowOpenStub.args[0][0]).to.not.be('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+
+							expect(configSync.wasLastRickRolledInYear).to.be(String(date.getFullYear()));
+						});
+					});
+
 					configSyncPermutations.forEach((config, index) => {
 						context(`configSyncPermutations[${index}]`, function () {
 
