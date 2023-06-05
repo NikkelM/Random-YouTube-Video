@@ -15,6 +15,8 @@ export const times = {
 	fourteenDaysAgo
 }
 
+// ---------- Config ----------
+
 // The configSync should always be the default, with these settings being changed
 // This allows us to not have to define something for every setting
 const configSyncModifiers = [
@@ -66,42 +68,68 @@ const configSyncModifiers = [
 	// TODO for testing the popup: channelSettings, currentChannelId/currentChannelName, numShuffledVideosTotal, lastViewedChangelogVersion
 ];
 
-export let configSyncPermutations = [];
+export let configSyncPermutations = {};
+const customAPIKeyPermutations = [];
 for (const useCustomApiKeyOption of configSyncModifiers[0]) {
 	for (const customYoutubeApiKey of configSyncModifiers[1]) {
 		for (const databaseSharingEnabledOption of configSyncModifiers[2]) {
-			for (const shuffleOpenInNewTabOption of configSyncModifiers[3]) {
-				for (const shuffleReUseNewTabOption of configSyncModifiers[4]) {
-					for (const shuffleTabId of configSyncModifiers[5]) {
-						for (const shuffleIgnoreShortsOption of configSyncModifiers[6]) {
-							for (const shuffleOpenAsPlaylistOption of configSyncModifiers[7]) {
-								for (const shuffleNumVideosInPlaylist of configSyncModifiers[8]) {
-									// Exclude invalid combinations
-									if (!useCustomApiKeyOption && (customYoutubeApiKey !== null || databaseSharingEnabledOption)) continue;
-									if (!shuffleOpenInNewTabOption && shuffleReUseNewTabOption) continue;
-									if (!shuffleReUseNewTabOption && shuffleTabId !== null) continue;
+			// Exclude invalid combinations
+			if (!useCustomApiKeyOption && (customYoutubeApiKey !== null || databaseSharingEnabledOption)) continue;
 
-									let modifiedConfigSync = deepCopy(configSyncDefaults);
-									modifiedConfigSync.useCustomApiKeyOption = useCustomApiKeyOption;
-									modifiedConfigSync.customYoutubeApiKey = customYoutubeApiKey;
-									modifiedConfigSync.databaseSharingEnabledOption = databaseSharingEnabledOption;
-									modifiedConfigSync.shuffleOpenInNewTabOption = shuffleOpenInNewTabOption;
-									modifiedConfigSync.shuffleReUseNewTabOption = shuffleReUseNewTabOption;
-									modifiedConfigSync.shuffleTabId = shuffleTabId;
-									modifiedConfigSync.shuffleIgnoreShortsOption = shuffleIgnoreShortsOption;
-									modifiedConfigSync.shuffleOpenAsPlaylistOption = shuffleOpenAsPlaylistOption;
-									modifiedConfigSync.shuffleNumVideosInPlaylist = shuffleNumVideosInPlaylist;
+			let modifiedConfigSync = deepCopy(configSyncDefaults);
+			modifiedConfigSync.useCustomApiKeyOption = useCustomApiKeyOption;
+			modifiedConfigSync.customYoutubeApiKey = customYoutubeApiKey;
+			modifiedConfigSync.databaseSharingEnabledOption = databaseSharingEnabledOption;
 
-									configSyncPermutations.push(modifiedConfigSync);
-								}
-							}
-						}
-					}
-				}
-			}
+			customAPIKeyPermutations.push(modifiedConfigSync);
 		}
 	}
 }
+configSyncPermutations.customAPIKeyPermutations = customAPIKeyPermutations;
+
+const openInNewTabPermutations = [];
+for (const shuffleOpenInNewTabOption of configSyncModifiers[3]) {
+	for (const shuffleReUseNewTabOption of configSyncModifiers[4]) {
+		for (const shuffleTabId of configSyncModifiers[5]) {
+			// Exclude invalid combinations
+			if (!shuffleOpenInNewTabOption && shuffleReUseNewTabOption) continue;
+			if (!shuffleReUseNewTabOption && shuffleTabId !== null) continue;
+
+			let modifiedConfigSync = deepCopy(configSyncDefaults);
+			modifiedConfigSync.shuffleOpenInNewTabOption = shuffleOpenInNewTabOption;
+			modifiedConfigSync.shuffleReUseNewTabOption = shuffleReUseNewTabOption;
+			modifiedConfigSync.shuffleTabId = shuffleTabId;
+
+			openInNewTabPermutations.push(modifiedConfigSync);
+		}
+	}
+}
+configSyncPermutations.openInNewTabPermutations = openInNewTabPermutations;
+
+// Opening in a playlist=
+const openAsPlaylistPermutations = [];
+for (const shuffleOpenAsPlaylistOption of configSyncModifiers[7]) {
+	for (const shuffleNumVideosInPlaylist of configSyncModifiers[8]) {
+		let modifiedConfigSync = deepCopy(configSyncDefaults);
+		modifiedConfigSync.shuffleOpenAsPlaylistOption = shuffleOpenAsPlaylistOption;
+		modifiedConfigSync.shuffleNumVideosInPlaylist = shuffleNumVideosInPlaylist;
+
+		openAsPlaylistPermutations.push(modifiedConfigSync);
+	}
+}
+configSyncPermutations.openAsPlaylistPermutations = openAsPlaylistPermutations;
+
+// Ignore shorts
+const ignoreShortsPermutations = [];
+for (const shuffleIgnoreShortsOption of configSyncModifiers[6]) {
+	let modifiedConfigSync = deepCopy(configSyncDefaults);
+	modifiedConfigSync.shuffleIgnoreShortsOption = shuffleIgnoreShortsOption;
+
+	ignoreShortsPermutations.push(modifiedConfigSync);
+}
+configSyncPermutations.ignoreShortsPermutations = ignoreShortsPermutations;
+
+// ---------- Playlists ----------
 
 const playlistModifiers = [
 	// lastFetchedFromDB: If the data was recently fetched from the database

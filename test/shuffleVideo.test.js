@@ -584,109 +584,117 @@ describe('shuffleVideo', function () {
 						});
 					});
 
-					configSyncPermutations.forEach((config, index) => {
-						context(`configSyncPermutations[${index}]`, function () {
+					Object.keys(configSyncPermutations).forEach((key) => {
+						context(`${key}`, function () {
 
-							beforeEach(async function () {
-								// Clear the sync storage and set the new values
-								await chrome.storage.sync.clear();
-								await chrome.storage.sync.set(config);
-							});
-
-							if (config.shuffleOpenInNewTabOption && !(config.shuffleReUseNewTabOption && config.shuffleTabId !== null)) {
-								it('should open a new tab with the correct URL', async function () {
-									await chooseRandomVideo(input.channelId, false, domElement);
-
-									expect(windowOpenStub.calledOnce).to.be(true);
-
-									if (config.shuffleOpenAsPlaylistOption) {
-										expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
-									} else {
-										expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch?v=');
-									}
-								});
-
-							} else if (config.shuffleReUseNewTabOption && config.shuffleTabId !== null) {
-								it('should open the video in the reusable tab', async function () {
-									// Due to the way JSDOM works, we cannot stub or spy on window.location.assign, so we have to check that window.open was not called
-									await chooseRandomVideo(input.channelId, false, domElement);
-
-									expect(windowOpenStub.callCount).to.be(0);
-
-									const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
-
-									if (needsYTAPIInteraction(input) && config.databaseSharingEnabledOption) {
-										expect(chrome.runtime.sendMessage.callCount).to.be(6);
-									} else if (needsYTAPIInteraction(input) && !config.databaseSharingEnabledOption) {
-										expect(chrome.runtime.sendMessage.callCount).to.be(4);
-									} else {
-										// 3 if we need to delete videos in the database, 4 if we don't
-										expect(chrome.runtime.sendMessage.callCount).to.be.within(3, 4);
-									}
-
-									expect(commands).to.contain('openVideoInTabWithId');
-								});
-
-							} else {
-								it('should open the video in the current tab', async function () {
-									// Due to the way JSDOM works, we cannot stub or spy on window.location.assign, so we have to check that window.open was not called
-									await chooseRandomVideo(input.channelId, false, domElement);
-
-									expect(windowOpenStub.callCount).to.be(0);
-
-									// As a workaround, we check that JSDOM complains about window.location.assign not being implemented
-									expect(errorSpy.callCount).to.be(1);
-									expect(errorSpy.args[0][0]).to.contain('Error: Not implemented: navigation');
-								});
-							}
-
-							// These tests do not care about the other options, so we can skip them for all but one permutation
-							if (!config.shuffleOpenInNewTabOption && !config.shuffleReUseNewTabOption && !config.shuffleOpenAsPlaylistOption) {
-								if (config.useCustomApiKeyOption && config.customYoutubeApiKey) {
-									it('should not reduce the userQuotaRemainingToday', async function () {
-										const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-
-										await chooseRandomVideo(input.channelId, false, domElement);
-
-										const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
-
-										expect(userQuotaRemainingTodayBefore).to.be(userQuotaRemainingTodayAfter);
-									});
-								} else {
-									it('should reduce the userQuotaRemainingToday if a request to the YouTube API has to be made', async function () {
-										const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-
-										await chooseRandomVideo(input.channelId, false, domElement);
-
-										const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
-
-										if (needsYTAPIInteraction(input, config)) {
-											expect(userQuotaRemainingTodayBefore).to.be.greaterThan(userQuotaRemainingTodayAfter);
-										} else {
-											expect(userQuotaRemainingTodayBefore).to.be(userQuotaRemainingTodayAfter);
+							configSyncPermutations[key].forEach((config, index) => {
+								context(`permutation ${index}`, function () {
+									beforeEach(async function () {
+										// Clear the sync storage and set the new values
+										await chrome.storage.sync.clear();
+										await chrome.storage.sync.set(config);
+										for (const [key, value] of Object.entries(config)) {
+											configSync[key] = value;
 										}
 									});
-								}
-							}
 
-							// We only test with the shuffleOpenInNewTab option, as the URL will be the same for all options
-							if (config.shuffleOpenAsPlaylistOption && config.shuffleOpenInNewTabOption && !config.shuffleReUseNewTabOption) {
-								it('should open the video in a playlist', async function () {
-									await chooseRandomVideo(input.channelId, false, domElement);
-									console.log(windowOpenStub.args)
-									expect(windowOpenStub.calledOnce).to.be(true);
-									expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
+									if (key === 'openInNewTabPermutations') {
+										if (config.shuffleOpenInNewTabOption && !(config.shuffleReUseNewTabOption && config.shuffleTabId !== null)) {
+											it('should open a new tab with the correct URL', async function () {
+												await chooseRandomVideo(input.channelId, false, domElement);
+
+												expect(windowOpenStub.calledOnce).to.be(true);
+												expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
+											});
+
+										}
+										else if (config.shuffleReUseNewTabOption && config.shuffleTabId !== null) {
+											it('should open the video in the reusable tab', async function () {
+												// Due to the way JSDOM works, we cannot stub or spy on window.location.assign, so we have to check that window.open was not called
+												await chooseRandomVideo(input.channelId, false, domElement);
+
+												expect(windowOpenStub.callCount).to.be(0);
+
+												const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+
+												if (needsYTAPIInteraction(input)) {
+													expect(chrome.runtime.sendMessage.callCount).to.be(6);
+												} else {
+													// 3 if we need to delete videos in the database, 4 if we don't
+													expect(chrome.runtime.sendMessage.callCount).to.be.within(3, 4);
+												}
+
+												expect(commands).to.contain('openVideoInTabWithId');
+											});
+
+										} else {
+											it('should open the video in the current tab', async function () {
+												// Due to the way JSDOM works, we cannot stub or spy on window.location.assign, so we have to check that window.open was not called
+												await chooseRandomVideo(input.channelId, false, domElement);
+
+												expect(windowOpenStub.callCount).to.be(0);
+
+												// As a workaround, we check that JSDOM complains about window.location.assign not being implemented
+												expect(errorSpy.callCount).to.be(1);
+												expect(errorSpy.args[0][0]).to.contain('Error: Not implemented: navigation');
+											});
+										}
+									} else if (key === 'customAPIKeyPermutations') {
+										if (config.useCustomApiKeyOption && config.customYoutubeApiKey) {
+											it('should not reduce the userQuotaRemainingToday', async function () {
+												const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+
+												await chooseRandomVideo(input.channelId, false, domElement);
+
+												const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+
+												expect(userQuotaRemainingTodayBefore).to.be(userQuotaRemainingTodayAfter);
+											});
+										} else {
+											it('should reduce the userQuotaRemainingToday if a request to the YouTube API has to be made', async function () {
+												const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+
+												await chooseRandomVideo(input.channelId, false, domElement);
+
+												const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+
+												if (needsYTAPIInteraction(input, config)) {
+													expect(userQuotaRemainingTodayBefore).to.be.greaterThan(userQuotaRemainingTodayAfter);
+												} else {
+													expect(userQuotaRemainingTodayBefore).to.be(userQuotaRemainingTodayAfter);
+												}
+											});
+										}
+									} else if (key === 'openAsPlaylistPermutations') {
+										if (config.shuffleOpenAsPlaylistOption && config.shuffleOpenInNewTabOption && !config.shuffleReUseNewTabOption) {
+											it('should open the video in a playlist', async function () {
+												await chooseRandomVideo(input.channelId, false, domElement);
+
+												expect(windowOpenStub.calledOnce).to.be(true);
+												expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
+											});
+										} else if (!config.shuffleOpenAsPlaylistOption && config.shuffleOpenInNewTabOption && !config.shuffleReUseNewTabOption) {
+											it('should not open the video in a playlist', async function () {
+												await chooseRandomVideo(input.channelId, false, domElement);
+
+												expect(windowOpenStub.calledOnce).to.be(true);
+												expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch?v=');
+											});
+										}
+									} else if (key === 'ignoreShortsPermutations') {
+										if (config.shuffleIgnoreShortsOption) {
+											it('should not choose any shorts', async function () {
+												await chooseRandomVideo(input.channelId, false, domElement);
+
+												expect(windowOpenStub.args[0][0]).to.not.contain('_S_');
+											});
+										}
+									} else {
+										throw new Error('Unknown config key');
+									}
+
 								});
-							} else if (!config.shuffleOpenAsPlaylistOption && config.shuffleOpenInNewTabOption && !config.shuffleReUseNewTabOption) {
-								it('should not open the video in a playlist', async function () {
-									await chooseRandomVideo(input.channelId, false, domElement);
-
-									console.log(windowOpenStub.args)
-									expect(windowOpenStub.calledOnce).to.be(true);
-									expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch?v=');
-								});
-							}
-
+							});
 						});
 					});
 				});
