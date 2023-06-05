@@ -640,29 +640,50 @@ describe('shuffleVideo', function () {
 								});
 							}
 
-							if (config.useCustomApiKeyOption && config.customYoutubeApiKey) {
-								it('should not reduce the userQuotaRemainingToday', async function () {
-									const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+							// These tests do not care about the other options, so we can skip them for all but one permutation
+							if (!config.shuffleOpenInNewTabOption && !config.shuffleReUseNewTabOption && !config.shuffleOpenAsPlaylistOption) {
+								if (config.useCustomApiKeyOption && config.customYoutubeApiKey) {
+									it('should not reduce the userQuotaRemainingToday', async function () {
+										const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
 
-									await chooseRandomVideo(input.channelId, false, domElement);
+										await chooseRandomVideo(input.channelId, false, domElement);
 
-									const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+										const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
 
-									expect(userQuotaRemainingTodayBefore).to.be(userQuotaRemainingTodayAfter);
-								});
-							} else {
-								it('should reduce the userQuotaRemainingToday if a request to the YouTube API has to be made', async function () {
-									const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-
-									await chooseRandomVideo(input.channelId, false, domElement);
-
-									const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
-
-									if (needsYTAPIInteraction(input, config)) {
-										expect(userQuotaRemainingTodayBefore).to.be.greaterThan(userQuotaRemainingTodayAfter);
-									} else {
 										expect(userQuotaRemainingTodayBefore).to.be(userQuotaRemainingTodayAfter);
-									}
+									});
+								} else {
+									it('should reduce the userQuotaRemainingToday if a request to the YouTube API has to be made', async function () {
+										const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+
+										await chooseRandomVideo(input.channelId, false, domElement);
+
+										const userQuotaRemainingTodayAfter = configSync.userQuotaRemainingToday;
+
+										if (needsYTAPIInteraction(input, config)) {
+											expect(userQuotaRemainingTodayBefore).to.be.greaterThan(userQuotaRemainingTodayAfter);
+										} else {
+											expect(userQuotaRemainingTodayBefore).to.be(userQuotaRemainingTodayAfter);
+										}
+									});
+								}
+							}
+
+							// We only test with the shuffleOpenInNewTab option, as the URL will be the same for all options
+							if (config.shuffleOpenAsPlaylistOption && config.shuffleOpenInNewTabOption && !config.shuffleReUseNewTabOption) {
+								it('should open the video in a playlist', async function () {
+									await chooseRandomVideo(input.channelId, false, domElement);
+									console.log(windowOpenStub.args)
+									expect(windowOpenStub.calledOnce).to.be(true);
+									expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
+								});
+							} else if (!config.shuffleOpenAsPlaylistOption && config.shuffleOpenInNewTabOption && !config.shuffleReUseNewTabOption) {
+								it('should not open the video in a playlist', async function () {
+									await chooseRandomVideo(input.channelId, false, domElement);
+
+									console.log(windowOpenStub.args)
+									expect(windowOpenStub.calledOnce).to.be(true);
+									expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch?v=');
 								});
 							}
 
