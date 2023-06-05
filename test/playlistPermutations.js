@@ -61,7 +61,6 @@ const configSyncModifiers = [
 	],
 	// shuffleNumVideosInPlaylist
 	[
-		10,
 		5
 	]
 	// TODO for testing the popup: channelSettings, currentChannelId/currentChannelName, numShuffledVideosTotal, lastViewedChangelogVersion
@@ -81,7 +80,6 @@ for (const useCustomApiKeyOption of configSyncModifiers[0]) {
 									if (!useCustomApiKeyOption && (customYoutubeApiKey !== null || databaseSharingEnabledOption)) continue;
 									if (!shuffleOpenInNewTabOption && shuffleReUseNewTabOption) continue;
 									if (!shuffleReUseNewTabOption && shuffleTabId !== null) continue;
-									if (!shuffleOpenAsPlaylistOption && shuffleNumVideosInPlaylist !== 10) continue;
 
 									let modifiedConfigSync = deepCopy(configSyncDefaults);
 									modifiedConfigSync.useCustomApiKeyOption = useCustomApiKeyOption;
