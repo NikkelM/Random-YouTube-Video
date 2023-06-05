@@ -833,8 +833,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 async function aprilFoolsJoke() {
 	const now = new Date();
 	if (now.getMonth() === 3 && now.getDate() === 1 && configSync.wasLastRickRolledInYear !== now.getFullYear()) {
-		configSync.wasLastRickRolledInYear = now.getFullYear();
-		await setSyncStorageValue("wasLastRickRolledInYear", now.getFullYear());
+		await setSyncStorageValue("wasLastRickRolledInYear", String(now.getFullYear()));
 
 		window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", '_blank').focus();
 	}
