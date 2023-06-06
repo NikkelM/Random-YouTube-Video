@@ -14,6 +14,20 @@ async function getKeyFromLocalStorage(key) {
 	});
 }
 
+function setupChannelSettings(configPermutations, playlistPermutations) {
+	// config.channelSettings contains one object with the key "template" and an object as value
+	// The key should be changed to be the current input.channelId										
+	// config.channelSettings[input.channelId] = deepCopy(config.channelSettings.template);
+	// delete config.channelSettings.template;
+	// await chrome.storage.sync.set(config);
+	configPermutations.forEach((config) => {
+		playlistPermutations.forEach((playlist) => {
+			config.channelSettings[playlist.channelId] = deepCopy(config.channelSettings.template);
+		});
+		delete config.channelSettings.template;
+	});
+}
+
 function setUpMockResponses(mockResponses) {
 	// Repeats the last response if there are no more responses set up
 	global.fetch = sinon.stub().callsFake((url) => {
@@ -436,7 +450,7 @@ describe('shuffleVideo', function () {
 			});
 		});
 
-		context('various user settings', function () {
+		context('various user settings', async function () {
 			// Choose a number of playlists for which to test different user setting combinations
 			const playlists = [
 				// Playlist that does not exist locally, DB is outdated
@@ -454,6 +468,7 @@ describe('shuffleVideo', function () {
 				// Playlist that has to be updated from the YT API as well, YT API has new videos
 				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist'))
 			];
+			setupChannelSettings(configSyncPermutations.channelSettingsPermutations, playlists);
 
 			playlists.forEach((input) => {
 				context(`playlist ${input.playlistId}`, function () {
@@ -593,9 +608,6 @@ describe('shuffleVideo', function () {
 										// Clear the sync storage and set the new values
 										await chrome.storage.sync.clear();
 										await chrome.storage.sync.set(config);
-										for (const [key, value] of Object.entries(config)) {
-											configSync[key] = value;
-										}
 									});
 
 									if (key === 'openInNewTabPermutations') {
@@ -687,6 +699,23 @@ describe('shuffleVideo', function () {
 												await chooseRandomVideo(input.channelId, false, domElement);
 
 												expect(windowOpenStub.args[0][0]).to.not.contain('_S_');
+											});
+										}
+									} else if (key === 'channelSettingsPermutations') {
+										// The percentageOption uses 100 as the default, and the allVideosOption has no value that can be set
+										if (Object.keys(config.channelSettings[input.channelId]).length === 1 && !['allVideosOption', 'percentageOption'].includes(config.channelSettings[input.channelId].activeOption)) {
+											it('should throw an error if the activeOption has no value set', async function () {
+												console.log(config.channelSettings[input.channelId])
+												try {
+													await chooseRandomVideo(input.channelId, false, domElement);
+												} catch (error) {
+													expect(error).to.be.an(RandomYoutubeVideoError);
+													expect(error.code).to.be('RYV-7');
+													expect(error.message).to.be(`You have set an option to filter the videos that are shuffled (${config.channelSettings[input.channelId].activeOption}), but no value for the option is set.`);
+
+													return;
+												}
+												expect().fail("No error was thrown");
 											});
 										}
 									} else {

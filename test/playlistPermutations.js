@@ -6,6 +6,7 @@ const zeroDaysAgo = daysAgo(0);
 const oneDayAgo = daysAgo(1);
 const twoDaysAgo = daysAgo(2);
 const threeDaysAgo = daysAgo(3);
+const sixDaysAgo = daysAgo(6);
 const fourteenDaysAgo = daysAgo(14);
 
 export const times = {
@@ -64,8 +65,43 @@ const configSyncModifiers = [
 	// shuffleNumVideosInPlaylist
 	[
 		5
+	],
+	// channelSettings: Use a generic channelId, which should be replaced in the test with the tested channelId
+	// One permutation for each filter type, within the filter types use two different values
+	// activeOption
+	[
+		"allVideosOption",
+		"dateOption",
+		"videoIdOption",
+		"percentageOption"
+	],
+	// channelSettingsPermutation
+	[
+		// Medium
+		{
+			"template": {
+				activeOption: null,
+				dateValue: sixDaysAgo,
+				videoIdValue: "LOC_V_00006",
+				percentageValue: 50
+			}
+		},
+		// Very recent
+		{
+			"template": {
+				activeOption: null,
+				dateValue: threeDaysAgo,
+				videoIdValue: "LOC_S_00001",
+				percentageValue: 1
+			}
+		},
+		// Nothing set
+		{
+			"template": {
+				activeOption: null
+			}
+		}
 	]
-	// TODO for testing the popup: channelSettings, currentChannelId/currentChannelName, numShuffledVideosTotal, lastViewedChangelogVersion
 ];
 
 export let configSyncPermutations = {};
@@ -106,7 +142,17 @@ for (const shuffleOpenInNewTabOption of configSyncModifiers[3]) {
 }
 configSyncPermutations.openInNewTabPermutations = openInNewTabPermutations;
 
-// Opening in a playlist=
+// Ignore shorts
+const ignoreShortsPermutations = [];
+for (const shuffleIgnoreShortsOption of configSyncModifiers[6]) {
+	let modifiedConfigSync = deepCopy(configSyncDefaults);
+	modifiedConfigSync.shuffleIgnoreShortsOption = shuffleIgnoreShortsOption;
+
+	ignoreShortsPermutations.push(modifiedConfigSync);
+}
+configSyncPermutations.ignoreShortsPermutations = ignoreShortsPermutations;
+
+// Opening in a playlist
 const openAsPlaylistPermutations = [];
 for (const shuffleOpenAsPlaylistOption of configSyncModifiers[7]) {
 	for (const shuffleNumVideosInPlaylist of configSyncModifiers[8]) {
@@ -119,15 +165,20 @@ for (const shuffleOpenAsPlaylistOption of configSyncModifiers[7]) {
 }
 configSyncPermutations.openAsPlaylistPermutations = openAsPlaylistPermutations;
 
-// Ignore shorts
-const ignoreShortsPermutations = [];
-for (const shuffleIgnoreShortsOption of configSyncModifiers[6]) {
-	let modifiedConfigSync = deepCopy(configSyncDefaults);
-	modifiedConfigSync.shuffleIgnoreShortsOption = shuffleIgnoreShortsOption;
+// Channel settings
+const channelSettingsPermutations = [];
+for (const activeOption of configSyncModifiers[9]) {
+	for (const channelSettingsPermutation of configSyncModifiers[10]) {
+		let modifiedConfigSync = deepCopy(configSyncDefaults);
+		let usedChannelSettingsPermutation = deepCopy(channelSettingsPermutation);
 
-	ignoreShortsPermutations.push(modifiedConfigSync);
+		usedChannelSettingsPermutation.template.activeOption = activeOption;
+		modifiedConfigSync.channelSettings = deepCopy(usedChannelSettingsPermutation);
+
+		channelSettingsPermutations.push(modifiedConfigSync);
+	}
 }
-configSyncPermutations.ignoreShortsPermutations = ignoreShortsPermutations;
+configSyncPermutations.channelSettingsPermutations = channelSettingsPermutations;
 
 // ---------- Playlists ----------
 
@@ -173,7 +224,7 @@ const defaultLocalVideos = {
 	"LOC_S_00001": threeDaysAgo.substring(0, 10),
 	"LOC_S_00002": daysAgo(4).substring(0, 10),
 	"LOC_S_00003": daysAgo(5).substring(0, 10),
-	"LOC_S_00004": daysAgo(6).substring(0, 10),
+	"LOC_S_00004": sixDaysAgo.substring(0, 10),
 	"LOC_S_00005": daysAgo(7).substring(0, 10),
 	"LOC_V_00006": daysAgo(8).substring(0, 10),
 	"LOC_V_00007": daysAgo(9).substring(0, 10),
