@@ -99,12 +99,15 @@ async function handleVersionSpecificUpdates(previousVersion) {
 
 // The shuffling page will open a port when it is started
 // By default, the port closing will cause the service worker to be reloaded, as this will fix a freezing issue
+let shufflingPageIsShuffling = false;
 chrome.runtime.onConnect.addListener(function (port) {
 	if (port.name === "shufflingPage") {
+		shufflingPageIsShuffling = true;
 		port.onDisconnect.addListener(reloadServiceWorker);
 
 		port.onMessage.addListener(function (msg) {
 			if (msg.command === "shuffleComplete") {
+				shufflingPageIsShuffling = false;
 				port.onDisconnect.removeListener(reloadServiceWorker);
 			}
 		});
@@ -152,7 +155,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			break;
 		case "openVideoInTabWithId":
 			openVideoInTabWithId(request.data.tabId, request.data.videoUrl).then(sendResponse);
-			break
+			break;
+		case "getShufflingPageShuffleStatus":
+			sendResponse(shufflingPageIsShuffling);
+			break;
 		default:
 			console.log(`Unknown command: ${request.command} (service worker). Hopefully another message listener will handle it.`);
 			sendResponse(`Unknown command: ${request.command} (service worker). Hopefully another message listener will handle it.`);
