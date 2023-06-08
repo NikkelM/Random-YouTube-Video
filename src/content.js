@@ -25,6 +25,9 @@ if (videoShuffleButton || channelShuffleButton) {
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
 async function startDOMObserver(event) {
+	// If the button previously displayed an error message, reset the text
+	resetShuffleButtonText();
+
 	const isVideoPage = isVideoUrl(window.location.href);
 
 	// Get the channel id from the event data
@@ -105,6 +108,13 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 	await chrome.runtime.sendMessage({ command: "updateCurrentChannel" });
 
 	buildShuffleButton(pageType, channelId, shuffleVideos);
+}
+
+function resetShuffleButtonText() {
+	// The element will not exist if the button has not been built yet
+	if (shuffleButtonTextElement) {
+		shuffleButtonTextElement.innerText = "\xa0Shuffle";
+	}
 }
 
 // ---------- Shuffle ----------
