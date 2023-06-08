@@ -48,12 +48,12 @@
 }
 
 .halfWidth {
-	width: 50%;
+	width: calc(max(600px, 50%));
 	margin: auto;
 }
 
 .thirdWidth {
-	width: 34%;
+	width: calc(max(400px, 34%));
 	margin: auto;
 }
 

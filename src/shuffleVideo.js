@@ -630,10 +630,12 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 							}
 						)
 						// If we have chosen at least one video, we just return those
+						/* c8 ignore start - Same behaviour as earlier, but this only triggers if the last chosen videos was a deleted one */
 					} else {
 						console.log(`No more videos to choose from (${numVideosToChoose - i + 1} videos too few uploaded on channel).`);
 						break outerLoop;
 					}
+					/* c8 ignore stop */
 				}
 			} while (!await testVideoExistence(randomVideo))
 		}
@@ -752,7 +754,7 @@ function chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOptio
 			break;
 
 		case "percentageOption":
-			if(activeOptionValue < 1 || activeOptionValue > 100) {
+			if (activeOptionValue < 1 || activeOptionValue > 100) {
 				throw new RandomYoutubeVideoError(
 					{
 						code: "RYV-8D",
