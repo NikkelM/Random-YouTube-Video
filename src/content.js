@@ -157,7 +157,7 @@ async function shuffleVideos() {
 			hasBeenShuffled = true;
 
 			// Inform the user about what has happened
-			alert(`Random YouTube Video:
+			window.alert(`Random YouTube Video:
 
 The extension's background worker was reloaded. This happens after an extension update, or after you interrupted a shuffle that was started from the popup.
 
@@ -169,7 +169,7 @@ The page will reload and you can try again.`)
 		}
 
 		// Alert the user about the error
-		alert(`Random YouTube Video:\n\n${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}${error.showTrace !== false ? "\n\n" + error.stack : ""}`);
+		window.alert(`Random YouTube Video:\n\n${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}${error.showTrace !== false ? "\n\n" + error.stack : ""}`);
 
 		// Immediately display the error
 		shuffleButtonTextElement.innerText = `\xa0${displayText}`;

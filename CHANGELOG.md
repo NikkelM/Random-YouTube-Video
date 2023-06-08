@@ -11,13 +11,13 @@
 
 ## v2.1.0
 
-- The extension is now available for [Firefox](https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/) as well.
+- The extension is now available for <a href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/">Firefox</a> as well.
 - The extension's background service worker will no longer reload if an error was encountered when shuffling using the button in the popup.
 - Fixed a bug where a fatal error would be encountered if the extension was choosing a non-embeddable video and shorts were ignored.
 - Fixed a bug where the 'Shuffle' button could sometimes show a negative fetch percentage when updating a channel's videos.
 - Fixed a bug where you were unable to shuffle when using the 'percentage' filtering option with a value of 100%.
 - Fixed a bug where it was possible that the default user settings would not get initialized correctly when first installing the extension.
-- Fixed a bug where new tabs opened by the extension would sometimes be opened in a new window instead.
+- Fixed a bug where new tabs opened by the extension would sometimes be opened in a new window instead of a new tab.
 - Fixed a number of bugs related to internal message passing that may have occurred when using the extension on Firefox.
 - Fixed some cosmetic issues across the extension.
 - Made the internal handling of user settings more robust.
@@ -74,7 +74,6 @@
 
 ## v1.4.4
 
-- Unfortunately, an attacker has compromised the default API keys provided by the extension. You can read the statement [here](https://github.com/NikkelM/Random-YouTube-Video/issues/125). These keys have therefore been disabled. You can still use your own custom API key, which is never transmitted to the extension's database and can therefore not be stolen. If you do not have a custom API key, you can generate one [here](https://developers.google.com/youtube/v3/getting-started). I will be working on reworking the way in which the extension communicates with YouTube's API to prevent this from happening again. I apologize for the inconvenience.
 - Fixed a bug where the channel name displayed in the popup would sometimes not be synchronized with the one that is used in the backend.
 - Fixed a bug where it would not be possible to set the shuffle percentage to 100% if another value was previously set.
 

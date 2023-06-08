@@ -44,15 +44,25 @@ describe('utils.js', function () {
 		});
 
 		context('setDOMTextWithDelay()', function () {
+			let clock;
+
+			beforeEach(() => {
+				clock = sinon.useFakeTimers();
+			});
+
+			afterEach(() => {
+				clock.restore();
+			});
+
 			it('should replace DOM text with default predicate', async function () {
 				expect(dom.window.document.getElementById("test-span").innerText).to.be("Before");
 
 				setDOMTextWithDelay(dom.window.document.getElementById("test-span"), "After", 30);
 
-				await new Promise(r => setTimeout(r, 10));
+				await clock.tickAsync(10);
 				expect(dom.window.document.getElementById("test-span").innerText).to.be("Before");
 
-				await new Promise(r => setTimeout(r, 30));
+				await clock.tickAsync(30);
 				expect(dom.window.document.getElementById("test-span").innerText).to.be("After");
 			});
 
@@ -64,10 +74,10 @@ describe('utils.js', function () {
 
 				setDOMTextWithDelay(dom.window.document.getElementById("test-span"), "After", 30, predicate);
 
-				await new Promise(r => setTimeout(r, 10));
+				await clock.tickAsync(10);
 				expect(dom.window.document.getElementById("test-span").innerText).to.be("Before");
 
-				await new Promise(r => setTimeout(r, 30));
+				await clock.tickAsync(30);
 				expect(dom.window.document.getElementById("test-span").innerText).to.be("After");
 			});
 
@@ -79,7 +89,7 @@ describe('utils.js', function () {
 
 				setDOMTextWithDelay(dom.window.document.getElementById("test-span"), "After", 20, predicate);
 
-				await new Promise(r => setTimeout(r, 30));
+				await clock.tickAsync(30);
 				expect(dom.window.document.getElementById("test-span").innerText).to.be("Before");
 			});
 		});
@@ -152,7 +162,7 @@ describe('utils.js', function () {
 
 			it('should resolve after the specified delay', async () => {
 				let hasResolved = false;
-				
+
 				delay(1000).then(() => {
 					hasResolved = true;
 				});
@@ -160,7 +170,7 @@ describe('utils.js', function () {
 				expect(hasResolved).to.be(false);
 				await clock.tickAsync(999);
 				expect(hasResolved).to.be(false);
-				await clock.tickAsync(1);	
+				await clock.tickAsync(1);
 				expect(hasResolved).to.be(true);
 			});
 		});
