@@ -6,6 +6,7 @@
 - Fixed the scrollbar on Chromium browsers not being styled correctly.
 - Added links to browser add-on stores to the popup.
 - The shuffle page opened by the popup will now inform you if a shuffle takes a bit longer than expected.
+- The 'Shuffle' button's text will now correctly reset when navigating to a different page after an error was encountered.
 - Fixed a bug where the shuffling page opened by the popup would sometimes incorrectly show an error message for a brief moment.
 - Internal pages such as the changelog page will now use more available space on smaller resolutions.
 <!--Releasenotes end-->
