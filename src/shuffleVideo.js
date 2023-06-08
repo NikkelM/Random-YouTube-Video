@@ -752,6 +752,16 @@ function chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOptio
 			break;
 
 		case "percentageOption":
+			if(activeOptionValue < 1 || activeOptionValue > 100) {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-8D",
+						message: `The percentage you specified (${activeOptionValue}) should be between 1 and 100. Normally, you should not be able to set such a value.`,
+						solveHint: "Please fix the percentage in the popup.",
+						showTrace: false
+					}
+				);
+			}
 			// Take only a percentage of the videos, and then choose a random video from that subset
 			videosToShuffle = videosByDate.slice(0, Math.max(1, Math.ceil(videosByDate.length * (activeOptionValue / 100))));
 			break;
