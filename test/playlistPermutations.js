@@ -2,6 +2,7 @@ import { configSyncDefaults } from "../src/config.js";
 
 // ---------- Constants used by the permutations ----------
 // Keep these in sync with the values compared against in the tests
+const tomorrow = daysAgo(-1);
 const zeroDaysAgo = daysAgo(0);
 const oneDayAgo = daysAgo(1);
 const twoDaysAgo = daysAgo(2);
@@ -10,6 +11,7 @@ const sixDaysAgo = daysAgo(6);
 const fourteenDaysAgo = daysAgo(14);
 
 export const times = {
+	tomorrow,
 	zeroDaysAgo,
 	oneDayAgo,
 	threeDaysAgo,
@@ -77,8 +79,9 @@ const configSyncModifiers = [
 	],
 	// channelSettingsPermutation
 	[
-		// Medium
+		// Normal behaviour
 		{
+			"type": "normal",
 			"template": {
 				activeOption: null,
 				dateValue: sixDaysAgo,
@@ -86,17 +89,19 @@ const configSyncModifiers = [
 				percentageValue: 50
 			}
 		},
-		// Very recent
+		// Error: No videos after date, ID does not map to video, percentage too low
 		{
+			"type": "error",
 			"template": {
 				activeOption: null,
-				dateValue: threeDaysAgo,
-				videoIdValue: "LOC_S_00001",
-				percentageValue: 1
+				dateValue: tomorrow,
+				videoIdValue: "DoesNotExistId",
+				percentageValue: 0
 			}
 		},
 		// Nothing set
 		{
+			"type": "empty",
 			"template": {
 				activeOption: null
 			}
@@ -157,6 +162,9 @@ const openAsPlaylistPermutations = [];
 for (const shuffleOpenAsPlaylistOption of configSyncModifiers[7]) {
 	for (const shuffleNumVideosInPlaylist of configSyncModifiers[8]) {
 		let modifiedConfigSync = deepCopy(configSyncDefaults);
+		// Always open in a new tab, so we can check the stub
+		modifiedConfigSync.shuffleOpenInNewTabOption = true;
+
 		modifiedConfigSync.shuffleOpenAsPlaylistOption = shuffleOpenAsPlaylistOption;
 		modifiedConfigSync.shuffleNumVideosInPlaylist = shuffleNumVideosInPlaylist;
 
@@ -169,6 +177,12 @@ configSyncPermutations.openAsPlaylistPermutations = openAsPlaylistPermutations;
 const channelSettingsPermutations = [];
 for (const activeOption of configSyncModifiers[9]) {
 	for (const channelSettingsPermutation of configSyncModifiers[10]) {
+		// Exclude invalid combinations
+		// The allVideosOption always works
+		if (activeOption === "allVideosOption" && channelSettingsPermutation.type !== "normal") continue;
+		// The allVideosOption and percentageOption do not error out if no value is set
+		if (["allVideosOption", "percentageOption"].includes(activeOption) && channelSettingsPermutation.type === "empty") continue;
+
 		let modifiedConfigSync = deepCopy(configSyncDefaults);
 		let usedChannelSettingsPermutation = deepCopy(channelSettingsPermutation);
 

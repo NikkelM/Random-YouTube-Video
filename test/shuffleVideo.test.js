@@ -15,16 +15,13 @@ async function getKeyFromLocalStorage(key) {
 }
 
 function setupChannelSettings(configPermutations, playlistPermutations) {
-	// config.channelSettings contains one object with the key "template" and an object as value
-	// The key should be changed to be the current input.channelId										
-	// config.channelSettings[input.channelId] = deepCopy(config.channelSettings.template);
-	// delete config.channelSettings.template;
-	// await chrome.storage.sync.set(config);
 	configPermutations.forEach((config) => {
 		playlistPermutations.forEach((playlist) => {
 			config.channelSettings[playlist.channelId] = deepCopy(config.channelSettings.template);
 		});
+		// Remove these, as they are not valid in the config structure
 		delete config.channelSettings.template;
+		delete config.channelSettings.type;
 	});
 }
 
@@ -477,7 +474,7 @@ describe('shuffleVideo', function () {
 						// ---------- Fetch mock responses ----------
 						// ----- YT API responses -----
 						// Combine the local, db and newVideos into one object, but remove locally deleted videos, as they do not exist in the YT API anymore
-						const allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos });
+						let allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos });
 						for (const [videoId, publishTime] of Object.entries(allVideos)) {
 							if (videoId.startsWith('DEL_LOC')) {
 								delete allVideos[videoId];
@@ -485,10 +482,11 @@ describe('shuffleVideo', function () {
 								allVideos[videoId] = publishTime;
 							}
 						}
+						allVideos = Object.fromEntries(Object.entries(allVideos).sort((a, b) => b[1].localeCompare(a[1])));
 
 						let YTAPIItems = [];
 						// The order of these is important, as the YouTube API will put the newest ones first, so sort by publishTime
-						for (const [videoId, publishTime] of Object.entries(allVideos).sort((a, b) => b[1].localeCompare(a[1]))) {
+						for (const [videoId, publishTime] of Object.entries(allVideos)) {
 							YTAPIItems.push({
 								"kind": "youtube#playlistItem",
 								"etag": "tag",
@@ -678,14 +676,14 @@ describe('shuffleVideo', function () {
 											});
 										}
 									} else if (key === 'openAsPlaylistPermutations') {
-										if (config.shuffleOpenAsPlaylistOption && config.shuffleOpenInNewTabOption && !config.shuffleReUseNewTabOption) {
+										if (config.shuffleOpenAsPlaylistOption) {
 											it('should open the video in a playlist', async function () {
 												await chooseRandomVideo(input.channelId, false, domElement);
 
 												expect(windowOpenStub.calledOnce).to.be(true);
 												expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
 											});
-										} else if (!config.shuffleOpenAsPlaylistOption && config.shuffleOpenInNewTabOption && !config.shuffleReUseNewTabOption) {
+										} else {
 											it('should not open the video in a playlist', async function () {
 												await chooseRandomVideo(input.channelId, false, domElement);
 
@@ -702,10 +700,9 @@ describe('shuffleVideo', function () {
 											});
 										}
 									} else if (key === 'channelSettingsPermutations') {
-										// The percentageOption uses 100 as the default, and the allVideosOption has no value that can be set
-										if (Object.keys(config.channelSettings[input.channelId]).length === 1 && !['allVideosOption', 'percentageOption'].includes(config.channelSettings[input.channelId].activeOption)) {
+										// The percentageOption uses 100 as the default, and the allVideosOption has no value that can be set, so no error will be thrown
+										if (Object.keys(config.channelSettings[input.channelId]).length === 1) {
 											it('should throw an error if the activeOption has no value set', async function () {
-												console.log(config.channelSettings[input.channelId])
 												try {
 													await chooseRandomVideo(input.channelId, false, domElement);
 												} catch (error) {
@@ -716,6 +713,62 @@ describe('shuffleVideo', function () {
 													return;
 												}
 												expect().fail("No error was thrown");
+											});
+											// These permutations contain only settings that lead to an error
+										} else if (config.channelSettings[input.channelId].videoIdValue === 'DoesNotExistId') {
+											it('should throw an error if the there are no videos matching the filter settings', async function () {
+												try {
+													await chooseRandomVideo(input.channelId, false, domElement);
+												} catch (error) {
+													expect(error).to.be.an(RandomYoutubeVideoError);
+													expect(error.code).to.contain('RYV-8');
+
+													return;
+												}
+												expect().fail("No error was thrown");
+											});
+										} else {
+											it('should apply the correct filter', async function () {
+												// The videos onto which the filter is applied includes the deleted videos (this changes the result e.g. for the percentageOption)
+												let filteredVideos = deepCopy({ ...input.dbVideos, ...input.dbDeletedVideos, ...input.localVideos, ...input.localDeletedVideos, ...input.newUploadedVideos });
+												filteredVideos = Object.fromEntries(Object.entries(filteredVideos).sort((a, b) => b[1].localeCompare(a[1])));
+
+												await chooseRandomVideo(input.channelId, false, domElement);
+
+												const chosenVideos = windowOpenStub.args[0][0].split('video_ids=')[1].split(',');
+
+												// Depending on the activeOption, make sure that only videos that match the filter are chosen
+												switch (config.channelSettings[input.channelId].activeOption) {
+													case 'allVideosOption':
+														for (const videoId of chosenVideos) {
+															expect(Object.keys(filteredVideos).includes(videoId)).to.be(true);
+														}
+														break;
+													case 'dateOption':
+														for (const videoId of chosenVideos) {
+															expect(filteredVideos[videoId]).to.be.greaterThan(config.channelSettings[input.channelId].dateValue);
+														}
+														break;
+													case 'videoIdOption':
+														// Get all videos from index 0 to index of the videoIdValue, excluding the videoIdValue
+														const videosAfterVideoWithId = Object.keys(filteredVideos).slice(0, Object.keys(filteredVideos).indexOf(config.channelSettings[input.channelId].videoIdValue));
+														// All videos that were chosen must be in the videosAfterVideoWithId array
+														for (const videoId of chosenVideos) {
+															expect(videosAfterVideoWithId.includes(videoId)).to.be(true);
+														}
+														break;
+													case 'percentageOption':
+														// Get the most recent (starting from index 0) videos that match the percentageValue
+														const percentageVideos = Object.keys(filteredVideos).slice(0, Math.max(1, Math.ceil(Object.keys(filteredVideos).length * (config.channelSettings[input.channelId].percentageValue / 100))));
+
+														// All videos that were chosen must be in the percentageVideos array
+														for (const videoId of chosenVideos) {
+															expect(percentageVideos.includes(videoId)).to.be(true);
+														}
+														break;
+													default:
+														expect().fail("Untested activeOption");
+												}
 											});
 										}
 									} else {
@@ -773,7 +826,7 @@ describe('shuffleVideo', function () {
 						// ---------- Fetch mock responses ----------
 						// ----- YT API responses -----
 						// Combine the local, db and newVideos into one object, but remove locally deleted videos, as they do not exist in the YT API anymore
-						const allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos });
+						let allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos });
 						for (const [videoId, publishTime] of Object.entries(allVideos)) {
 							if (videoId.startsWith('DEL_LOC')) {
 								delete allVideos[videoId];
@@ -781,10 +834,11 @@ describe('shuffleVideo', function () {
 								allVideos[videoId] = publishTime;
 							}
 						}
+						allVideos = Object.fromEntries(Object.entries(allVideos).sort((a, b) => b[1].localeCompare(a[1])));
 
 						let YTAPIItems = [];
 						// The order of these is important, as the YouTube API will put the newest ones first, so sort by publishTime
-						for (const [videoId, publishTime] of Object.entries(allVideos).sort((a, b) => b[1].localeCompare(a[1]))) {
+						for (const [videoId, publishTime] of Object.entries(allVideos)) {
 							YTAPIItems.push({
 								"kind": "youtube#playlistItem",
 								"etag": "tag",
