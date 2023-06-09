@@ -192,12 +192,13 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 	} else {
 		console.log("Updating playlistInfo in the database...");
 		// Contains all properties except the videos
-		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => key !== "videos"));
+		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => (key !== "videos" && key !== "knownShorts")));
 
 		// Upload the 'metadata'
 		update(ref(db, playlistId), playlistInfoWithoutVideos);
 
 		// Update the videos separately to not overwrite existing videos
+		// If we have to update the shorts, we will always overwrite the videos as well, so we don't have to separately upload them here
 		update(ref(db, playlistId + "/videos"), playlistInfo.videos);
 	}
 

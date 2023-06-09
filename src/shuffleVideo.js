@@ -107,16 +107,21 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		// Update the remaining user quota in the configSync
 		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
 
-		let chosenVideos, encounteredDeletedVideos;
-		({ chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
+		let chosenVideos, encounteredDeletedVideos, encounteredNewShorts;
+		({ chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos, encounteredNewShorts } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
 
 		if (shouldUpdateDatabase && databaseSharing) {
 			playlistInfo["lastUpdatedDBAt"] = new Date().toISOString();
 
 			let videosToDatabase = {};
 			// If any videos need to be deleted, this should be the union of videos, newvideos, minus the videos to delete
-			if (encounteredDeletedVideos) {
-				console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
+			if (encounteredDeletedVideos || encounteredNewShorts) {
+				if (encounteredDeletedVideos) {
+					console.log("Some videos need to be deleted from the database as they no longer exist...");
+				}
+				if (encounteredNewShorts) {
+					console.log("Some videos have been identified as shorts and have to be reassigned in the database...");
+				}
 				videosToDatabase = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
 			} else {
 				// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
@@ -124,7 +129,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 				videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
 			}
 
-			await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos);
+			await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos, encounteredNewShorts);
 
 			// If we just updated the database, we automatically have the same version as it
 			playlistInfo["lastFetchedFromDB"] = playlistInfo["lastUpdatedDBAt"];
@@ -142,7 +147,8 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			"lastAccessedLocally": new Date().toISOString(),
 			"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
 			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
-			"videos": playlistInfo["videos"] ?? {}
+			"videos": playlistInfo["videos"] ?? {},
+			"knownShorts": playlistInfo["knownShorts"] ?? {},
 		};
 
 		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
@@ -167,12 +173,19 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 	let playlistInfo = await chrome.runtime.sendMessage(msg);
 
-	/* c8 ignore start - These are legacy conversions we do not need to test */
+	/* c8 ignore start - These are legacy conversions we don't want to test */
 	// In case the playlist is still in the old Array format (before v1.0.0) in the database, convert it to the new format
 	if (playlistInfo && playlistInfo["videos"] && Array.isArray(playlistInfo["videos"])) {
 		console.log("The playlist was found in the database, but it is in an old format (before v1.0.0). Removing...");
 		mustOverwriteDatabase = true;
 		return {};
+	}
+
+	// In case the playlistInfo does not contain a 'knownShorts' key (before v2.1.1), add it
+	if (playlistInfo && !playlistInfo["knownShorts"]) {
+		console.log("The playlist was found in the database, but it is in an old format (before v2.1.1). Updating format...");
+
+		playlistInfo["knownShorts"] = {};
 	}
 
 	// In case the videos have the upload date AND time in the database (before v1.3.0), convert it to only the date
@@ -184,7 +197,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 			playlistInfo["videos"][videoId] = playlistInfo["videos"][videoId].substring(0, 10);
 		}
 
-		await uploadPlaylistToDatabase(playlistInfo, playlistInfo["videos"], playlistId, true, false);
+		await uploadPlaylistToDatabase(playlistInfo, playlistInfo["videos"], playlistId, true, false, false);
 	}
 	/* c8 ignore stop */
 
@@ -198,7 +211,9 @@ async function tryGetPlaylistFromDB(playlistId) {
 }
 
 // Upload a playlist to the database
-async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos) {
+async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, mustOverwriteDatabase, encounteredDeletedVideos, encounteredNewShorts) {
+	const overwrite = mustOverwriteDatabase || encounteredDeletedVideos || encounteredNewShorts;
+
 	// Only upload the wanted keys
 	const playlistInfoForDatabase = {
 		"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
@@ -206,15 +221,22 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsP
 		"videos": videosToDatabase
 	};
 
+	// We only need to upload the shorts if we have to overwrite the database entries
+	if (overwrite) {
+		playlistInfoForDatabase["knownShorts"] = playlistInfo["knownShorts"];
+	}
+
 	// Send the playlist info to the database
 	const msg = {
 		// mustOverwriteDatabase: In case the data is still in an old format, we need to overwrite it instead of updating
-		command: (mustOverwriteDatabase || encounteredDeletedVideos) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
+		command: (overwrite) ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
 		data: {
 			key: uploadsPlaylistId,
 			val: playlistInfoForDatabase
 		}
 	};
+
+	console.log(msg)
 
 	await chrome.runtime.sendMessage(msg);
 }
@@ -271,6 +293,9 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 		progressTextElement.innerText = `\xa0Fetching: ${Math.round(resultsFetchedCount / totalResults * 100)}%`;
 	}
 
+	// Add an empty object that will store known shorts uploaded on this channel in the future
+	playlistInfo["knownShorts"] = {};
+
 	// For each video, add an entry in the form of videoId: uploadTime
 	playlistInfo["videos"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)]));
 
@@ -322,7 +347,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	const totalNumVideosOnChannel = apiResponse["pageInfo"]["totalResults"];
 	// If the channel has already reached the API cap, we don't know how many new videos there are, so we put an estimate to show the user something
 	// The difference could be negative if there are more videos saved in the database than exist in the playlist, e.g videos were deleted
-	const totalExpectedNewResults = totalNumVideosOnChannel > 19999 ? 1000 : Math.max(totalNumVideosOnChannel - getLength(playlistInfo["videos"]), 0);
+	const totalExpectedNewResults = totalNumVideosOnChannel > 19999 ? 1000 : Math.max(totalNumVideosOnChannel - (getLength(playlistInfo["videos"] + getLength(playlistInfo["knownShorts"]))), 0);
 
 	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
 	if (totalExpectedNewResults / 50 >= userQuotaRemainingToday + 50 && !isCustomKey) {
@@ -353,7 +378,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 		console.log("No new videos have been published since the last check.");
 
 		// Make sure that we are not missing any videos in the database
-		const numVideosInDatabase = getLength(playlistInfo["videos"]) + (getLength(playlistInfo["newVideos"] ?? {}));
+		const numVideosInDatabase = getLength(playlistInfo["videos"]) + getLength(playlistInfo["knownShorts"]) + (getLength(playlistInfo["newVideos"] ?? {}));
 		if (totalNumVideosOnChannel > numVideosInDatabase) {
 			console.log(`There are less videos saved in the database than are uploaded on the channel (${numVideosInDatabase}/${totalNumVideosOnChannel}), so some videos are missing. Refetching all videos...`);
 			return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement);
@@ -398,7 +423,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	playlistInfo["newVideos"] = newVideos;
 
 	// Make sure that we are not missing any videos in the database
-	const numVideosInDatabase = getLength(playlistInfo["videos"]) + (getLength(playlistInfo["newVideos"] ?? {}));
+	const numVideosInDatabase = getLength(playlistInfo["videos"]) + getLength(playlistInfo["knownShorts"]) + (getLength(playlistInfo["newVideos"] ?? {}));
 	if (totalNumVideosOnChannel > numVideosInDatabase) {
 		console.log(`There are less videos saved in the database than are uploaded on the channel (${numVideosInDatabase}/${totalNumVideosOnChannel}), so some videos are missing. Refetching all videos...`);
 		return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement);
@@ -517,6 +542,34 @@ async function testVideoExistence(videoId) {
 	return true;
 }
 
+async function isShort(videoId) {
+	let videoIsShort;
+	try {
+		await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${videoId}&format=json`, {
+			method: "GET"
+		}).then(res => res.json())
+			.then(res => {
+				if (res.thumbnail_url.endsWith("hq2.jpg")) {
+					videoIsShort = true;
+				} else {
+					videoIsShort = false;
+				}
+			});
+		// We get an 'Unauthorized' response if the video cannot be embedded, which cannot be parsed as JSON using res.json()
+		// This fallback tests if we get redirected to a normal video page, which means the video is not a short, but this takes longer
+	} catch (error) {
+		await fetch(`https://www.youtube.com/shorts/${videoId}`)
+			.then(res => {
+				if (res.redirected) {
+					videoIsShort = false;
+				} else {
+					videoIsShort = true;
+				}
+			});
+	}
+	return videoIsShort;
+}
+
 // Requests the API key from the background script
 async function getAPIKey(useAPIKeyAtIndex = null) {
 	const msg = {
@@ -577,27 +630,33 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 
 	// Sort all videos by date
 	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
+	if (!configSync.shuffleIgnoreShortsOption) {
+		allVideos = Object.assign({}, allVideos, playlistInfo["knownShorts"]);
+	}
+
 	let videosByDate = Object.keys(allVideos).sort((a, b) => {
 		return new Date(allVideos[b]) - new Date(allVideos[a]);
 	});
 
-	// Error handling for videosToShuffle being undefined/empty is done in chooseVideoWithFilter()
-	let videosToShuffle = chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue);
+	// Error handling for videosToShuffle being undefined/empty is done in applyShuffleFilter()
+	let videosToShuffle = applyShuffleFilter(videosByDate, activeShuffleFilterOption, activeOptionValue);
 
 	let chosenVideos = [];
 	let randomVideo;
 	let encounteredDeletedVideos = false;
+	let encounteredNewShorts = false;
+
 	const numVideosToChoose = configSync.shuffleOpenAsPlaylistOption ? configSync.shuffleNumVideosInPlaylist : 1;
 
 	console.log(`Choosing ${numVideosToChoose} random video${numVideosToChoose > 1 ? "s" : ""}.`);
 
-	// We use this label to break out of both the for loop and the while loop if there are no more videos after encountering deleted videos
+	// We use this label to break out of both the for loop and the while loop if there are no more videos after encountering a deleted video
 	outerLoop:
 	for (let i = 0; i < numVideosToChoose; i++) {
 		if (videosToShuffle.length === 0) {
 			// All available videos were chosen from, so we need to terminate the loop early
-			console.log(`No more videos to choose from (${numVideosToChoose - i + 1} videos too few uploaded on channel).`);
-			break;
+			console.log(`No more videos to choose from (${numVideosToChoose - i} videos too few uploaded on channel).`);
+			break outerLoop;
 		}
 
 		randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
@@ -609,8 +668,12 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			shouldUpdateDatabase = true;
 			do {
 				// Remove the video from the local playlist object
-				// It will always be in the "videos" object, as we have just fetched the "newVideos" from the YouTube API
-				delete playlistInfo["videos"][randomVideo];
+				// It will always be in the "videos" or "knownShorts" object, as we have just fetched the "newVideos" from the YouTube API
+				if (playlistInfo["videos"][randomVideo]) {
+					delete playlistInfo["videos"][randomVideo];
+				} else {
+					delete playlistInfo["knownShorts"][randomVideo];
+				}
 
 				// Remove the deleted video from the videosToShuffle array and choose a new random video
 				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
@@ -632,7 +695,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 						// If we have chosen at least one video, we just return those
 						/* c8 ignore start - Same behaviour as earlier, but this only triggers if the last chosen videos was a deleted one */
 					} else {
-						console.log(`No more videos to choose from (${numVideosToChoose - i + 1} videos too few uploaded on channel).`);
+						console.log(`No more videos to choose from (${numVideosToChoose - i} videos too few uploaded on channel).`);
 						break outerLoop;
 					}
 					/* c8 ignore stop */
@@ -644,36 +707,19 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		// We can test if it is a short by sending a HEAD request to the oembed API, the thumbnail url will end in "hq2.jpg" for shorts and "hqdefault.jpg" for normal videos
 		// Sending a request to the oembed API is significantly faster than sending a request to https://www.youtube.com/shorts/${randomVideo}
 		if (configSync.shuffleIgnoreShortsOption) {
-			let response;
-			try {
-				await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${randomVideo}&format=json`, {
-					method: "GET"
-				}).then(res => res.json())
-					.then(res => response = res);
-				// We get an 'Unauthorized' response if the video cannot be embedded, which cannot be parsed as JSON
-			} catch (error) {
-				await fetch(`https://www.youtube.com/shorts/${randomVideo}`)
-					.then(res => {
-						if (!res.redirected) {
-							// The video is a short, so we do not want to choose it
-							// Workaround to simulate a response from the oembed API
-							response = {
-								thumbnail_url: `https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`
-							};
-						} else {
-							response = {
-								thumbnail_url: `https://i.ytimg.com/vi/${randomVideo}/hqdefault.jpg`
-							};
-						}
-					});
-			}
+			const videoIsShort = await isShort(randomVideo);
 
 			// For shorts, the thumbnail url ends in "hq2.jpg", for normal videos it ends in "hqdefault.jpg"
-			if (response.thumbnail_url === (`https://i.ytimg.com/vi/${randomVideo}/hq2.jpg`)) {
+			if (videoIsShort) {
+				encounteredNewShorts = true;
+				shouldUpdateDatabase = true;
 				console.log('A chosen video was a short, but shorts are ignored. Choosing a new random video.');
 
+				// Remove the video from playlistInfo["videos"] and add it to playlistInfo["knownShorts"]
+				playlistInfo["knownShorts"][randomVideo] = playlistInfo["videos"][randomVideo];
+				delete playlistInfo["videos"][randomVideo];
+
 				// Remove the video from videosToShuffle to not choose it again
-				// Do not remove it from the playlistInfo object, as we do not want to delete it from the database
 				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 
 				// We need to decrement i, as we did not choose a video
@@ -690,13 +736,25 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 		}
 	}
+
+	// If we haven't chosen any videos: The channel has no uploads, or only shorts
+	if (chosenVideos.length === 0) {
+		throw new RandomYoutubeVideoError(
+			{
+				code: "RYV-6B",
+				message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring shorts and the channel has only uploaded shorts.",
+				solveHint: "If you are ignoring shorts, disable the option in the popup to shuffle from this channel.",
+				showTrace: false
+			}
+		)
+	}
 	console.log(`${chosenVideos.length} random video${chosenVideos.length > 1 ? "s have" : " has"} been chosen: [${chosenVideos}]`);
 
-	return { chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
+	return { chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos, encounteredNewShorts };
 }
 
 // Applies a filter to the playlist object, based on the setting set in the popup
-function chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue) {
+function applyShuffleFilter(videosByDate, activeShuffleFilterOption, activeOptionValue) {
 	let videosToShuffle;
 	switch (activeShuffleFilterOption) {
 		case "allVideosOption":
@@ -707,7 +765,7 @@ function chooseVideoWithFilter(allVideos, videosByDate, activeShuffleFilterOptio
 		case "dateOption":
 			// Take only videos that were released after the specified date
 			videosToShuffle = videosByDate.filter((videoId) => {
-				return new Date(allVideos[videoId]) >= new Date(activeOptionValue);
+				return new Date(videosByDate[videoId]) >= new Date(activeOptionValue);
 			});
 			// If the list is empty, alert the user
 			if (videosToShuffle.length === 0) {
