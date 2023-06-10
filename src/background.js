@@ -169,7 +169,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // ---------- Firebase ----------
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, child, update, get } from 'firebase/database';
+import { getDatabase, ref, child, update, get, set } from 'firebase/database';
 
 const firebaseConfig = {
 	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
@@ -188,18 +188,20 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 	if (overwriteVideos) {
 		console.log("Setting playlistInfo in the database...");
 		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested within the playlist
-		update(ref(db, playlistId), playlistInfo);
+		set(ref(db, playlistId), playlistInfo);
 	} else {
 		console.log("Updating playlistInfo in the database...");
 		// Contains all properties except the videos
-		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => (key !== "videos" && key !== "knownShorts")));
+		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => (key !== "videos")));
 
 		// Upload the 'metadata'
 		update(ref(db, playlistId), playlistInfoWithoutVideos);
 
 		// Update the videos separately to not overwrite existing videos
-		// If we have to update the shorts, we will always overwrite the videos as well, so we don't have to separately upload them here
-		update(ref(db, playlistId + "/videos"), playlistInfo.videos);
+		update(ref(db, playlistId + "/videos/knownVideos"), playlistInfo.videos.knownVideos ?? {});
+		update(ref(db, playlistId + "/videos/knownShorts"), playlistInfo.videos.knownShorts ?? {});
+		// Overwrite the unknown videos, as some were removed and moved to one of the other two locations
+		set(ref(db, playlistId + "/videos/unknownType"), playlistInfo.videos.unknownType ?? {});
 	}
 
 	return "PlaylistInfo was sent to database.";
