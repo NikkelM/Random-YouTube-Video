@@ -204,7 +204,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 
 	// In case the playlistInfo does not contain the 'knownShorts', ... keys (before v2.1.1), add them
 	// This can be checked bz checking if the "videos" object is a string, or an object (the new format is an object)
-	if (playlistInfo && playlistInfo["videos"] && typeof playlistInfo["videos"] === "string") {
+	if (playlistInfo && playlistInfo["videos"] && (typeof playlistInfo["videos"][Object.keys(playlistInfo["videos"])[0]]) === "string") {
 		console.log("The playlist was found in the database, but it is in an old format (before v2.1.1). Updating format...");
 
 		const videos = JSON.parse(JSON.stringify(playlistInfo["videos"]));
@@ -557,7 +557,7 @@ async function testVideoExistence(videoId) {
 		method: "HEAD"
 	});
 
-	if (response.status === 400) {
+	if (response.status !== 200) {
 		console.log(`Video doesn't exist: ${videoId}`);
 		return false;
 	}
@@ -692,16 +692,16 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			do {
 				// Remove the video from the local playlist object
 				switch (true) {
-					case playlistInfo["videos"]["unknownType"][randomVideo]:
+					case playlistInfo["videos"]["unknownType"][randomVideo] !== undefined:
 						delete playlistInfo["videos"]["unknownType"][randomVideo];
 						break;
-					case playlistInfo["videos"]["knownShorts"][randomVideo]:
+					case playlistInfo["videos"]["knownShorts"][randomVideo] !== undefined:
 						delete playlistInfo["videos"]["knownShorts"][randomVideo];
 						break;
-					case playlistInfo["videos"]["knownVideos"][randomVideo]:
+					case playlistInfo["videos"]["knownVideos"][randomVideo] !== undefined:
 						delete playlistInfo["videos"]["knownVideos"][randomVideo];
 						break;
-					case playlistInfo["newVideos"][randomVideo]:
+					case playlistInfo["newVideos"][randomVideo] !== undefined:
 						delete playlistInfo["newVideos"][randomVideo];
 						break;
 					default:
