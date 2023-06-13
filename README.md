@@ -17,19 +17,21 @@ Firefox:
 <br>
 <a href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/">
 <img src="https://img.shields.io/amo/v/random-youtube-video?label=version"
-		alt="Firefox version" ></a>
+		alt="Firefox version"></a>
 <a href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/">
 	<img src="https://img.shields.io/amo/rating/random-youtube-video?label=rating"
-		alt="Firefox rating" ></a>
+		alt="Firefox rating"></a>
 <a href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/">
 	<img alt="Mozilla Add-on" src="https://img.shields.io/amo/users/random-youtube-video?label=users"
-		alt="Firefox users" ></a>
+		alt="Firefox users"></a>
 <br>
 <br>
-<img alt="GitHub Workflow Status - Tests" src="https://img.shields.io/github/actions/workflow/status/NikkelM/Random-YouTube-Video/test.yml?branch=main&label=tests">
+<a href='https://github.com/NikkelM/Random-YouTube-Video/actions?query=branch%3Amain'>
+	<img src="https://img.shields.io/github/actions/workflow/status/NikkelM/Random-YouTube-Video/test.yml?branch=main&label=tests"
+		alt="GitHub Workflow Status - Tests"></a>
 <a href='https://coveralls.io/github/NikkelM/Random-YouTube-Video?branch=main'>
 	<img src='https://coveralls.io/repos/github/NikkelM/Random-YouTube-Video/badge.svg?branch=main' 
-		alt='Coverage Status' /></a>
+		alt='Coverage Status'></a>
 <br>
 <a href="https://github.com/NikkelM/Random-YouTube-Video/tree/main/CHANGELOG.md">
   <img src="https://img.shields.io/badge/view-changelog-blue"
