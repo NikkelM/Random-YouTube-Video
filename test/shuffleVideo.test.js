@@ -589,7 +589,6 @@ describe('shuffleVideo', function () {
 
 							await chooseRandomVideo(input.playlistId, false, domElement);
 
-							console.log(windowOpenStub.args);
 							expect(windowOpenStub.calledOnce).to.be(true);
 							expect(windowOpenStub.args[0][0]).to.not.be('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
 
