@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.1.1 (Unreleased)
+## v2.2.0
 
 <!--Releasenotes start-->
 - Fixed the scrollbar on Chromium browsers not being styled correctly.
@@ -8,6 +8,7 @@
 - The shuffle page opened by the popup will now inform you if a shuffle takes a bit longer than expected.
 - The 'Shuffle' button's text will now correctly reset when navigating to a different page after an error was encountered.
 - If an error was encountered when shuffling from the popup, the opened shuffle page will no longer prevent you from shuffling again.
+- Fixed a bug where the extension's service worker would get shut down while video data was being fetched from the YouTube API, leading to a 'Receiving end does not exist' error.
 - Fixed a bug where the shuffling page opened by the popup would sometimes incorrectly show an error message for a brief moment.
 - Internal pages such as the changelog page will now use more available space on smaller resolutions.
 <!--Releasenotes end-->
