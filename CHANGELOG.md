@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.1.1 (Unreleased)
+## v2.2.0
 
 <!--Releasenotes start-->
 - Fixed the scrollbar on Chromium browsers not being styled correctly.
