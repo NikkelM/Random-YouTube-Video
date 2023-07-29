@@ -173,7 +173,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // ---------- Firebase ----------
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, child, update, get, set, remove } from 'firebase/database';
+import { getDatabase, ref, child, update, get, remove } from 'firebase/database';
 
 const firebaseConfig = {
 	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
@@ -192,7 +192,7 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 	if (overwriteVideos) {
 		console.log("Setting playlistInfo in the database...");
 		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested within the playlist
-		set(ref(db, playlistId), playlistInfo);
+		update(ref(db, playlistId), playlistInfo);
 	} else {
 		console.log("Updating playlistInfo in the database...");
 		// Contains all properties except the videos
