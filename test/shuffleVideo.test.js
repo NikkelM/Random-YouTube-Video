@@ -750,7 +750,6 @@ describe('shuffleVideo', function () {
 												let filteredVideos = deepCopy({ ...input.dbVideos, ...input.dbDeletedVideos, ...input.localVideos, ...input.localDeletedVideos, ...input.newUploadedVideos });
 												filteredVideos = Object.fromEntries(Object.entries(filteredVideos).sort((a, b) => b[1].localeCompare(a[1])));
 
-												console.log(config)
 												await chooseRandomVideo(input.channelId, false, domElement);
 
 												const chosenVideos = windowOpenStub.args[0][0].split('video_ids=')[1].split(',');
