@@ -173,7 +173,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // ---------- Firebase ----------
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, child, update, get, remove } from 'firebase/database';
+import { getDatabase, ref, child, update, get, set, remove } from 'firebase/database';
 
 const firebaseConfig = {
 	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
