@@ -463,7 +463,9 @@ describe('shuffleVideo', function () {
 				// Playlist that has to be updated from the YT API as well, YT API has no new videos
 				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist')),
 				// Playlist that has to be updated from the YT API as well, YT API has new videos
-				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist'))
+				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist')),
+				// Playlist that only has shorts saved locally
+				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsOnlyShorts_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist')),
 			];
 			setupChannelSettings(configSyncPermutations.channelSettingsPermutations, playlists);
 
@@ -692,11 +694,27 @@ describe('shuffleVideo', function () {
 										}
 									} else if (key === 'ignoreShortsPermutations') {
 										if (config.shuffleIgnoreShortsOption) {
-											it('should not choose any shorts', async function () {
-												await chooseRandomVideo(input.channelId, false, domElement);
+											if (input.playlistId.includes('LocalPlaylistContainsOnlyShorts')) {
+												it('should throw an error if the playlist only contains shorts', async function () {
+													try {
+														await chooseRandomVideo(input.channelId, false, domElement);
+													}
+													catch (error) {
+														expect(error).to.be.a(RandomYoutubeVideoError);
+														expect(error.code).to.be('RYV-6B');
+														expect(error.message).to.be('All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring shorts and the channel has only uploaded shorts.');
 
-												expect(windowOpenStub.args[0][0]).to.not.contain('_S_');
-											});
+														return;
+													}
+													expect().fail("No error was thrown");
+												});
+											} else {
+												it('should not choose any shorts', async function () {
+													await chooseRandomVideo(input.channelId, false, domElement);
+
+													expect(windowOpenStub.args[0][0]).to.not.contain('_S_');
+												});
+											}
 										}
 									} else if (key === 'channelSettingsPermutations') {
 										// The percentageOption uses 100 as the default, and the allVideosOption has no value that can be set, so no error will be thrown
