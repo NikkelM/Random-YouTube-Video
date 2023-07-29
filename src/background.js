@@ -138,6 +138,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		// Updates (overwriting videos) a playlist in Firebase
 		case "overwritePlaylistInfoInDB":
 			updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, true).then(sendResponse);
+			break;		
+		// Before v1.0.0 the videos were stored in an array without upload times, so they need to all be refetched
+		case 'updateDBPlaylistToV1.0.0':
+			updateDBPlaylistToV1_0_0('uploadsPlaylists/' + request.data.key).then(sendResponse);
 			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":
@@ -169,7 +173,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // ---------- Firebase ----------
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, child, update, get, set } from 'firebase/database';
+import { getDatabase, ref, child, update, get, remove } from 'firebase/database';
 
 const firebaseConfig = {
 	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
@@ -198,13 +202,17 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 		update(ref(db, playlistId), playlistInfoWithoutVideos);
 
 		// Update the videos separately to not overwrite existing videos
-		update(ref(db, playlistId + "/videos/knownVideos"), playlistInfo.videos.knownVideos ?? {});
-		update(ref(db, playlistId + "/videos/knownShorts"), playlistInfo.videos.knownShorts ?? {});
-		// Overwrite the unknown videos, as some were removed and moved to one of the other two locations
-		set(ref(db, playlistId + "/videos/unknownType"), playlistInfo.videos.unknownType ?? {});
+		update(ref(db, playlistId + "/videos"), playlistInfo.videos);
 	}
 
 	return "PlaylistInfo was sent to database.";
+}
+
+async function updateDBPlaylistToV1_0_0(playlistId) {
+	// Remove all videos from the database
+	remove(ref(db, playlistId + '/videos'));
+
+	return "Videos were removed from the database playlist.";
 }
 
 // Prefers to get cached data instead of sending a request to the database
