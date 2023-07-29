@@ -20,13 +20,13 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 	} catch (error) {
 		console.log("The service worker was stopped and had to be restarted.");
 	}
-	/* c8 ignore stop */
 	try {
 		// While chooseRandomVideo is running, we need to keep the service worker alive
 		// Otherwise, it will get stopped after 30 seconds and we will get an error if fetching the videos takes longer
 		var keepServiceWorkerAlive = setInterval(() => {
 			chrome.runtime.sendMessage({ command: "connectionTest" });
 		}, 25000);
+		/* c8 ignore stop */
 
 		// Each user has a set amount of quota they can use per day.
 		// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.
@@ -523,7 +523,7 @@ async function testVideoExistence(videoId) {
 		});
 
 		// 401 unauthorized means the video may exist, but cannot be embedded
-		// As an alternative, we check if there exists a thumbnail for this video id
+		// As an alternative, we check if a thumbnail exists for this video id
 		if (response.status === 401) {
 			let thumbResponse = await fetch(`https://img.youtube.com/vi/${videoId}/0.jpg`, {
 				method: "HEAD"

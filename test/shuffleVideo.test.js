@@ -196,254 +196,254 @@ describe('shuffleVideo', function () {
 				expect(alertStub.calledOnce).to.be(true);
 				expect(alertStub.calledWith('NOTICE: The channel you are shuffling from has a lot of uploads (20,000+). The YouTube API only allows fetching the most recent 20,000 videos, which means that older uploads will not be shuffled from. This limitation is in place no matter if you use a custom API key or not.\n\nThe extension will now fetch all videos it can get from the API.'));
 			});
+		});
 
-			context('YouTube API error handling', function () {
-				it('should throw an error if the YouTube API response returns an unhandled error', async function () {
-					const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-					const YTMockResponses = {
-						'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
-							new Response(JSON.stringify(
-								{
-									"error": {
-										"code": 400,
-										"message": "This is an unhandled error.",
-										"errors": [
-											{
-												"message": "This is an unhandled error.",
-												"domain": "youtube.something",
-												"reason": "unhandledError",
-												"location": "somewhere",
-												"locationType": "something"
-											}
-										]
-									}
+		context('YouTube API error handling', function () {
+			it('should throw an error if the YouTube API response returns an unhandled error', async function () {
+				const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+				const YTMockResponses = {
+					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
+						new Response(JSON.stringify(
+							{
+								"error": {
+									"code": 400,
+									"message": "This is an unhandled error.",
+									"errors": [
+										{
+											"message": "This is an unhandled error.",
+											"domain": "youtube.something",
+											"reason": "unhandledError",
+											"location": "somewhere",
+											"locationType": "something"
+										}
+									]
 								}
-							))
-						]
-					};
+							}
+						))
+					]
+				};
 
-					setUpMockResponses(YTMockResponses);
+				setUpMockResponses(YTMockResponses);
 
-					// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
-					try {
-						await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
-					} catch (error) {
-						expect(error).to.be.a(YoutubeAPIError);
-						expect(error.code).to.be(400);
-						expect(error.message).to.be("This is an unhandled error.");
-						expect(error.reason).to.be("unhandledError");
+				// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
+				try {
+					await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(YoutubeAPIError);
+					expect(error.code).to.be(400);
+					expect(error.message).to.be("This is an unhandled error.");
+					expect(error.reason).to.be("unhandledError");
 
-						// If an error is encountered, the quota is only reduced by 1
-						expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
-						return;
-					}
-					expect().fail("No error was thrown");
-				});
+					// If an error is encountered, the quota is only reduced by 1
+					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
 
-				it('should throw an error if the YouTube API response returns a playlistNotFound error', async function () {
-					const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-					const YTMockResponses = {
-						'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
-							new Response(JSON.stringify(
-								{
-									"error": {
-										"code": 404,
-										"message": "The playlist identified with the request's \u003ccode\u003eplaylistId\u003c/code\u003e parameter cannot be found.",
-										"errors": [
-											{
-												"message": "The playlist identified with the request's \u003ccode\u003eplaylistId\u003c/code\u003e parameter cannot be found.",
-												"domain": "youtube.playlistItem",
-												"reason": "playlistNotFound",
-												"location": "playlistId",
-												"locationType": "parameter"
-											}
-										]
-									}
+			it('should throw an error if the YouTube API response returns a playlistNotFound error', async function () {
+				const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+				const YTMockResponses = {
+					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
+						new Response(JSON.stringify(
+							{
+								"error": {
+									"code": 404,
+									"message": "The playlist identified with the request's \u003ccode\u003eplaylistId\u003c/code\u003e parameter cannot be found.",
+									"errors": [
+										{
+											"message": "The playlist identified with the request's \u003ccode\u003eplaylistId\u003c/code\u003e parameter cannot be found.",
+											"domain": "youtube.playlistItem",
+											"reason": "playlistNotFound",
+											"location": "playlistId",
+											"locationType": "parameter"
+										}
+									]
 								}
-							))
-						]
-					};
+							}
+						))
+					]
+				};
 
-					setUpMockResponses(YTMockResponses);
+				setUpMockResponses(YTMockResponses);
 
-					// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
-					try {
-						await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
-					} catch (error) {
-						// This error is caught separately and a RandomYoutubeVideoError is thrown instead
-						expect(error).to.be.a(RandomYoutubeVideoError);
-						expect(error.code).to.be("RYV-6A");
-						expect(error.message).to.be("This channel has not uploaded any videos.");
+				// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
+				try {
+					await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
+				} catch (error) {
+					// This error is caught separately and a RandomYoutubeVideoError is thrown instead
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-6A");
+					expect(error.message).to.be("This channel has not uploaded any videos.");
 
-						// If an error is encountered, the quota is only reduced by 1
-						expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
-						return;
-					}
-					expect().fail("No error was thrown");
-				});
+					// If an error is encountered, the quota is only reduced by 1
+					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
 
-				it('should throw an error if the YouTube API response returns a quotaExceeded error and no more keys are available', async function () {
-					const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-					const YTMockResponses = {
-						'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
-							new Response(JSON.stringify(
-								{
-									"error": {
-										"code": 403,
-										"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
-										"errors": [
-											{
-												"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
-												"domain": "youtube.quota",
-												"reason": "quotaExceeded"
-											}
-										]
-									}
+			it('should throw an error if the YouTube API response returns a quotaExceeded error and no more keys are available', async function () {
+				const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+				const YTMockResponses = {
+					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
+						new Response(JSON.stringify(
+							{
+								"error": {
+									"code": 403,
+									"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
+									"errors": [
+										{
+											"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
+											"domain": "youtube.quota",
+											"reason": "quotaExceeded"
+										}
+									]
 								}
-							))
-						]
-					};
+							}
+						))
+					]
+				};
 
-					setUpMockResponses(YTMockResponses);
+				setUpMockResponses(YTMockResponses);
 
-					// Remove all but one API key from the database
-					await chrome.runtime.sendMessage({ command: "setKeyInDB", data: { key: "youtubeAPIKeys", val: ["defaultAPIKey1"] } });
+				// Remove all but one API key from the database
+				await chrome.runtime.sendMessage({ command: "setKeyInDB", data: { key: "youtubeAPIKeys", val: ["defaultAPIKey1"] } });
 
-					// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
-					try {
-						await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
-					} catch (error) {
-						// This error is caught separately and a RandomYoutubeVideoError is thrown instead
-						expect(error).to.be.a(RandomYoutubeVideoError);
-						expect(error.code).to.be("RYV-2");
-						expect(error.message).to.be("All API keys have exceeded the allocated quota.");
+				// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
+				try {
+					await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
+				} catch (error) {
+					// This error is caught separately and a RandomYoutubeVideoError is thrown instead
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-2");
+					expect(error.message).to.be("All API keys have exceeded the allocated quota.");
 
-						// If an error is encountered, the quota is only reduced by 1
-						expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
+					// If an error is encountered, the quota is only reduced by 1
+					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
 
-						// The only available API key should have been used
-						const fetchArguments = global.fetch.args;
-						expect(fetchArguments.length).to.be(1);
+					// The only available API key should have been used
+					const fetchArguments = global.fetch.args;
+					expect(fetchArguments.length).to.be(1);
 
-						const apiKeys = fetchArguments.map((fetchArgument) => fetchArgument[0].split("&key=")[1]);
-						expect(apiKeys[0]).to.be("defaultAPIKey1");
-						return;
-					}
-					expect().fail("No error was thrown");
-				});
+					const apiKeys = fetchArguments.map((fetchArgument) => fetchArgument[0].split("&key=")[1]);
+					expect(apiKeys[0]).to.be("defaultAPIKey1");
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
 
-				it('should throw an error if the YouTube API response returns a quotaExceeded error and a custom API key was used', async function () {
-					const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-					const YTMockResponses = {
-						'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
-							new Response(JSON.stringify(
-								{
-									"error": {
-										"code": 403,
-										"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
-										"errors": [
-											{
-												"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
-												"domain": "youtube.quota",
-												"reason": "quotaExceeded"
-											}
-										]
-									}
+			it('should throw an error if the YouTube API response returns a quotaExceeded error and a custom API key was used', async function () {
+				const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+				const YTMockResponses = {
+					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
+						new Response(JSON.stringify(
+							{
+								"error": {
+									"code": 403,
+									"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
+									"errors": [
+										{
+											"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
+											"domain": "youtube.quota",
+											"reason": "quotaExceeded"
+										}
+									]
 								}
-							))
-						]
-					};
+							}
+						))
+					]
+				};
 
-					setUpMockResponses(YTMockResponses);
+				setUpMockResponses(YTMockResponses);
 
-					// Set a custom API key in the config
-					configSync.useCustomApiKeyOption = true;
-					configSync.customYoutubeApiKey = "customAPIKey";
+				// Set a custom API key in the config
+				configSync.useCustomApiKeyOption = true;
+				configSync.customYoutubeApiKey = "customAPIKey";
 
-					// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
-					try {
-						await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
-					} catch (error) {
-						// This error is caught separately and a RandomYoutubeVideoError is thrown instead
-						expect(error).to.be.a(RandomYoutubeVideoError);
-						expect(error.code).to.be("RYV-5");
-						expect(error.message).to.be("Your custom API key has reached its daily quota allocation.");
+				// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
+				try {
+					await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
+				} catch (error) {
+					// This error is caught separately and a RandomYoutubeVideoError is thrown instead
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-5");
+					expect(error.message).to.be("Your custom API key has reached its daily quota allocation.");
 
-						// If an error is encountered, the quota is only reduced by 1
-						expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
+					// If an error is encountered, the quota is only reduced by 1
+					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
 
-						// The custom API should have been used
-						const fetchArguments = global.fetch.args;
-						expect(fetchArguments.length).to.be(1);
+					// The custom API should have been used
+					const fetchArguments = global.fetch.args;
+					expect(fetchArguments.length).to.be(1);
 
-						const apiKeys = fetchArguments.map((fetchArgument) => fetchArgument[0].split("&key=")[1]);
-						expect(apiKeys[0]).to.be(configSync.customYoutubeApiKey);
-						return;
-					}
-					expect().fail("No error was thrown");
-				});
+					const apiKeys = fetchArguments.map((fetchArgument) => fetchArgument[0].split("&key=")[1]);
+					expect(apiKeys[0]).to.be(configSync.customYoutubeApiKey);
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
 
-				it('should choose a new API key if the current one has no quota remaining', async function () {
-					const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
-					const YTMockResponses = {
-						'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
-							new Response(JSON.stringify(
-								{
-									"error": {
-										"code": 403,
-										"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
-										"errors": [
-											{
-												"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
-												"domain": "youtube.quota",
-												"reason": "quotaExceeded"
-											}
-										]
-									}
+			it('should choose a new API key if the current one has no quota remaining', async function () {
+				const userQuotaRemainingTodayBefore = configSync.userQuotaRemainingToday;
+				const YTMockResponses = {
+					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
+						new Response(JSON.stringify(
+							{
+								"error": {
+									"code": 403,
+									"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
+									"errors": [
+										{
+											"message": "The request cannot be completed because you have exceeded your \u003ca href=\"/youtube/v3/getting-started#quota\"\u003equota\u003c/a\u003e.",
+											"domain": "youtube.quota",
+											"reason": "quotaExceeded"
+										}
+									]
 								}
-							)),
-							new Response(JSON.stringify(
-								{
-									"error": {
-										"code": 199,
-										"message": "This appears if the first API key was swapped out for the second one successfully.",
-										"errors": [
-											{
-												"message": "This appears if the first API key was swapped out for the second one successfully.",
-												"domain": "custom",
-												"reason": "wantingToCheckSomething"
-											}
-										]
-									}
+							}
+						)),
+						new Response(JSON.stringify(
+							{
+								"error": {
+									"code": 199,
+									"message": "This appears if the first API key was swapped out for the second one successfully.",
+									"errors": [
+										{
+											"message": "This appears if the first API key was swapped out for the second one successfully.",
+											"domain": "custom",
+											"reason": "wantingToCheckSomething"
+										}
+									]
 								}
-							))
-						]
-					};
+							}
+						))
+					]
+				};
 
-					setUpMockResponses(YTMockResponses);
+				setUpMockResponses(YTMockResponses);
 
-					// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
-					try {
-						await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
-					} catch (error) {
-						// This error is caught separately and a RandomYoutubeVideoError is thrown instead
-						expect(error).to.be.a(YoutubeAPIError);
-						expect(error.code).to.be(199);
-						expect(error.message).to.be("This appears if the first API key was swapped out for the second one successfully.");
+				// Playlist that does not exist locally, DB is outdated, so we need to fetch something from the API
+				try {
+					await chooseRandomVideo('UC_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
+				} catch (error) {
+					// This error is caught separately and a RandomYoutubeVideoError is thrown instead
+					expect(error).to.be.a(YoutubeAPIError);
+					expect(error.code).to.be(199);
+					expect(error.message).to.be("This appears if the first API key was swapped out for the second one successfully.");
 
-						// If an error is encountered, the quota is only reduced by 1
-						expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
+					// If an error is encountered, the quota is only reduced by 1
+					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
 
-						// The first and second API key should be different
-						const fetchArguments = global.fetch.args;
-						expect(fetchArguments.length).to.be(2);
+					// The first and second API key should be different
+					const fetchArguments = global.fetch.args;
+					expect(fetchArguments.length).to.be(2);
 
-						const apiKeys = fetchArguments.map((fetchArgument) => fetchArgument[0].split("&key=")[1]);
-						expect(apiKeys[0]).to.not.be(apiKeys[1]);
-						return;
-					}
-					expect().fail("No error was thrown");
-				});
+					const apiKeys = fetchArguments.map((fetchArgument) => fetchArgument[0].split("&key=")[1]);
+					expect(apiKeys[0]).to.not.be(apiKeys[1]);
+					return;
+				}
+				expect().fail("No error was thrown");
 			});
 		});
 
@@ -528,10 +528,18 @@ describe('shuffleVideo', function () {
 						// We check the complete thumbnail_url in the function, so we need to mock each video's response individually
 						let videoIsShortMockResponses = {};
 						for (const [videoId, publishTime] of Object.entries(allVideos)) {
-							if (videoId.includes('_S_')) {
+							// We pretend that this video cannot be embedded
+							if (videoId === 'LOC_S_00001') {
+								videoIsShortMockResponses[`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${videoId}&format=json`] = ['Unauthorized'];
+								videoIsShortMockResponses[`https://www.youtube.com/shorts/${videoId}`] = [{ status: 200, redirected: false }];
+							} else if (videoId.includes('_S_')) {
 								videoIsShortMockResponses[`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${videoId}&format=json`] = [new Response(JSON.stringify({
 									"thumbnail_url": `https://i.ytimg.com/vi/${videoId}/hq2.jpg`,
 								}))];
+								// We pretend that this video cannot be embedded
+							} else if (videoId === 'LOC_V_00006') {
+								videoIsShortMockResponses[`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${videoId}&format=json`] = ['Unauthorized'];
+								videoIsShortMockResponses[`https://www.youtube.com/shorts/${videoId}`] = [{ status: 200, redirected: true }];
 							} else {
 								videoIsShortMockResponses[`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${videoId}&format=json`] = [new Response(JSON.stringify({
 									"thumbnail_url": `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
