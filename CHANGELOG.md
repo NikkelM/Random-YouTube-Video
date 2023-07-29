@@ -3,7 +3,7 @@
 ## v2.2.1
 
 <!--Releasenotes start-->
-- Fixed a bug where the extension would handle a non-embeddable video as deleted.
+- Fixed a bug where the extension would be unable to determine if a non-embeddable video is a short or not.
 - The extension now handles the case where shorts are ignored, but a channel has only uploaded shorts.
 - Fixed some minor bugs regarding version compatibility.
 <!--Releasenotes end-->
