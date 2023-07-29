@@ -643,7 +643,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 	});
 
 	// Error handling for videosToShuffle being undefined/empty is done in applyShuffleFilter()
-	let videosToShuffle = applyShuffleFilter(videosByDate, activeShuffleFilterOption, activeOptionValue);
+	let videosToShuffle = applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue);
 
 	let chosenVideos = [];
 	let randomVideo;
@@ -744,7 +744,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 }
 
 // Applies a filter to the playlist object, based on the setting set in the popup
-function applyShuffleFilter(videosByDate, activeShuffleFilterOption, activeOptionValue) {
+function applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue) {
 	let videosToShuffle;
 	switch (activeShuffleFilterOption) {
 		case "allVideosOption":
@@ -755,7 +755,7 @@ function applyShuffleFilter(videosByDate, activeShuffleFilterOption, activeOptio
 		case "dateOption":
 			// Take only videos that were released after the specified date
 			videosToShuffle = videosByDate.filter((videoId) => {
-				return new Date(videosByDate[videoId]) >= new Date(activeOptionValue);
+				return new Date(allVideos[videoId]) >= new Date(activeOptionValue);
 			});
 			// If the list is empty, alert the user
 			if (videosToShuffle.length === 0) {
