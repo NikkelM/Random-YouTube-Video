@@ -1,8 +1,15 @@
 # Changelog
 
-## v2.2.0
+## v2.2.1
 
 <!--Releasenotes start-->
+- Fixed a bug where the extension would handle a non-embeddable video as deleted.
+- The extension now handles the case where shorts are ignored, but a channel has only uploaded shorts.
+- Fixed some minor bugs regarding version compatibility.
+<!--Releasenotes end-->
+
+## v2.2.0
+
 - Fixed the scrollbar on Chromium browsers not being styled correctly.
 - Added links to browser add-on stores to the popup.
 - The shuffle page opened by the popup will now inform you if a shuffle takes a bit longer than expected.
@@ -11,7 +18,6 @@
 - Fixed a bug where the extension's service worker would get shut down while video data was being fetched from the YouTube API, leading to a 'Receiving end does not exist' error.
 - Fixed a bug where the shuffling page opened by the popup would sometimes incorrectly show an error message for a brief moment.
 - Internal pages such as the changelog page will now use more available space on smaller resolutions.
-<!--Releasenotes end-->
 
 ## v2.1.0
 

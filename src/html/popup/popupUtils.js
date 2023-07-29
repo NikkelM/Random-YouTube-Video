@@ -115,7 +115,7 @@ export async function updateFYIDiv(domElements) {
 	// ----- FYI: Number of shuffled videos text -----
 	// Use toLocaleString() to add commas/periods to large numbers
 	const numShuffledVideosTotal = configSync.numShuffledVideosTotal.toLocaleString();
-	domElements.numberOfShuffledVideosText.innerText = `You have shuffled ${numShuffledVideosTotal} video${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""} until now.`;
+	domElements.numberOfShuffledVideosText.innerText = `You have shuffled ${numShuffledVideosTotal} time${(configSync.numShuffledVideosTotal !== 1) ? "s" : ""} until now.`;
 
 	// ----- Daily quota notice -----
 	await getUserQuotaRemainingToday();
