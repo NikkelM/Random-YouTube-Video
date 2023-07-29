@@ -281,11 +281,6 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 		progressTextElement.innerText = `\xa0Fetching: ${Math.round(resultsFetchedCount / totalResults * 100)}%`;
 	}
 
-	// Add an empty object that will store known shorts uploaded on this channel in the future
-	playlistInfo["videos"] = {};
-	playlistInfo["videos"]["knownVideos"] = {};
-	playlistInfo["videos"]["knownShorts"] = {};
-
 	// For each video, add an entry in the form of videoId: uploadTime
 	playlistInfo["videos"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)]));
 
@@ -302,7 +297,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 		progressTextElement.innerText = `\xa0Fetching: ${Math.round(resultsFetchedCount / totalResults * 100)}%`;
 
 		// For each video, add an entry in the form of videoId: uploadTime
-		playlistInfo["videos"] = Object.assign(playlistInfo["newVideos"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)])));
+		playlistInfo["videos"] = Object.assign(playlistInfo["videos"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)])));
 
 		pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 	}
@@ -335,6 +330,8 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, "", APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 	const totalNumVideosOnChannel = apiResponse["pageInfo"]["totalResults"];
+	// If the channel has already reached the API cap, we don't know how many new videos there are, so we put an estimate to show the user something
+	// The difference could be negative if there are more videos saved in the database than exist in the playlist, e.g videos were deleted
 	const numLocallyKnownVideos = getLength(playlistInfo["videos"]);
 	const totalExpectedNewResults = totalNumVideosOnChannel > 19999 ? 1000 : Math.max(totalNumVideosOnChannel - numLocallyKnownVideos, 0);
 
@@ -638,7 +635,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		);
 	}
 
-	// Join all relevant videos and sort them by date
+	// Sort all videos by date
 	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
 
 	let videosByDate = Object.keys(allVideos).sort((a, b) => {
