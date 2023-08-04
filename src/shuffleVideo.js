@@ -914,8 +914,14 @@ async function aprilFoolsJoke() {
 // ---------- Local storage ----------
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
 async function tryGetPlaylistFromLocalStorage(playlistId) {
-	return await chrome.storage.local.get([playlistId]).then((result) => {
+	return await chrome.storage.local.get([playlistId]).then(async (result) => {
 		if (result[playlistId]) {
+			// To fix a bug introduced in v2.2.1
+			if(!result[playlistId]["videos"]) {
+				// Remove from localStorage
+				await chrome.storage.local.remove([playlistId]);
+				return {}
+			}
 			return result[playlistId];
 		}
 		return {};
