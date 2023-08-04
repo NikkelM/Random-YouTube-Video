@@ -116,6 +116,14 @@ describe('utils.js', function () {
 		});
 
 		context('getLength()', function () {
+			it('should return 0 for undefined', function () {
+				expect(getLength(undefined)).to.be(0);
+			});
+
+			it('should return 0 for null', function () {
+				expect(getLength(null)).to.be(0);
+			});
+
 			it('should return 0 for empty objects', function () {
 				expect(getLength({})).to.be(0);
 			});

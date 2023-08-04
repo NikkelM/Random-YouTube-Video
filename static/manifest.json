@@ -1,7 +1,7 @@
 {
 	"name": "Random YouTube Video",
 	"description": "Play a random video uploaded on the current YouTube channel.",
-	"version": "2.2.1",
+	"version": "2.2.2",
 	"manifest_version": 3,
 	"content_scripts": [
 		{
