@@ -45,7 +45,7 @@ export function isEmpty(obj) {
 
 // Gets the length of an object
 export function getLength(obj) {
-	return Object.keys(obj).length;
+	return Object.keys(obj ?? {}).length;
 }
 
 // Adds a number of hours to a date

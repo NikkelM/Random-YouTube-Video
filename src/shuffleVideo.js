@@ -131,7 +131,11 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			} else {
 				// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
 				console.log("Uploading new video IDs to the database...");
-				videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
+				if(getLength(playlistInfo["newVideos"] ?? {}) > 0) {
+					videosToDatabase = playlistInfo["newVideos"];
+				} else {
+					videosToDatabase = playlistInfo["videos"] ?? 0;
+				}
 			}
 
 			await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, encounteredDeletedVideos);
@@ -203,6 +207,14 @@ async function tryGetPlaylistFromDB(playlistId) {
 		return {};
 	}
 
+	if (!playlistInfo["videos"]) {
+		// Due to some mistake, there is no video data in the database
+		// Overwrite the playlist with an empty one
+		console.log("The playlist was found in the database, but it is empty. Removing...");
+		await uploadPlaylistToDatabase({}, {}, playlistId, true);
+		return {};
+	}
+
 	playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 
 	return playlistInfo;
@@ -212,7 +224,7 @@ async function tryGetPlaylistFromDB(playlistId) {
 async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, encounteredDeletedVideos) {
 	// Only upload the wanted keys
 	const playlistInfoForDatabase = {
-		"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"],
+		"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"] ?? new Date().toISOString(),
 		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
 		"videos": videosToDatabase
 	};
@@ -408,7 +420,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	playlistInfo["newVideos"] = newVideos;
 
 	// Make sure that we are not missing any videos in the database
-	const numVideosInDatabase = numLocallyKnownVideos + (getLength(playlistInfo["newVideos"] ?? {}));
+	const numVideosInDatabase = numLocallyKnownVideos + getLength(playlistInfo["newVideos"]);
 	if (totalNumVideosOnChannel > numVideosInDatabase) {
 		console.log(`There are less videos saved in the database than are uploaded on the channel (${numVideosInDatabase}/${totalNumVideosOnChannel}), so some videos are missing. Refetching all videos...`);
 		return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement);
@@ -636,7 +648,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 	}
 
 	// Sort all videos by date
-	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"]);
+	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
 
 	let videosByDate = Object.keys(allVideos).sort((a, b) => {
 		return new Date(allVideos[b]) - new Date(allVideos[a]);

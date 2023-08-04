@@ -1,12 +1,17 @@
 # Changelog
 
-## v2.2.1
+## v2.2.2
 
 <!--Releasenotes start-->
+- Fixed a bug where there would be no video IDs stored in the database, leading to an error.
+- Fixed the 'Changelog' button on the changelog page not doing anything.
+<!--Releasenotes end-->
+
+## v2.2.1
+
 - Fixed a bug where the extension would be unable to determine if a non-embeddable video is a short or not.
 - The extension now handles the case where shorts are ignored, but a channel has only uploaded shorts.
 - Fixed some minor bugs regarding version compatibility.
-<!--Releasenotes end-->
 
 ## v2.2.0
 
