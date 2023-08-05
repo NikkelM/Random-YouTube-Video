@@ -272,19 +272,19 @@ const defaultDBDeletedVideos = {
 
 // The YT API returns a full-length timestamp
 const oneNewYTAPIVideo = {
-	"YT_V_000001": zeroDaysAgo
+	"YT_V_000001": zeroDaysAgo.slice(0, 19) + 'Z'
 };
 
 // Get over the 50 per page API limit, and get to more than one additional page for the inner while loop
 const multipleNewYTAPIVideos = {};
 for (let i = 1; i <= 70; i++) {
 	const key = `YT_V_${String(i).padStart(6, '0')}`;
-	multipleNewYTAPIVideos[key] = zeroDaysAgo;
+	multipleNewYTAPIVideos[key] = zeroDaysAgo.slice(0, 19) + 'Z';
 }
 // Add another 35 shorts, with _S_ in the key
 for (let i = 71; i <= 105; i++) {
 	const key = `YT_S_${String(i).padStart(6, '0')}`;
-	multipleNewYTAPIVideos[key] = zeroDaysAgo;
+	multipleNewYTAPIVideos[key] = zeroDaysAgo.slice(0, 19) + 'Z';
 }
 
 // ---------- Permutations for testing ----------
@@ -379,7 +379,7 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 						}
 
 						// When was the last locally known video published
-						localLastVideoPublishedAt = threeDaysAgo;
+						localLastVideoPublishedAt = threeDaysAgo.slice(0, 19) + 'Z';
 
 						if (playlistModifiers[3][l] === "LocalPlaylistContainsDeletedVideos") {
 							localVideos = deepCopy(defaultLocalVideos);
@@ -401,7 +401,7 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 						if (playlistModifiers[5][n] === "DBContainsVideosNotInLocalPlaylist") {
 							dbVideos = deepCopy({ ...defaultLocalVideos, ...defaultDBVideos });
 							dbDeletedVideos = null;
-							dbLastVideoPublishedAt = twoDaysAgo;
+							dbLastVideoPublishedAt = twoDaysAgo.slice(0, 19) + 'Z';
 						} else if (playlistModifiers[5][n] === "DBContainsNoVideosNotInLocalPlaylist") {
 							dbVideos = playlistModifiers[3][l] === "LocalPlaylistContainsOnlyShorts"
 								? deepCopy(defaultLocalShorts)
@@ -421,10 +421,10 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 						if (playlistModifiers[1][j] !== "DBEntryIsUpToDate") {
 							if (playlistModifiers[4][m] === "OneNewVideoUploaded") {
 								newUploadedVideos = deepCopy(oneNewYTAPIVideo);
-								newLastVideoPublishedAt = zeroDaysAgo;
+								newLastVideoPublishedAt = zeroDaysAgo.slice(0, 19) + 'Z';
 							} else if (playlistModifiers[4][m] === "MultipleNewVideosUploaded") {
 								newUploadedVideos = deepCopy(multipleNewYTAPIVideos);
-								newLastVideoPublishedAt = zeroDaysAgo;
+								newLastVideoPublishedAt = zeroDaysAgo.slice(0, 19) + 'Z';
 							} else if (playlistModifiers[4][m] === "NoNewVideoUploaded") {
 								newUploadedVideos = null;
 								newLastVideoPublishedAt = dbLastVideoPublishedAt;

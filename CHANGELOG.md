@@ -1,11 +1,16 @@
 # Changelog
 
-## v2.2.2
+## v2.2.3
 
 <!--Releasenotes start-->
+- Error messages now include the current channel ID to help with reporting an issue.
+- Some changes in how data that is sent to the database is handled, to prepare for a future security update.
+<!--Releasenotes end-->
+
+## v2.2.2
+
 - Fixed a bug where there would be no video IDs stored in the database, leading to an error.
 - Fixed the 'Changelog' button on the changelog page not doing anything.
-<!--Releasenotes end-->
 
 ## v2.2.1
 

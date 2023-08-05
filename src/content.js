@@ -120,9 +120,10 @@ function resetShuffleButtonText() {
 // ---------- Shuffle ----------
 // Called when the 'Shuffle' button is clicked
 async function shuffleVideos() {
+	let channelId;
 	try {
 		// Get the saved channelId from the button
-		const channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerText;
+		channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerText;
 
 		// If the channelId somehow wasn't saved, throw an error
 		if (!channelId) {
@@ -179,7 +180,7 @@ The page will reload and you can try again.`)
 		}
 
 		// Alert the user about the error
-		window.alert(`Random YouTube Video:\n\n${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}${error.showTrace !== false ? "\n\n" + error.stack : ""}`);
+		window.alert(`Random YouTube Video:\n\nChannel ${channelId}\n${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}${error.showTrace !== false ? "\n\n" + error.stack : ""}`);
 
 		// Immediately display the error
 		shuffleButtonTextElement.innerText = `\xa0${displayText}`;

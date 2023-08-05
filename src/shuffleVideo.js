@@ -131,10 +131,10 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			} else {
 				// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
 				console.log("Uploading new video IDs to the database...");
-				if(getLength(playlistInfo["newVideos"] ?? {}) > 0) {
+				if (getLength(playlistInfo["newVideos"] ?? {}) > 0) {
 					videosToDatabase = playlistInfo["newVideos"];
 				} else {
-					videosToDatabase = playlistInfo["videos"] ?? 0;
+					videosToDatabase = playlistInfo["videos"];
 				}
 			}
 
@@ -155,7 +155,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			// Remember the last time the playlist was accessed locally (==now)
 			"lastAccessedLocally": new Date().toISOString(),
 			"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
-			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
+			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
 			"videos": playlistInfo["videos"] ?? {}
 		};
 
@@ -225,9 +225,23 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsP
 	// Only upload the wanted keys
 	const playlistInfoForDatabase = {
 		"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"] ?? new Date().toISOString(),
-		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
+		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
 		"videos": videosToDatabase
 	};
+
+	// Make sure the data is in the correct format
+	if (playlistInfoForDatabase["lastUpdatedDBAt"].length !== 24) {
+		alert(`Random YouTube Video:\nPlease send this information to the developer:\n\nlastUpdatedDBAt has the wrong format (got ${playlistInfoForDatabase["lastVideoPublishedAt"]}).\nChannelId: ${uploadsPlaylistId}.`);
+		return;
+	}
+	if (playlistInfoForDatabase["lastVideoPublishedAt"].length !== 20) {
+		alert(`Random YouTube Video:\nPlease send this information to the developer:\n\nlastVideoPublishedAt has the wrong format (got ${playlistInfoForDatabase["lastVideoPublishedAt"]}).\nChannelId: ${uploadsPlaylistId}.`);
+		return;
+	}
+	if (getLength(playlistInfoForDatabase["videos"]) < 1) {
+		alert(`Random YouTube Video:\nPlease send this information to the developer:\n\nNo videos object was found.\nChannelId: ${uploadsPlaylistId}.`);
+		return;
+	}
 
 	// Send the playlist info to the database
 	const msg = {
@@ -916,12 +930,14 @@ async function aprilFoolsJoke() {
 async function tryGetPlaylistFromLocalStorage(playlistId) {
 	return await chrome.storage.local.get([playlistId]).then(async (result) => {
 		if (result[playlistId]) {
+			/* c8 ignore start */
 			// To fix a bug introduced in v2.2.1
-			if(!result[playlistId]["videos"]) {
+			if (!result[playlistId]["videos"]) {
 				// Remove from localStorage
 				await chrome.storage.local.remove([playlistId]);
 				return {}
 			}
+			/* c8 ignore stop */
 			return result[playlistId];
 		}
 		return {};

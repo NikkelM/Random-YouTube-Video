@@ -138,7 +138,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		// Updates (overwriting videos) a playlist in Firebase
 		case "overwritePlaylistInfoInDB":
 			updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, true).then(sendResponse);
-			break;		
+			break;
 		// Before v1.0.0 the videos were stored in an array without upload times, so they need to all be refetched
 		case 'updateDBPlaylistToV1.0.0':
 			updateDBPlaylistToV1_0_0('uploadsPlaylists/' + request.data.key).then(sendResponse);
@@ -189,7 +189,14 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos) {
-	if (overwriteVideos) {
+	// Find out if the playlist already exists in the database
+	// We only need to send this request if we don't already have to overwrite the entry
+	let playlistExists = true;
+	if (!overwriteVideos) {
+		playlistExists = await readDataOnce(playlistId);
+	}
+
+	if (overwriteVideos || !playlistExists) {
 		console.log("Setting playlistInfo in the database...");
 		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested within the playlist
 		update(ref(db, playlistId), playlistInfo);

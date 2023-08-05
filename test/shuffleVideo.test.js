@@ -42,6 +42,28 @@ function setUpMockResponses(mockResponses) {
 	});
 }
 
+// Checks that a set of messages contains the correct data format for the database
+function checkPlaylistsUploadedToDB(messages, input) {
+	messages.forEach((message) => {
+		const data = message[0].data;
+
+		expect(message.length).to.be(1);
+
+		expect(data.key).to.be(input.playlistId);
+		expect(Object.keys(data.val)).to.contain('lastUpdatedDBAt');
+		expect(data.val.lastUpdatedDBAt.length).to.be(24);
+		expect(Object.keys(data.val)).to.contain('lastVideoPublishedAt');
+		expect(data.val.lastVideoPublishedAt.length).to.be(20);
+		expect(Object.keys(data.val)).to.contain('videos');
+		expect(Object.keys(data.val.videos).length).to.be.greaterThan(0);
+		// Check the format of the videos
+		for (const [videoId, publishTime] of Object.entries(data.val.videos)) {
+			expect(videoId.length).to.be(11);
+			expect(publishTime.length).to.be(10);
+		}
+	});
+}
+
 describe('shuffleVideo', function () {
 
 	beforeEach(function () {
@@ -481,7 +503,8 @@ describe('shuffleVideo', function () {
 							if (videoId.startsWith('DEL_LOC')) {
 								delete allVideos[videoId];
 							} else {
-								allVideos[videoId] = publishTime;
+								// The YT API returns the publishTime in ISO 8601 format, so we need to convert it, as the localStorage and DB use a different format
+								allVideos[videoId] = new Date(publishTime).toISOString().slice(0, 19) + 'Z';
 							}
 						}
 						allVideos = Object.fromEntries(Object.entries(allVideos).sort((a, b) => b[1].localeCompare(a[1])));
@@ -856,7 +879,8 @@ describe('shuffleVideo', function () {
 							if (videoId.startsWith('DEL_LOC')) {
 								delete allVideos[videoId];
 							} else {
-								allVideos[videoId] = publishTime;
+								// The YT API returns the publishTime in ISO 8601 format, so we need to convert it, as the localStorage and DB use a different format
+								allVideos[videoId] = new Date(publishTime).toISOString().slice(0, 19) + 'Z';
 							}
 						}
 						allVideos = Object.fromEntries(Object.entries(allVideos).sort((a, b) => b[1].localeCompare(a[1])));
@@ -963,7 +987,8 @@ describe('shuffleVideo', function () {
 							it('should only interact with the database to remove deleted videos', async function () {
 								await chooseRandomVideo(input.channelId, false, domElement);
 
-								const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+								const messages = chrome.runtime.sendMessage.args;
+								const commands = messages.map(arg => arg[0].command);
 
 								// callCount is 3 if we didn't choose a deleted video, 4 else
 								expect(chrome.runtime.sendMessage.callCount).to.be.within(3, 4);
@@ -974,6 +999,9 @@ describe('shuffleVideo', function () {
 
 								if (chrome.runtime.sendMessage.callCount === 4) {
 									expect(commands).to.contain('overwritePlaylistInfoInDB');
+									// One entry should contain a valid DB update
+									const overwriteMessages = messages.filter(arg => arg[0].command === 'overwritePlaylistInfoInDB');
+									checkPlaylistsUploadedToDB(overwriteMessages, input);
 								}
 
 							});
@@ -982,7 +1010,8 @@ describe('shuffleVideo', function () {
 								await chooseRandomVideo(input.channelId, false, domElement);
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
 
-								const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+								const messages = chrome.runtime.sendMessage.args;
+								const commands = messages.map(arg => arg[0].command);
 
 								if (needsYTAPIInteraction(input)) {
 									expect(chrome.runtime.sendMessage.callCount).to.be(6);
@@ -1008,14 +1037,21 @@ describe('shuffleVideo', function () {
 										break;
 									case 5:
 										expect(commands).to.contain('overwritePlaylistInfoInDB');
+										const overwriteMessages = messages.filter(arg => arg[0].command === 'overwritePlaylistInfoInDB');
+										checkPlaylistsUploadedToDB(overwriteMessages, input);
+
 										expect(numDeletedVideosBefore).to.be.greaterThan(numDeletedVideosAfter);
 										break;
 									case 6:
 										expect(commands).to.contain('getAPIKey');
 										if (numDeletedVideosBefore > numDeletedVideosAfter) {
 											expect(commands).to.contain('overwritePlaylistInfoInDB');
+											const overwriteMessages = messages.filter(arg => arg[0].command === 'overwritePlaylistInfoInDB');
+											checkPlaylistsUploadedToDB(overwriteMessages, input);
 										} else {
 											expect(commands).to.contain('updatePlaylistInfoInDB');
+											const updateMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+											checkPlaylistsUploadedToDB(updateMessages, input);
 										}
 										break;
 									default:
@@ -1027,7 +1063,8 @@ describe('shuffleVideo', function () {
 								await chooseRandomVideo(input.channelId, false, domElement);
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
 
-								const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+								const messages = chrome.runtime.sendMessage.args;
+								const commands = messages.map(arg => arg[0].command);
 
 								expect(commands).to.contain('connectionTest');
 								expect(commands).to.contain('getPlaylistFromDB');
@@ -1041,6 +1078,8 @@ describe('shuffleVideo', function () {
 									expect(chrome.runtime.sendMessage.callCount).to.be(6);
 									expect(commands).to.contain('getAPIKey');
 									expect(commands).to.contain('updatePlaylistInfoInDB');
+									const updateMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+									checkPlaylistsUploadedToDB(updateMessages, input);
 								} else {
 									expect(chrome.runtime.sendMessage.callCount).to.be(4);
 								}
@@ -1053,7 +1092,8 @@ describe('shuffleVideo', function () {
 							it('should only fetch data from the database', async function () {
 								await chooseRandomVideo(input.channelId, false, domElement);
 
-								const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+								const messages = chrome.runtime.sendMessage.args;
+								const commands = messages.map(arg => arg[0].command);
 
 								// 4 because we only need to fetch from the DB
 								expect(chrome.runtime.sendMessage.callCount).to.be(4);
@@ -1068,7 +1108,8 @@ describe('shuffleVideo', function () {
 							it('should update the database', async function () {
 								await chooseRandomVideo(input.channelId, false, domElement);
 
-								const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+								const messages = chrome.runtime.sendMessage.args;
+								const commands = messages.map(arg => arg[0].command);
 
 								// 6 because we need to fetch from the DB, fetch from the YT API, and update the DB
 								expect(chrome.runtime.sendMessage.callCount).to.be(6);
@@ -1079,6 +1120,8 @@ describe('shuffleVideo', function () {
 								expect(commands).to.contain('getCurrentTabId');
 								expect(commands).to.contain('getAPIKey');
 								expect(commands).to.contain('updatePlaylistInfoInDB');
+								const updateMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+								checkPlaylistsUploadedToDB(updateMessages, input);
 							});
 						}
 					});
