@@ -131,11 +131,12 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			} else {
 				// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
 				console.log("Uploading new video IDs to the database...");
-				if(getLength(playlistInfo["newVideos"] ?? {}) > 0) {
-					videosToDatabase = playlistInfo["newVideos"];
-				} else {
-					videosToDatabase = playlistInfo["videos"] ?? 0;
-				}
+				// if(getLength(playlistInfo["newVideos"] ?? {}) > 0) {
+				// 	videosToDatabase = playlistInfo["newVideos"];
+				// } else {
+				// 	videosToDatabase = playlistInfo["videos"] ?? 0;
+				// }
+				videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
 			}
 
 			await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, encounteredDeletedVideos);
@@ -155,7 +156,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			// Remember the last time the playlist was accessed locally (==now)
 			"lastAccessedLocally": new Date().toISOString(),
 			"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
-			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
+			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
 			"videos": playlistInfo["videos"] ?? {}
 		};
 
@@ -225,7 +226,7 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsP
 	// Only upload the wanted keys
 	const playlistInfoForDatabase = {
 		"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"] ?? new Date().toISOString(),
-		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString(),
+		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
 		"videos": videosToDatabase
 	};
 
