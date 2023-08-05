@@ -930,12 +930,14 @@ async function aprilFoolsJoke() {
 async function tryGetPlaylistFromLocalStorage(playlistId) {
 	return await chrome.storage.local.get([playlistId]).then(async (result) => {
 		if (result[playlistId]) {
+			/* c8 ignore start */
 			// To fix a bug introduced in v2.2.1
 			if (!result[playlistId]["videos"]) {
 				// Remove from localStorage
 				await chrome.storage.local.remove([playlistId]);
 				return {}
 			}
+			/* c8 ignore stop */
 			return result[playlistId];
 		}
 		return {};
