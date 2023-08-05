@@ -136,7 +136,6 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 				} else {
 					videosToDatabase = playlistInfo["videos"] ?? 0;
 				}
-				// videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
 			}
 
 			await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, encounteredDeletedVideos);
