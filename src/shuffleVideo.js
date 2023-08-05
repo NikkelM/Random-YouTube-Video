@@ -131,12 +131,12 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			} else {
 				// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
 				console.log("Uploading new video IDs to the database...");
-				// if(getLength(playlistInfo["newVideos"] ?? {}) > 0) {
-				// 	videosToDatabase = playlistInfo["newVideos"];
-				// } else {
-				// 	videosToDatabase = playlistInfo["videos"] ?? 0;
-				// }
-				videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
+				if(getLength(playlistInfo["newVideos"] ?? {}) > 0) {
+					videosToDatabase = playlistInfo["newVideos"];
+				} else {
+					videosToDatabase = playlistInfo["videos"] ?? 0;
+				}
+				// videosToDatabase = playlistInfo["newVideos"] ?? playlistInfo["videos"] ?? {};
 			}
 
 			await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, encounteredDeletedVideos);
