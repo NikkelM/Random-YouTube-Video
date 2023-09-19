@@ -1,11 +1,13 @@
 # Changelog
 
-## v2.2.3
+## v2.3.0 (Unreleased)
 
 <!--Releasenotes start-->
+<!--Releasenotes end-->
+
+## v2.2.3
 - Error messages now include the current channel ID to help with reporting an issue.
 - Some changes in how data that is sent to the database is handled, to prepare for a future security update.
-<!--Releasenotes end-->
 
 ## v2.2.2
 
