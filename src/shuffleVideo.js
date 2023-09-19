@@ -89,7 +89,8 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			(!databaseSharing && ((playlistInfo["lastAccessedLocally"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()))) {
 			console.log(`Local uploads playlist for this channel may be outdated.${databaseSharing ? " Updating from the database..." : ""}`);
 
-			playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId) : {};
+			// Try to get an updated version of the playlist, but keep the information about locally known videos and shorts
+			playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId, playlistInfo) : {};
 
 			// The playlist does not exist in the database (==it was deleted since the user last fetched it). Get it from the API.
 			// With the current functionality and db rules, this shouldn't happen, except if the user has opted out of database sharing.
@@ -110,10 +111,8 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		// Update the remaining user quota in the configSync
 		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, userQuotaRemainingToday));
 
-		// To prevent potential TypeErrors later on, assign an empty newVideos object if it doesn't exist
-		if (!playlistInfo["newVideos"]) {
-			playlistInfo["newVideos"] = {};
-		}
+		// Validate that all required keys exist in the playlistInfo object
+		validatePlaylistInfo(playlistInfo);
 
 		let chosenVideos, encounteredDeletedVideos;
 		({ chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
@@ -127,14 +126,14 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			// If any videos need to be deleted, this should be the union of videos, newvideos, minus the videos to delete
 			if (encounteredDeletedVideos) {
 				console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
-				videosToDatabase = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
+				videosToDatabase = Object.assign({}, getAllVideosFromLocalPlaylist(playlistInfo), playlistInfo["newVideos"] ?? {});
 			} else {
 				// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
 				console.log("Uploading new video IDs to the database...");
 				if (getLength(playlistInfo["newVideos"] ?? {}) > 0) {
 					videosToDatabase = playlistInfo["newVideos"];
 				} else {
-					videosToDatabase = playlistInfo["videos"];
+					videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
 				}
 			}
 
@@ -148,7 +147,10 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		console.log("Saving playlist to local storage...");
 
 		// We can now join the new videos with the old ones
-		playlistInfo["videos"] = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
+		// TODO: This is where we add the new videos to the "unknownType" key, instead of joining
+		// playlistInfo["videos"] = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
+		// TODO: Make sure the unknownType key exists here
+		playlistInfo["videos"]["unknownType"] = Object.assign({}, playlistInfo["videos"]["unknownType"], playlistInfo["newVideos"] ?? {});
 
 		// Only save the wanted keys
 		const playlistInfoForLocalStorage = {
@@ -156,9 +158,13 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			"lastAccessedLocally": new Date().toISOString(),
 			"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
 			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
+			// TODO: New shorts format here (separate keys) - it should work like this
 			"videos": playlistInfo["videos"] ?? {}
 		};
 
+		// TODO: Remove debug code
+		console.log(playlistInfoForLocalStorage);
+		return;
 		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
 		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
@@ -175,7 +181,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 // --------------- Private ---------------
 // ---------- Database ----------
 // Try to get the playlist from the database. If it does not exist, return an empty dictionary.
-async function tryGetPlaylistFromDB(playlistId) {
+async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 	const msg = {
 		command: "getPlaylistFromDB",
 		data: playlistId
@@ -216,6 +222,28 @@ async function tryGetPlaylistFromDB(playlistId) {
 	}
 
 	playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
+
+	if (!localPlaylistInfo) {
+		// Since we just fetched the playlist, we do not have any info locally, so all videos are "unknownType"
+		const videosCopy = playlistInfo["videos"];
+		playlistInfo["videos"] = {};
+		playlistInfo["videos"]["unknownType"] = videosCopy;
+		playlistInfo["videos"]["knownVideos"] = {};
+		playlistInfo["videos"]["knownShorts"] = {};
+	} else {
+		// Else, we need to find out which videos are new, and add them to the unknownType key
+		// It is also possible that there are videos in the localPlaylistInfo which do not exist in the database anymore, so we need to delete them
+		// If a video is in localPlaylistInfo but not in the database, it needs to be removed from the localPlaylistInfo
+		// If a video is in the database but not in localPlaylistInfo, it needs to be added to the localPlaylistInfo, in the unknownType key
+		// If a video is in both, we don't need to do anything
+		// To get all videos that exist in only the database, we can join the local video types and get the difference to the database videos
+		// To get all videos that exist in only the local storage, we do the same but the other way around
+
+		// Get all videos that exist in only the database
+		// TODO: Use a set to speed this lookup up
+		const videosOnlyInDatabase = Object.keys(playlistInfo["videos"]).filter((videoId) => !Object.keys(getAllVideosFromLocalPlaylist(localPlaylistInfo)).includes(videoId));
+		// TODO: Get the difference between the local videos and the database videos in a more efficient way
+	}
 
 	return playlistInfo;
 }
@@ -275,6 +303,8 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	}
 
 	let playlistInfo = {};
+	playlistInfo["videos"] = {};
+
 	let pageToken = "";
 	let apiResponse = null;
 
@@ -308,7 +338,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	}
 
 	// For each video, add an entry in the form of videoId: uploadTime
-	playlistInfo["videos"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)]));
+	playlistInfo["videos"]["unknownType"] = Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)]));
 
 	// We also want to get the uploadTime of the most recent video
 	playlistInfo["lastVideoPublishedAt"] = apiResponse["items"][0]["contentDetails"]["videoPublishedAt"];
@@ -323,7 +353,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 		progressTextElement.innerText = `\xa0Fetching: ${Math.round(resultsFetchedCount / totalResults * 100)}%`;
 
 		// For each video, add an entry in the form of videoId: uploadTime
-		playlistInfo["videos"] = Object.assign(playlistInfo["videos"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)])));
+		playlistInfo["videos"]["unknownType"] = Object.assign(playlistInfo["videos"]["unknownType"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)])));
 
 		pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 	}
@@ -358,7 +388,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	const totalNumVideosOnChannel = apiResponse["pageInfo"]["totalResults"];
 	// If the channel has already reached the API cap, we don't know how many new videos there are, so we put an estimate to show the user something
 	// The difference could be negative if there are more videos saved in the database than exist in the playlist, e.g videos were deleted
-	const numLocallyKnownVideos = getLength(playlistInfo["videos"]);
+	const numLocallyKnownVideos = getLength(getAllVideosFromLocalPlaylist(playlistInfo));
 	const totalExpectedNewResults = totalNumVideosOnChannel > 19999 ? 1000 : Math.max(totalNumVideosOnChannel - numLocallyKnownVideos, 0);
 
 	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
@@ -662,6 +692,9 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 	}
 
 	// Sort all videos by date
+	// TODO: How to retain information for which subdictionary a video belongs to?
+	// Do we maybe sort all three dicts separately and always choose from a random one of them?
+	// What is the overhead?
 	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
 
 	let videosByDate = Object.keys(allVideos).sort((a, b) => {
@@ -698,6 +731,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			do {
 				// Remove the video from the local playlist object
 				// It will always be in the "videos" object, as we have just fetched the "newVideos" from the YouTube API
+				// TODO: Delete from the correct subdictionary
 				delete playlistInfo["videos"][randomVideo];
 
 				// Remove the deleted video from the videosToShuffle array and choose a new random video
@@ -922,6 +956,34 @@ async function aprilFoolsJoke() {
 		await setSyncStorageValue("wasLastRickRolledInYear", String(now.getFullYear()));
 
 		window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", '_blank').focus();
+	}
+}
+
+// ---------- Helper functions ----------
+// Join all videos into one object, useful for database interaction and filtering
+function getAllVideosFromLocalPlaylist(playlistInfo) {
+	return Object.assign({}, playlistInfo["videos"]["knownVideos"], playlistInfo["videos"]["knownShorts"], playlistInfo["videos"]["unknownType"]);
+}
+
+function validatePlaylistInfo(playlistInfo) {
+	// The playlistInfo object must contain lastVideoPublishedAt, lastFetchedFromDB and videos
+	// The videos subkey must contain knownVideos, knownShorts and unknownType
+	// If the newVideos key is missing, add it as an empty object
+	// TODO: Remove debug code
+	console.log(Object.keys(playlistInfo));
+	if (!playlistInfo["lastVideoPublishedAt"] || !playlistInfo["lastFetchedFromDB"]
+		|| !playlistInfo["videos"] || !playlistInfo["videos"]["knownVideos"] || !playlistInfo["videos"]["knownShorts"] || !playlistInfo["videos"]["unknownType"]) {
+		throw new RandomYoutubeVideoError(
+			{
+				code: "RYV-10",
+				message: `The playlistInfo object is missing one or more required keys (Got: ${Object.keys(playlistInfo)}).`,
+				solveHint: "Please try again and inform the developer if the error is not resolved.",
+				showTrace: false
+			}
+		);
+	}
+	if (!playlistInfo["newVideos"]) {
+		playlistInfo["newVideos"] = {};
 	}
 }
 
