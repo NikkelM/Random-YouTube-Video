@@ -72,7 +72,7 @@ Did you find any bugs with the version you tested? Please let me know by [openin
 - The bundled extension files will be placed in the `dist/<browser>` directories.
 - You can load the extension in your browser by following the instructions below.
 
-#### Chrome/Chromium
+#### Chromium
 
 - Open the Extension Management page by navigating to `chrome://extensions`.
 - Make sure that you have enabled developer mode.
