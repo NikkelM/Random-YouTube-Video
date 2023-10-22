@@ -324,7 +324,7 @@ async function openVideoInTabWithId(tabId, videoUrl) {
 // ---------- Local storage ----------
 async function getFromLocalStorage(key) {
 	return await chrome.storage.local.get([key]).then((result) => {
-		if (result[key]) {
+		if (result[key] !== undefined) {
 			return result[key];
 		}
 		return null;
