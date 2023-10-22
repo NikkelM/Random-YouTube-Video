@@ -165,11 +165,11 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		// TODO: Remove debug code
 		console.log(playlistInfoForLocalStorage);
 		return;
-		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
+		// await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
-		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
+		// await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
 
-		await playVideo(chosenVideos, firedFromPopup);
+		// await playVideo(chosenVideos, firedFromPopup);
 	} catch (error) {
 		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, configSync.userQuotaRemainingToday - 1));
 		throw error;
@@ -231,18 +231,23 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 		playlistInfo["videos"]["knownVideos"] = {};
 		playlistInfo["videos"]["knownShorts"] = {};
 	} else {
-		// Else, we need to find out which videos are new, and add them to the unknownType key
-		// It is also possible that there are videos in the localPlaylistInfo which do not exist in the database anymore, so we need to delete them
-		// If a video is in localPlaylistInfo but not in the database, it needs to be removed from the localPlaylistInfo
-		// If a video is in the database but not in localPlaylistInfo, it needs to be added to the localPlaylistInfo, in the unknownType key
-		// If a video is in both, we don't need to do anything
-		// To get all videos that exist in only the database, we can join the local video types and get the difference to the database videos
-		// To get all videos that exist in only the local storage, we do the same but the other way around
+		const allVideosInLocalPlaylist = getAllVideosFromLocalPlaylist(localPlaylistInfo);
+		const allVideosInLocalPlaylistAsSet = new Set(Object.keys(allVideosInLocalPlaylist));
+		const allVideosInDatabaseAsSet = new Set(Object.keys(playlistInfo["videos"]));
 
-		// Get all videos that exist in only the database
-		// TODO: Use a set to speed this lookup up
-		const videosOnlyInDatabase = Object.keys(playlistInfo["videos"]).filter((videoId) => !Object.keys(getAllVideosFromLocalPlaylist(localPlaylistInfo)).includes(videoId));
-		// TODO: Get the difference between the local videos and the database videos in a more efficient way
+		// Add videos that are new from the database to the local playlist
+		const videosOnlyInDatabase = Object.keys(playlistInfo["videos"].filter((videoId) => !allVideosInLocalPlaylistAsSet.has(videoId)));
+		playlistInfo["videos"]["unknownType"] = Object.assign({}, playlistInfo["videos"]["unknownType"], Object.fromEntries(videosOnlyInDatabase.map((videoId) => [videoId, playlistInfo["videos"][videoId]])));
+
+		// Remove videos from the local playlist object that no longer exist in the database
+		const videoTypes = ["knownVideos", "knownShorts", "unknownType"];
+		for (const type of videoTypes) {
+			for (const videoId in localPlaylistInfo["videos"][type]) {
+				if (!allVideosInDatabaseAsSet.has(videoId)) {
+					delete localPlaylistInfo["videos"][type][videoId];
+				}
+			}
+		}
 	}
 
 	return playlistInfo;
