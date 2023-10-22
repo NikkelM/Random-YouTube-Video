@@ -12,13 +12,13 @@ chrome.runtime.onStartup.addListener(async function () {
 	console.log(`${((utilizedStorage / maxLocalStorage) * 100).toFixed(2)}% of local storage is used. (${utilizedStorage}/${maxLocalStorage} bytes)`);
 
 	if (maxLocalStorage * 0.9 < utilizedStorage) {
-		console.log("Local storage is over 90% utilized. Removing playlists that have not been accessed the longest...");
+		console.log("Local storage is over 90% utilized. Removing playlists that have not been accessed the longest to free up some space...");
 
 		// Get all playlists from local storage
 		const localStorageContents = await chrome.storage.local.get();
 
 		// We only need the keys that hold playlists, which is signified by the existence of the "videos" sub-key
-		const allPlaylists = Object.fromEntries(Object.entries(localStorageContents).filter(([k, v]) => v["videos"]));
+		const allPlaylists = Object.fromEntries(Object.entries(localStorageContents).filter(([key, value]) => value["videos"]));
 
 		// Sort the playlists by lastAccessedLocally value
 		const sortedPlaylists = Object.entries(allPlaylists).sort((a, b) => {
