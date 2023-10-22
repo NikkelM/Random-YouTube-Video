@@ -3,6 +3,8 @@
 ## v2.3.0 (Unreleased)
 
 <!--Releasenotes start-->
+- Shuffling when excluding shorts is now a lot quicker if you have shuffled from the channel before, as the extension will remember which videos are shorts.
+- Fixed a rare data inconsistency bug occurring with specific database values.
 <!--Releasenotes end-->
 
 ## v2.2.3
