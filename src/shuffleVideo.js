@@ -23,16 +23,17 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 	try {
 		// While chooseRandomVideo is running, we need to keep the service worker alive
 		// Otherwise, it will get stopped after 30 seconds and we will get an error if fetching the videos takes longer
+		// So every 25 seconds, we send a message to the service worker to keep it alive
 		var keepServiceWorkerAlive = setInterval(() => {
 			chrome.runtime.sendMessage({ command: "connectionTest" });
 		}, 25000);
 		/* c8 ignore stop */
 
 		// Each user has a set amount of quota they can use per day.
-		// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day.
+		// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day
 		let userQuotaRemainingToday = await getUserQuotaRemainingToday();
 
-		// If we somehow update the playlist info and want to send it to the database in the end, this variable indicates it
+		// If we update the playlist info in any way and want to send it to the database in the end, this variable indicates it
 		let shouldUpdateDatabase = false;
 
 		// User preferences
@@ -147,10 +148,8 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		console.log("Saving playlist to local storage...");
 
 		// We can now join the new videos with the old ones
-		// TODO: This is where we add the new videos to the "unknownType" key, instead of joining
-		// playlistInfo["videos"] = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
-		// TODO: Make sure the unknownType key exists here
-		playlistInfo["videos"]["unknownType"] = Object.assign({}, playlistInfo["videos"]["unknownType"], playlistInfo["newVideos"] ?? {});
+		// We do not yet know if the new videos are videos or shorts, so we put them in the "unknownType" key
+		playlistInfo["videos"]["unknownType"] = Object.assign({}, playlistInfo["videos"]["unknownType"] ?? {}, playlistInfo["newVideos"] ?? {});
 
 		// Only save the wanted keys
 		const playlistInfoForLocalStorage = {
@@ -158,18 +157,18 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			"lastAccessedLocally": new Date().toISOString(),
 			"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
 			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
-			// TODO: New shorts format here (separate keys) - it should work like this
+			// TODO: New shorts format here (separate keys) - it should work like this -> Test it
 			"videos": playlistInfo["videos"] ?? {}
 		};
 
 		// TODO: Remove debug code
 		console.log(playlistInfoForLocalStorage);
 		return;
-		// await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
+		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
-		// await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
+		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
 
-		// await playVideo(chosenVideos, firedFromPopup);
+		await playVideo(chosenVideos, firedFromPopup);
 	} catch (error) {
 		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, configSync.userQuotaRemainingToday - 1));
 		throw error;
@@ -973,9 +972,6 @@ function getAllVideosFromLocalPlaylist(playlistInfo) {
 function validatePlaylistInfo(playlistInfo) {
 	// The playlistInfo object must contain lastVideoPublishedAt, lastFetchedFromDB and videos
 	// The videos subkey must contain knownVideos, knownShorts and unknownType
-	// If the newVideos key is missing, add it as an empty object
-	// TODO: Remove debug code
-	console.log(Object.keys(playlistInfo));
 	if (!playlistInfo["lastVideoPublishedAt"] || !playlistInfo["lastFetchedFromDB"]
 		|| !playlistInfo["videos"] || !playlistInfo["videos"]["knownVideos"] || !playlistInfo["videos"]["knownShorts"] || !playlistInfo["videos"]["unknownType"]) {
 		throw new RandomYoutubeVideoError(
