@@ -1,11 +1,16 @@
 # Changelog
 
-## v2.2.3
+## v2.2.4
 
 <!--Releasenotes start-->
+- Fixed an alignment issue of the shuffle button on channel pages that was introduced with the latest update to the YouTube UI.
+- Fixed some issues with the display of the shuffle button if the shuffle icon is not loaded in time.
+<!--Releasenotes end-->
+
+## v2.2.3
+
 - Error messages now include the current channel ID to help with reporting an issue.
 - Some changes in how data that is sent to the database is handled, to prepare for a future security update.
-<!--Releasenotes end-->
 
 ## v2.2.2
 
