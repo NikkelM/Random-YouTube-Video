@@ -8,7 +8,7 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 	let buttonDivID = "youtube-random-video-shuffle-button";
 	let buttonDivExtraStyle = "";
 	let buttonDivOwner = null;
-	let buttonDivPrepend = true;
+	let buttonDivAppend = true;
 
 	// Depending on the type of page we're on, we might need to change certain parts of the button
 	switch (pageType) {
@@ -20,7 +20,6 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 			buttonDivID = "youtube-random-video-shuffle-button-video";
 			buttonDivExtraStyle = "margin-left: 8px;";
 			buttonDivOwner = document.getElementById("above-the-fold").children.namedItem("top-row").children.namedItem("owner");
-			buttonDivPrepend = false;
 			break;
 		default:
 			console.warn(`Cannot build button: Unknown page type: ${pageType}`);
@@ -69,11 +68,11 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 	</div>`;
 	buttonDiv = new DOMParser().parseFromString(buttonDiv, "text/html").body.firstChild;
 
-	// Depending on the page we're on, we wat to prepend or append the button to the owner
-	if (buttonDivPrepend) {
-		buttonDivOwner.prepend(buttonDiv);
-	} else {
+	// Depending on the page we're on, we may want to prepend or append the button to the parent
+	if (buttonDivAppend) {
 		buttonDivOwner.appendChild(buttonDiv);
+	} else {
+		buttonDivOwner.prepend(buttonDiv);
 	}
 
 	// Wait for the button renderer to get the child elements defined by the element type
