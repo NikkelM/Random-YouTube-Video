@@ -116,7 +116,7 @@ function finalizeButton(pageType, channelId, clickHandler) {
 	<button
 		class="yt-spec-button-shape-next yt-spec-button-shape-next--tonal yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-m"
 		aria-label="Shuffle from this channel">
-			<span class="material-symbols-outlined">
+			<span class="material-symbols-outlined" style="width: 24.01px; overflow: hidden;">
 				shuffle
 			</span>
 			<div class="cbox yt-spec-button-shape-next--button-text-content">
