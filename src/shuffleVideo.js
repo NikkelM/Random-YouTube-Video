@@ -696,14 +696,25 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 	}
 
 	// Sort all videos by date
+	// TODO: WIP Start
 	// TODO: How to retain information for which subdictionary a video belongs to?
 	// Do we maybe sort all three dicts separately and always choose from a random one of them?
 	// What is the overhead?
-	let allVideos = Object.assign({}, playlistInfo["videos"], playlistInfo["newVideos"] ?? {});
+	// Problem with current below approach (22/10/2023): The applyShuffleFilter function needs to get all videos at once to correctly apply the percentageOption filter
+	let allUnknownTypeVideos = Object.assign({}, playlistInfo["videos"]["unknownType"], playlistInfo["newVideos"] ?? {});
+	let allKnownVideos = playlistInfo["videos"]["knownVideos"];
+	let allKnownShorts = playlistInfo["videos"]["knownShorts"];
 
-	let videosByDate = Object.keys(allVideos).sort((a, b) => {
-		return new Date(allVideos[b]) - new Date(allVideos[a]);
+	let unknownTypeVideosByDate = Object.keys(allUnknownTypeVideos).sort((a, b) => {
+		return new Date(allUnknownTypeVideos[b]) - new Date(allUnknownTypeVideos[a]);
 	});
+	let knownVideosByDate = Object.keys(playlistInfo["videos"]["knownVideos"]).sort((a, b) => {
+		return new Date(allKnownVideos[b]) - new Date(allKnownVideos[a]);
+	});
+	let knownShortsByDate = Object.keys(playlistInfo["videos"]["knownShorts"]).sort((a, b) => {
+		return new Date(allKnownShorts[b]) - new Date(allKnownShorts[a]);
+	});
+	// TODO: WIP End
 
 	// Error handling for videosToShuffle being undefined/empty is done in applyShuffleFilter()
 	let videosToShuffle = applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue);
@@ -767,6 +778,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		}
 
 		// If the user does not want to shuffle from shorts, and we do not yet know the type of the chosen video, we check if it is a short
+		// TODO: Whenever we get to know the type of a video, we should move it to the correct subdictionary
 		if (configSync.shuffleIgnoreShortsOption) {
 			const videoIsShort = await isShort(randomVideo);
 
