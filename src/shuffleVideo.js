@@ -157,7 +157,6 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			"lastAccessedLocally": new Date().toISOString(),
 			"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
 			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
-			// TODO: New shorts format here (separate keys) - it should work like this -> Test it
 			"videos": playlistInfo["videos"] ?? {}
 		};
 
@@ -308,6 +307,9 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 
 	let playlistInfo = {};
 	playlistInfo["videos"] = {};
+	playlistInfo["videos"]["unknownType"] = {};
+	playlistInfo["videos"]["knownVideos"] = {};
+	playlistInfo["videos"]["knownShorts"] = {};
 
 	let pageToken = "";
 	let apiResponse = null;
@@ -361,6 +363,8 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 
 		pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 	}
+
+	playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 
 	return { playlistInfo, userQuotaRemainingToday };
 }
@@ -696,27 +700,20 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 	}
 
 	// Sort all videos by date
-	// TODO: WIP Start
-	// TODO: How to retain information for which subdictionary a video belongs to?
-	// Do we maybe sort all three dicts separately and always choose from a random one of them?
-	// What is the overhead?
-	// Problem with current below approach (22/10/2023): The applyShuffleFilter function needs to get all videos at once to correctly apply the percentageOption filter
-	let allUnknownTypeVideos = Object.assign({}, playlistInfo["videos"]["unknownType"], playlistInfo["newVideos"] ?? {});
+	let allUnknownType = Object.assign({}, playlistInfo["videos"]["unknownType"], playlistInfo["newVideos"] ?? {});
 	let allKnownVideos = playlistInfo["videos"]["knownVideos"];
 	let allKnownShorts = playlistInfo["videos"]["knownShorts"];
 
-	let unknownTypeVideosByDate = Object.keys(allUnknownTypeVideos).sort((a, b) => {
-		return new Date(allUnknownTypeVideos[b]) - new Date(allUnknownTypeVideos[a]);
-	});
-	let knownVideosByDate = Object.keys(playlistInfo["videos"]["knownVideos"]).sort((a, b) => {
-		return new Date(allKnownVideos[b]) - new Date(allKnownVideos[a]);
-	});
-	let knownShortsByDate = Object.keys(playlistInfo["videos"]["knownShorts"]).sort((a, b) => {
-		return new Date(allKnownShorts[b]) - new Date(allKnownShorts[a]);
-	});
-	// TODO: WIP End
+	let allVideos = Object.assign({}, allUnknownType, allKnownVideos);
+	// Only if we are not ignoring shorts, we want to include them in the shuffle
+	if (!configSync.shuffleIgnoreShortsOption) {
+		allVideos = Object.assign({}, allVideos, allKnownShorts);
+	}
 
-	// Error handling for videosToShuffle being undefined/empty is done in applyShuffleFilter()
+	let videosByDate = Object.keys(allVideos).sort((a, b) => {
+		return new Date(allVideos[b]) - new Date(allVideos[a]);
+	});
+
 	let videosToShuffle = applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, activeOptionValue);
 
 	let chosenVideos = [];
@@ -745,9 +742,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			shouldUpdateDatabase = true;
 			do {
 				// Remove the video from the local playlist object
-				// It will always be in the "videos" object, as we have just fetched the "newVideos" from the YouTube API
-				// TODO: Delete from the correct subdictionary
-				delete playlistInfo["videos"][randomVideo];
+				delete playlistInfo[getVideoType(randomVideo, playlistInfo)][randomVideo];
 
 				// Remove the deleted video from the videosToShuffle array and choose a new random video
 				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
@@ -778,21 +773,34 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		}
 
 		// If the user does not want to shuffle from shorts, and we do not yet know the type of the chosen video, we check if it is a short
-		// TODO: Whenever we get to know the type of a video, we should move it to the correct subdictionary
 		if (configSync.shuffleIgnoreShortsOption) {
-			const videoIsShort = await isShort(randomVideo);
+			if (playlistInfo["videos"]["unknownType"][randomVideo] !== undefined) {
+				const videoIsShort = await isShort(randomVideo);
 
-			if (videoIsShort) {
-				console.log('A chosen video was a short, but shorts are ignored. Choosing a new random video.');
+				if (videoIsShort) {
+					console.log('A chosen video was a short, but shorts are ignored. Choosing a new random video.');
 
-				// Remove the video from videosToShuffle to not choose it again
-				// Do not remove it from the playlistInfo object, as we do not want to delete it from the database
-				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
+					// Move the video to the knownShorts subdictionary
+					playlistInfo["videos"]["knownShorts"][randomVideo] = playlistInfo["videos"]["unknownType"][randomVideo];
+					delete playlistInfo["videos"]["unknownType"][randomVideo];
 
-				// We need to decrement i, as we did not choose a video in this iteration
-				i--;
+					// Remove the video from videosToShuffle to not choose it again
+					// Do not remove it from the playlistInfo object, as we do not want to delete it from the database
+					videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
+
+					// We need to decrement i, as we did not choose a video in this iteration
+					i--;
+				} else {
+					// Move the video to the knownVideos subdictionary
+					playlistInfo["videos"]["knownVideos"][randomVideo] = playlistInfo["videos"]["unknownType"][randomVideo];
+					delete playlistInfo["videos"]["unknownType"][randomVideo];
+
+					// The video is not a short, so add it to the list of chosen videos and remove it from the pool of videos to choose from
+					chosenVideos.push(randomVideo);
+					videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
+				}
 			} else {
-				// The video is not a short, so add it to the list of chosen videos and remove it from the pool of videos to choose from
+				// Otherwise, the video must be a knownVideo, as we do not include knownShorts in allVideos above
 				chosenVideos.push(randomVideo);
 				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 			}
@@ -817,6 +825,18 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 	console.log(`${chosenVideos.length} random video${chosenVideos.length > 1 ? "s have" : " has"} been chosen: [${chosenVideos}]`);
 
 	return { chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
+}
+
+function getVideoType(videoId, playlistInfo) {
+	if (playlistInfo["videos"]["unknownType"][videoId]) {
+		return "unknownType";
+	} else if (playlistInfo["videos"]["knownVideos"][videoId]) {
+		return "knownVideos";
+	} else if (playlistInfo["videos"]["knownShorts"][videoId]) {
+		return "knownShorts";
+	} else {
+		return null;
+	}
 }
 
 // Applies a filter to the playlist object, based on the setting set in the popup
@@ -882,7 +902,7 @@ function applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, 
 				throw new RandomYoutubeVideoError(
 					{
 						code: "RYV-8D",
-						message: `The percentage you specified (${activeOptionValue}) should be between 1 and 100. Normally, you should not be able to set such a value.`,
+						message: `The percentage you specified (${activeOptionValue}%) should be between 1 and 100. Normally, you should not be able to set such a value.`,
 						solveHint: "Please fix the percentage in the popup.",
 						showTrace: false
 					}
@@ -986,7 +1006,8 @@ function validatePlaylistInfo(playlistInfo) {
 	// The videos subkey must contain knownVideos, knownShorts and unknownType
 	if (!playlistInfo["lastVideoPublishedAt"] || !playlistInfo["lastFetchedFromDB"]
 		|| !playlistInfo["videos"] || !playlistInfo["videos"]["knownVideos"] || !playlistInfo["videos"]["knownShorts"] || !playlistInfo["videos"]["unknownType"]) {
-		throw new RandomYoutubeVideoError(
+			console.log(playlistInfo);
+			throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-10",
 				message: `The playlistInfo object is missing one or more required keys (Got: ${Object.keys(playlistInfo)}).`,
