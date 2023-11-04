@@ -4,6 +4,7 @@
 
 <!--Releasenotes start-->
 - Shuffling when excluding shorts is now a lot quicker if you have shuffled from the channel before, as the extension will remember which videos are shorts.
+- Added an additional message to the shuffle button if shuffling takes longer due to ignoring shorts.
 - Fixed a rare data inconsistency bug occurring with specific database values.
 <!--Releasenotes end-->
 
