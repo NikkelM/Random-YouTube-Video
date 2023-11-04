@@ -743,7 +743,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			shouldUpdateDatabase = true;
 			do {
 				// Remove the video from the local playlist object
-				delete playlistInfo[getVideoType(randomVideo, playlistInfo)][randomVideo];
+				delete playlistInfo["videos"][getVideoType(randomVideo, playlistInfo)][randomVideo];
 
 				// Remove the deleted video from the videosToShuffle array and choose a new random video
 				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
