@@ -205,15 +205,7 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 	}
 	/* c8 ignore stop */
 
-	if (!playlistInfo) {
-		return {};
-	}
-
-	if (!playlistInfo["videos"]) {
-		// Due to some mistake, there is no video data in the database
-		// Overwrite the playlist with an empty one
-		console.log("The playlist was found in the database, but it is empty. Removing...");
-		await uploadPlaylistToDatabase({}, {}, playlistId, true);
+	if (!playlistInfo || !playlistInfo["videos"]) {
 		return {};
 	}
 

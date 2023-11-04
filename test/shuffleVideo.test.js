@@ -480,7 +480,7 @@ describe('shuffleVideo', function () {
 			});
 		});
 
-		context('various user settings', async function () {
+		context('user settings', async function () {
 			// Choose a number of playlists for which to test different user setting combinations
 			const playlists = [
 				// Playlist that does not exist locally, DB is outdated
@@ -995,7 +995,7 @@ describe('shuffleVideo', function () {
 
 					context('database interaction', function () {
 						if (!needsDBInteraction(input)) {
-							it('should only interact with the database to remove deleted videos', async function () {
+							it('should only interact with the database to remove deleted videos if the local playlist is up-to-date', async function () {
 								await chooseRandomVideo(input.channelId, false, domElement);
 
 								const messages = chrome.runtime.sendMessage.args;
@@ -1096,7 +1096,6 @@ describe('shuffleVideo', function () {
 								}
 
 								const numDeletedVideosAfter = Object.keys(playlistInfoAfter.videos).filter(videoId => videoId.includes('DEL')).length;
-
 								expect(numDeletedVideosAfter).to.be(0);
 							});
 						} else if (input.playlistModifiers.lastUpdatedDBAt === 'DBEntryIsUpToDate') {
@@ -1133,6 +1132,41 @@ describe('shuffleVideo', function () {
 								expect(commands).to.contain('updatePlaylistInfoInDB');
 								const updateMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
 								checkPlaylistsUploadedToDB(updateMessages, input);
+							});
+						}
+						// Test special case where the database has an entry but no video data
+						if (input.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsUpToDate_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist_LocalPlaylistContainsOnlyUnknownVideos') {
+							it('should correctly handle the case that the database entry exists but has no videos', async function () {
+								// Remove the video data from the database entry
+								let newPlaylistInfoInDB = deepCopy(await chrome.runtime.sendMessage({ command: 'getPlaylistFromDB', data: input.playlistId }));
+								delete newPlaylistInfoInDB["videos"];
+								await chrome.runtime.sendMessage({ command: 'overwritePlaylistInfoInDB', data: { key: input.playlistId, val: newPlaylistInfoInDB } });
+
+								await chooseRandomVideo(input.channelId, false, domElement);
+
+								const messages = chrome.runtime.sendMessage.args;
+								const commands = messages.map(arg => arg[0].command);
+
+								expect(chrome.runtime.sendMessage.callCount).to.be(8);
+
+								// First two are from the test setup
+								expect(commands).to.contain('overwritePlaylistInfoInDB');
+								const getPlaylistFromDBCount = commands.filter(command => command === 'getPlaylistFromDB').length;
+								expect(getPlaylistFromDBCount).to.equal(2);
+								expect(commands).to.contain('connectionTest');
+								expect(commands).to.contain('getAPIKey');
+								expect(commands).to.contain('updatePlaylistInfoInDB');
+								const updateMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+								checkPlaylistsUploadedToDB(updateMessages, input);
+								expect(commands).to.contain('getAllYouTubeTabs');
+								expect(commands).to.contain('getCurrentTabId');
+
+								// Get the entry from the database
+								const playlistInfoInDB = await chrome.runtime.sendMessage({ command: 'getPlaylistFromDB', data: input.playlistId });
+								expect(playlistInfoInDB).to.not.be(null);
+								expect(Object.keys(playlistInfoInDB.videos).length).to.equal(10);
+								// These are the videos that should be in the playlist, but due to some mistake were missing from the DB
+								expect(playlistInfoInDB.videos).to.eql({ ...input.dbVideos });
 							});
 						}
 					});
