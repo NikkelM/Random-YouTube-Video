@@ -160,9 +160,6 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			"videos": playlistInfo["videos"] ?? {}
 		};
 
-		// TODO: Remove debug code
-		console.log(playlistInfoForLocalStorage);
-		return;
 		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
 
 		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
@@ -800,7 +797,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 					videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 				}
 			} else {
-				// Otherwise, the video must be a knownVideo, as we do not include knownShorts in allVideos above
+				// Otherwise, the video must be a knownVideo, as we do not include knownShorts in allVideos
 				chosenVideos.push(randomVideo);
 				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 			}
@@ -1006,8 +1003,7 @@ function validatePlaylistInfo(playlistInfo) {
 	// The videos subkey must contain knownVideos, knownShorts and unknownType
 	if (!playlistInfo["lastVideoPublishedAt"] || !playlistInfo["lastFetchedFromDB"]
 		|| !playlistInfo["videos"] || !playlistInfo["videos"]["knownVideos"] || !playlistInfo["videos"]["knownShorts"] || !playlistInfo["videos"]["unknownType"]) {
-			console.log(playlistInfo);
-			throw new RandomYoutubeVideoError(
+		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-10",
 				message: `The playlistInfo object is missing one or more required keys (Got: ${Object.keys(playlistInfo)}).`,
