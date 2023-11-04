@@ -394,13 +394,13 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 								localDeletedVideos = deepCopy(defaultLocalDeletedVideos);
 							} else if (playlistModifiers[3][l] === "LocalPlaylistContainsNoDeletedVideos") {
 								localVideos = deepCopy(defaultLocalVideos);
-								localDeletedVideos = {};
+								localDeletedVideos = null;
 							} else if (playlistModifiers[2][k] === "LocalPlaylistDoesNotExist") {
-								localVideos = {};
-								localDeletedVideos = {};
+								localVideos = null;
+								localDeletedVideos = null;
 							} else if (playlistModifiers[3][l] === "LocalPlaylistContainsOnlyShorts") {
 								localVideos = deepCopy(defaultLocalShorts);
-								localDeletedVideos = {};
+								localDeletedVideos = null;
 							} else {
 								throw new Error(`Invalid playlist modifier combination: ${playlistModifiers[3][l]}`);
 							}
@@ -495,7 +495,7 @@ export const localPlaylistPermutations = playlistPermutations.reduce((localPlayl
 	if (playlist.playlistModifiers.lastAccessedLocally !== "LocalPlaylistDoesNotExist") {
 		const playlistCopy = deepCopy(playlist);
 		const { playlistId, lastAccessedLocally, lastFetchedFromDB, localLastVideoPublishedAt, localVideos, localDeletedVideos, localPlaylistVideoKnowledge } = playlistCopy;
-		const videosWithTypes = makeLocalPlaylistFromVideos(deepCopy(localVideos), deepCopy(localDeletedVideos), localPlaylistVideoKnowledge);
+		const videosWithTypes = makeLocalPlaylistFromVideos(deepCopy(localVideos ?? {}), deepCopy(localDeletedVideos ?? {}), localPlaylistVideoKnowledge);
 		localPlaylists[playlistId] = { lastAccessedLocally, lastFetchedFromDB, lastVideoPublishedAt: localLastVideoPublishedAt, videos: videosWithTypes };
 	}
 	return localPlaylists;
