@@ -471,23 +471,23 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 }
 
 // ----- Locally stored playlists -----
-export const localPlaylistPermutations = playlistPermutations.reduce((acc, playlist) => {
+export const localPlaylistPermutations = playlistPermutations.reduce((localPlaylists, playlist) => {
 	if (playlist.playlistModifiers.lastAccessedLocally !== "LocalPlaylistDoesNotExist") {
 		const playlistCopy = deepCopy(playlist);
 		const { playlistId, lastAccessedLocally, lastFetchedFromDB, localLastVideoPublishedAt, localVideos, localDeletedVideos } = playlistCopy;
-		acc[playlistId] = { lastAccessedLocally, lastFetchedFromDB, lastVideoPublishedAt: localLastVideoPublishedAt, videos: deepCopy({ ...localVideos, ...localDeletedVideos }) };
+		localPlaylists[playlistId] = { lastAccessedLocally, lastFetchedFromDB, lastVideoPublishedAt: localLastVideoPublishedAt, videos: deepCopy({ ...localVideos, ...localDeletedVideos }) };
 	}
-	return acc;
+	return localPlaylists;
 }, {});
 
 // ----- Database -----
-export const databasePermutations = playlistPermutations.reduce((acc, playlist) => {
+export const databasePermutations = playlistPermutations.reduce((databasePlaylists, playlist) => {
 	if (playlist.playlistModifiers.lastUpdatedDBAt !== "DBEntryDoesNotExist") {
 		const playlistCopy = deepCopy(playlist);
 		const { playlistId, lastUpdatedDBAt, dbLastVideoPublishedAt, dbVideos, dbDeletedVideos } = playlistCopy;
-		acc[playlistId] = { lastUpdatedDBAt, lastVideoPublishedAt: dbLastVideoPublishedAt, videos: deepCopy({ ...dbVideos, ...dbDeletedVideos }) };
+		databasePlaylists[playlistId] = { lastUpdatedDBAt, lastVideoPublishedAt: dbLastVideoPublishedAt, videos: deepCopy({ ...dbVideos, ...dbDeletedVideos }) };
 	}
-	return acc;
+	return databasePlaylists;
 }, {});
 
 // ----- Utility functions -----
