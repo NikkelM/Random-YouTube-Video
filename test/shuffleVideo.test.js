@@ -7,6 +7,7 @@ import { chooseRandomVideo } from '../src/shuffleVideo.js';
 import { configSync, setSyncStorageValue } from '../src/chromeStorage.js';
 import { deepCopy, configSyncPermutations, playlistPermutations, needsDBInteraction, needsYTAPIInteraction } from './playlistPermutations.js';
 
+// ---------- Utility functions ----------
 // Utility to get the contents of localStorage at a certain key
 async function getKeyFromLocalStorage(key) {
 	return await chrome.storage.local.get([key]).then((result) => {
@@ -67,6 +68,11 @@ function checkPlaylistsUploadedToDB(messages, input) {
 	});
 }
 
+function getAllVideosAsOneObject(playlistInfo) {
+	return Object.assign({}, playlistInfo.videos.unknownType, playlistInfo.videos.knownShorts, playlistInfo.videos.knownVideos);
+}
+
+// ---------- Tests ----------
 describe('shuffleVideo', function () {
 
 	beforeEach(function () {
@@ -943,10 +949,10 @@ describe('shuffleVideo', function () {
 								expect(testedPlaylistLocally.lastFetchedFromDB).to.be(input.lastFetchedFromDB);
 								expect(testedPlaylistLocally.lastVideoPublishedAt).to.be(input.localLastVideoPublishedAt);
 								expect(testedPlaylistLocally.videos).to.be.an('object');
-								expect(testedPlaylistLocally.videos).to.eql({ ...input.localVideos, ...input.localDeletedVideos });
+								expect(getAllVideosAsOneObject(testedPlaylistLocally)).to.eql({ ...input.localVideos, ...input.localDeletedVideos });
 							} else {
 								// For non-existent playlists, the local storage should be empty
-								expect(testedPlaylistLocally).to.be(undefined);
+								expect(testedPlaylistLocally).to.be(null);
 							}
 						});
 
@@ -1030,7 +1036,7 @@ describe('shuffleVideo', function () {
 								expect(commands).to.contain('getCurrentTabId');
 
 								const numDeletedVideosBefore = Object.keys(input.dbDeletedVideos).filter(videoId => videoId.includes('DEL')).length;
-								const numDeletedVideosAfter = Object.keys(playlistInfoAfter.videos).filter(videoId => videoId.includes('DEL')).length;
+								const numDeletedVideosAfter = Object.keys(getAllVideosAsOneObject(playlistInfoAfter)).filter(videoId => videoId.includes('DEL')).length;
 
 								// Callcount:
 								// 6 if we need to fetch from the YT API, with update or overwrite depending on if a video was deleted
@@ -1139,7 +1145,6 @@ describe('shuffleVideo', function () {
 								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
 								await chooseRandomVideo(input.channelId, false, domElement);
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
-								const videosAfter = Object.keys(playlistInfoAfter.videos);
 
 								if (input.playlistModifiers.lastAccessedLocally !== 'LocalPlaylistDoesNotExist') {
 									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(playlistInfoBefore.lastAccessedLocally);
@@ -1147,7 +1152,7 @@ describe('shuffleVideo', function () {
 									if (!needsDBInteraction(input)) {
 										expect(playlistInfoAfter.lastFetchedFromDB).to.be(playlistInfoBefore.lastFetchedFromDB);
 										expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
-										expect(playlistInfoBefore.videos).to.have.keys(videosAfter);
+										expect(playlistInfoBefore.videos).to.have.keys(Object.keys(playlistInfoAfter.videos));
 										// If the database contains videos not in the local playlist
 									} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsVideosNotInLocalPlaylist' ||
 										input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos') {
@@ -1159,16 +1164,16 @@ describe('shuffleVideo', function () {
 										}
 										if (input.localDeletedVideos) {
 											// By fetching the videos from the database, any locally deleted videos should have been removed from the local playlist
-											expect(playlistInfoAfter.videos).to.not.have.keys(Object.keys(input.localDeletedVideos));
+											expect(getAllVideosAsOneObject(playlistInfoAfter)).to.not.have.keys(Object.keys(input.localDeletedVideos));
 										}
-										expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(videosAfter);
+										expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(Object.keys(getAllVideosAsOneObject(playlistInfoAfter)));
 										// The database and local playlist are in sync already
 									} else {
 										expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(playlistInfoBefore.lastFetchedFromDB);
 										expect(playlistInfoAfter.lastVideoPublishedAt).to.be(playlistInfoBefore.lastVideoPublishedAt);
 										// By fetching the videos from the database, any deleted videos should have been removed from the local playlist
 										// We also know that here, the db did not contain any deleted videos
-										expect(playlistInfoAfter.videos).to.have.keys(Object.keys({ ...input.localVideos, ...input.dbVideos }));
+										expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys(Object.keys({ ...input.localVideos, ...input.dbVideos }));
 									}
 								} else {
 									// If the playlist did not exist locally before, it should now
@@ -1177,7 +1182,7 @@ describe('shuffleVideo', function () {
 									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(timeBefore);
 									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(timeBefore);
 									expect(playlistInfoAfter.lastVideoPublishedAt).to.be(input.dbLastVideoPublishedAt);
-									expect({ ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(videosAfter)
+									expect({ ...input.dbVideos, ...input.dbDeletedVideos }).to.have.keys(Object.keys(getAllVideosAsOneObject(playlistInfoAfter)))
 								}
 							});
 							// For playlists that need to interact with the YouTube API
@@ -1187,7 +1192,6 @@ describe('shuffleVideo', function () {
 								const playlistInfoBefore = await getKeyFromLocalStorage(input.playlistId);
 								await chooseRandomVideo(input.channelId, false, domElement);
 								const playlistInfoAfter = await getKeyFromLocalStorage(input.playlistId);
-								const videosAfter = Object.keys(playlistInfoAfter.videos);
 
 								if (!needsDBInteraction(input)) {
 									throw new Error('This test should not be run for playlists that do not need to interact with the database. If they are, this means we are now using different configSync objects.');
@@ -1200,19 +1204,19 @@ describe('shuffleVideo', function () {
 									if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsNoVideosNotInLocalPlaylist' && input.playlistModifiers.newUploadedVideos === 'NoNewVideoUploaded') {
 										expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(playlistInfoBefore.lastVideoPublishedAt.substring(0, 10));
 										if (input.playlistModifiers.containsDeletedVideos === 'LocalPlaylistContainsDeletedVideos') {
-											expect(playlistInfoAfter.videos).to.have.keys(Object.keys({ ...input.localVideos, ...input.dbVideos }));
+											expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys(Object.keys({ ...input.localVideos, ...input.dbVideos }));
 										} else {
 											expect(playlistInfoAfter.videos).to.eql(playlistInfoBefore.videos);
 										}
 										// If there are deleted videos, but no new videos
 									} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos' && input.playlistModifiers.newUploadedVideos === 'NoNewVideoUploaded') {
 										expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(playlistInfoBefore.lastVideoPublishedAt.substring(0, 10));
-										expect(playlistInfoAfter.videos).to.have.keys(Object.keys(input.localVideos));
-										expect({ ...playlistInfoAfter.videos, ...input.dbDeletedVideos }).to.have.keys(Object.keys(playlistInfoAfter.videos));
+										expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys(Object.keys(input.localVideos));
+										expect({ ...getAllVideosAsOneObject(playlistInfoAfter), ...input.dbDeletedVideos }).to.have.keys(Object.keys(getAllVideosAsOneObject(playlistInfoAfter)));
 										// If there were new videos, either in the DB or uploaded
 									} else {
 										expect(playlistInfoAfter.lastVideoPublishedAt).to.be.greaterThan(playlistInfoBefore.lastVideoPublishedAt);
-										expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos, ...input.newUploadedVideos }).to.have.keys(videosAfter);
+										expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos, ...input.newUploadedVideos }).to.have.keys(Object.keys(getAllVideosAsOneObject(playlistInfoAfter)));
 									}
 								} else {
 									// If the playlist did not exist locally before, it should now
@@ -1221,7 +1225,7 @@ describe('shuffleVideo', function () {
 									expect(playlistInfoAfter.lastAccessedLocally).to.be.greaterThan(timeBefore);
 									expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(timeBefore);
 									expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(input.newLastVideoPublishedAt.substring(0, 10));
-									expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos, ...input.newUploadedVideos }).to.have.keys(videosAfter)
+									expect({ ...input.localVideos, ...input.dbVideos, ...input.dbDeletedVideos, ...input.newUploadedVideos }).to.have.keys(Object.keys(getAllVideosAsOneObject(playlistInfoAfter)))
 								}
 
 							});
