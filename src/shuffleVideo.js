@@ -131,7 +131,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			// If any videos need to be deleted, this should be the union of videos, newvideos, minus the videos to delete
 			if (encounteredDeletedVideos) {
 				console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
-				videosToDatabase = Object.assign({}, getAllVideosFromLocalPlaylist(playlistInfo), playlistInfo["newVideos"] ?? {});
+				videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
 			} else {
 				// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
 				console.log("Uploading new video IDs to the database...");
@@ -182,7 +182,8 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 		data: playlistId
 	};
 
-	let playlistInfo = await chrome.runtime.sendMessage(msg);
+	// Some of the tests break if we do not create a deepCopy here, as they run on the same object
+	let playlistInfo = JSON.parse(JSON.stringify(await chrome.runtime.sendMessage(msg)));
 
 	/* c8 ignore start - These are legacy conversions we don't want to test */
 	// In case the playlist is still in the old Array format (before v1.0.0) in the database, convert it to the new format
@@ -243,7 +244,7 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 		for (const type of videoTypes) {
 			for (const videoId in localPlaylistInfo["videos"][type]) {
 				if (!allVideosInDatabaseAsSet.has(videoId)) {
-					delete localPlaylistInfo["videos"][type][videoId];
+					delete playlistInfo["videos"][type][videoId];
 				}
 			}
 		}

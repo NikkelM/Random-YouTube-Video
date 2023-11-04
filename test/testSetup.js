@@ -64,7 +64,7 @@ chrome.runtime.sendMessage.callsFake((request) => {
 		// Only for the tests
 		case "setKeyInDB":
 			mockedDatabase[request.data.key] = request.data.val;
-			return "Key was removed from database.";
+			return "Key was set in the database (mocked for tests).";
 
 		case "getAPIKey":
 			return getAPIKey(false, request.data.useAPIKeyAtIndex);
