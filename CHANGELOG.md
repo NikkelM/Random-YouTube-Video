@@ -1,11 +1,17 @@
 # Changelog
 
-## v2.2.4
+## v2.3.0
 
 <!--Releasenotes start-->
+- Shuffling when excluding shorts is now a lot quicker if you have shuffled from the channel before, as the extension will remember which videos are shorts and skip them automatically.
+- Added an additional message to the shuffle button if shuffling takes a bit longer due to ignoring shorts.
+- Fixed a rare data inconsistency bug occurring with specific database values.
+<!--Releasenotes end-->
+
+## v2.2.4
+
 - Fixed an alignment issue of the shuffle button on channel pages that was introduced with the latest update to the YouTube UI.
 - Fixed some issues with the display of the shuffle button if the shuffle icon is not loaded in time.
-<!--Releasenotes end-->
 
 ## v2.2.3
 

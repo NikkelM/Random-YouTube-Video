@@ -1,6 +1,6 @@
 {
   "name": "random-youtube-video",
-  "version": "2.2.4",
+  "version": "2.3.0",
   "description": "Play a random video uploaded on the current YouTube channel.",
   "scripts": {
 		"dev": "concurrently \"npm run dev:chromium\" \"npm run dev:firefox\"",
