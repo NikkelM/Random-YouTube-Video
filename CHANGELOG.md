@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.3.0 (Unreleased)
+## v2.3.0
 
 <!--Releasenotes start-->
 - Shuffling when excluding shorts is now a lot quicker if you have shuffled from the channel before, as the extension will remember which videos are shorts.
