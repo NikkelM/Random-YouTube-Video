@@ -1205,8 +1205,12 @@ describe('shuffleVideo', function () {
 										expect(playlistInfoAfter.lastVideoPublishedAt.substring(0, 10)).to.be(playlistInfoBefore.lastVideoPublishedAt.substring(0, 10));
 										if (input.playlistModifiers.containsDeletedVideos === 'LocalPlaylistContainsDeletedVideos') {
 											expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys(Object.keys({ ...input.localVideos, ...input.dbVideos }));
-										} else {
+										} else if(input.playlistModifiers.lastUpdatedDBAt !== 'DBEntryDoesNotExist') {
 											expect(playlistInfoAfter.videos).to.eql(playlistInfoBefore.videos);
+										} else {
+											// If the DB entry does not exist, we overwrite possible local knowledge about known videos and shorts
+											expect(playlistInfoAfter.videos.knownVideos).to.eql({});
+											expect(playlistInfoAfter.videos.knownShorts).to.eql({});
 										}
 										// If there are deleted videos, but no new videos
 									} else if (input.playlistModifiers.dbContainsNewVideos === 'DBContainsDeletedVideos' && input.playlistModifiers.newUploadedVideos === 'NoNewVideoUploaded') {
