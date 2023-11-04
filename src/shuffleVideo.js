@@ -115,6 +115,10 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		// Validate that all required keys exist in the playlistInfo object
 		validatePlaylistInfo(playlistInfo);
 
+		// Join the new videos with the old ones to be able to use them when shuffling
+		// Do not delete the newVideos key as it may be needed when updating the database
+		playlistInfo["videos"]["unknownType"] = Object.assign({}, playlistInfo["videos"]["unknownType"] ?? {}, playlistInfo["newVideos"] ?? {});
+
 		let chosenVideos, encounteredDeletedVideos;
 		({ chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
 
@@ -146,10 +150,6 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 
 		// Update the playlist locally
 		console.log("Saving playlist to local storage...");
-
-		// We can now join the new videos with the old ones
-		// We do not yet know if the new videos are videos or shorts, so we put them in the "unknownType" key
-		playlistInfo["videos"]["unknownType"] = Object.assign({}, playlistInfo["videos"]["unknownType"] ?? {}, playlistInfo["newVideos"] ?? {});
 
 		// Only save the wanted keys
 		const playlistInfoForLocalStorage = {
