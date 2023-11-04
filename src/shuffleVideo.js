@@ -218,9 +218,9 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 
 	playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 
+	const videosCopy = JSON.parse(JSON.stringify(playlistInfo["videos"]));
 	if (!localPlaylistInfo) {
 		// Since we just fetched the playlist, we do not have any info locally, so all videos are "unknownType"
-		const videosCopy = playlistInfo["videos"];
 		playlistInfo["videos"] = {};
 		playlistInfo["videos"]["unknownType"] = videosCopy;
 		playlistInfo["videos"]["knownVideos"] = {};
@@ -232,7 +232,11 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 
 		// Add videos that are new from the database to the local playlist
 		const videosOnlyInDatabase = Object.keys(playlistInfo["videos"]).filter((videoId) => !allVideosInLocalPlaylistAsSet.has(videoId));
-		localPlaylistInfo["videos"]["unknownType"] = Object.assign({}, localPlaylistInfo["videos"]["unknownType"], Object.fromEntries(videosOnlyInDatabase.map((videoId) => [videoId, playlistInfo["videos"][videoId]])));
+
+		playlistInfo["videos"] = {};
+		playlistInfo["videos"]["unknownType"] = Object.assign({}, localPlaylistInfo["videos"]["unknownType"], Object.fromEntries(videosOnlyInDatabase.map((videoId) => [videoId, videosCopy[videoId]])));
+		playlistInfo["videos"]["knownVideos"] = localPlaylistInfo["videos"]["knownVideos"] ?? {};
+		playlistInfo["videos"]["knownShorts"] = localPlaylistInfo["videos"]["knownShorts"] ?? {};
 
 		// Remove videos from the local playlist object that no longer exist in the database
 		const videoTypes = ["knownVideos", "knownShorts", "unknownType"];
