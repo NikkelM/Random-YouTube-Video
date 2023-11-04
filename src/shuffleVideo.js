@@ -231,8 +231,8 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 		const allVideosInDatabaseAsSet = new Set(Object.keys(playlistInfo["videos"]));
 
 		// Add videos that are new from the database to the local playlist
-		const videosOnlyInDatabase = Object.keys(playlistInfo["videos"].filter((videoId) => !allVideosInLocalPlaylistAsSet.has(videoId)));
-		playlistInfo["videos"]["unknownType"] = Object.assign({}, playlistInfo["videos"]["unknownType"], Object.fromEntries(videosOnlyInDatabase.map((videoId) => [videoId, playlistInfo["videos"][videoId]])));
+		const videosOnlyInDatabase = Object.keys(playlistInfo["videos"]).filter((videoId) => !allVideosInLocalPlaylistAsSet.has(videoId));
+		localPlaylistInfo["videos"]["unknownType"] = Object.assign({}, localPlaylistInfo["videos"]["unknownType"], Object.fromEntries(videosOnlyInDatabase.map((videoId) => [videoId, playlistInfo["videos"][videoId]])));
 
 		// Remove videos from the local playlist object that no longer exist in the database
 		const videoTypes = ["knownVideos", "knownShorts", "unknownType"];
