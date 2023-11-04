@@ -600,7 +600,7 @@ async function testVideoExistence(videoId) {
 			videoExists = true;
 		}
 	} catch (error) {
-		console.log(`Video doesn't exist: ${videoId}`);
+		console.log(`An error was encountered and it is assumed the video does not exist: ${videoId}`);
 		videoExists = false;
 	}
 
@@ -828,9 +828,17 @@ function getVideoType(videoId, playlistInfo) {
 		return "knownVideos";
 	} else if (playlistInfo["videos"]["knownShorts"][videoId]) {
 		return "knownShorts";
-	} else {
-		return null;
 	}
+	/* c8 ignore start - This will only happen if we forget to implement something here, so we do not need to test it */
+	throw new RandomYoutubeVideoError(
+		{
+			code: "RYV-11",
+			message: `The video that was tested does not exist in the local playlist ${videoId}, so it's type could not be found.`,
+			solveHint: "Please contact the developer, as this should not happen.",
+			showTrace: false
+		}
+	);
+	/* c8 ignore stop */
 }
 
 // Applies a filter to the playlist object, based on the setting set in the popup
@@ -884,7 +892,7 @@ function applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, 
 					{
 						code: "RYV-8C",
 						message: `There are no videos that were released after the specified video ID (${activeOptionValue}), or the newest video has not yet been added to the database.`,
-						solveHint: "The extension will update playlists every 48 hours, so please wait for an update, change the video ID or use a different shuffle filter option.",
+						solveHint: "The extension updates playlists every 48 hours, so please wait for an update, change the video ID used in the filer or use a different filter option.",
 						showTrace: false
 					}
 				);
@@ -995,6 +1003,7 @@ function getAllVideosFromLocalPlaylist(playlistInfo) {
 	return Object.assign({}, playlistInfo["videos"]["knownVideos"], playlistInfo["videos"]["knownShorts"], playlistInfo["videos"]["unknownType"]);
 }
 
+/* c8 ignore start - We do not test this function as it will only trigger if we make a mistake programming somewhere, which will get caught by the test suite */
 function validatePlaylistInfo(playlistInfo) {
 	// The playlistInfo object must contain lastVideoPublishedAt, lastFetchedFromDB and videos
 	// The videos subkey must contain knownVideos, knownShorts and unknownType
@@ -1013,6 +1022,7 @@ function validatePlaylistInfo(playlistInfo) {
 		playlistInfo["newVideos"] = {};
 	}
 }
+/* c8 ignore stop */
 
 // ---------- Local storage ----------
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
