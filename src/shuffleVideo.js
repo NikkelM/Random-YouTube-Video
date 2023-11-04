@@ -182,7 +182,7 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 		data: playlistId
 	};
 
-	// Some of the tests break if we do not create a deepCopy here, as they run on the same object
+	// Some of the tests break if we do not create a deepCopy here, as the local and database object somehow get linked
 	let playlistInfo = JSON.parse(JSON.stringify(await chrome.runtime.sendMessage(msg)));
 
 	/* c8 ignore start - These are legacy conversions we don't want to test */
@@ -600,7 +600,7 @@ async function testVideoExistence(videoId) {
 			videoExists = true;
 		}
 	} catch (error) {
-		console.log(`An error was encountered and it is assumed the video does not exist: ${videoId}`);
+		console.log(`An error was encountered while checking for video existence, so it is assumed the video does not exist: ${videoId}`);
 		videoExists = false;
 	}
 
