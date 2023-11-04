@@ -10,7 +10,10 @@ import { deepCopy, configSyncPermutations, playlistPermutations, needsDBInteract
 // Utility to get the contents of localStorage at a certain key
 async function getKeyFromLocalStorage(key) {
 	return await chrome.storage.local.get([key]).then((result) => {
-		return result[key];
+		if (result[key] !== undefined) {
+			return result[key];
+		}
+		return null;
 	});
 }
 
@@ -144,22 +147,24 @@ describe('shuffleVideo', function () {
 
 			it('should throw an error if the channel has no uploads', async function () {
 				// Take a playlist with deleted videos
-				const testedPlaylist = await getKeyFromLocalStorage('UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist');
+				const playlistId = "UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist_LocalPlaylistContainsOnlyUnknownVideos";
+				const channelId = playlistId.replace("UU", "UC");
+				const testedPlaylist = await getKeyFromLocalStorage(playlistId);
 
-				const newVideos = Object.keys(testedPlaylist.videos).reduce((acc, videoId) => {
+				const newVideos = Object.keys(testedPlaylist.videos).reduce((newPlaylist, videoId) => {
 					if (videoId.includes('DEL')) {
-						acc[videoId] = testedPlaylist.videos[videoId];
+						newPlaylist[videoId] = testedPlaylist.videos[videoId];
 					}
-					return acc;
+					return newPlaylist;
 				}, {});
-				testedPlaylist.videos = newVideos;
+				testedPlaylist.videos.unknownType = newVideos;
 
 				await chrome.storage.local.set({ [testedPlaylist.playlistId]: testedPlaylist });
 
 				setUpMockResponses(videoExistenceMockResponses);
 
 				try {
-					await chooseRandomVideo("UC_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsDeletedVideos_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist", false, domElement);
+					await chooseRandomVideo(channelId, false, domElement);
 				} catch (error) {
 					expect(error).to.be.a(RandomYoutubeVideoError);
 					expect(error.code).to.be("RYV-6B");

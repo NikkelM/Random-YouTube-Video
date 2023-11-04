@@ -1006,7 +1006,7 @@ function validatePlaylistInfo(playlistInfo) {
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-10",
-				message: `The playlistInfo object is missing one or more required keys (Got: ${Object.keys(playlistInfo)}).`,
+				message: `The playlistInfo object is missing one or more required keys (Got: ${Object.keys(playlistInfo)}, videos key: ${Object.keys(playlistInfo["videos"]) ?? "No keys"}).`,
 				solveHint: "Please try again and inform the developer if the error is not resolved.",
 				showTrace: false
 			}
@@ -1021,10 +1021,10 @@ function validatePlaylistInfo(playlistInfo) {
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
 async function tryGetPlaylistFromLocalStorage(playlistId) {
 	return await chrome.storage.local.get([playlistId]).then(async (result) => {
-		if (result[playlistId]) {
+		if (result[playlistId] !== undefined) {
 			/* c8 ignore start */
 			// To fix a bug introduced in v2.2.1
-			if (!result[playlistId]["videos"]) {
+			if (result[playlistId]["videos"] === undefined) {
 				// Remove from localStorage
 				await chrome.storage.local.remove([playlistId]);
 				return {}

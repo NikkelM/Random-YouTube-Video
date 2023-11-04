@@ -491,7 +491,6 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 }
 
 // ----- Locally stored playlists -----
-// TODO: Make this adhere to the new format
 export const localPlaylistPermutations = playlistPermutations.reduce((localPlaylists, playlist) => {
 	if (playlist.playlistModifiers.lastAccessedLocally !== "LocalPlaylistDoesNotExist") {
 		const playlistCopy = deepCopy(playlist);
