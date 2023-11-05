@@ -95,6 +95,18 @@ async function handleVersionSpecificUpdates(previousVersion) {
 			await chrome.storage.local.remove("youtubeAPIKey");
 		}
 	}
+
+	// v2.4.0 changed the data type for the shuffleIgnoreShortsOption from boolean to number
+	if (previousVersion < "2.4.0") {
+		console.log("Updating local storage to v2.4.0 format...");
+		const localStorageContents = await chrome.storage.local.get();
+		// Delete the youtubeAPIKey from local storage if it exists
+		if(localStorageContents["shuffleIgnoreShortsOption"] == true) {
+			await chrome.storage.local.set({"shuffleIgnoreShortsOption": 2});
+		} else {
+			await chrome.storage.local.set({"shuffleIgnoreShortsOption": 1});
+		}
+	}
 }
 
 // The shuffling page will open a port when it is started
