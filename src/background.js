@@ -3,8 +3,20 @@
 import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 
 // ---------- Initialization/Chrome event listeners ----------
-// On Chrome startup, we make sure we are not using too much local storage
-chrome.runtime.onStartup.addListener(async function () {
+
+// Check whether a new version was installed
+async function initExtension() {
+	const manifestData = chrome.runtime.getManifest();
+	if (configSync.previousVersion < manifestData.version) {
+		await handleExtensionUpdate(manifestData, configSync.previousVersion);
+	}
+
+	checkLocalStorageCapacity();
+}
+await initExtension();
+
+// Make sure we are not using too much local storage
+async function checkLocalStorageCapacity() {
 	// If over 90% of the storage quota for playlists is used, remove playlists that have not been accessed in a long time
 	const utilizedStorage = await chrome.storage.local.getBytesInUse();
 	const maxLocalStorage = chrome.storage.local.QUOTA_BYTES;
@@ -32,25 +44,11 @@ chrome.runtime.onStartup.addListener(async function () {
 			chrome.storage.local.remove(playlistId);
 		}
 	}
-});
-
-// Check whether a new version was installed
-chrome.runtime.onInstalled.addListener(async function (details) {
-	const manifestData = chrome.runtime.getManifest();
-
-	if (details.reason == "update" && details.previousVersion !== manifestData.version) {
-		await handleExtensionUpdate(manifestData, details.previousVersion);
-	} else if (details.reason == "install") {
-		await handleExtensionInstall(manifestData);
-	}
-});
-
-async function handleExtensionInstall(manifestData) {
-	console.log(`Extension was installed (v${manifestData.version})`);
 }
 
 async function handleExtensionUpdate(manifestData, previousVersion) {
 	console.log(`Extension was updated to version v${manifestData.version}`);
+	await setSyncStorageValue("previousVersion", manifestData.version);
 
 	// Handle changes that may be specific to a certain version change
 	await handleVersionSpecificUpdates(previousVersion);
@@ -69,7 +67,18 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 }
 
 async function handleVersionSpecificUpdates(previousVersion) {
-	// v1.5.0 added renamed some keys in the channelSettings object
+	// v2.4.0 changed the data type for the shuffleIgnoreShortsOption from boolean to number
+	if (previousVersion < "2.4.0") {
+		console.log("Updating sync storage to v2.4.0 format...");
+		const syncStorageContents = await chrome.storage.sync.get();
+		if (syncStorageContents["shuffleIgnoreShortsOption"] == true) {
+			await setSyncStorageValue("shuffleIgnoreShortsOption", 2);
+		} else {
+			await setSyncStorageValue("shuffleIgnoreShortsOption", 1);
+		}
+	}
+
+	// v1.5.0 renamed some keys in the channelSettings object
 	if (previousVersion < "1.5.0") {
 		console.log("Updating channelSettings to v1.5.0 format...");
 
@@ -83,7 +92,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 				delete channelSetting["shufflePercentage"];
 			}
 		}
-		await chrome.storage.sync.set(configSyncValues);
+		await setSyncStorageValue(configSyncValues);
 	}
 
 	// v1.3.0 removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
@@ -93,18 +102,6 @@ async function handleVersionSpecificUpdates(previousVersion) {
 		// Delete the youtubeAPIKey from local storage if it exists
 		if (localStorageContents["youtubeAPIKey"]) {
 			await chrome.storage.local.remove("youtubeAPIKey");
-		}
-	}
-
-	// v2.4.0 changed the data type for the shuffleIgnoreShortsOption from boolean to number
-	if (previousVersion < "2.4.0") {
-		console.log("Updating local storage to v2.4.0 format...");
-		const localStorageContents = await chrome.storage.local.get();
-		// Delete the youtubeAPIKey from local storage if it exists
-		if(localStorageContents["shuffleIgnoreShortsOption"] == true) {
-			await chrome.storage.local.set({"shuffleIgnoreShortsOption": 2});
-		} else {
-			await chrome.storage.local.set({"shuffleIgnoreShortsOption": 1});
 		}
 	}
 }
