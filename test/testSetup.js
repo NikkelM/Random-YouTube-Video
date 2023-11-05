@@ -33,7 +33,7 @@ chrome.storage.local.get.callsFake(() => {
 	return Promise.resolve(mockedLocalStorage);
 });
 chrome.storage.local.set.callsFake((obj) => {
-	Object.assign(mockedLocalStorage, obj);
+	Object.assign(mockedLocalStorage, deepCopy(obj));
 	return Promise.resolve();
 });
 chrome.storage.local.clear.callsFake(() => {
@@ -51,19 +51,19 @@ chrome.runtime.sendMessage.callsFake((request) => {
 
 		case 'getPlaylistFromDB':
 			// Return a playlist from the database
-			return Promise.resolve(mockedDatabase[request.data] ?? null);
+			return Promise.resolve(deepCopy(mockedDatabase[request.data] ?? null));
 
 		// With our mocked database, both commands have the same effect
 		case 'updatePlaylistInfoInDB':
-			request.data.val.videos = { ...mockedDatabase[request.data.key]?.videos ?? {}, ...request.data.val.videos };
+			request.data.val.videos = { ...mockedDatabase[request.data.key]?.videos ?? {}, ...deepCopy(request.data.val.videos) };
 		case 'overwritePlaylistInfoInDB':
 			// Update/Overwrite a playlist in the database
-			mockedDatabase[request.data.key] = request.data.val;
+			mockedDatabase[request.data.key] = deepCopy(request.data.val);
 			return "PlaylistInfo was sent to database.";
 
 		// Only for the tests
 		case "setKeyInDB":
-			mockedDatabase[request.data.key] = request.data.val;
+			mockedDatabase[request.data.key] = deepCopy(request.data.val);
 			return "Key was set in the database (mocked for tests).";
 
 		case "getAPIKey":
