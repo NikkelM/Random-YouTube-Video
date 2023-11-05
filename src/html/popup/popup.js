@@ -118,7 +118,17 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 	manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, configSync.shuffleOpenInNewTabOption);
 
 	// ----- Shuffling: Ignore shorts option toggle -----
-	domElements.shuffleIgnoreShortsOptionToggle.checked = configSync.shuffleIgnoreShortsOption;
+	domElements.shuffleIgnoreShortsOptionToggle.dataset.checked = configSync.shuffleIgnoreShortsOption;
+	console.log(domElements.shuffleIgnoreShortsOptionToggle.dataset.checked);
+	if (domElements.shuffleIgnoreShortsOptionToggle.dataset.checked == 0) {
+		domElements.shuffleIgnoreShortsOptionToggle.indeterminate = false;
+		domElements.shuffleIgnoreShortsOptionToggle.checked = false;
+	} else if (domElements.shuffleIgnoreShortsOptionToggle.dataset.checked == 1) {
+		domElements.shuffleIgnoreShortsOptionToggle.indeterminate = true;
+	} else if (domElements.shuffleIgnoreShortsOptionToggle.dataset.checked == 2) {
+		domElements.shuffleIgnoreShortsOptionToggle.indeterminate = false;
+		domElements.shuffleIgnoreShortsOptionToggle.checked = true;
+	}
 
 	// ----- Shuffling: Open as playlist option toggle -----
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
@@ -205,8 +215,24 @@ async function setPopupDomElemenEventListeners(domElements) {
 	});
 
 	// Shuffling: Ignore shorts option toggle
-	domElements.shuffleIgnoreShortsOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("shuffleIgnoreShortsOption", this.checked);
+	domElements.shuffleIgnoreShortsOptionToggle.addEventListener("click", async function () {
+		if (this.dataset.checked == 0) {
+			// unchecked, going indeterminate
+			this.dataset.checked = 1;
+			this.indeterminate = true;
+		} else if (this.dataset.checked == 1) {
+			// indeterminate, going checked
+			this.dataset.checked = 2;
+			this.indeterminate = false;
+			this.checked = true;
+		} else if (this.dataset.checked == 2) {
+			// checked, going unchecked
+			this.dataset.checked = 0;
+			this.indeterminate = false;
+			this.checked = false;
+		}
+
+		await setSyncStorageValue("shuffleIgnoreShortsOption", this.dataset.checked);
 
 		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionToggle, this.checked);
 	});

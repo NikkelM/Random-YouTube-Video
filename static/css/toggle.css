@@ -14,6 +14,14 @@
   white-space: nowrap;
   width: 1px;
 }
+
+.toggle input:indeterminate + .slider {
+  background-color: orange; 
+}
+
+.toggle input:indeterminate + .slider::before {
+  transform: translateX(1em);
+}
  
 .toggle .slider {
   position: absolute;
