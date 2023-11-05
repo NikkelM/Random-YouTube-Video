@@ -11,7 +11,8 @@ export const configSyncDefaults = {
 	// These properties influence the behavior of the "Shuffle" button
 	"shuffleOpenInNewTabOption": true,
 	"shuffleReUseNewTabOption": true,
-	"shuffleIgnoreShortsOption": false,
+	// 0 = only shorts, 1 = no option set, 2 = ignore shorts
+	"shuffleIgnoreShortsOption": 1,
 	"shuffleOpenAsPlaylistOption": true,
 	// How many random videos to add to a playlist
 	"shuffleNumVideosInPlaylist": 10,
