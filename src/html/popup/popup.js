@@ -35,7 +35,8 @@ function getPopupDomElements() {
 		shuffleOpenInNewTabOptionToggle: document.getElementById("shuffleOpenInNewTabOptionToggle"),
 		// Shuffling: Reuse tab option toggle
 		shuffleReUseNewTabOptionToggle: document.getElementById("shuffleReUseNewTabOptionToggle"),
-		// Shuffling : Ignore shorts option toggle
+		// Shuffling : Ignore shorts option (toggle)
+		shuffleIgnoreShortsOptionTextLabel: document.getElementById("shuffleIgnoreShortsOptionTextLabel"),
 		shuffleIgnoreShortsOptionToggle: document.getElementById("shuffleIgnoreShortsOptionToggle"),
 		// Shuffling: Open as playlist option toggle
 		shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle"),
@@ -119,13 +120,15 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 
 	// ----- Shuffling: Ignore shorts option toggle -----
 	domElements.shuffleIgnoreShortsOptionToggle.dataset.checked = configSync.shuffleIgnoreShortsOption;
-	console.log(domElements.shuffleIgnoreShortsOptionToggle.dataset.checked);
 	if (domElements.shuffleIgnoreShortsOptionToggle.dataset.checked == 0) {
+		domElements.shuffleIgnoreShortsOptionTextLabel.textContent = "Only shorts";
 		domElements.shuffleIgnoreShortsOptionToggle.indeterminate = false;
 		domElements.shuffleIgnoreShortsOptionToggle.checked = false;
 	} else if (domElements.shuffleIgnoreShortsOptionToggle.dataset.checked == 1) {
+		domElements.shuffleIgnoreShortsOptionTextLabel.textContent = "Shorts handling";
 		domElements.shuffleIgnoreShortsOptionToggle.indeterminate = true;
 	} else if (domElements.shuffleIgnoreShortsOptionToggle.dataset.checked == 2) {
+		domElements.shuffleIgnoreShortsOptionTextLabel.textContent = "Ignore Shorts";
 		domElements.shuffleIgnoreShortsOptionToggle.indeterminate = false;
 		domElements.shuffleIgnoreShortsOptionToggle.checked = true;
 	}
@@ -218,15 +221,18 @@ async function setPopupDomElemenEventListeners(domElements) {
 	domElements.shuffleIgnoreShortsOptionToggle.addEventListener("click", async function () {
 		if (this.dataset.checked == 0) {
 			// unchecked, going indeterminate
+			domElements.shuffleIgnoreShortsOptionTextLabel.textContent = "Shorts handling";
 			this.dataset.checked = 1;
 			this.indeterminate = true;
 		} else if (this.dataset.checked == 1) {
 			// indeterminate, going checked
+			domElements.shuffleIgnoreShortsOptionTextLabel.textContent = "Ignore Shorts";
 			this.dataset.checked = 2;
 			this.indeterminate = false;
 			this.checked = true;
 		} else if (this.dataset.checked == 2) {
 			// checked, going unchecked
+			domElements.shuffleIgnoreShortsOptionTextLabel.textContent = "Only shorts";
 			this.dataset.checked = 0;
 			this.indeterminate = false;
 			this.checked = false;
