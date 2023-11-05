@@ -183,7 +183,7 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 	};
 
 	// Some of the tests break if we do not create a deepCopy here, as the local and database object somehow get linked
-	let playlistInfo = JSON.parse(JSON.stringify(await chrome.runtime.sendMessage(msg)));
+	let playlistInfo = await chrome.runtime.sendMessage(msg);
 
 	/* c8 ignore start - These are legacy conversions we don't want to test */
 	// In case the playlist is still in the old Array format (before v1.0.0) in the database, convert it to the new format
