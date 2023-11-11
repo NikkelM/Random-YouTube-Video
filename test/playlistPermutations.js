@@ -56,8 +56,9 @@ const configSyncModifiers = [
 	],
 	// shuffleIgnoreShortsOption
 	[
-		true,
-		false
+		"0",
+		"1",
+		"2"
 	],
 	// shuffleOpenAsPlaylistOption
 	[
@@ -214,11 +215,13 @@ const playlistModifiers = [
 		'LocalPlaylistRecentlyAccessed',
 		'LocalPlaylistNotRecentlyAccessed'
 	],
-	// containsDeletedVideos: If the local playlist should contain deleted videos
+	// containsDeletedVideos: If the local playlist should contain deleted videos, and if shorts are present
+	// The first two items imply that both videos and shorts are present
 	[
 		'LocalPlaylistContainsDeletedVideos',
 		'LocalPlaylistContainsNoDeletedVideos',
-		'LocalPlaylistContainsOnlyShorts'
+		'LocalPlaylistContainsOnlyShorts',
+		'LocalPlaylistContainsNoShorts'
 	],
 	// newUploadedVideos: If a new video has since been uploaded
 	[
@@ -243,18 +246,18 @@ const playlistModifiers = [
 const defaultLocalShorts = {
 	"LOC_S_00001": threeDaysAgo.substring(0, 10),
 	"LOC_S_00002": daysAgo(4).substring(0, 10),
-	"LOC_S_00003": daysAgo(5).substring(0, 10),
+	"LOC_S_00003": daysAgo(10).substring(0, 10),
 	"LOC_S_00004": sixDaysAgo.substring(0, 10),
-	"LOC_S_00005": daysAgo(7).substring(0, 10),
+	"LOC_S_00005": daysAgo(12).substring(0, 10),
 };
 
-const defaultLocalVideos = Object.assign({}, defaultLocalShorts, {
-	"LOC_V_00006": daysAgo(8).substring(0, 10),
-	"LOC_V_00007": daysAgo(9).substring(0, 10),
+const defaultLocalVideos = {
+	"LOC_V_00006": threeDaysAgo.substring(0, 10),
+	"LOC_V_00007": daysAgo(4).substring(0, 10),
 	"LOC_V_00008": daysAgo(10).substring(0, 10),
-	"LOC_V_00009": daysAgo(11).substring(0, 10),
+	"LOC_V_00009": sixDaysAgo.substring(0, 10),
 	"LOC_V_00010": daysAgo(12).substring(0, 10),
-});
+};
 
 const defaultLocalDeletedVideos = {
 	"DEL_LOC_S_1": fourteenDaysAgo.substring(0, 10),
@@ -322,10 +325,10 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 								|| playlistModifiers[2][k] !== "LocalPlaylistRecentlyAccessed" || playlistModifiers[5][n] !== "DBContainsNoVideosNotInLocalPlaylist")) {
 								continue;
 							}
-							// If the local playlist does not exist, it cannot contain deleted videos, only shorts, have been updated from the DB recently, or have sorted videos into types
+							// If the local playlist does not exist, it cannot contain deleted videos, only shorts, no shorts, have been updated from the DB recently, or have sorted videos into types
 							if ((playlistModifiers[2][k] === "LocalPlaylistDoesNotExist") && (playlistModifiers[3][l] === "LocalPlaylistContainsDeletedVideos"
-								|| playlistModifiers[3][l] === "LocalPlaylistContainsOnlyShorts" || playlistModifiers[0][i] === "LocalPlaylistFetchedDBRecently"
-								|| playlistModifiers[6][o] === "LocalPlaylistContainsKnownShortsAndVideos")) {
+								|| playlistModifiers[3][l] === "LocalPlaylistContainsOnlyShorts" || playlistModifiers[3][l] === "LocalPlaylistContainsNoShorts"
+								|| playlistModifiers[0][i] === "LocalPlaylistFetchedDBRecently" || playlistModifiers[6][o] === "LocalPlaylistContainsKnownShortsAndVideos")) {
 								continue;
 							}
 							// If the DB entry does not exist, it cannot contain videos not in the local playlist
@@ -341,6 +344,17 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 							// UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsOnlyShorts_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist_LocalPlaylistContainsOnlyUnknownVideos
 							// This is because the other permutations are covered by the other tests
 							if (playlistModifiers[3][l] === "LocalPlaylistContainsOnlyShorts") {
+								// Discard all permutations that are not the one described above
+								if (playlistModifiers[0][i] !== "LocalPlaylistFetchedDBRecently" || playlistModifiers[1][j] !== "DBEntryIsUpToDate"
+									|| playlistModifiers[2][k] !== "LocalPlaylistRecentlyAccessed" || playlistModifiers[4][m] !== "NoNewVideoUploaded"
+									|| playlistModifiers[5][n] !== "DBContainsNoVideosNotInLocalPlaylist" || playlistModifiers[6][o] !== "LocalPlaylistContainsOnlyUnknownVideos") {
+									continue;
+								}
+							}
+							// We also only need one permutation that has no shorts saved locally, which is
+							// UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsNoShorts_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist_LocalPlaylistContainsOnlyUnknownVideos
+							// This is because the other permutations are covered by the other tests
+							if (playlistModifiers[3][l] === "LocalPlaylistContainsNoShorts") {
 								// Discard all permutations that are not the one described above
 								if (playlistModifiers[0][i] !== "LocalPlaylistFetchedDBRecently" || playlistModifiers[1][j] !== "DBEntryIsUpToDate"
 									|| playlistModifiers[2][k] !== "LocalPlaylistRecentlyAccessed" || playlistModifiers[4][m] !== "NoNewVideoUploaded"
@@ -390,10 +404,10 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 							localLastVideoPublishedAt = threeDaysAgo.slice(0, 19) + 'Z';
 
 							if (playlistModifiers[3][l] === "LocalPlaylistContainsDeletedVideos") {
-								localVideos = deepCopy(defaultLocalVideos);
+								localVideos = deepCopy({ ...defaultLocalVideos, ...defaultLocalShorts });
 								localDeletedVideos = deepCopy(defaultLocalDeletedVideos);
 							} else if (playlistModifiers[3][l] === "LocalPlaylistContainsNoDeletedVideos") {
-								localVideos = deepCopy(defaultLocalVideos);
+								localVideos = deepCopy({ ...defaultLocalVideos, ...defaultLocalShorts });
 								localDeletedVideos = null;
 							} else if (playlistModifiers[2][k] === "LocalPlaylistDoesNotExist") {
 								localVideos = null;
@@ -401,23 +415,30 @@ for (let i = 0; i < playlistModifiers[0].length; i++) {
 							} else if (playlistModifiers[3][l] === "LocalPlaylistContainsOnlyShorts") {
 								localVideos = deepCopy(defaultLocalShorts);
 								localDeletedVideos = null;
+							} else if (playlistModifiers[3][l] === "LocalPlaylistContainsNoShorts") {
+								localVideos = deepCopy(defaultLocalVideos);
+								localDeletedVideos = null;
 							} else {
 								throw new Error(`Invalid playlist modifier combination: ${playlistModifiers[3][l]}`);
 							}
 
 							// Does the db contain videos unknown to the local playlist
+							if (playlistModifiers[3][l] === "LocalPlaylistContainsOnlyShorts") {
+								dbVideos = deepCopy(defaultLocalShorts);
+							} else if (playlistModifiers[3][l] === "LocalPlaylistContainsNoShorts") {
+								dbVideos = deepCopy(defaultLocalVideos);
+							} else {
+								dbVideos = deepCopy({ ...defaultLocalVideos, ...defaultLocalShorts });
+							}
+
 							if (playlistModifiers[5][n] === "DBContainsVideosNotInLocalPlaylist") {
-								dbVideos = deepCopy({ ...defaultLocalVideos, ...defaultDBVideos });
+								dbVideos = deepCopy({ ...dbVideos, ...defaultDBVideos });
 								dbDeletedVideos = null;
 								dbLastVideoPublishedAt = twoDaysAgo.slice(0, 19) + 'Z';
 							} else if (playlistModifiers[5][n] === "DBContainsNoVideosNotInLocalPlaylist") {
-								dbVideos = playlistModifiers[3][l] === "LocalPlaylistContainsOnlyShorts"
-									? deepCopy(defaultLocalShorts)
-									: deepCopy(defaultLocalVideos);
 								dbDeletedVideos = null;
 								dbLastVideoPublishedAt = localLastVideoPublishedAt;
 							} else if (playlistModifiers[5][n] === "DBContainsDeletedVideos") {
-								dbVideos = deepCopy(defaultLocalVideos);
 								dbDeletedVideos = deepCopy(defaultDBDeletedVideos);
 								dbLastVideoPublishedAt = localLastVideoPublishedAt;
 							} else {

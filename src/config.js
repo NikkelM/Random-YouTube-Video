@@ -36,7 +36,8 @@ export const configSyncDefaults = {
 	// For april fools: Will be the number of the year in which the user was last rickrolled (we only want to rickroll the user once per year)
 	"wasLastRickRolledInYear": "1970",
 	// Used when updating the extension
-	"previousVersion": chrome.runtime.getManifest().version,
+	/* c8 ignore next */
+	"previousVersion": typeof chrome !== "undefined" ? chrome.runtime.getManifest().version : "0",
 };
 
 export const shufflingHints = [

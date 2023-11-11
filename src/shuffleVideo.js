@@ -754,7 +754,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 						throw new RandomYoutubeVideoError(
 							{
 								code: "RYV-6B",
-								message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring shorts and the channel has only uploaded shorts.",
+								message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring/only shuffling from shorts and the channel only has/has no shorts.",
 								solveHint: "If you are ignoring shorts, disable the option in the popup to shuffle from this channel.",
 								showTrace: false
 							}
@@ -765,8 +765,8 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 						console.log(`No more videos to choose from (${numVideosToChoose - i} videos too few uploaded on channel).`);
 						break outerLoop;
 					}
-					/* c8 ignore stop */
 				}
+				/* c8 ignore stop */
 			} while (!await testVideoExistence(randomVideo))
 		}
 
@@ -838,8 +838,8 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 							showTrace: false
 						}
 					);
-					/* c8 ignore stop */
 				}
+				/* c8 ignore stop */
 			} else {
 				// Otherwise, the video must be a knownVideo, as we do not include knownShorts in allVideos
 				chosenVideos.push(randomVideo);
@@ -857,7 +857,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-6B",
-				message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring shorts and the channel has only uploaded shorts.",
+				message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring/only shuffling from shorts and the channel only has/has no shorts.",
 				solveHint: "If you are ignoring shorts, disable the option in the popup to shuffle from this channel.",
 				showTrace: false
 			}
