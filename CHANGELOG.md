@@ -4,6 +4,7 @@
 
 <!--Releasenotes start-->
 - Added a new option to shuffle only from shorts.
+- Fixed bugs that would prevent some initialization logic to run whenever the extension is updated.
 <!--Releasenotes end-->
 
 ## v2.3.0
