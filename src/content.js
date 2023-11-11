@@ -141,7 +141,7 @@ async function shuffleVideos() {
 		var hasBeenShuffled = false;
 		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Shuffling...", 1000, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffle" && !hasBeenShuffled); });
 		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still on it...", 5000, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffling..." && !hasBeenShuffled); });
-		if (configSync.shuffleIgnoreShortsOption) {
+		if (configSync.shuffleIgnoreShortsOption != "1") {
 			setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Sorting shorts...", 8000, () => { return (shuffleButtonTextElement.innerText === "\xa0Still on it..." && !hasBeenShuffled); });
 		}
 
