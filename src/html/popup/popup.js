@@ -35,9 +35,8 @@ function getPopupDomElements() {
 		shuffleOpenInNewTabOptionToggle: document.getElementById("shuffleOpenInNewTabOptionToggle"),
 		// Shuffling: Reuse tab option toggle
 		shuffleReUseNewTabOptionToggle: document.getElementById("shuffleReUseNewTabOptionToggle"),
-		// Shuffling : Ignore shorts option (toggle)
-		shuffleIgnoreShortsOptionTextLabel: document.getElementById("shuffleIgnoreShortsOptionTextLabel"),
-		shuffleIgnoreShortsOptionToggle: document.getElementById("shuffleIgnoreShortsOptionToggle"),
+		// Shuffling : Ignore shorts option dropdown
+		shuffleIgnoreShortsOptionDropdown: document.getElementById("shuffleIgnoreShortsOptionDropdown"),
 		// Shuffling: Open as playlist option toggle
 		shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle"),
 		// Shuffling: Number of videos in playlist div
@@ -118,20 +117,8 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 	// If this option is enabled depends on the state of the shuffleOpenInNewTabOptionToggle
 	manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, configSync.shuffleOpenInNewTabOption);
 
-	// ----- Shuffling: Ignore shorts option toggle -----
-	domElements.shuffleIgnoreShortsOptionToggle.dataset.checked = configSync.shuffleIgnoreShortsOption;
-	if (domElements.shuffleIgnoreShortsOptionToggle.dataset.checked == 0) {
-		domElements.shuffleIgnoreShortsOptionTextLabel.textContent = "Only shorts";
-		domElements.shuffleIgnoreShortsOptionToggle.indeterminate = false;
-		domElements.shuffleIgnoreShortsOptionToggle.checked = false;
-	} else if (domElements.shuffleIgnoreShortsOptionToggle.dataset.checked == 1) {
-		domElements.shuffleIgnoreShortsOptionTextLabel.textContent = "Shorts handling";
-		domElements.shuffleIgnoreShortsOptionToggle.indeterminate = true;
-	} else if (domElements.shuffleIgnoreShortsOptionToggle.dataset.checked == 2) {
-		domElements.shuffleIgnoreShortsOptionTextLabel.textContent = "Ignore Shorts";
-		domElements.shuffleIgnoreShortsOptionToggle.indeterminate = false;
-		domElements.shuffleIgnoreShortsOptionToggle.checked = true;
-	}
+	// ----- Shuffling: Ignore shorts option dropdown -----
+	domElements.shuffleIgnoreShortsOptionDropdown.value = configSync.shuffleIgnoreShortsOption;
 
 	// ----- Shuffling: Open as playlist option toggle -----
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
@@ -217,30 +204,11 @@ async function setPopupDomElemenEventListeners(domElements) {
 		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked);
 	});
 
-	// Shuffling: Ignore shorts option toggle
-	domElements.shuffleIgnoreShortsOptionToggle.addEventListener("click", async function () {
-		if (this.dataset.checked == 0) {
-			// unchecked, going indeterminate
-			domElements.shuffleIgnoreShortsOptionTextLabel.textContent = "Shorts handling";
-			this.dataset.checked = 1;
-			this.indeterminate = true;
-		} else if (this.dataset.checked == 1) {
-			// indeterminate, going checked
-			domElements.shuffleIgnoreShortsOptionTextLabel.textContent = "Ignore Shorts";
-			this.dataset.checked = 2;
-			this.indeterminate = false;
-			this.checked = true;
-		} else if (this.dataset.checked == 2) {
-			// checked, going unchecked
-			domElements.shuffleIgnoreShortsOptionTextLabel.textContent = "Only shorts";
-			this.dataset.checked = 0;
-			this.indeterminate = false;
-			this.checked = false;
-		}
+	// Shuffling: Ignore shorts option dropdown
+	domElements.shuffleIgnoreShortsOptionDropdown.addEventListener("change", async function () {
+		await setSyncStorageValue("shuffleIgnoreShortsOption", this.value);
 
-		await setSyncStorageValue("shuffleIgnoreShortsOption", this.dataset.checked);
-
-		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionToggle, this.checked);
+		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionDropdown, this.value);
 	});
 
 	// Shuffling: Open as playlist option toggle
