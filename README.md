@@ -7,7 +7,7 @@ Chrome Web Store:
   <img src="https://img.shields.io/chrome-web-store/v/kijgnjhogkjodpakfmhgleobifempckf?label=version"
     alt="Chrome web store version"></a>
 <a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
-  <img src="https://img.shields.io/chrome-web-store/rating/kijgnjhogkjodpakfmhgleobifempckf?label=rating"
+  <img src="https://img.shields.io/chrome-web-store/stars/kijgnjhogkjodpakfmhgleobifempckf?label=rating"
     alt="Chrome web store rating"></a>
 <a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
   <img src="https://img.shields.io/chrome-web-store/users/kijgnjhogkjodpakfmhgleobifempckf?label=users"
@@ -19,7 +19,7 @@ Firefox:
 <img src="https://img.shields.io/amo/v/random-youtube-video?label=version"
 		alt="Firefox version"></a>
 <a href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/">
-	<img src="https://img.shields.io/amo/rating/random-youtube-video?label=rating"
+	<img src="https://img.shields.io/amo/stars/random-youtube-video?label=rating"
 		alt="Firefox rating"></a>
 <a href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/">
 	<img alt="Mozilla Add-on" src="https://img.shields.io/amo/users/random-youtube-video?label=users"

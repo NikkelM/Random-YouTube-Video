@@ -11,7 +11,8 @@ export const configSyncDefaults = {
 	// These properties influence the behavior of the "Shuffle" button
 	"shuffleOpenInNewTabOption": true,
 	"shuffleReUseNewTabOption": true,
-	"shuffleIgnoreShortsOption": false,
+	// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
+	"shuffleIgnoreShortsOption": 1,
 	"shuffleOpenAsPlaylistOption": true,
 	// How many random videos to add to a playlist
 	"shuffleNumVideosInPlaylist": 10,
@@ -34,6 +35,9 @@ export const configSyncDefaults = {
 	"lastViewedChangelogVersion": "0",
 	// For april fools: Will be the number of the year in which the user was last rickrolled (we only want to rickroll the user once per year)
 	"wasLastRickRolledInYear": "1970",
+	// Used when updating the extension
+	/* c8 ignore next */
+	"previousVersion": typeof chrome !== "undefined" ? chrome.runtime.getManifest().version : "0",
 };
 
 export const shufflingHints = [

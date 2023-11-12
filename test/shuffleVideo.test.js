@@ -499,6 +499,8 @@ describe('shuffleVideo', function () {
 				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistDidNotFetchDBRecently_DBEntryIsNotUpToDate_LocalPlaylistNotRecentlyAccessed_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist_LocalPlaylistContainsKnownShortsAndVideos')),
 				// Playlist that only has shorts saved locally
 				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsOnlyShorts_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist_LocalPlaylistContainsOnlyUnknownVideos')),
+				// Playlist that has no shorts saved locally
+				deepCopy(playlistPermutations.find((playlist) => playlist.playlistId === 'UU_LocalPlaylistFetchedDBRecently_DBEntryIsUpToDate_LocalPlaylistRecentlyAccessed_LocalPlaylistContainsNoShorts_NoNewVideoUploaded_DBContainsNoVideosNotInLocalPlaylist_LocalPlaylistContainsOnlyUnknownVideos')),
 			];
 			setupChannelSettings(configSyncPermutations.channelSettingsPermutations, playlists);
 
@@ -735,7 +737,8 @@ describe('shuffleVideo', function () {
 											});
 										}
 									} else if (key === 'ignoreShortsPermutations') {
-										if (config.shuffleIgnoreShortsOption) {
+										// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
+										if (config.shuffleIgnoreShortsOption == "2") {
 											if (input.playlistId.includes('LocalPlaylistContainsOnlyShorts')) {
 												it('should throw an error if the playlist only contains shorts', async function () {
 													try {
@@ -744,7 +747,7 @@ describe('shuffleVideo', function () {
 													catch (error) {
 														expect(error).to.be.a(RandomYoutubeVideoError);
 														expect(error.code).to.be('RYV-6B');
-														expect(error.message).to.be('All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring shorts and the channel has only uploaded shorts.');
+														expect(error.message).to.be('All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring/only shuffling from shorts and the channel only has/has no shorts.');
 
 														return;
 													}
@@ -755,6 +758,39 @@ describe('shuffleVideo', function () {
 													await chooseRandomVideo(input.channelId, false, domElement);
 
 													expect(windowOpenStub.args[0][0]).to.not.contain('_S_');
+												});
+											}
+										} else if (config.shuffleIgnoreShortsOption == "0") {
+											if (input.playlistId.includes('LocalPlaylistContainsNoShorts')) {
+												it('should throw an error if the playlist contains no shorts', async function () {
+													try {
+														await chooseRandomVideo(input.channelId, false, domElement);
+													}
+													catch (error) {
+														expect(error).to.be.a(RandomYoutubeVideoError);
+														expect(error.code).to.be('RYV-6B');
+														expect(error.message).to.be('All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring/only shuffling from shorts and the channel only has/has no shorts.');
+
+														return;
+													}
+													expect().fail("No error was thrown");
+												});
+											} else {
+												it('should only choose shorts', async function () {
+													await chooseRandomVideo(input.channelId, false, domElement);
+
+													expect(windowOpenStub.args[0][0]).to.not.contain('_V_');
+												});
+											}
+										} else if (config.shuffleIgnoreShortsOption == "1") {
+											if (!input.playlistId.includes('LocalPlaylistContainsNoShorts') && !input.playlistId.includes('LocalPlaylistContainsOnlyShorts')) {
+												// This works because we choose more videos than there are only videos OR shorts in the playlist, so there will always be one of each
+												// If this suddenly starts failing, it may be that that assumption was changed
+												it('should be able to choose both shorts and videos', async function () {
+													await chooseRandomVideo(input.channelId, false, domElement);
+
+													expect(windowOpenStub.args[0][0]).to.contain('_V_');
+													expect(windowOpenStub.args[0][0]).to.contain('_S_');
 												});
 											}
 										}
@@ -786,7 +822,7 @@ describe('shuffleVideo', function () {
 												}
 												expect().fail("No error was thrown");
 											});
-										} else {
+										} else if (!(input.playlistId.includes('LocalPlaylistContainsNoShorts') && config.channelSettings[input.channelId].activeOption === 'videoIdOption')) {
 											it('should apply the correct filter', async function () {
 												// The videos onto which the filter is applied includes the deleted videos (this changes the result e.g. for the percentageOption)
 												let filteredVideos = deepCopy({ ...input.dbVideos, ...input.dbDeletedVideos, ...input.localVideos, ...input.localDeletedVideos, ...input.newUploadedVideos });

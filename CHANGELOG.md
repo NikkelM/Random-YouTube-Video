@@ -1,12 +1,17 @@
 # Changelog
 
-## v2.3.0
+## v2.4.0 (Unreleased)
 
 <!--Releasenotes start-->
+- Added a new option to shuffle only from shorts.
+- Fixed bugs that would prevent some initialization logic to run whenever the extension is updated.
+<!--Releasenotes end-->
+
+## v2.3.0
+
 - Shuffling when excluding shorts is now a lot quicker if you have shuffled from the channel before, as the extension will remember which videos are shorts and skip them automatically.
 - Added an additional message to the shuffle button if shuffling takes a bit longer due to ignoring shorts.
 - Fixed a rare data inconsistency bug occurring with specific database values.
-<!--Releasenotes end-->
 
 ## v2.2.4
 

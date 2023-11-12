@@ -35,8 +35,8 @@ function getPopupDomElements() {
 		shuffleOpenInNewTabOptionToggle: document.getElementById("shuffleOpenInNewTabOptionToggle"),
 		// Shuffling: Reuse tab option toggle
 		shuffleReUseNewTabOptionToggle: document.getElementById("shuffleReUseNewTabOptionToggle"),
-		// Shuffling : Ignore shorts option toggle
-		shuffleIgnoreShortsOptionToggle: document.getElementById("shuffleIgnoreShortsOptionToggle"),
+		// Shuffling : Ignore shorts option dropdown
+		shuffleIgnoreShortsOptionDropdown: document.getElementById("shuffleIgnoreShortsOptionDropdown"),
 		// Shuffling: Open as playlist option toggle
 		shuffleOpenAsPlaylistOptionToggle: document.getElementById("shuffleOpenAsPlaylistOptionToggle"),
 		// Shuffling: Number of videos in playlist div
@@ -117,8 +117,8 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 	// If this option is enabled depends on the state of the shuffleOpenInNewTabOptionToggle
 	manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, configSync.shuffleOpenInNewTabOption);
 
-	// ----- Shuffling: Ignore shorts option toggle -----
-	domElements.shuffleIgnoreShortsOptionToggle.checked = configSync.shuffleIgnoreShortsOption;
+	// ----- Shuffling: Ignore shorts option dropdown -----
+	domElements.shuffleIgnoreShortsOptionDropdown.value = configSync.shuffleIgnoreShortsOption;
 
 	// ----- Shuffling: Open as playlist option toggle -----
 	domElements.shuffleOpenAsPlaylistOptionToggle.checked = configSync.shuffleOpenAsPlaylistOption;
@@ -204,11 +204,11 @@ async function setPopupDomElemenEventListeners(domElements) {
 		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked);
 	});
 
-	// Shuffling: Ignore shorts option toggle
-	domElements.shuffleIgnoreShortsOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("shuffleIgnoreShortsOption", this.checked);
+	// Shuffling: Ignore shorts option dropdown
+	domElements.shuffleIgnoreShortsOptionDropdown.addEventListener("change", async function () {
+		await setSyncStorageValue("shuffleIgnoreShortsOption", this.value);
 
-		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionToggle, this.checked);
+		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionDropdown, this.value);
 	});
 
 	// Shuffling: Open as playlist option toggle

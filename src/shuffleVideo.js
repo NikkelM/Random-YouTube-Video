@@ -697,11 +697,15 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 	let allUnknownType = Object.assign({}, playlistInfo["videos"]["unknownType"], playlistInfo["newVideos"] ?? {});
 	let allKnownVideos = playlistInfo["videos"]["knownVideos"];
 	let allKnownShorts = playlistInfo["videos"]["knownShorts"];
+	let allVideos;
 
-	let allVideos = Object.assign({}, allUnknownType, allKnownVideos);
-	// Only if we are not ignoring shorts, we want to include them in the shuffle
-	if (!configSync.shuffleIgnoreShortsOption) {
-		allVideos = Object.assign({}, allVideos, allKnownShorts);
+	// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
+	if (configSync.shuffleIgnoreShortsOption == "1") {
+		allVideos = Object.assign({}, allUnknownType, allKnownVideos, allKnownShorts);
+	} else if (configSync.shuffleIgnoreShortsOption == "2") {
+		allVideos = Object.assign({}, allUnknownType, allKnownVideos);
+	} else {
+		allVideos = Object.assign({}, allUnknownType, allKnownShorts);
 	}
 
 	let videosByDate = Object.keys(allVideos).sort((a, b) => {
@@ -716,7 +720,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 
 	const numVideosToChoose = configSync.shuffleOpenAsPlaylistOption ? configSync.shuffleNumVideosInPlaylist : 1;
 
-	console.log(`Choosing ${numVideosToChoose} random video${numVideosToChoose > 1 ? "s" : ""}.`);
+	console.log(`Choosing ${numVideosToChoose} random video(s).`);
 
 	// We use this label to break out of both the for loop and the while loop if there are no more videos after encountering a deleted video
 	outerLoop:
@@ -750,7 +754,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 						throw new RandomYoutubeVideoError(
 							{
 								code: "RYV-6B",
-								message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring shorts and the channel has only uploaded shorts.",
+								message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring/only shuffling from shorts and the channel only has/has no shorts.",
 								solveHint: "If you are ignoring shorts, disable the option in the popup to shuffle from this channel.",
 								showTrace: false
 							}
@@ -761,17 +765,31 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 						console.log(`No more videos to choose from (${numVideosToChoose - i} videos too few uploaded on channel).`);
 						break outerLoop;
 					}
-					/* c8 ignore stop */
 				}
+				/* c8 ignore stop */
 			} while (!await testVideoExistence(randomVideo))
 		}
 
-		// If the user does not want to shuffle from shorts, and we do not yet know the type of the chosen video, we check if it is a short
-		if (configSync.shuffleIgnoreShortsOption) {
+		// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
+		// If the user does not want to shuffle from shorts, or only wants to shuffle from shorts, and we do not yet know the type of the chosen video, we check if it is a short or not
+		if (configSync.shuffleIgnoreShortsOption != "1") {
 			if (playlistInfo["videos"]["unknownType"][randomVideo] !== undefined) {
 				const videoIsShort = await isShort(randomVideo);
 
-				if (videoIsShort) {
+				// What follows is dependent on if the video is a short or not, and the user's settings
+
+				// Case 1: !isShort && ignoreShorts => Success
+				if (!videoIsShort && configSync.shuffleIgnoreShortsOption == "2") {
+					// Move the video to the knownVideos subdictionary
+					playlistInfo["videos"]["knownVideos"][randomVideo] = playlistInfo["videos"]["unknownType"][randomVideo];
+					delete playlistInfo["videos"]["unknownType"][randomVideo];
+
+					// The video is not a short, so add it to the list of chosen videos and remove it from the pool of videos to choose from
+					chosenVideos.push(randomVideo);
+					videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
+
+					// Case 2: isShort && ignoreShorts => Failure
+				} else if (videoIsShort && configSync.shuffleIgnoreShortsOption == "2") {
 					console.log('A chosen video was a short, but shorts are ignored. Choosing a new random video.');
 
 					// Move the video to the knownShorts subdictionary
@@ -784,15 +802,44 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 
 					// We need to decrement i, as we did not choose a video in this iteration
 					i--;
-				} else {
+
+					// Case 3: isShort && onlyShorts => Success
+				} else if (videoIsShort && configSync.shuffleIgnoreShortsOption == "0") {
+					// Move the video to the knownShorts subdictionary
+					playlistInfo["videos"]["knownShorts"][randomVideo] = playlistInfo["videos"]["unknownType"][randomVideo];
+					delete playlistInfo["videos"]["unknownType"][randomVideo];
+
+					// The video is a short, so add it to the list of chosen videos and remove it from the pool of videos to choose from
+					chosenVideos.push(randomVideo);
+					videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
+
+					// Case 4: !isShort && onlyShorts => Failure
+				} else if (!videoIsShort && configSync.shuffleIgnoreShortsOption == "0") {
+					console.log('A chosen video was not a short, but only shorts should be shuffled. Choosing a new random video.');
+
 					// Move the video to the knownVideos subdictionary
 					playlistInfo["videos"]["knownVideos"][randomVideo] = playlistInfo["videos"]["unknownType"][randomVideo];
 					delete playlistInfo["videos"]["unknownType"][randomVideo];
 
-					// The video is not a short, so add it to the list of chosen videos and remove it from the pool of videos to choose from
-					chosenVideos.push(randomVideo);
+					// Remove the video from videosToShuffle to not choose it again
+					// Do not remove it from the playlistInfo object, as we do not want to delete it from the database
 					videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
+
+					// We need to decrement i, as we did not choose a video in this iteration
+					i--;
+
+					/* c8 ignore start - This should never happen, but we want to test it anyway */
+				} else {
+					throw new RandomYoutubeVideoError(
+						{
+							code: "RYV-11B",
+							message: `An unknown error occurred while testing if the video ${randomVideo} should be included in the shuffle.`,
+							solveHint: "Please contact the developer, as this should not happen.",
+							showTrace: false
+						}
+					);
 				}
+				/* c8 ignore stop */
 			} else {
 				// Otherwise, the video must be a knownVideo, as we do not include knownShorts in allVideos
 				chosenVideos.push(randomVideo);
@@ -810,7 +857,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-6B",
-				message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring shorts and the channel has only uploaded shorts.",
+				message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring/only shuffling from shorts and the channel only has/has no shorts.",
 				solveHint: "If you are ignoring shorts, disable the option in the popup to shuffle from this channel.",
 				showTrace: false
 			}
@@ -832,7 +879,7 @@ function getVideoType(videoId, playlistInfo) {
 	/* c8 ignore start - This will only happen if we forget to implement something here, so we do not need to test it */
 	throw new RandomYoutubeVideoError(
 		{
-			code: "RYV-11",
+			code: "RYV-11A",
 			message: `The video that was tested does not exist in the local playlist ${videoId}, so it's type could not be found.`,
 			solveHint: "Please contact the developer, as this should not happen.",
 			showTrace: false
