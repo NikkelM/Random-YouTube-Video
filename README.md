@@ -3,13 +3,13 @@
 <p align="center">
 Chrome Web Store:
 <br>
-<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
+<a href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
   <img src="https://img.shields.io/chrome-web-store/v/kijgnjhogkjodpakfmhgleobifempckf?label=version"
     alt="Chrome web store version"></a>
-<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
+<a href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
   <img src="https://img.shields.io/chrome-web-store/stars/kijgnjhogkjodpakfmhgleobifempckf?label=rating"
     alt="Chrome web store rating"></a>
-<a href="https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
+<a href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf">
   <img src="https://img.shields.io/chrome-web-store/users/kijgnjhogkjodpakfmhgleobifempckf?label=users"
     alt="Chrome web store users"></a>
 <br>
@@ -38,7 +38,7 @@ Firefox:
     alt="View changelog"></a>
 </p>
 
-Download the extension for: [Chrome/Chromium](https://chrome.google.com/webstore/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf) | [Edge](https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe) | [Firefox](https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/) 
+Download the extension for: [Chrome/Chromium](https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf) | [Edge](https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe) | [Firefox](https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/) 
 
 *The Chrome Web Store version can be installed on any Chromium-based browser, such as Edge, Brave, Opera and many more.*
 
