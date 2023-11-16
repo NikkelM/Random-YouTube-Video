@@ -92,7 +92,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 				delete channelSetting["shufflePercentage"];
 			}
 		}
-		await setSyncStorageValue(configSyncValues);
+		await setSyncStorageValue("channelSettings", configSyncValues["channelSettings"]);
 	}
 
 	// v1.3.0 removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
