@@ -1,6 +1,6 @@
 // Entry point for the popup page
 import { delay } from "../../utils.js";
-import { configSync, setSyncStorageValue } from "../../chromeStorage.js";
+import { configSync, setSyncStorageValue, removeSyncStorageValue } from "../../chromeStorage.js";
 import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv } from "./popupUtils.js";
 import { tryFocusingTab } from "../htmlUtils.js";
 
@@ -171,16 +171,18 @@ async function setPopupDomElemenEventListeners(domElements) {
 	domElements.customApiKeySubmitButton.addEventListener("click", async function () {
 		// Make sure the passed API key is valid
 		const newAPIKey = domElements.customApiKeyInputField.value;
+		const oldApiKey = configSync.customYoutubeApiKey;
 
 		if (newAPIKey.length > 0 && await validateApiKey(newAPIKey, domElements)) {
 			await setSyncStorageValue("customYoutubeApiKey", newAPIKey);
 		} else {
-			await setSyncStorageValue("customYoutubeApiKey", null);
+			await removeSyncStorageValue("customYoutubeApiKey");
 			await setSyncStorageValue("databaseSharingEnabledOption", true);
 			domElements.customApiKeyInputField.value = "";
 		}
+
 		// If the user removed the API key, show a message in the info div
-		if (newAPIKey.length === 0) {
+		if (oldApiKey != undefined && newAPIKey.length === 0) {
 			domElements.customApiKeyInputInfoText.innerText = "Custom API key was successfully removed.";
 			domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 		}
