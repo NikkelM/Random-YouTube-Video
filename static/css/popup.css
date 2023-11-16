@@ -39,6 +39,36 @@
 	display: none !important;
 }
 
+@keyframes slideDown {
+  0% {
+    max-height: 0;
+  }
+  100% {
+    max-height: 120px;
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    max-height: 120px;
+  }
+  100% {
+    max-height: 0;
+  }
+}
+
+.hiddenTransition {
+  animation: slideUp 0.9s forwards;
+  overflow: hidden;
+	display: hidden;
+}
+
+.visibleTransition {
+  animation: slideDown 0.9s forwards;
+  overflow: hidden;
+  display: block;
+}
+
 .displayInline {
 	display: inline;
 }
@@ -155,7 +185,7 @@
 .shuffleButton {
 	margin-top: 8px;
 	margin-bottom: 8px;
-	font-size: 15px
+	font-size: 15px;
 }
 
 .randomYoutubeVideoButton:hover {
@@ -227,7 +257,7 @@
 }
 
 /* Remove the up and down arrows from the number input for firefox */
-.optionTextInput input.numberInput.noArrows[type=number] {
+.optionTextInput input.numberInput.noArrows[type="number"] {
 	appearance: none;
 	-moz-appearance: textfield;
 }
@@ -247,7 +277,7 @@
 	pointer-events: none;
 }
 
-.optionTextInput input.invalid-input {
+input.invalid-input {
 	border: 2.5px solid #c32e04 !important;
 	animation: flash 0.5s infinite;
 }
