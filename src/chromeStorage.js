@@ -27,6 +27,12 @@ export async function setSyncStorageValue(key, value) {
 	await chrome.storage.sync.set({ [key]: value });
 }
 
+export async function removeSyncStorageValue(key) {
+	delete configSync[key];
+
+	await chrome.storage.sync.remove(key);
+}
+
 // Returns the number of requests the user can still make to the Youtube API today
 export async function getUserQuotaRemainingToday() {
 	// The quota gets reset at midnight

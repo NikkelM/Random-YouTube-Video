@@ -4,6 +4,7 @@
 
 <!--Releasenotes start-->
 - Added a new option to shuffle only from shorts.
+- Added some animations to the custom API key input field, and made it more clear when the input is invalid.
 - Fixed bugs that would prevent some initialization logic to run whenever the extension is updated.
 <!--Releasenotes end-->
 

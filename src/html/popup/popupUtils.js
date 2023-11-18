@@ -12,6 +12,8 @@ export async function manageDependents(domElements, parent, value) {
 			if (value) {
 				// Show input field for custom API key
 				domElements.customApiKeyInputDiv.classList.remove("hidden");
+				domElements.customApiKeyInputDiv.classList.remove("hiddenTransition");
+				domElements.customApiKeyInputDiv.classList.add("visibleTransition");
 				// Set the value of the custom API key input field to the value in sync storage
 				domElements.customApiKeyInputField.value = configSync.customYoutubeApiKey ? configSync.customYoutubeApiKey : "";
 
@@ -32,7 +34,8 @@ export async function manageDependents(domElements, parent, value) {
 				manageDbOptOutOption(domElements);
 
 				// Hide input field for custom API key
-				domElements.customApiKeyInputDiv.classList.add("hidden");
+				domElements.customApiKeyInputDiv.classList.remove("visibleTransition");
+				domElements.customApiKeyInputDiv.classList.add("hiddenTransition");
 			}
 			updateFYIDiv(domElements);
 			break;
@@ -150,6 +153,11 @@ export async function validateApiKey(customAPIKey, domElements) {
 	if (defaultAPIKeys.includes(customAPIKey)) {
 		domElements.customApiKeyInputInfoText.innerText = "This API key is used by the extension. Please enter your own.";
 		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
+		
+		domElements.customApiKeyInputField.classList.add('invalid-input');
+		setTimeout(() => {
+			domElements.customApiKeyInputField.classList.remove('invalid-input');
+		}, 1500);
 		return false;
 	}
 
@@ -160,6 +168,11 @@ export async function validateApiKey(customAPIKey, domElements) {
 	if (apiResponse["error"]) {
 		domElements.customApiKeyInputInfoText.innerText = "Error: " + apiResponse["error"]["message"];
 		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
+
+		domElements.customApiKeyInputField.classList.add('invalid-input');
+		setTimeout(() => {
+			domElements.customApiKeyInputField.classList.remove('invalid-input');
+		}, 1500);
 		return false;
 	}
 
