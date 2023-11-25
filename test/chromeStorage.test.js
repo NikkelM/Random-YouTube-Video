@@ -1,6 +1,6 @@
 import expect from 'expect.js';
 
-import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from '../src/chromeStorage.js';
+import { configSync, setSyncStorageValue, removeSyncStorageValue, getUserQuotaRemainingToday } from '../src/chromeStorage.js';
 import { configSyncDefaults } from '../src/config.js';
 
 describe('chromeStorage', function () {
@@ -41,7 +41,6 @@ describe('chromeStorage', function () {
 	});
 
 	context('setSyncStorageValue()', function () {
-
 		it('should set the value in the configSync object', async function () {
 			await setSyncStorageValue("testKey1", "testValue1");
 
@@ -75,6 +74,20 @@ describe('chromeStorage', function () {
 		});
 	});
 
+	context('removeSyncStorageValue()', function () {
+
+		it('should remove the value from the configSync object', async function () {
+			await setSyncStorageValue("testKey4", "testValue4");
+
+			expect(configSync).to.have.key("testKey4");
+			expect(configSync.testKey4).to.be("testValue4");
+
+			await removeSyncStorageValue("testKey4");
+
+			expect(configSync).to.not.have.key("testKey4");
+		});
+
+	});
 	context('getUserQuotaRemainingToday()', function () {
 
 		it('should return the number of requests the user can still make to the Youtube API today', async function () {
