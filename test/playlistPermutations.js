@@ -248,7 +248,7 @@ const defaultLocalShorts = {
 	"LOC_S_00002": daysAgo(4).substring(0, 10),
 	"LOC_S_00003": daysAgo(10).substring(0, 10),
 	"LOC_S_00004": sixDaysAgo.substring(0, 10),
-	"LOC_S_00005": daysAgo(12).substring(0, 10),
+	"LOC_S_00005": daysAgo(72).substring(0, 10),
 };
 
 const defaultLocalVideos = {
@@ -256,15 +256,15 @@ const defaultLocalVideos = {
 	"LOC_V_00007": daysAgo(4).substring(0, 10),
 	"LOC_V_00008": daysAgo(10).substring(0, 10),
 	"LOC_V_00009": sixDaysAgo.substring(0, 10),
-	"LOC_V_00010": daysAgo(12).substring(0, 10),
+	"LOC_V_00010": daysAgo(72).substring(0, 10),
 };
 
 const defaultLocalDeletedVideos = {
-	"DEL_LOC_S_1": fourteenDaysAgo.substring(0, 10),
-	"DEL_LOC_S_2": fourteenDaysAgo.substring(0, 10),
-	"DEL_LOC_V_3": fourteenDaysAgo.substring(0, 10),
-	"DEL_LOC_V_4": fourteenDaysAgo.substring(0, 10),
-	"DEL_LOC_V_5": fourteenDaysAgo.substring(0, 10)
+	"DEL_LOC_S_1": threeDaysAgo.substring(0, 10),
+	"DEL_LOC_S_2": threeDaysAgo.substring(0, 10),
+	"DEL_LOC_V_3": threeDaysAgo.substring(0, 10),
+	"DEL_LOC_V_4": threeDaysAgo.substring(0, 10),
+	"DEL_LOC_V_5": threeDaysAgo.substring(0, 10)
 };
 
 const defaultDBVideos = {
@@ -273,9 +273,9 @@ const defaultDBVideos = {
 };
 
 const defaultDBDeletedVideos = {
-	"DEL_DB_V_01": fourteenDaysAgo.substring(0, 10),
-	"DEL_DB_V_02": fourteenDaysAgo.substring(0, 10),
-	"DEL_DB_V_03": fourteenDaysAgo.substring(0, 10)
+	"DEL_DB_V_01": threeDaysAgo.substring(0, 10),
+	"DEL_DB_V_02": threeDaysAgo.substring(0, 10),
+	"DEL_DB_V_03": threeDaysAgo.substring(0, 10)
 };
 
 // The YT API returns a full-length timestamp
