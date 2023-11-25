@@ -4,8 +4,9 @@
 
 <!--Releasenotes start-->
 - Added a new option to shuffle only from shorts.
-- Added some animations to the custom API key input field, and made it more clear when the input is invalid.
-- Fixed bugs that would prevent some initialization logic to run whenever the extension is updated.
+- Reduced the time it takes to shuffle, as the extension now uses a more sophisticated way to decide whether or not to check if a video has been deleted or not.
+- The popup now feels smoother in some places, and will make it clearer when some inputs are invalid.
+- Fixed bugs that would prevent some initialization logic to run after the extension is updated.
 <!--Releasenotes end-->
 
 ## v2.3.0

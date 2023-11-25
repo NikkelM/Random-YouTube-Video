@@ -572,9 +572,27 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 }
 
 // ---------- Utility ----------
-async function testVideoExistence(videoId) {
-	let videoExists;
+async function testVideoExistence(videoId, uploadTime) {
+	let videoAgeInDays = Math.floor((new Date() - new Date(uploadTime)) / (1000 * 60 * 60 * 24));
 
+	let checkProbability;
+	// For very new videos, we have just fetched them (we check every 48 hours), so they are very likely not deleted
+	if (videoAgeInDays <= 2) {
+		checkProbability = 0;
+	} else if (videoAgeInDays <= 7) {
+		checkProbability = 1;
+	} else if (videoAgeInDays <= 60) {
+		checkProbability = 0.5;
+	} else {
+		checkProbability = 0.2;
+	}
+
+	if (Math.random() > checkProbability) {
+		console.log("Skipping check if video is deleted or not.");
+		return true;
+	}
+
+	let videoExists;
 	try {
 		let response = await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`, {
 			method: "HEAD"
@@ -734,7 +752,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
 
 		// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
-		if (!await testVideoExistence(randomVideo)) {
+		if (!await testVideoExistence(randomVideo, allVideos[randomVideo])) {
 			encounteredDeletedVideos = true;
 			// Update the database by removing the deleted videos there as well
 			shouldUpdateDatabase = true;
@@ -767,7 +785,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 					}
 				}
 				/* c8 ignore stop */
-			} while (!await testVideoExistence(randomVideo))
+			} while (!await testVideoExistence(randomVideo, allVideos[randomVideo]))
 		}
 
 		// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
