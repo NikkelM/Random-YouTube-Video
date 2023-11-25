@@ -9,7 +9,7 @@ module.exports = env => {
 		entry: {
 			// JS
 			background: './src/background.js',
-			buildShuffleButton: './src/buildShuffleButton.js',
+			domManipulation: './src/domManipulation.js',
 			content: './src/content.js',
 			shuffleVideo: './src/shuffleVideo.js',
 			utils: './src/utils.js',

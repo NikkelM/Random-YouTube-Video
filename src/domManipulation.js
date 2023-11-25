@@ -92,6 +92,15 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 	});
 }
 
+export function tryRenameUntitledList() {
+	let untitledListElement = document.querySelector('ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy').querySelector('yt-formatted-string');
+
+	if (untitledListElement) {
+		untitledListElement.innerText = "Random YouTube Video - Playlist";
+		untitledListElement.title = "This playlist is unlisted, temporary and cannot be saved. Until it is removed by YouTube (which will happen automatically), you can revisit it using the link in the URL bar.";
+	}
+}
+
 // ----- Private -----
 function finalizeButton(pageType, channelId, clickHandler) {
 	let buttonDivID = "youtube-random-video-shuffle-button";

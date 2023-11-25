@@ -5,6 +5,7 @@
 <!--Releasenotes start-->
 - Added a new option to shuffle only from shorts.
 - Reduced the time it takes to shuffle, as the extension now uses a more sophisticated way to decide whether or not to check if a video has been deleted or not.
+- The playlist that is opened when shuffling (if the option is enabled) now has a better title and tooltip.
 - The popup now feels smoother in some places, and will make it clearer when some inputs are invalid.
 - Fixed bugs that would prevent some initialization logic to run after the extension is updated.
 <!--Releasenotes end-->
