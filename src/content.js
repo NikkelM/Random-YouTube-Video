@@ -44,11 +44,6 @@ async function startDOMObserver(event) {
 
 	if (!channelId?.startsWith("UC")) {
 		// If no valid channelId was provided in the event, we won't be able to add the button
-		window.alert(`Random YouTube Video:
-
-The extension was unable to determine the channel ID. Please try reloading the page.
-
-If that does not help, please report this bug on GitHub and include the page URL!`);
 		return;
 	}
 
