@@ -1,5 +1,5 @@
 // Content script that is injected into YouTube pages
-import { setDOMTextWithDelay, isVideoUrl, RandomYoutubeVideoError } from "./utils.js";
+import { setDOMTextWithDelay, getPageTypeFromURL, RandomYoutubeVideoError } from "./utils.js";
 import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 import { buildShuffleButton, shuffleButton, shuffleButtonTextElement, tryRenameUntitledList } from "./domManipulation.js";
 import { chooseRandomVideo } from "./shuffleVideo.js";
@@ -28,47 +28,54 @@ async function startDOMObserver(event) {
 	// If the button previously displayed an error message, reset the text
 	resetShuffleButtonText();
 
-	const isVideoPage = isVideoUrl(window.location.href);
+	let pageType = getPageTypeFromURL(window.location.href);
 
 	// Get the channel id from the event data
 	let channelId = null;
 	let channelName = null;
 
-	if (isVideoPage) {
+	if (pageType == "video" || pageType == "short") {
 		channelId = event?.detail?.response?.playerResponse?.videoDetails?.channelId;
 		channelName = event?.detail?.response?.playerResponse?.videoDetails?.author;
-	} else {
+	} else if (pageType == "channel") {
 		channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
 		channelName = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.title;
 	}
 
 	if (!channelId?.startsWith("UC")) {
 		// If no valid channelId was provided in the event, we won't be able to add the button
+		window.alert(`Random YouTube Video:
+
+The extension was unable to determine the channel ID. Please try reloading the page.
+
+If that does not help, please report this bug on GitHub and include the page URL!`);
 		return;
 	}
 
 	// Wait until the required DOM element we add the button to is loaded
 	var observer = new MutationObserver(function (mutations, me) {
 		// ----- Channel page -----
-		if (!isVideoPage) {
+		if (pageType === "channel") {
 			var channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
-
 			// ----- Video page -----
-		} else {
-			// Find out if we are on a video page that has completed loading the required element
+		} else if (pageType === "video") {
 			var videoPageRequiredElementLoadComplete = document.getElementById("player") && document.getElementById("above-the-fold");
+			// ----- Shorts page -----
+		} else if (pageType === "short") {
+			// As of now, we do not add a shuffle button to shorts pages, so we stop listening immediately
+			var shortsPageRequiredElementLoadComplete = true;
 		}
 
 		// If we are on a video page, and the required element has loaded, add the shuffle button
-		if (isVideoPage && videoPageRequiredElementLoadComplete) {
+		if (pageType === "video" && videoPageRequiredElementLoadComplete) {
 			me.disconnect(); // Stop observing
 			channelDetectedAction("video", channelId, channelName);
 			return;
-		}
-
-		// If we are NOT on a video page, we assume we are on a channel page
-		// If the required element has loaded, add a shuffle button
-		if (!isVideoPage && channelPageRequiredElementLoadComplete) {
+		} else if (pageType === "short" && shortsPageRequiredElementLoadComplete) {
+			me.disconnect(); // Stop observing
+			channelDetectedAction("short", channelId, channelName);
+			return;
+		} else if (pageType === "channel" && channelPageRequiredElementLoadComplete) {
 			me.disconnect(); // Stop observing
 			channelDetectedAction("channel", channelId, channelName);
 			return;
@@ -145,10 +152,10 @@ async function shuffleVideos() {
 
 		// We need this variable to make sure the button text is only changed if the shuffle hasn't finished within the time limit
 		var hasBeenShuffled = false;
-		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Shuffling...", 1000, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffle" && !hasBeenShuffled); });
-		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still on it...", 5000, () => { return (shuffleButtonTextElement.innerText === "\xa0Shuffling..." && !hasBeenShuffled); });
+		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Shuffling...", 1000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Shuffle" || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
+		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still on it...", 5000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Shuffling..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
 		if (configSync.shuffleIgnoreShortsOption != "1") {
-			setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Sorting shorts...", 8000, () => { return (shuffleButtonTextElement.innerText === "\xa0Still on it..." && !hasBeenShuffled); });
+			setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Sorting shorts...", 8000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
 		}
 
 		await chooseRandomVideo(channelId, false, shuffleButtonTextElement);
