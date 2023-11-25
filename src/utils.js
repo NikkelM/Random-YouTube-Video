@@ -21,6 +21,19 @@ export function isVideoUrl(url) {
 	return urlParts[3]?.startsWith("watch?v=") ?? false;
 }
 
+export function getPageTypeFromURL(url) {
+	if (!url) return false;
+
+	const urlParts = url.split("/");
+	if (urlParts[3]?.startsWith("watch?v=")) {
+		return "video";
+	} else if (urlParts[3]?.startsWith("shorts")) {
+		return "short";
+	} else {
+		return "channel";
+	}
+}
+
 // ----- DOM -----
 export function setDOMTextWithDelay(textElement, newText, delayMS, predicate = () => { return true; }) {
 	// Sets the innerHTML of a (text) DOM element after a delay, if a predicate evaluates to true
