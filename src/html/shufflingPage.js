@@ -86,9 +86,11 @@ async function shuffleButtonClicked() {
 	try {
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
 
-		setDOMTextWithDelay(domElements.fetchPercentageNotice, "Applying filters...", 3000, () => { return (domElements.fetchPercentageNotice.innerText === "Please wait..."); });
-		setDOMTextWithDelay(domElements.fetchPercentageNotice, "Should be done soon...", 10000, () => { return (domElements.fetchPercentageNotice.innerText === "Applying filters..."); });
-
+		setDOMTextWithDelay(domElements.fetchPercentageNotice, "Applying filters...", 2000, () => { console.log(domElements.fetchPercentageNotice.innerText); return (domElements.fetchPercentageNotice.innerText === "Please wait..." || domElements.fetchPercentageNotice.innerText === "\xa0Fetching: 100%"); });
+		setDOMTextWithDelay(domElements.fetchPercentageNotice, "Should be done soon...", 5000, () => { return (domElements.fetchPercentageNotice.innerText === "Applying filters..." || domElements.fetchPercentageNotice.innerText === "\xa0Fetching: 100%"); });
+		if (configSync.shuffleIgnoreShortsOption != "1") {
+			setDOMTextWithDelay(domElements.fetchPercentageNotice, "Sorting shorts...", 9000, () => { return (domElements.fetchPercentageNotice.innerText === "Should be done soon..." || domElements.fetchPercentageNotice.innerText === "\xa0Fetching: 100%"); });
+		}
 		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
 
 		// Focus this tab when the shuffle completes
