@@ -2,7 +2,7 @@ import expect from 'expect.js';
 import sinon from 'sinon';
 import { JSDOM } from 'jsdom';
 
-import { isVideoUrl, isEmpty, getLength, addHours, delay, setDOMTextWithDelay, RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
+import { isVideoUrl, getPageTypeFromURL, isEmpty, getLength, addHours, delay, setDOMTextWithDelay, RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
 
 describe('utils.js', function () {
 	context('URL helpers', function () {
@@ -29,8 +29,39 @@ describe('utils.js', function () {
 				expect(isVideoUrl("https://www.google.com")).to.be(false);
 				expect(isVideoUrl("https://www.google.com/search?q=youtube")).to.be(false);
 				expect(isVideoUrl("about:blank")).to.be(false);
+				expect(isVideoUrl("edge://extensions/")).to.be(false);
+			});
+		});
+
+		context('getPageTypeFromURL()', function () {
+			it('should not break if no URL is provided', function () {
+				expect(getPageTypeFromURL(null)).to.be(null);
+				expect(getPageTypeFromURL(undefined)).to.be(null);
+				expect(getPageTypeFromURL("")).to.be(null);
+				expect(getPageTypeFromURL(0)).to.be(null);
+			});
+			
+			it('should identify a YouTube video URL', function () {
+				expect(getPageTypeFromURL("https://www.youtube.com/watch?v=12345678901")).to.be("video");
+			});
+			
+			it('should identify a YouTube shorts URL', function () {
+				expect(getPageTypeFromURL("https://www.youtube.com/shorts/12345678901")).to.be("short");
 			});
 
+			it('should identify a YouTube non-video/non-shorts URL', function () {
+				expect(getPageTypeFromURL("https://www.youtube.com/channel/myChannelID")).to.be("channel");
+				expect(getPageTypeFromURL("https://www.youtube.com/@Username")).to.be("channel");
+				expect(getPageTypeFromURL("https://www.youtube.com")).to.be("channel");
+				expect(getPageTypeFromURL("https://www.youtube.com/playlist?list=PL1234567890")).to.be("channel");
+			});
+
+			it('should identify a non-YouTube URL', function () {
+				expect(getPageTypeFromURL("https://www.google.com")).to.be(null);
+				expect(getPageTypeFromURL("https://www.google.com/search?q=youtube")).to.be(null);
+				expect(getPageTypeFromURL("about:blank")).to.be(null);
+				expect(getPageTypeFromURL("edge://extensions/")).to.be(null);
+			});
 		});
 	});
 
