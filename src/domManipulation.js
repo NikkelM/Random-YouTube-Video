@@ -9,7 +9,6 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 	let buttonDivExtraStyle = "";
 	let buttonDivOwner = null;
 	let buttonDivAppend = true;
-	let hasMultipleOwners = false;
 
 	// Depending on the type of page we're on, we might need to change certain parts of the button
 	switch (pageType) {
@@ -23,11 +22,10 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 			buttonDivOwner = document.getElementById("above-the-fold").children.namedItem("top-row").children.namedItem("owner");
 			break;
 		case "short":
-			hasMultipleOwners = true;
-			buttonDivID = "youtube-random-video-shuffle-button-short";
+			buttonDivID = `youtube-random-video-shuffle-button-short-${channelId}`;
 			buttonDivAppend = false;
-			// buttonDivExtraStyle = "margin-left: 8px;";
-			buttonDivOwner = document.querySelectorAll("ytd-reel-video-renderer ytd-reel-player-overlay-renderer #actions");
+			// Only select the currently active short
+			buttonDivOwner = document.querySelector("ytd-reel-video-renderer[is-active] ytd-reel-player-overlay-renderer #actions");
 			break;
 		default:
 			console.warn(`Cannot build button: Unknown page type: ${pageType}`);
@@ -54,7 +52,7 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 		document.getElementById(buttonDivID).style.display = "flex";
 
 		// Update the channelId
-		// TODO: Does it get updated correctly for shorts?
+		// TODO: Does it get updated correctly for shorts? Yes
 		document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('channelId').innerText = channelId ?? "";
 
 		// Set the variables to the correct button reference (channel vs. video page)
@@ -88,31 +86,13 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 
 	// Depending on the page we're on, we may want to prepend or append the button to the parent
 	if (buttonDivAppend) {
-		if (hasMultipleOwners) {
-			// for each owner, loop
-			buttonDivOwner.forEach(owner => {
-				let cloneButtonDiv = buttonDiv.cloneNode(true);
-				owner.appendChild(cloneButtonDiv);
-			});
-		} else {
-			buttonDivOwner.appendChild(buttonDiv);
-		}
+		buttonDivOwner.appendChild(buttonDiv);
 	} else {
-		if (hasMultipleOwners) {
-			buttonDivOwner.forEach(owner => {
-				let cloneButtonDiv = buttonDiv.cloneNode(true);
-				owner.prepend(cloneButtonDiv);
-			});
-		} else {
-			buttonDivOwner.prepend(buttonDiv);
-		}
+		buttonDivOwner.prepend(buttonDiv);
 	}
 
 	// Wait for the button renderer to get the child elements defined by the element type
 	let observer = new MutationObserver(function (mutations, me) {
-		if (hasMultipleOwners) {
-			buttonDivOwner = buttonDivOwner[0];
-		}
 		let shuffleButton = buttonDivOwner.children.namedItem(buttonDivID);
 		if (shuffleButton.children.length > 0) {
 			me.disconnect(); // Stop observing
@@ -147,16 +127,16 @@ function finalizeButton(pageType, channelId, clickHandler) {
 	switch (pageType) {
 		case "channel":
 			buttonDivID = "youtube-random-video-shuffle-button-channel";
-			buttonDivOwner = document.getElementsById("inner-header-container").children.namedItem("buttons");
+			buttonDivOwner = document.getElementById("inner-header-container").children.namedItem("buttons");
 			break;
 		case "video":
 			buttonDivID = "youtube-random-video-shuffle-button-video";
-			buttonDivOwner = document.getElementsById("above-the-fold").children.namedItem("top-row").children.namedItem("owner");
+			buttonDivOwner = document.getElementById("above-the-fold").children.namedItem("top-row").children.namedItem("owner");
 			break;
 		case "short":
 			isSmallButton = true;
-			buttonDivID = "youtube-random-video-shuffle-button-short";
-			buttonDivOwner = document.querySelectorAll("ytd-reel-video-renderer ytd-reel-player-overlay-renderer #actions");
+			buttonDivID = `youtube-random-video-shuffle-button-short-${channelId}`;
+			buttonDivOwner = document.querySelector("ytd-reel-video-renderer[is-active] ytd-reel-player-overlay-renderer #actions");
 			break;
 		default:
 			console.warn(`Cannot build button: unknown page type: ${pageType}`);
@@ -217,30 +197,20 @@ function finalizeButton(pageType, channelId, clickHandler) {
 	buttonTooltip.innerText = "Shuffle from this channel";
 
 	// Remove the original button tooltip, it does not have all required attributes
-	buttonDivOwner.forEach(owner => {
-		owner.children.namedItem(buttonDivID).children[0].removeChild(owner.children.namedItem(buttonDivID).children[0].children[1]);
-	});
+	buttonDivOwner.children.namedItem(buttonDivID).children[0].removeChild(buttonDivOwner.children.namedItem(buttonDivID).children[0].children[1]);
 
 	// Add the correct tooltip
-	buttonDivOwner.forEach(owner => {
-		let cloneButtonTooltip = buttonTooltip.cloneNode(true);
-		owner.children.namedItem(buttonDivID).children[0].appendChild(cloneButtonTooltip);
-	});
+	buttonDivOwner.children.namedItem(buttonDivID).children[0].appendChild(buttonTooltip);
 
 	// Add the button to the page
-	buttonDivOwner.forEach(owner => {
-		let cloneButton = button.cloneNode(true);
-		owner.children.namedItem(buttonDivID).children[0].children[0].appendChild(cloneButton);
-	});
+	buttonDivOwner.children.namedItem(buttonDivID).children[0].children[0].appendChild(button);
 
 	// Set references to the button and the text inside the button
-	buttonDivOwner.forEach(owner => {
-		// The shuffleButton must be the currently active short
-		shuffleButton = owner.children.namedItem(buttonDivID);
-		// TODO: Assign the text element to where the icon is right now to replace it with a percentage
-		shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[1].children[0];
+	// The shuffleButton must be the currently active short
+	shuffleButton = buttonDivOwner.children.namedItem(buttonDivID);
+	// TODO: Assign the text element to where the icon is right now to replace it with a percentage
+	shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[1].children[0];
 
-		// Add the event listener that shuffles the videos to the button
-		shuffleButton.addEventListener("click", clickHandler);
-	});
+	// Add the event listener that shuffles the videos to the button
+	shuffleButton.addEventListener("click", clickHandler);
 }
