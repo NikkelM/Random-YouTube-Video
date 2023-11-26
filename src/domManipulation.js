@@ -5,26 +5,27 @@ export let shuffleButton = null;
 export let shuffleButtonTextElement = null;
 
 export function buildShuffleButton(pageType, channelId, clickHandler) {
-	let buttonDivID = "youtube-random-video-shuffle-button";
+	let buttonDivID = null;
 	let buttonDivExtraStyle = "";
 	let buttonDivOwner = null;
 	let buttonDivAppend = true;
+	let isSmallButton = false;
 
 	// Depending on the type of page we're on, we might need to change certain parts of the button
 	switch (pageType) {
 		case "channel":
-			buttonDivID = "youtube-random-video-shuffle-button-channel";
+			buttonDivID = "youtube-random-video-large-shuffle-button-channel";
 			buttonDivOwner = [document.getElementById("channel-header").querySelector("#inner-header-container").children.namedItem("buttons")];
 			break;
 		case "video":
-			buttonDivID = "youtube-random-video-shuffle-button-video";
+			buttonDivID = "youtube-random-video-large-shuffle-button-video";
 			buttonDivExtraStyle = "margin-left: 8px;";
 			buttonDivOwner = [document.getElementById("above-the-fold").children.namedItem("top-row").children.namedItem("owner")];
 			break;
 		case "short":
-			buttonDivID = "youtube-random-video-shuffle-button-short";
+			isSmallButton = true;
+			buttonDivID = "youtube-random-video-small-shuffle-button-short";
 			buttonDivAppend = false;
-			// buttonDivExtraStyle = "margin-left: 8px;";
 			buttonDivOwner = document.querySelectorAll("ytd-reel-video-renderer ytd-reel-player-overlay-renderer #actions");
 			break;
 		default:
@@ -46,18 +47,30 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 		return;
 	}
 
-	// If all required buttons already exist, don't build them again
-	let numButtonsOnPage = document.querySelectorAll(`#${buttonDivID}`).length;
-	if (numButtonsOnPage >= buttonDivOwner.length && channelId) {
+	// If all required buttons already exist, don't build them again, but only update values
+	let allButtonsOnPage = document.querySelectorAll(`#${buttonDivID}`);
+	if (allButtonsOnPage.length >= buttonDivOwner.length && channelId) {
+		let button = null;
+		if (pageType === "short") {
+			// If we are on a shorts page, get the button of the active renderer
+			button = document.querySelector("ytd-reel-video-renderer[is-active] ytd-reel-player-overlay-renderer #actions").children.namedItem(buttonDivID);
+		} else {
+			button = document.getElementById(buttonDivID);
+		}
+
 		// Unhide the button if it was hidden
-		document.getElementById(buttonDivID).style.display = "flex";
+		button.style.display = "flex";
 
 		// Update the channelId
-		document.getElementById(buttonDivID).children[0].children[0].children[0].children.namedItem('channelId').innerText = channelId ?? "";
+		button.children[0].children[0].children[0].children.namedItem('channelId').innerText = channelId ?? "";
 
-		// Set the variables to the correct button reference (channel vs. video page)
-		shuffleButton = document.getElementById(buttonDivID);
-		shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[1].children[0];
+		// Set the variables to the correct button reference (channel vs. video vs. shorts page)
+		shuffleButton = button;
+		if (isSmallButton) {
+			shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[0].children[0];
+		} else {
+			shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[1].children[0];
+		}
 
 		return;
 	}
@@ -107,7 +120,7 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 		let shuffleButton = buttonDivOwner[buttonDivOwner.length - 1].children.namedItem(buttonDivID);
 		if (shuffleButton.children.length > 0) {
 			me.disconnect(); // Stop observing
-			finalizeButton(pageType, channelId, clickHandler);
+			finalizeButton(pageType, channelId, clickHandler, isSmallButton);
 			return;
 		}
 	});
@@ -129,24 +142,22 @@ export function tryRenameUntitledList() {
 }
 
 // ----- Private -----
-function finalizeButton(pageType, channelId, clickHandler) {
-	let isSmallButton = false;
+function finalizeButton(pageType, channelId, clickHandler, isSmallButton) {
 	let buttonText = "&nbsp;Shuffle";
-	let buttonDivID = "youtube-random-video-shuffle-button";
+	let buttonDivID = null;
 	let buttonDivOwner = null;
 
 	switch (pageType) {
 		case "channel":
-			buttonDivID = "youtube-random-video-shuffle-button-channel";
+			buttonDivID = "youtube-random-video-large-shuffle-button-channel";
 			buttonDivOwner = [document.getElementById("inner-header-container").children.namedItem("buttons")];
 			break;
 		case "video":
-			buttonDivID = "youtube-random-video-shuffle-button-video";
+			buttonDivID = "youtube-random-video-large-shuffle-button-video";
 			buttonDivOwner = [document.getElementById("above-the-fold").children.namedItem("top-row").children.namedItem("owner")];
 			break;
 		case "short":
-			isSmallButton = true;
-			buttonDivID = "youtube-random-video-shuffle-button-short";
+			buttonDivID = "youtube-random-video-small-shuffle-button-short";
 			buttonDivOwner = document.querySelectorAll("ytd-reel-video-renderer ytd-reel-player-overlay-renderer #actions");
 			break;
 		default:
@@ -161,11 +172,11 @@ function finalizeButton(pageType, channelId, clickHandler) {
 			class="yt-spec-button-shape-next yt-spec-button-shape-next--tonal yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-l yt-spec-button-shape-next--icon-button"
 			aria-label="Shuffle from this channel">
 				<div class="yt-spec-button-shape-next__icon">
-					<span class="material-symbols-outlined" style="width: 24.01px; overflow: hidden;">
+					<span id="random-youtube-video-small-shuffle-button-text" class="material-symbols-outlined" style="width: 24.01px; overflow: hidden;">
 						shuffle
 					</span>
 				</div>
-				<!--This is a dummy span to assign the shuffleButtonTextElement to later on-->
+				<!--TODO: Do we need this still?-->
 				<span style="display: none">
 					<span></span>
 				</span>
@@ -186,7 +197,7 @@ function finalizeButton(pageType, channelId, clickHandler) {
 				shuffle
 			</span>
 			<div class="cbox yt-spec-button-shape-next--button-text-content">
-				<span class="yt-core-attributed-string yt-core-attributed-string--white-space-no-wrap" role="text">
+				<span id="random-youtube-video-large-shuffle-button-text" class="yt-core-attributed-string yt-core-attributed-string--white-space-no-wrap" role="text">
 					${buttonText}
 				</span>
 			</div>
@@ -224,14 +235,28 @@ function finalizeButton(pageType, channelId, clickHandler) {
 		owner.children.namedItem(buttonDivID).children[0].children[0].appendChild(cloneButton);
 	});
 
-	// Set references to the button and the text inside the button
+	// Set the click handler for all buttons
 	buttonDivOwner.forEach(owner => {
 		// The shuffleButton must be the currently active short
 		shuffleButton = owner.children.namedItem(buttonDivID);
-		// TODO: Assign the text element to where the icon is right now to replace it with a percentage
-		shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[1].children[0];
 
 		// Add the event listener that shuffles the videos to the button
 		shuffleButton.addEventListener("click", clickHandler);
 	});
+
+	// Finally, set the references to the current button
+	let activeButton = null;
+	if (pageType === "short") {
+		// If we are on a shorts page, get the button of the active renderer
+		activeButton = document.querySelector("ytd-reel-video-renderer[is-active] ytd-reel-player-overlay-renderer #actions").children.namedItem(buttonDivID);
+	} else {
+		activeButton = document.getElementById(buttonDivID);
+	}
+
+	shuffleButton = activeButton;
+	if (isSmallButton) {
+		shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[0].children[0];
+	} else {
+		shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[1].children[0];
+	}
 }
