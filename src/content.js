@@ -15,9 +15,10 @@ document.head.appendChild(iconFont);
 // The only way for a button to already exist when the content script is loaded is if the extension was reloaded in the background
 // That will cause the content script to be re-injected into the page, but the DOM will not be reloaded
 // That in turn will disconnect the event listener (on Firefox), which will make the button not work
-const videoShuffleButton = document.getElementById("youtube-random-video-shuffle-button-video");
-const channelShuffleButton = document.getElementById("youtube-random-video-shuffle-button-channel");
-if (videoShuffleButton || channelShuffleButton) {
+const videoShuffleButton = document.getElementById("youtube-random-video-large-shuffle-button-video");
+const channelShuffleButton = document.getElementById("youtube-random-video-large-shuffle-button-channel");
+const shortShuffleButton = document.getElementById("youtube-random-video-small-shuffle-button-short");
+if (videoShuffleButton || channelShuffleButton || shortShuffleButton) {
 	window.location.reload(true);
 }
 
@@ -147,30 +148,53 @@ async function shuffleVideos() {
 
 		// We need this variable to make sure the button text is only changed if the shuffle hasn't finished within the time limit
 		var hasBeenShuffled = false;
-		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Shuffling...", 1000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Shuffle" || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
-		setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still on it...", 5000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Shuffling..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
-		if (configSync.shuffleIgnoreShortsOption != "1") {
-			setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Sorting shorts...", 8000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
+
+		// Only use this text if the button is the large shuffle button, the small one only has space for an icon
+		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
+			setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Shuffling...", 1000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Shuffle" || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
+			setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still on it...", 5000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Shuffling..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
+			if (configSync.shuffleIgnoreShortsOption != "1") {
+				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Sorting shorts...", 8000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
+			}
 		}
+		// TODO: Alternative text for the small button
 
 		await chooseRandomVideo(channelId, false, shuffleButtonTextElement);
 		hasBeenShuffled = true;
 
 		// Reset the button text in case we opened the video in a new tab
-		shuffleButtonTextElement.innerText = "\xa0Shuffle";
+		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
+			shuffleButtonTextElement.innerText = "\xa0Shuffle";
+		} else {
+			shuffleButtonTextElement.classList.add("material-symbols-outlined");
+			shuffleButtonTextElement.innerText = "shuffle";
+		}
 	} catch (error) {
 		console.error(error);
 
 		let displayText = "";
-		switch (error.name) {
-			case "RandomYoutubeVideoError":
-				displayText = `Error ${error.code}`;
-				break;
-			case "YoutubeAPIError":
-				displayText = `API Error ${error.code}`;
-				break;
-			default:
-				displayText = `Unknown Error`;
+		if (shuffleButtonTextElement?.id?.includes("small-shuffle-button")) {
+			switch (error.name) {
+				case "RandomYoutubeVideoError":
+					displayText = error.code;
+					break;
+				case "YoutubeAPIError":
+					displayText = error.code;
+					break;
+				default:
+					displayText = "close";
+			}
+		} else {
+			switch (error.name) {
+				case "RandomYoutubeVideoError":
+					displayText = `Error ${error.code}`;
+					break;
+				case "YoutubeAPIError":
+					displayText = `API Error ${error.code}`;
+					break;
+				default:
+					displayText = "Unknown Error";
+			}
 		}
 
 		// Special case: If the extension's background worker was reloaded, we need to reload the page to get the correct reference to the shuffle function again
@@ -190,11 +214,15 @@ The page will reload and you can try again.`)
 			return;
 		}
 
+		// Immediately display the error
+		if (shuffleButtonTextElement?.id?.includes("small-shuffle-button")) {
+			shuffleButtonTextElement.innerText = displayText;
+		} else {
+			shuffleButtonTextElement.innerText = `\xa0${displayText}`;
+		}
+
 		// Alert the user about the error
 		window.alert(`Random YouTube Video:\n\nChannel ${channelId}\n${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}${error.showTrace !== false ? "\n\n" + error.stack : ""}`);
-
-		// Immediately display the error
-		shuffleButtonTextElement.innerText = `\xa0${displayText}`;
 
 		return;
 	}

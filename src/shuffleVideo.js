@@ -334,7 +334,8 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 
 	// If there are less than 50 videos, we don't need to show a progress percentage
 	if (totalResults > 50) {
-		progressTextElement.innerText = `\xa0Fetching: ${Math.round(resultsFetchedCount / totalResults * 100)}%`;
+		const percentage = Math.round(resultsFetchedCount / totalResults * 100);
+		updateProgressTextElement(progressTextElement, `\xa0Fetching: ${percentage}%`, `${percentage}%`);
 	}
 
 	// For each video, add an entry in the form of videoId: uploadTime
@@ -350,7 +351,9 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 		// Set the current progress as text for the shuffle button/info text
 		// We never get to this code part if there are less than or exactly 50 videos in the playlist, so we don't need to check for that
 		resultsFetchedCount += apiResponse["items"].length;
-		progressTextElement.innerText = `\xa0Fetching: ${Math.round(resultsFetchedCount / totalResults * 100)}%`;
+
+		const percentage = Math.round(resultsFetchedCount / totalResults * 100);
+		updateProgressTextElement(progressTextElement, `\xa0Fetching: ${percentage}%`, `${percentage}%`);
 
 		// For each video, add an entry in the form of videoId: uploadTime
 		playlistInfo["videos"]["unknownType"] = Object.assign(playlistInfo["videos"]["unknownType"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)])));
@@ -410,7 +413,8 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 	// If there are less than 50 new videos, we don't need to show a progress percentage
 	if (totalExpectedNewResults > 50) {
-		progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100)}%`;
+		const percentage = Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100);
+		updateProgressTextElement(progressTextElement, `\xa0Fetching: ${percentage}%`, `${percentage}%`);
 	}
 
 	// Update the "last video published at" date (only for the most recent video)
@@ -451,7 +455,9 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 				// Set the current progress as text for the shuffle button/info text
 				// We never get to this code part if there are less than or exactly 50 new videos, so we don't need to check for that
 				resultsFetchedCount += apiResponse["items"].length;
-				progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100)}%`;
+
+				const percentage = Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100);
+				updateProgressTextElement(progressTextElement, `\xa0Fetching: ${percentage}%`, `${percentage}%`);
 
 				currVideo = 0;
 				// Else, we have checked all videos
@@ -1088,6 +1094,22 @@ function validatePlaylistInfo(playlistInfo) {
 	}
 }
 /* c8 ignore stop */
+
+function updateProgressTextElement(progressTextElement, largeButtonText, smallButtonText) {
+	// If the text is not in a list of approved texts
+	// TODO: Also adapt the text size, and alignment of the text
+	if (!["shuffle", "close"].includes(smallButtonText) || !["shuffle", "close"].includes(largeButtonText)) {
+		progressTextElement.classList.remove("material-symbols-outlined");
+	} else {
+		progressTextElement.classList.add("material-symbols-outlined");
+	}
+
+	if (progressTextElement.id.includes("large-shuffle-button")) {
+		progressTextElement.innerText = largeButtonText;
+	} else {
+		progressTextElement.innerText = smallButtonText;
+	}
+}
 
 // ---------- Local storage ----------
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary
