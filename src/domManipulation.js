@@ -139,7 +139,6 @@ export function tryRenameUntitledList() {
 
 // ----- Private -----
 function finalizeButton(pageType, channelId, clickHandler) {
-	let hasMultipleOwners = false;
 	let isSmallButton = false;
 	let buttonText = "&nbsp;Shuffle";
 	let buttonDivID = "youtube-random-video-shuffle-button";
@@ -156,7 +155,6 @@ function finalizeButton(pageType, channelId, clickHandler) {
 			break;
 		case "short":
 			isSmallButton = true;
-			hasMultipleOwners = true;
 			buttonDivID = "youtube-random-video-shuffle-button-short";
 			buttonDivOwner = document.querySelectorAll("ytd-reel-video-renderer ytd-reel-player-overlay-renderer #actions");
 			break;
@@ -176,6 +174,7 @@ function finalizeButton(pageType, channelId, clickHandler) {
 						shuffle
 					</span>
 				</div>
+				<!--This is a dummy span to assign the shuffleButtonTextElement to later on-->
 				<span style="display: none">
 					<span></span>
 				</span>
@@ -238,6 +237,7 @@ function finalizeButton(pageType, channelId, clickHandler) {
 	buttonDivOwner.forEach(owner => {
 		// The shuffleButton must be the currently active short
 		shuffleButton = owner.children.namedItem(buttonDivID);
+		// TODO: Assign the text element to where the icon is right now to replace it with a percentage
 		shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[1].children[0];
 
 		// Add the event listener that shuffles the videos to the button
