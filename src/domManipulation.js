@@ -176,10 +176,6 @@ function finalizeButton(pageType, channelId, clickHandler, isSmallButton) {
 						shuffle
 					</span>
 				</div>
-				<!--TODO: Do we need this still?-->
-				<span style="display: none">
-					<span></span>
-				</span>
 				<yt-touch-feedback-shape style="border-radius: inherit;">
 					<div class="yt-spec-touch-feedback-shape yt-spec-touch-feedback-shape--touch-response" aria-hidden="true">
 						<div class="yt-spec-touch-feedback-shape__stroke" style></div>
