@@ -46,7 +46,7 @@ Download the extension for: [Chrome/Chromium](https://chromewebstore.google.com/
 
 Do you have a favourite YouTube channel, but don't know what to watch? This extension is for you!
 
-The Random YouTube Video extension adds a 'Shuffle' button to YouTube channel and video pages, which will play a random video from the current channel. You can use the extension's popup to customize your experience further.
+The Random YouTube Video extension adds a 'Shuffle' button to YouTube channel, video and shorts pages, which will play a truly random video from the current channel. You can use the extension's popup to customize your experience further.
 
 Highlighted Features:<br>
 - Choose from a wide range of options to individualize your experience, such as ignoring shorts, only shuffling from the most recent videos, shuffling multiple videos into a playlist, and much more!
