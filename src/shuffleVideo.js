@@ -1097,16 +1097,16 @@ function validatePlaylistInfo(playlistInfo) {
 /* c8 ignore stop */
 
 function updateProgressTextElement(progressTextElement, largeButtonText, smallButtonText) {
-	// If the text is not in a list of approved texts
-	if (!["shuffle", "close"].includes(smallButtonText) || !["shuffle", "close"].includes(largeButtonText)) {
-		updateSmallButtonStyle(progressTextElement, true);
-	} else {
-		updateSmallButtonStyle(progressTextElement, false);
-	}
 
 	if (progressTextElement.id.includes("large-shuffle-button")) {
 		progressTextElement.innerText = largeButtonText;
 	} else {
+		// Make it the icon style if an icon is set, otherwise the text style
+		if (!["shuffle", "close"].includes(smallButtonText)) {
+			updateSmallButtonStyle(progressTextElement, true);
+		} else {
+			updateSmallButtonStyle(progressTextElement, false);
+		}
 		progressTextElement.innerText = smallButtonText;
 	}
 }
