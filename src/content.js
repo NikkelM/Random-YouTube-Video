@@ -1,5 +1,5 @@
 // Content script that is injected into YouTube pages
-import { setDOMTextWithDelay, getPageTypeFromURL, RandomYoutubeVideoError, delay } from "./utils.js";
+import { setDOMTextWithDelay, updateSmallButtonStyle, getPageTypeFromURL, RandomYoutubeVideoError, delay } from "./utils.js";
 import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 import { buildShuffleButton, shuffleButton, shuffleButtonTextElement, tryRenameUntitledList } from "./domManipulation.js";
 import { chooseRandomVideo } from "./shuffleVideo.js";
@@ -124,7 +124,7 @@ function resetShuffleButtonText() {
 		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
 			shuffleButtonTextElement.innerText = "\xa0Shuffle";
 		} else if (shuffleButtonTextElement.innerText !== "autorenew") {
-			shuffleButtonTextElement.classList.add("material-symbols-outlined");
+			updateSmallButtonStyle(shuffleButtonTextElement, false);
 			shuffleButtonTextElement.innerText = "shuffle";
 		}
 	}
@@ -173,13 +173,12 @@ async function shuffleVideos() {
 					clearInterval(checkInterval);
 					await delay(400);
 
-					shuffleButtonTextElementCopy.classList.add("material-symbols-outlined");
+					updateSmallButtonStyle(shuffleButtonTextElementCopy, false);
 					shuffleButtonTextElementCopy.innerText = "autorenew";
 					let rotation = 0;
 
 					let rotateInterval = setInterval(() => {
 						if (hasBeenShuffled) {
-							shuffleButtonTextElementCopy.style.transform = "rotate(0deg)";
 							clearInterval(rotateInterval);
 							return;
 						}
@@ -198,7 +197,7 @@ async function shuffleVideos() {
 		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
 			shuffleButtonTextElement.innerText = "\xa0Shuffle";
 		} else {
-			shuffleButtonTextElementCopy.classList.add("material-symbols-outlined");
+			updateSmallButtonStyle(shuffleButtonTextElementCopy, false);
 			shuffleButtonTextElementCopy.innerText = "shuffle";
 		}
 	} catch (error) {
@@ -206,7 +205,7 @@ async function shuffleVideos() {
 
 		hasBeenShuffled = true;
 		if (shuffleButton.id.includes("small-shuffle-button")) {
-			shuffleButtonTextElementCopy.classList.remove("material-symbols-outlined");
+			updateSmallButtonStyle(shuffleButtonTextElementCopy, true);
 		}
 
 		let displayText = "";

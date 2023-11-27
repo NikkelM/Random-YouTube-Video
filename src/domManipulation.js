@@ -172,7 +172,7 @@ function finalizeButton(pageType, channelId, clickHandler, isSmallButton) {
 			class="yt-spec-button-shape-next yt-spec-button-shape-next--tonal yt-spec-button-shape-next--mono yt-spec-button-shape-next--size-l yt-spec-button-shape-next--icon-button"
 			aria-label="Shuffle from this channel">
 				<div class="yt-spec-button-shape-next__icon">
-					<span id="random-youtube-video-small-shuffle-button-text" class="material-symbols-outlined" style="width: 24.01px; overflow: hidden;">
+					<span id="random-youtube-video-small-shuffle-button-text" class="material-symbols-outlined" style="width: 100%; height: 100%; overflow: hidden;">
 						shuffle
 					</span>
 				</div>

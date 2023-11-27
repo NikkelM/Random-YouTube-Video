@@ -5,7 +5,8 @@ import {
 	getLength,
 	isVideoUrl,
 	RandomYoutubeVideoError,
-	YoutubeAPIError
+	YoutubeAPIError,
+	updateSmallButtonStyle
 } from "./utils.js";
 import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from "./chromeStorage.js";
 
@@ -1097,11 +1098,10 @@ function validatePlaylistInfo(playlistInfo) {
 
 function updateProgressTextElement(progressTextElement, largeButtonText, smallButtonText) {
 	// If the text is not in a list of approved texts
-	// TODO: Also adapt the text size, and alignment of the text
 	if (!["shuffle", "close"].includes(smallButtonText) || !["shuffle", "close"].includes(largeButtonText)) {
-		progressTextElement.classList.remove("material-symbols-outlined");
+		updateSmallButtonStyle(progressTextElement, true);
 	} else {
-		progressTextElement.classList.add("material-symbols-outlined");
+		updateSmallButtonStyle(progressTextElement, false);
 	}
 
 	if (progressTextElement.id.includes("large-shuffle-button")) {

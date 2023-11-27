@@ -47,6 +47,23 @@ export function setDOMTextWithDelay(textElement, newText, delayMS, predicate = (
 	});
 }
 
+export function updateSmallButtonStyle(textElement, isTextStyle) {
+	textElement.style.fontSize = isTextStyle ? "12px" : "";
+	textElement.style.position = isTextStyle ? "absolute" : "";
+	textElement.style.top = isTextStyle ? "50%" : "";
+	textElement.style.left = isTextStyle ? "50%" : "";
+	textElement.style.transform = isTextStyle ? "translate(-50%, -50%)" : "";
+	textElement.style.alignItems = isTextStyle ? "center" : "";
+	textElement.style.justifyContent = isTextStyle ? "center" : "";
+	textElement.style.display = isTextStyle ? "flex" : "";
+
+	if (isTextStyle) {
+			textElement.classList.remove("material-symbols-outlined");
+	} else {
+			textElement.classList.add("material-symbols-outlined");
+	}
+}
+
 // ----- Small utilities -----
 // Waits for a certain amount of milliseconds
 export function delay(ms) {
