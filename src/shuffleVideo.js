@@ -593,8 +593,8 @@ async function testVideoExistence(videoId, uploadTime) {
 		checkProbability = 0.2;
 	}
 
+	// We don't always want to check if a video exists, as this takes a lot of time
 	if (Math.random() > checkProbability) {
-		console.log("Skipping check if video is deleted or not.");
 		return true;
 	}
 
