@@ -57,9 +57,9 @@ Highlighted Features:<br>
 
 Do you have ideas for new features or have encountered a bug? Please [open an issue](https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose).
 
-The `main` branch of this repository *should* always be stable. If you want to test the newest unreleased features, follow the steps below to create a version of the extension you can add to your browser.
+The `main` branch of this repository *should* always be stable. If you want to test the newest unreleased features, follow the steps below to create a local version of the extension that you can install in the browser of your choice.
 <br>
-You can find out what new changes are coming with the newest unreleased version in the [changelog](https://github.com/NikkelM/Random-YouTube-Video/blob/main/CHANGELOG.md).
+You can find out what new changes will be coming in the next version in the [changelog](https://github.com/NikkelM/Random-YouTube-Video/blob/main/CHANGELOG.md).
 Did you find any bugs with the version you tested? Please let me know by [opening an issue](https://github.com/NikkelM/Random-YouTube-Video/issues/new/choose)!
 
 ### Installation
@@ -69,7 +69,7 @@ Did you find any bugs with the version you tested? Please let me know by [openin
 	- `npm run build:chromium` builds a distribution for Chrome/Chromium only.
 	- `npm run build:firefox` builds a distribution for Firefox only.
 	- Replace `build` with `dev` in the above commands to build a development version of the extension that updates automatically when you make changes to the code.
-- The bundled extension files will be placed in the `dist/<browser>` directories.
+- The bundled extension files will be placed in the `dist/<environment>` directories.
 - You can load the extension in your browser by following the instructions below.
 
 #### Chromium
