@@ -3,10 +3,10 @@ import {
 	isEmpty,
 	addHours,
 	getLength,
-	isVideoUrl,
 	RandomYoutubeVideoError,
 	YoutubeAPIError,
-	updateSmallButtonStyle
+	updateSmallButtonStyle,
+	getPageTypeFromURL
 } from "./utils.js";
 import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from "./chromeStorage.js";
 
@@ -1009,13 +1009,14 @@ async function playVideo(chosenVideos, firedFromPopup) {
 	// If the shuffle button from the popup was used, we always open the video in the 'same tab' (==the shuffling page)
 	// If the user wants to reuse tabs, we only open in a new tab if the reusable tab is not open anymore
 	if (configSync.shuffleOpenInNewTabOption && !firedFromPopup) {
+		const pageType = getPageTypeFromURL(window.location.href);
 		// Video page: Pause the current video if it is playing
-		if (isVideoUrl(window.location.href)) {
+		if (pageType === "video") {
 			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
 			if (player && player.classList.contains('playing-mode') && !player.classList.contains('unstarted-mode')) {
 				player.children[0].click();
 			}
-		} else {
+		} else if(pageType === "channel") {
 			// Channel page: Pause the featured video if it exists and is playing
 			const featuredPlayer = document.querySelector('ytd-player#player')?.children[0]?.children[0];
 			if (featuredPlayer && featuredPlayer.classList.contains('playing-mode') && !featuredPlayer.classList.contains('unstarted-mode')) {
@@ -1026,6 +1027,8 @@ async function playVideo(chosenVideos, firedFromPopup) {
 			if (miniPlayer && miniPlayer.classList.contains('playing-mode') && !miniPlayer.classList.contains('unstarted-mode')) {
 				miniPlayer.children[0].click();
 			}
+		} else {
+			console.log(`The current page type (${pageType}) is not supported when checking if a video player should be paused.`);
 		}
 
 		// If there is a reusable tab and the option is enabled, open the video there
