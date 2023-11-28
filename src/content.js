@@ -218,7 +218,7 @@ async function shuffleVideos() {
 					displayText = error.code;
 					break;
 				default:
-					displayText = "close";
+					displayText = "Unknown Error";
 			}
 		} else {
 			switch (error.name) {
@@ -254,7 +254,7 @@ The page will reload and you can try again.`)
 		if (shuffleButton?.id?.includes("large-shuffle-button")) {
 			shuffleButtonTextElement.innerText = `\xa0${displayText}`;
 		} else {
-			shuffleButtonTextElementCopy.innerText = displayText;
+			shuffleButtonTextElementCopy.innerText = displayText == "Unknown Error" ? "Error" : displayText;
 		}
 
 		// Alert the user about the error

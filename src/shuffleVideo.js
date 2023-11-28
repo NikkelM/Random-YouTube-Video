@@ -1097,7 +1097,6 @@ function validatePlaylistInfo(playlistInfo) {
 /* c8 ignore stop */
 
 function updateProgressTextElement(progressTextElement, largeButtonText, smallButtonText) {
-
 	if (progressTextElement.id.includes("large-shuffle-button")) {
 		progressTextElement.innerText = largeButtonText;
 	} else {
