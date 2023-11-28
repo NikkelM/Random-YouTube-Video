@@ -169,9 +169,14 @@ async function shuffleVideos() {
 			let iterationsWaited = 0;
 
 			let checkInterval = setInterval(async () => {
-				if (!hasBeenShuffled && (shuffleButtonTextElementCopy.innerText == "100%" || (shuffleButtonTextElementCopy.innerText == "shuffle" && iterationsWaited++ >= 10))) {
+				if (!hasBeenShuffled && (shuffleButtonTextElementCopy.innerText == "100%" || (shuffleButtonTextElementCopy.innerText == "shuffle" && iterationsWaited++ >= 15))) {
 					clearInterval(checkInterval);
 					await delay(400);
+
+					// If we have finished the shuffle between the check and the delay, we don't want to change the text
+					if (hasBeenShuffled) {
+						return;
+					}
 
 					updateSmallButtonStyle(shuffleButtonTextElementCopy, false);
 					shuffleButtonTextElementCopy.innerText = "autorenew";
@@ -185,9 +190,10 @@ async function shuffleVideos() {
 						shuffleButtonTextElementCopy.style.transform = `rotate(${rotation}deg)`;
 						rotation = (rotation + 5) % 360;
 					}, 25);
+				} else if (hasBeenShuffled) {
+					clearInterval(checkInterval);
 				}
-				await delay(100);
-			}, 100);
+			}, 150);
 		}
 
 		await chooseRandomVideo(channelId, false, shuffleButtonTextElement);
