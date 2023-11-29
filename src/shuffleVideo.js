@@ -5,7 +5,7 @@ import {
 	getLength,
 	RandomYoutubeVideoError,
 	YoutubeAPIError,
-	updateSmallButtonStyle,
+	updateSmallButtonStyleForText,
 	getPageTypeFromURL
 } from "./utils.js";
 import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from "./chromeStorage.js";
@@ -1015,7 +1015,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 			if (player && player.classList.contains('playing-mode') && !player.classList.contains('unstarted-mode')) {
 				player.children[0].click();
 			}
-		} else if(pageType === "channel") {
+		} else if (pageType === "channel") {
 			// Channel page: Pause the featured video if it exists and is playing
 			const featuredPlayer = document.querySelector('ytd-player#player')?.children[0]?.children[0];
 			if (featuredPlayer && featuredPlayer.classList.contains('playing-mode') && !featuredPlayer.classList.contains('unstarted-mode')) {
@@ -1104,9 +1104,9 @@ function updateProgressTextElement(progressTextElement, largeButtonText, smallBu
 	} else {
 		// Make it the icon style if an icon is set, otherwise the text style
 		if (!["shuffle", "close"].includes(smallButtonText)) {
-			updateSmallButtonStyle(progressTextElement, true);
+			updateSmallButtonStyleForText(progressTextElement, true);
 		} else {
-			updateSmallButtonStyle(progressTextElement, false);
+			updateSmallButtonStyleForText(progressTextElement, false);
 		}
 		progressTextElement.innerText = smallButtonText;
 	}

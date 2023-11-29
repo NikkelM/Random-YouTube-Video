@@ -47,7 +47,7 @@ export function setDOMTextWithDelay(textElement, newText, delayMS, predicate = (
 	});
 }
 
-export function updateSmallButtonStyle(textElement, isTextStyle) {
+export function updateSmallButtonStyleForTextForText(textElement, isTextStyle) {
 	textElement.style.fontSize = isTextStyle ? "12px" : "";
 	textElement.style.position = isTextStyle ? "absolute" : "";
 	textElement.style.top = isTextStyle ? "50%" : "";
@@ -58,9 +58,9 @@ export function updateSmallButtonStyle(textElement, isTextStyle) {
 	textElement.style.display = isTextStyle ? "flex" : "";
 
 	if (isTextStyle) {
-			textElement.classList.remove("material-symbols-outlined");
+		textElement.classList.remove("material-symbols-outlined");
 	} else {
-			textElement.classList.add("material-symbols-outlined");
+		textElement.classList.add("material-symbols-outlined");
 	}
 }
 

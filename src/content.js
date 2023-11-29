@@ -1,5 +1,5 @@
 // Content script that is injected into YouTube pages
-import { setDOMTextWithDelay, updateSmallButtonStyle, getPageTypeFromURL, RandomYoutubeVideoError, delay } from "./utils.js";
+import { setDOMTextWithDelay, updateSmallButtonStyleForText, getPageTypeFromURL, RandomYoutubeVideoError, delay } from "./utils.js";
 import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 import { buildShuffleButton, shuffleButton, shuffleButtonTextElement, tryRenameUntitledList } from "./domManipulation.js";
 import { chooseRandomVideo } from "./shuffleVideo.js";
@@ -124,7 +124,7 @@ function resetShuffleButtonText() {
 		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
 			shuffleButtonTextElement.innerText = "\xa0Shuffle";
 		} else if (shuffleButtonTextElement.innerText !== "autorenew") {
-			updateSmallButtonStyle(shuffleButtonTextElement, false);
+			updateSmallButtonStyleForText(shuffleButtonTextElement, false);
 			shuffleButtonTextElement.innerText = "shuffle";
 		}
 	}
@@ -178,7 +178,7 @@ async function shuffleVideos() {
 						return;
 					}
 
-					updateSmallButtonStyle(shuffleButtonTextElementCopy, false);
+					updateSmallButtonStyleForText(shuffleButtonTextElementCopy, false);
 					shuffleButtonTextElementCopy.innerText = "autorenew";
 					let rotation = 0;
 
@@ -203,7 +203,7 @@ async function shuffleVideos() {
 		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
 			shuffleButtonTextElement.innerText = "\xa0Shuffle";
 		} else {
-			updateSmallButtonStyle(shuffleButtonTextElementCopy, false);
+			updateSmallButtonStyleForText(shuffleButtonTextElementCopy, false);
 			shuffleButtonTextElementCopy.innerText = "shuffle";
 		}
 	} catch (error) {
@@ -211,7 +211,7 @@ async function shuffleVideos() {
 
 		hasBeenShuffled = true;
 		if (shuffleButton.id.includes("small-shuffle-button")) {
-			updateSmallButtonStyle(shuffleButtonTextElementCopy, true);
+			updateSmallButtonStyleForText(shuffleButtonTextElementCopy, true);
 		}
 
 		let displayText = "";
