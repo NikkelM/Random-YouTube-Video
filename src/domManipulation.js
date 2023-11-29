@@ -69,7 +69,7 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 		// Update the channelId
 		button.children[0].children[0].children[0].children.namedItem('channelId').innerText = channelId ?? "";
 
-		// Set the variables to the correct button reference (channel vs. video vs. shorts page)
+		// Set the variables to the correct button reference
 		shuffleButton = button;
 		if (isLargeButton) {
 			shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[1].children[0];
@@ -100,23 +100,19 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 	}
 	buttonDiv = new DOMParser().parseFromString(buttonDiv, "text/html").body.firstChild;
 
-	// Depending on the page we're on, we may want to prepend or append the button to the parent
-	if (buttonDivAppend) {
-		buttonDivOwner.forEach(owner => {
-			// Only add a button if there isn't one already (which can happen for shorts pages)
-			if (owner.children.namedItem(buttonDivID) == null) {
-				const cloneButtonDiv = buttonDiv.cloneNode(true);
+	buttonDivOwner.forEach(owner => {
+		// Only add a button if there isn't one already (which can happen for shorts pages)
+		if (owner.children.namedItem(buttonDivID) == null) {
+			const cloneButtonDiv = buttonDiv.cloneNode(true);
+
+			// Depending on the page we're on, we may want to prepend or append the button to the parent
+			if (buttonDivAppend) {
 				owner.appendChild(cloneButtonDiv);
-			}
-		});
-	} else {
-		buttonDivOwner.forEach(owner => {
-			if (owner.children.namedItem(buttonDivID) == null) {
-				const cloneButtonDiv = buttonDiv.cloneNode(true);
+			} else {
 				owner.prepend(cloneButtonDiv);
 			}
-		});
-	}
+		}
+	});
 
 	// Wait for the button renderer to get the child elements defined by the element type
 	let observer = new MutationObserver(function (mutations, me) {
