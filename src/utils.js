@@ -47,7 +47,7 @@ export function setDOMTextWithDelay(textElement, newText, delayMS, predicate = (
 	});
 }
 
-export function updateSmallButtonStyleForTextForText(textElement, isTextStyle) {
+export function updateSmallButtonStyleForText(textElement, isTextStyle) {
 	textElement.style.fontSize = isTextStyle ? "12px" : "";
 	textElement.style.position = isTextStyle ? "absolute" : "";
 	textElement.style.top = isTextStyle ? "50%" : "";
