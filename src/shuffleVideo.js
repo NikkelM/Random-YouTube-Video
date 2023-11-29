@@ -307,7 +307,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	playlistInfo["videos"]["knownShorts"] = {};
 
 	let pageToken = "";
-	let apiResponse = null;
+	let apiResponse;
 
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
@@ -388,7 +388,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 	let lastKnownUploadTime = playlistInfo["lastVideoPublishedAt"];
 
-	let apiResponse = null;
+	let apiResponse;
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, "", APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 	const totalNumVideosOnChannel = apiResponse["pageInfo"]["totalResults"];
@@ -485,7 +485,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 // Send a request to the Youtube API to get a snippet of a playlist
 async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday) {
 	const originalUserQuotaRemainingToday = userQuotaRemainingToday;
-	let apiResponse = null;
+	let apiResponse;
 
 	// We wrap this in a while block to simulate a retry mechanism until we get a valid response
 	/* eslint no-constant-condition: ["error", { "checkLoops": false }] */

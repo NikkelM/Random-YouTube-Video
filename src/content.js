@@ -31,8 +31,8 @@ async function startDOMObserver(event) {
 	let pageType = getPageTypeFromURL(window.location.href);
 
 	// Get the channel id from the event data
-	let channelId = null;
-	let channelName = null;
+	let channelId;
+	let channelName;
 
 	if (pageType == "video" || pageType == "short") {
 		channelId = event?.detail?.response?.playerResponse?.videoDetails?.channelId;
@@ -137,7 +137,7 @@ async function shuffleVideos() {
 
 	// Shorts pages make a copy of the shuffleButtonTextElement to be able to spin it even if the user scrolls to another short, to keep the animation going
 	var shuffleButtonTextElementCopy = shuffleButtonTextElement;
-	
+
 	let channelId;
 	try {
 		// Get the saved channelId from the button
@@ -180,8 +180,8 @@ async function shuffleVideos() {
 
 					updateSmallButtonStyleForText(shuffleButtonTextElementCopy, false);
 					shuffleButtonTextElementCopy.innerText = "autorenew";
-					let rotation = 0;
 
+					let rotation = 0;
 					let rotateInterval = setInterval(() => {
 						if (hasBeenShuffled) {
 							clearInterval(rotateInterval);

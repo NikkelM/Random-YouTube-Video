@@ -1,13 +1,13 @@
 // Builds the 'Shuffle' buttons that are used by the extension, and handles other dom related tasks
 
 // ----- Public -----
-export let shuffleButton = null;
-export let shuffleButtonTextElement = null;
+export let shuffleButton;
+export let shuffleButtonTextElement;
 
 export function buildShuffleButton(pageType, channelId, clickHandler) {
-	let buttonDivID = null;
+	let buttonDivID;
 	let buttonDivExtraStyle = "";
-	let buttonDivOwner = null;
+	let buttonDivOwner;
 	let buttonDivAppend = true;
 	let isLargeButton = true;
 
@@ -55,7 +55,7 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 	// If all required buttons already exist, don't build them again, but only update values
 	let allButtonsOnPage = document.querySelectorAll(`#${buttonDivID}`);
 	if (allButtonsOnPage.length >= buttonDivOwner.length) {
-		let button = null;
+		let button;
 		if (pageType === "short") {
 			// If we are on a shorts page, get the button of the active renderer
 			button = document.querySelector("ytd-reel-video-renderer[is-active] ytd-reel-player-overlay-renderer #actions").children.namedItem(buttonDivID);
@@ -226,7 +226,7 @@ function finalizeButton(pageType, channelId, clickHandler, isLargeButton, button
 	});
 
 	// Finally, set the references to the current button
-	let activeButton = null;
+	let activeButton;
 	if (pageType === "short") {
 		// If we are on a shorts page, get the button of the active renderer
 		activeButton = document.querySelector("ytd-reel-video-renderer[is-active] ytd-reel-player-overlay-renderer #actions").children.namedItem(buttonDivID);
