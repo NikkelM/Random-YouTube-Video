@@ -135,6 +135,9 @@ function resetShuffleButtonText() {
 async function shuffleVideos() {
 	resetShuffleButtonText();
 
+	// Shorts pages make a copy of the shuffleButtonTextElement to be able to spin it even if the user scrolls to another short, to keep the animation going
+	var shuffleButtonTextElementCopy = shuffleButtonTextElement;
+	
 	let channelId;
 	try {
 		// Get the saved channelId from the button
@@ -154,8 +157,6 @@ async function shuffleVideos() {
 
 		// We need this variable to make sure the button text is only changed if the shuffle hasn't finished within the time limit
 		var hasBeenShuffled = false;
-		// Shorts pages make a copy of the shuffleButtonTextElement to be able to spin it even if the user scrolls to another short, to keep the animation going
-		var shuffleButtonTextElementCopy;
 
 		// Only use this text if the button is the large shuffle button, the small one only has space for an icon
 		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
@@ -165,7 +166,6 @@ async function shuffleVideos() {
 				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Sorting shorts...", 8000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
 			}
 		} else {
-			shuffleButtonTextElementCopy = shuffleButtonTextElement;
 			let iterationsWaited = 0;
 
 			let checkInterval = setInterval(async () => {
@@ -260,6 +260,8 @@ The page will reload and you can try again.`)
 		} else {
 			shuffleButtonTextElementCopy.innerText = displayText == "Unknown Error" ? "Error" : displayText;
 		}
+		// Small delay to allow for the DOM change to be rendered
+		await delay(10);
 
 		// Alert the user about the error
 		window.alert(`Random YouTube Video:\n\nChannel ${channelId}\n${displayText}${error.message ? "\n" + error.message : ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}${error.showTrace !== false ? "\n\n" + error.stack : ""}`);
