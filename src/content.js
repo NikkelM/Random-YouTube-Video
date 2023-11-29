@@ -215,13 +215,13 @@ async function shuffleVideos() {
 		}
 
 		let displayText = "";
-		if (shuffleButton?.id?.includes("small-shuffle-button")) {
+		if (shuffleButton?.id?.includes("large-shuffle-button")) {
 			switch (error.name) {
 				case "RandomYoutubeVideoError":
-					displayText = error.code;
+					displayText = `Error ${error.code}`;
 					break;
 				case "YoutubeAPIError":
-					displayText = error.code;
+					displayText = `API Error ${error.code}`;
 					break;
 				default:
 					displayText = "Unknown Error";
@@ -229,10 +229,8 @@ async function shuffleVideos() {
 		} else {
 			switch (error.name) {
 				case "RandomYoutubeVideoError":
-					displayText = `Error ${error.code}`;
-					break;
 				case "YoutubeAPIError":
-					displayText = `API Error ${error.code}`;
+					displayText = error.code;
 					break;
 				default:
 					displayText = "Unknown Error";
