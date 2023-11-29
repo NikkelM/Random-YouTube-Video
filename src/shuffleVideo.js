@@ -1026,6 +1026,11 @@ async function playVideo(chosenVideos, firedFromPopup) {
 			if (miniPlayer && miniPlayer.classList.contains('playing-mode') && !miniPlayer.classList.contains('unstarted-mode')) {
 				miniPlayer.children[0].click();
 			}
+		} else if (pageType === "short") {
+			const player = document.querySelector('ytd-player#player')?.children[0]?.children[0];
+			if (player && player.classList.contains('playing-mode') && !player.classList.contains('unstarted-mode')) {
+				player.children[0].click();
+			}
 		} else {
 			console.log(`The current page type (${pageType}) is not supported when checking if a video player should be paused.`);
 		}
