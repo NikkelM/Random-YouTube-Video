@@ -382,7 +382,7 @@ async function setPopupDomElemenEventListeners(domElements) {
 		const tabUrl = chrome.runtime.getURL("html/changelog.html");
 		let mustOpenTab = await tryFocusingTab(tabUrl);
 		if (mustOpenTab) {
-			window.open(tabUrl, "_blank");
+			await chrome.tabs.create({ url: "html/changelog.html" });
 		}
 
 		// Close the popup
