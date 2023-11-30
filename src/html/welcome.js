@@ -4,6 +4,17 @@ import { displayShufflingHint, tryFocusingTab } from "./htmlUtils.js";
 
 // ----- Setup -----
 const domElements = getDomElements();
+
+// Show the "Reload all YouTube pages" div if there are youtube pages open
+chrome.tabs.query({}, function (tabs) {
+	for (let i = 0; i <= tabs.length - 1; i++) {
+		if (tabs[i].url.split("/")[2]?.includes("youtube")) {
+			domElements.needToReloadYouTubePagesDiv.classList.remove("hidden");
+			break;
+		}
+	}
+});
+
 await buildShufflingHints();
 
 // --- Set headers ---
@@ -18,6 +29,10 @@ function getDomElements() {
 		randomYoutubeVideo: document.getElementById("randomYoutubeVideo"),
 		// The document heading with the current version
 		updateHeading: document.getElementById("updateHeading"),
+
+		// RELOAD YOUTUBE PAGES
+		// The div containing the button and texts to reload all YouTube pages
+		needToReloadYouTubePagesDiv: document.getElementById("needToReloadYouTubePagesDiv"),
 		// Button to reload all YouTube pages
 		reloadAllYouTubePagesButton: document.getElementById("reloadAllYouTubePagesButton"),
 		// Text displayed before/after reloading all YouTube pages
