@@ -44,7 +44,7 @@ domElements.reloadAllYouTubePagesButton.addEventListener("click", async function
 	let tabs = await chrome.tabs.query({});
 	// Split the url and check if the domain is "youtube"
 	for (let i = 0; i <= tabs.length - 1; i++) {
-		if (tabs[i].url.split("/")[2].includes("youtube")) {
+		if (tabs[i].url.split("/")[2]?.includes("youtube")) {
 			chrome.tabs.reload(tabs[i].id);
 		}
 	}
