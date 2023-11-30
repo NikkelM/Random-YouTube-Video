@@ -41,9 +41,8 @@ export const configSyncDefaults = {
 
 export const shufflingHints = [
 	// General extension hints
-	"The extension adds a 'Shuffle' button to all channel, video and shorts pages on YouTube, this button has the same behaviour as shuffling from the popup!",
+	"The extension adds a 'Shuffle' button to all channel, video and shorts pages on YouTube. This button has the same behaviour as shuffling from the popup!",
 	"If you are the first person to shuffle from a channel, the video ID's of that channel are saved both locally and in a remote database for other users to use!",
-	"Try using the extension on April 1st - maybe something unexpected will happen!",
 	"The extension does not collect any personal information, it only stores video ID's of channels you shuffle from, without linking them back to you!",
 	"You only have a certain number of requests to the YouTube API per day. You can remove this limit by providing your own API key in the popup!",
 	"The extension popup shows you how many videos you have shuffled so far!",
