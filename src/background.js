@@ -71,9 +71,9 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 }
 
 async function handleVersionSpecificUpdates(previousVersion) {
-	// v2.4.0 changed the data type for the shuffleIgnoreShortsOption from boolean to number
-	if (previousVersion < "2.4.0") {
-		console.log("Updating sync storage to v2.4.0 format...");
+	// v3.0.0 changed the data type for the shuffleIgnoreShortsOption from boolean to number
+	if (previousVersion < "3.0.0") {
+		console.log("Updating sync storage to v3.0.0 format...");
 		const syncStorageContents = await chrome.storage.sync.get();
 		if (syncStorageContents["shuffleIgnoreShortsOption"] == true) {
 			await setSyncStorageValue("shuffleIgnoreShortsOption", 2);

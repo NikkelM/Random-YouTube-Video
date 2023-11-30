@@ -1,10 +1,12 @@
 # Changelog
 
-## v2.4.0 (Unreleased)
+## v3.0.0 (Unreleased)
 
 <!--Releasenotes start-->
 - Shorts pages are now supported! Shuffle buttons can now be found on all shorts pages.
 - Added a new option to shuffle only from shorts.
+- Added a 'welcome' page that will be shown when you first install the extension and guide you through the first steps.
+- The popup now also works as a standalone options page.
 - When watching shorts, the extension will now update the last visited channel in the popup.
 - Reduced the time it takes to shuffle, as the extension now uses a more sophisticated way to decide whether or not to check if a video has been deleted or not.
 - The playlist that is opened when shuffling (if the option is enabled) now has a better title and tooltip.
