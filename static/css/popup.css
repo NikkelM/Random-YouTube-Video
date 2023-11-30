@@ -106,10 +106,11 @@
 
 .randomYoutubeVideoPopupBody {
 	width: 400px;
+	margin: 0px auto;
 }
 
 #randomYoutubeVideoBody {
-	margin: 0px;
+	/* margin: 0px; */
 	font-size: 14px;
 	font-family: var(--randomYoutubeVideo-font-family);
 	background-color: var(--randomYoutubeVideo-bg-color);
