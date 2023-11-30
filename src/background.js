@@ -7,7 +7,11 @@ import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 // Check whether a new version was installed
 async function initExtension() {
 	const manifestData = chrome.runtime.getManifest();
-	if (configSync.previousVersion < manifestData.version) {
+	if (configSync.previousVersion === null) {
+		console.log(`Extension was installed for the first time (v${manifestData.version})`);
+		await setSyncStorageValue("previousVersion", manifestData.version);
+		await chrome.tabs.create({ url: "html/welcome.html" });
+	} else if (configSync.previousVersion < manifestData.version) {
 		await handleExtensionUpdate(manifestData, configSync.previousVersion);
 	}
 
