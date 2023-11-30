@@ -384,6 +384,8 @@ async function setPopupDomElemenEventListeners(domElements) {
 		if (mustOpenTab) {
 			await chrome.tabs.create({ url: "html/changelog.html" });
 		}
+
+		domElements.viewChangelogButton.classList.remove("highlight-green");
 	});
 }
 
