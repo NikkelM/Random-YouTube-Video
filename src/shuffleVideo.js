@@ -3,9 +3,10 @@ import {
 	isEmpty,
 	addHours,
 	getLength,
-	isVideoUrl,
 	RandomYoutubeVideoError,
-	YoutubeAPIError
+	YoutubeAPIError,
+	updateSmallButtonStyleForText,
+	getPageTypeFromURL
 } from "./utils.js";
 import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from "./chromeStorage.js";
 
@@ -306,7 +307,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	playlistInfo["videos"]["knownShorts"] = {};
 
 	let pageToken = "";
-	let apiResponse = null;
+	let apiResponse;
 
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
@@ -334,7 +335,8 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 
 	// If there are less than 50 videos, we don't need to show a progress percentage
 	if (totalResults > 50) {
-		progressTextElement.innerText = `\xa0Fetching: ${Math.round(resultsFetchedCount / totalResults * 100)}%`;
+		const percentage = Math.round(resultsFetchedCount / totalResults * 100);
+		updateProgressTextElement(progressTextElement, `\xa0Fetching: ${percentage}%`, `${percentage}%`);
 	}
 
 	// For each video, add an entry in the form of videoId: uploadTime
@@ -350,7 +352,9 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 		// Set the current progress as text for the shuffle button/info text
 		// We never get to this code part if there are less than or exactly 50 videos in the playlist, so we don't need to check for that
 		resultsFetchedCount += apiResponse["items"].length;
-		progressTextElement.innerText = `\xa0Fetching: ${Math.round(resultsFetchedCount / totalResults * 100)}%`;
+
+		const percentage = Math.round(resultsFetchedCount / totalResults * 100);
+		updateProgressTextElement(progressTextElement, `\xa0Fetching: ${percentage}%`, `${percentage}%`);
 
 		// For each video, add an entry in the form of videoId: uploadTime
 		playlistInfo["videos"]["unknownType"] = Object.assign(playlistInfo["videos"]["unknownType"], Object.fromEntries(apiResponse["items"].map((video) => [video["contentDetails"]["videoId"], video["contentDetails"]["videoPublishedAt"].substring(0, 10)])));
@@ -384,7 +388,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 	let lastKnownUploadTime = playlistInfo["lastVideoPublishedAt"];
 
-	let apiResponse = null;
+	let apiResponse;
 	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, "", APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
 
 	const totalNumVideosOnChannel = apiResponse["pageInfo"]["totalResults"];
@@ -410,7 +414,8 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 
 	// If there are less than 50 new videos, we don't need to show a progress percentage
 	if (totalExpectedNewResults > 50) {
-		progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100)}%`;
+		const percentage = Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100);
+		updateProgressTextElement(progressTextElement, `\xa0Fetching: ${percentage}%`, `${percentage}%`);
 	}
 
 	// Update the "last video published at" date (only for the most recent video)
@@ -451,7 +456,9 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 				// Set the current progress as text for the shuffle button/info text
 				// We never get to this code part if there are less than or exactly 50 new videos, so we don't need to check for that
 				resultsFetchedCount += apiResponse["items"].length;
-				progressTextElement.innerText = `\xa0Fetching: ${Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100)}%`;
+
+				const percentage = Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100);
+				updateProgressTextElement(progressTextElement, `\xa0Fetching: ${percentage}%`, `${percentage}%`);
 
 				currVideo = 0;
 				// Else, we have checked all videos
@@ -478,7 +485,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 // Send a request to the Youtube API to get a snippet of a playlist
 async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday) {
 	const originalUserQuotaRemainingToday = userQuotaRemainingToday;
-	let apiResponse = null;
+	let apiResponse;
 
 	// We wrap this in a while block to simulate a retry mechanism until we get a valid response
 	/* eslint no-constant-condition: ["error", { "checkLoops": false }] */
@@ -587,8 +594,8 @@ async function testVideoExistence(videoId, uploadTime) {
 		checkProbability = 0.2;
 	}
 
+	// We don't always want to check if a video exists, as this takes a lot of time
 	if (Math.random() > checkProbability) {
-		console.log("Skipping check if video is deleted or not.");
 		return true;
 	}
 
@@ -993,22 +1000,22 @@ async function playVideo(chosenVideos, firedFromPopup) {
 		randomVideoURL = `https://www.youtube.com/watch?v=${chosenVideos[0]}`;
 	}
 
-	// Get all tab IDs
-	const currentYouTubeTabs = await chrome.runtime.sendMessage({ command: "getAllYouTubeTabs" }) ?? [];
 	// Find out if the reusable tab is still open (and on a youtube.com page)
+	const currentYouTubeTabs = await chrome.runtime.sendMessage({ command: "getAllYouTubeTabs" }) ?? [];
 	const reusableTabExists = currentYouTubeTabs.find((tab) => tab.id === configSync.shuffleTabId);
 
 	// Open the video in a new tab, the reusable tab or the current tab
 	// If the shuffle button from the popup was used, we always open the video in the 'same tab' (==the shuffling page)
 	// If the user wants to reuse tabs, we only open in a new tab if the reusable tab is not open anymore
 	if (configSync.shuffleOpenInNewTabOption && !firedFromPopup) {
+		const pageType = getPageTypeFromURL(window.location.href);
 		// Video page: Pause the current video if it is playing
-		if (isVideoUrl(window.location.href)) {
+		if (pageType === "video") {
 			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
 			if (player && player.classList.contains('playing-mode') && !player.classList.contains('unstarted-mode')) {
 				player.children[0].click();
 			}
-		} else {
+		} else if (pageType === "channel") {
 			// Channel page: Pause the featured video if it exists and is playing
 			const featuredPlayer = document.querySelector('ytd-player#player')?.children[0]?.children[0];
 			if (featuredPlayer && featuredPlayer.classList.contains('playing-mode') && !featuredPlayer.classList.contains('unstarted-mode')) {
@@ -1019,6 +1026,13 @@ async function playVideo(chosenVideos, firedFromPopup) {
 			if (miniPlayer && miniPlayer.classList.contains('playing-mode') && !miniPlayer.classList.contains('unstarted-mode')) {
 				miniPlayer.children[0].click();
 			}
+		} else if (pageType === "short") {
+			const player = document.querySelector('ytd-player#player')?.children[0]?.children[0];
+			if (player && player.classList.contains('playing-mode') && !player.classList.contains('unstarted-mode')) {
+				player.children[0].click();
+			}
+		} else {
+			console.log(`The current page type (${pageType}) is not supported when checking if a video player should be paused.`);
 		}
 
 		// If there is a reusable tab and the option is enabled, open the video there
@@ -1088,6 +1102,20 @@ function validatePlaylistInfo(playlistInfo) {
 	}
 }
 /* c8 ignore stop */
+
+function updateProgressTextElement(progressTextElement, largeButtonText, smallButtonText) {
+	if (progressTextElement.id.includes("large-shuffle-button")) {
+		progressTextElement.innerText = largeButtonText;
+	} else {
+		// Make it the icon style if an icon is set, otherwise the text style
+		if (!["shuffle", "close"].includes(smallButtonText)) {
+			updateSmallButtonStyleForText(progressTextElement, true);
+		} else {
+			updateSmallButtonStyleForText(progressTextElement, false);
+		}
+		progressTextElement.innerText = smallButtonText;
+	}
+}
 
 // ---------- Local storage ----------
 // Tries to fetch the playlist from local storage. If it is not present, returns an empty dictionary

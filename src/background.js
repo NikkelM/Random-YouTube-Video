@@ -245,7 +245,7 @@ async function readDataOnce(key) {
 // ---------- Helpers ----------
 async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 	// List of API keys that are stored in the database/locally
-	let availableAPIKeys = null;
+	let availableAPIKeys;
 
 	// If the user has opted to use a custom API key, use that instead of the default one
 	if (!forceDefault && configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
@@ -280,8 +280,8 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 		return { APIKey: availableAPIKeys.map(key => rot13(key, false)), isCustomKey: false, keyIndex: null };
 	}
 
-	let usedIndex = null;
-	let chosenAPIKey = null;
+	let usedIndex;
+	let chosenAPIKey;
 	if (useAPIKeyAtIndex === null) {
 		// Choose a random one of the available API keys to evenly distribute the quotas
 		usedIndex = Math.floor(Math.random() * availableAPIKeys.length);

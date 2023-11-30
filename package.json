@@ -1,7 +1,7 @@
 {
   "name": "random-youtube-video",
   "version": "2.3.0",
-  "description": "Play a random video uploaded on the current YouTube channel.",
+  "description": "Customize, shuffle and play random videos from any YouTube channel.",
   "scripts": {
 		"dev": "concurrently \"npm run dev:chromium\" \"npm run dev:firefox\"",
     "dev:chromium": "webpack --env browser=chromium --watch --config webpack.dev.cjs",
