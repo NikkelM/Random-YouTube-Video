@@ -15,6 +15,7 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 	switch (pageType) {
 		case "channel":
 			buttonDivID = "youtube-random-video-large-shuffle-button-channel";
+			buttonDivExtraStyle = "margin-left: 14px;";
 			buttonDivOwner = [document.getElementById("channel-header").querySelector("#inner-header-container").children.namedItem("buttons")];
 			break;
 		case "video":
