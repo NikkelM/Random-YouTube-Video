@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html id="randomYoutubeVideoHTML" lang="en">
+	<head>
+		<title>Random YouTube Video</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link id="RandomYoutubeVideoStyleSheet" rel="stylesheet" href="../css/popup.css" />
+	</head>
+
+	<body id="randomYoutubeVideoBody">
+		<div id="randomYoutubeVideo" style="margin-top: 10px">
+			<h1>Random YouTube Video</h1>
+			<h2>Welcome!</h2>
+
+			<br />
+			<br />
+			<div id="shufflingHint">
+				<h3><i>Did you know...</i></h3>
+				<p id="shufflingHintP" class="thirdWidth">The hints could not be loaded - please report this bug on GitHub!</p>
+				<button id="nextHintButton" class="randomYoutubeVideoButton" style="margin-top: 6px">New Hint</button>
+			</div>
+
+			<br />
+			<br />
+			<footer id="randomYoutubeVideoFooter">
+				Leave a review:
+				<a
+					class="footerLink"
+					href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
+					target="_blank"
+					rel="noopener"
+					title="Leave a review on the Chrome Web Store"
+					>Chrome</a
+				>
+				<a class="footerLink" href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/" target="_blank" rel="noopener" title="Leave a review on the Mozilla Add-Ons page">Firefox</a>
+				<a
+					class="footerLink"
+					href="https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe"
+					target="_blank"
+					rel="noopener"
+					title="Leave a review on the Edge Add-Ons page"
+					>Edge</a
+				>
+				<br />
+				<a class="footerLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank" rel="noopener" title="View the source code or get into contact with the developer">GitHub</a>
+				<button class="randomYoutubeVideoButton" id="viewChangelogButton" type="button" title="View the latest changes to the extension">Changelog</button>
+				<a class="footerLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension">Donate</a>
+			</footer>
+		</div>
+
+		<script src="../utils.js" type="text/javascript"></script>
+		<script src="../htmlUtils.js" type="text/javascript"></script>
+		<script src="../welcome.js" type="module"></script>
+	</body>
+</html>

@@ -18,6 +18,7 @@ module.exports = env => {
 			changelog: './src/html/changelog.js',
 			htmlUtils: './src/html/htmlUtils.js',
 			shufflingPage: './src/html/shufflingPage.js',
+			welcome: './src/html/welcome.js',
 			// POPUP
 			popup: './src/html/popup/popup.js',
 			popupUtils: './src/html/popup/popupUtils.js',
