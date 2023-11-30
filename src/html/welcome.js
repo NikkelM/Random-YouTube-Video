@@ -8,7 +8,7 @@ await buildShufflingHints();
 
 // --- Set headers ---
 const currentVersion = chrome.runtime.getManifest().version;
-// domElements.versionText.innerText = `v${currentVersion}`;
+domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
 
 // ---------- DOM ----------
 // Get all relevant DOM elements
@@ -16,6 +16,8 @@ function getDomElements() {
 	return {
 		// The div containing all other elements
 		randomYoutubeVideo: document.getElementById("randomYoutubeVideo"),
+		// The document heading with the current version
+		updateHeading: document.getElementById("updateHeading"),
 		// Displays the version text
 		// SHUFFLING HINTS
 		versionText: document.getElementById("versionText"),
