@@ -22,12 +22,16 @@ function getDomElements() {
 		reloadAllYouTubePagesButton: document.getElementById("reloadAllYouTubePagesButton"),
 		// Text displayed before/after reloading all YouTube pages
 		reloadText: document.getElementById("reloadText"),
+		// The button to open the options page
+		openOptionsPageButton: document.getElementById("openOptionsPageButton"),
+
 		// SHUFFLING HINTS
 		versionText: document.getElementById("versionText"),
 		// The p element containing the shuffle hint
 		shufflingHintP: document.getElementById("shufflingHintP"),
 		// The button that displays the next shuffle hint
 		nextHintButton: document.getElementById("nextHintButton"),
+
 		// FOOTER
 		// View changelog button
 		viewChangelogButton: document.getElementById("viewChangelogButton"),
@@ -53,6 +57,11 @@ domElements.reloadAllYouTubePagesButton.addEventListener("click", async function
 		That's it - 'Shuffle' buttons have been added to all YouTube channel, video and shorts pages!<br />
 		If you experience any issues, feel free to reach out to me on GitHub, linked below and on the popup.
 	`;
+});
+
+// Open options page button
+domElements.openOptionsPageButton.addEventListener("click", async function () {
+	await chrome.tabs.create({ url: "html/popup.html" });
 });
 
 // View changelog button
