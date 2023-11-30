@@ -86,7 +86,6 @@ function getDomElements() {
 	}
 }
 
-
 // ----- Changelog -----
 async function updateChangelog(forVersion = `v${currentVersion}`) {
 	if (changelogText === null) {
