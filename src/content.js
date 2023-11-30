@@ -160,10 +160,18 @@ async function shuffleVideos() {
 
 		// Only use this text if the button is the large shuffle button, the small one only has space for an icon
 		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
-			setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Shuffling...", 1000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Shuffle" || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
+			shuffleButtonTextElement.innerText = "\xa0Shuffling...";
 			setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still on it...", 5000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Shuffling..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
 			if (configSync.shuffleIgnoreShortsOption != "1") {
-				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Sorting shorts...", 8000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
+				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Sorting shorts...", 10000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
+				if (configSync.shuffleIgnoreShortsOption == "2") {
+					setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Lots of shorts...", 20000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Sorting shorts..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
+				} else if (configSync.shuffleIgnoreShortsOption == "0") {
+					setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Not many shorts...", 20000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Sorting shorts..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
+				}
+				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still sorting...", 35000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Lots of shorts..." || shuffleButtonTextElement.innerText === "\xa0Not many shorts..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
+			} else {
+				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still sorting...", 20000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
 			}
 		} else {
 			let iterationsWaited = 0;
