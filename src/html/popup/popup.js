@@ -384,9 +384,6 @@ async function setPopupDomElemenEventListeners(domElements) {
 		if (mustOpenTab) {
 			await chrome.tabs.create({ url: "html/changelog.html" });
 		}
-
-		// Close the popup
-		window.close();
 	});
 }
 
