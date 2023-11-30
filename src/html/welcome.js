@@ -55,7 +55,7 @@ domElements.reloadAllYouTubePagesButton.addEventListener("click", async function
 		<br />
 		<br />
 		That's it - 'Shuffle' buttons have been added to all YouTube channel, video and shorts pages!<br />
-		If you experience any issues, feel free to reach out to me on GitHub, linked below and on the popup.
+		If you experience any issues, feel free to reach out to me on GitHub, linked below and in the options page.
 	`;
 });
 
