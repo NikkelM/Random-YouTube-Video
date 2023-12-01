@@ -110,7 +110,6 @@
 }
 
 #randomYoutubeVideoBody {
-	/* margin: 0px; */
 	font-size: 14px;
 	font-family: var(--randomYoutubeVideo-font-family);
 	background-color: var(--randomYoutubeVideo-bg-color);
