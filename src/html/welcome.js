@@ -1,6 +1,6 @@
 // Contains logic for the "Welcome" page
 import { setSyncStorageValue } from "../chromeStorage.js";
-import { displayShufflingHint, tryFocusingTab } from "./htmlUtils.js";
+import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
 
 // ----- Setup -----
 const domElements = getDomElements();
@@ -19,7 +19,8 @@ chrome.tabs.query({}, function (tabs) {
 const currentVersion = chrome.runtime.getManifest().version;
 domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
 
-await buildShufflingHints();
+await buildShufflingHints(domElements);
+await setPopupDomElemenEventListeners(domElements);
 
 // ---------- DOM ----------
 // Get all relevant DOM elements
@@ -50,48 +51,39 @@ function getDomElements() {
 	}
 }
 
-// Reload all YouTube pages button
-domElements.reloadAllYouTubePagesButton.addEventListener("click", async function () {
-	// Reload all YouTube tabs
-	let tabs = await chrome.tabs.query({});
-	// Split the url and check if the domain is "youtube"
-	for (let i = 0; i <= tabs.length - 1; i++) {
-		if (tabs[i].url.split("/")[2]?.includes("youtube")) {
-			chrome.tabs.reload(tabs[i].id);
+// Set event listeners for DOM elements
+async function setPopupDomElemenEventListeners(domElements) {
+	// Reload all YouTube pages button
+	domElements.reloadAllYouTubePagesButton.addEventListener("click", async function () {
+		let tabs = await chrome.tabs.query({});
+		for (let i = 0; i <= tabs.length - 1; i++) {
+			if (tabs[i].url.split("/")[2]?.includes("youtube")) {
+				chrome.tabs.reload(tabs[i].id);
+			}
 		}
-	}
 
-	domElements.reloadAllYouTubePagesButton.classList.remove("highlight-green");
-	// Display text after reloading
-	domElements.reloadText.innerHTML = `
+		domElements.reloadAllYouTubePagesButton.classList.remove("highlight-green");
+		domElements.reloadText.innerHTML = `
 		<br />
 		<br />
 		That's it - 'Shuffle' buttons have been added to all YouTube channel, video and shorts pages!<br />
 		If you experience any issues, feel free to reach out to me on GitHub, linked below and in the options page.
 	`;
-});
+	});
 
-// Open options page button
-domElements.openOptionsPageButton.addEventListener("click", async function () {
-	await chrome.tabs.create({ url: "html/popup.html" });
-});
+	// Open options page button
+	domElements.openOptionsPageButton.addEventListener("click", async function () {
+		await chrome.tabs.create({ url: "html/popup.html" });
+	});
 
-// View changelog button
-domElements.viewChangelogButton.addEventListener("click", async function () {
-	await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
+	// View changelog button
+	domElements.viewChangelogButton.addEventListener("click", async function () {
+		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
 
-	const tabUrl = chrome.runtime.getURL("html/changelog.html");
-	let mustOpenTab = await tryFocusingTab(tabUrl);
-	if (mustOpenTab) {
-		await chrome.tabs.create({ url: "html/changelog.html" });
-	}
-});
-
-// ----- Shuffling Hints -----
-export async function buildShufflingHints() {
-	let currentHint = await displayShufflingHint(domElements.shufflingHintP);
-	// Add click listener to the "New hint" button
-	domElements.nextHintButton.addEventListener("click", async function () {
-		currentHint = await displayShufflingHint(domElements.shufflingHintP, currentHint);
+		const tabUrl = chrome.runtime.getURL("html/changelog.html");
+		let mustOpenTab = await tryFocusingTab(tabUrl);
+		if (mustOpenTab) {
+			await chrome.tabs.create({ url: "html/changelog.html" });
+		}
 	});
 }
