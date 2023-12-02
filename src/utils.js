@@ -87,24 +87,27 @@ export function addHours(date, hours) {
 
 // ----- Errors -----
 export class RandomYoutubeVideoError extends Error {
-	constructor({ code = "RYV-0", message = "", solveHint = "", showTrace = true }) {
+	constructor({ code = "RYV-0", message = "", solveHint = "", showTrace = true, canSavePlaylist = false }) {
 		super(message);
 		this.code = code;
 		this.message = message;
 		this.solveHint = solveHint;
 		this.showTrace = showTrace;
+		// This should be set to true for 'non-fatal' errors, where the playlist is in a safe state
+		this.canSavePlaylist = canSavePlaylist;
 		this.name = "RandomYoutubeVideoError";
 	}
 }
 
 export class YoutubeAPIError extends RandomYoutubeVideoError {
-	constructor(code = "YAPI-0", message = "", reason = "", solveHint = "", showTrace = true) {
+	constructor(code = "YAPI-0", message = "", reason = "", solveHint = "", showTrace = true, canSavePlaylist = false) {
 		super(message);
 		this.code = code;
 		this.message = message;
 		this.reason = reason;
 		this.solveHint = solveHint;
 		this.showTrace = showTrace;
+		this.canSavePlaylist = canSavePlaylist;
 		this.name = "YoutubeAPIError";
 	}
 }

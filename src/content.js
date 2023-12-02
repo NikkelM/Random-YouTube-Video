@@ -150,7 +150,8 @@ async function shuffleVideos() {
 					code: "RYV-9",
 					message: "The extension was unable to find from which channel to shuffle.",
 					solveHint: "The page will now reload, after which the button should work again. If it doesn't, please report this issue on GitHub!",
-					showTrace: false
+					showTrace: false,
+					canSavePlaylist: false
 				}
 			)
 		}
