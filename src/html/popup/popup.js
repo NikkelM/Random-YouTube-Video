@@ -9,14 +9,15 @@ const isPopup = chrome.extension.getViews({ type: "popup" }).length > 0;
 if (isPopup) {
 	const tabs = await chrome.tabs.query({});
 	const activeTab = tabs.filter(tab => tab.active);
+	const popupURL = chrome.runtime.getURL("html/popup.html");
 
 	// If the options page is focused, do not open the popup
-	if (activeTab[0].url === chrome.runtime.getURL("html/popup.html")) {
+	if (activeTab[0].url === popupURL) {
 		window.close();
 	} else {
 		// Else, close the options page in the background
 		for (const tab of tabs) {
-			if (tab.url === chrome.runtime.getURL("html/popup.html")) {
+			if (tab.url === popupURL) {
 				chrome.tabs.remove(tab.id);
 				break;
 			}
