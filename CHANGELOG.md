@@ -1,6 +1,6 @@
 # Changelog
 
-## v3.0.0 (Unreleased)
+## v3.0.0
 
 <!--Releasenotes start-->
 - Shorts pages are now supported! Shuffle buttons can now be found on all shorts pages.
