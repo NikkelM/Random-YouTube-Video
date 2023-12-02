@@ -76,14 +76,24 @@ async function setDomElemenEventListeners(domElements) {
 async function shuffleButtonClicked() {
 	try {
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
+		const shuffleButtonTextElement = domElements.fetchPercentageNotice;
 
-		setDOMTextWithDelay(domElements.fetchPercentageNotice, "Applying filters...", 2000, () => { console.log(domElements.fetchPercentageNotice.innerText); return (domElements.fetchPercentageNotice.innerText === "Please wait..." || domElements.fetchPercentageNotice.innerText === "\xa0Fetching: 100%"); });
-		setDOMTextWithDelay(domElements.fetchPercentageNotice, "Should be done soon...", 5000, () => { return (domElements.fetchPercentageNotice.innerText === "Applying filters..." || domElements.fetchPercentageNotice.innerText === "\xa0Fetching: 100%"); });
+		setDOMTextWithDelay(shuffleButtonTextElement, "Applying filters...", 4000, () => { return ((shuffleButtonTextElement.innerText === "Please wait..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
+		setDOMTextWithDelay(shuffleButtonTextElement, "Should be done soon...", 8000, () => { return (shuffleButtonTextElement.innerText === "Applying filters..." || shuffleButtonTextElement.innerText === "Fetching: 100%"); });
+		
 		if (configSync.shuffleIgnoreShortsOption != "1") {
-			setDOMTextWithDelay(domElements.fetchPercentageNotice, "Sorting shorts...", 9000, () => { return (domElements.fetchPercentageNotice.innerText === "Should be done soon..." || domElements.fetchPercentageNotice.innerText === "\xa0Fetching: 100%"); });
+			setDOMTextWithDelay(shuffleButtonTextElement, "Sorting shorts...", 12000, () => { return ((shuffleButtonTextElement.innerText === "Should be done soon..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
+			if (configSync.shuffleIgnoreShortsOption == "2") {
+				setDOMTextWithDelay(shuffleButtonTextElement, "Lots of shorts...", 20000, () => { return ((shuffleButtonTextElement.innerText === "Sorting shorts..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
+			} else if (configSync.shuffleIgnoreShortsOption == "0") {
+				setDOMTextWithDelay(shuffleButtonTextElement, "Not many shorts...", 20000, () => { return ((shuffleButtonTextElement.innerText === "Sorting shorts..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
+			}
+			setDOMTextWithDelay(shuffleButtonTextElement, "Still sorting...", 35000, () => { return ((shuffleButtonTextElement.innerText === "Lots of shorts..." || shuffleButtonTextElement.innerText === "Not many shorts..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
+		} else {
+			setDOMTextWithDelay(shuffleButtonTextElement, "Still shuffling...", 20000, () => { return ((shuffleButtonTextElement.innerText === "Should be done soon..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
 		}
 
-		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
+		await chooseRandomVideo(configSync.currentChannelId, true, shuffleButtonTextElement);
 
 		// Focus this tab when the shuffle completes
 		chrome.tabs.query({ url: chrome.runtime.getURL('html/shufflingPage.html') }, function (tabs) {

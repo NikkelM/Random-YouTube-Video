@@ -171,7 +171,7 @@ async function shuffleVideos() {
 				}
 				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still sorting...", 35000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Lots of shorts..." || shuffleButtonTextElement.innerText === "\xa0Not many shorts..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
 			} else {
-				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still sorting...", 20000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
+				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still shuffling...", 20000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
 			}
 		} else {
 			let iterationsWaited = 0;
