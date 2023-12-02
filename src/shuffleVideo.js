@@ -35,20 +35,21 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		let userQuotaRemainingToday = await getUserQuotaRemainingToday();
 
 		// If we update the playlist info in any way and want to send it to the database in the end, this variable indicates it
-		let shouldUpdateDatabase = false;
+		var shouldUpdateDatabase = false;
 
 		// User preferences
-		const databaseSharing = configSync.databaseSharingEnabledOption;
+		var databaseSharing = configSync.databaseSharingEnabledOption;
 
 		// Get the id of the uploads playlist for this channel
-		const uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : null;
+		var uploadsPlaylistId = channelId ? channelId.replace("UC", "UU") : null;
 		if (!uploadsPlaylistId) {
 			throw new RandomYoutubeVideoError(
 				{
 					code: "RYV-1",
 					message: "No channel-ID found.",
 					solveHint: "Please reload the page and try again. Please inform the developer if this keeps happening.",
-					showTrace: false
+					showTrace: false,
+					canSavePlaylist: false
 				}
 			);
 		}
@@ -56,7 +57,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		console.log(`Shuffling from playlist/channel: ${uploadsPlaylistId}`);
 
 		// Check if the playlist is already saved in local storage, so we don't need to access the database
-		let playlistInfo = await tryGetPlaylistFromLocalStorage(uploadsPlaylistId);
+		var playlistInfo = await tryGetPlaylistFromLocalStorage(uploadsPlaylistId);
 
 		// The playlist does not exist locally. Try to get it from the database first
 		if (isEmpty(playlistInfo)) {
@@ -120,54 +121,26 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		// Do not delete the newVideos key as it may be needed when updating the database
 		playlistInfo["videos"]["unknownType"] = Object.assign({}, playlistInfo["videos"]["unknownType"] ?? {}, playlistInfo["newVideos"] ?? {});
 
-		let chosenVideos, encounteredDeletedVideos;
+		let chosenVideos;
+		var encounteredDeletedVideos;
 		({ chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
 
-		if (shouldUpdateDatabase && databaseSharing) {
-			console.log("Updating the database with the new playlist information...");
-
-			playlistInfo["lastUpdatedDBAt"] = new Date().toISOString();
-
-			let videosToDatabase = {};
-			// If any videos need to be deleted, this should be the union of videos, newvideos, minus the videos to delete
-			if (encounteredDeletedVideos) {
-				console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
-				videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
-			} else {
-				// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
-				console.log("Uploading new video IDs to the database...");
-				if (getLength(playlistInfo["newVideos"] ?? {}) > 0) {
-					videosToDatabase = playlistInfo["newVideos"];
-				} else {
-					videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
-				}
-			}
-
-			await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, encounteredDeletedVideos);
-
-			// If we just updated the database, we automatically have the same version as it
-			playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
-		}
-
-		// Update the playlist locally
-		console.log("Saving playlist to local storage...");
-
-		// Only save the wanted keys
-		const playlistInfoForLocalStorage = {
-			// Remember the last time the playlist was accessed locally (==now)
-			"lastAccessedLocally": new Date().toISOString(),
-			"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
-			"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
-			"videos": playlistInfo["videos"] ?? {}
-		};
-
-		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfoForLocalStorage);
+		// Save the playlist to the database and locally
+		playlistInfo = await handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, encounteredDeletedVideos);
+		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfo);
 
 		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
 
 		await playVideo(chosenVideos, firedFromPopup);
 	} catch (error) {
 		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, configSync.userQuotaRemainingToday - 1));
+
+		// There are some errors that still allow us to save the playlist to the database and locally
+		if (error instanceof RandomYoutubeVideoError && error.canSavePlaylist == true) {
+			playlistInfo = await handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, encounteredDeletedVideos);
+			await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfo);
+		}
+
 		throw error;
 	} finally {
 		clearInterval(keepServiceWorkerAlive);
@@ -246,6 +219,37 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 	return playlistInfo;
 }
 
+// Prepare the playlist info object for saving to the database, and then upload it
+async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, encounteredDeletedVideos) {
+	if (shouldUpdateDatabase && databaseSharing) {
+		console.log("Updating the database with the new playlist information...");
+
+		playlistInfo["lastUpdatedDBAt"] = new Date().toISOString();
+
+		let videosToDatabase = {};
+		// If any videos need to be deleted, this should be the union of videos, newvideos, minus the videos to delete
+		if (encounteredDeletedVideos) {
+			console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
+			videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
+		} else {
+			// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
+			console.log("Uploading new video IDs to the database...");
+			if (getLength(playlistInfo["newVideos"] ?? {}) > 0) {
+				videosToDatabase = playlistInfo["newVideos"];
+			} else {
+				videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
+			}
+		}
+
+		await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, encounteredDeletedVideos);
+
+		// If we just updated the database, we automatically have the same version as it
+		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
+	}
+
+	return playlistInfo;
+}
+
 // Upload a playlist to the database
 async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, encounteredDeletedVideos) {
 	// Only upload the wanted keys
@@ -295,7 +299,8 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 				code: "RYV-4A",
 				message: "You have exceeded your daily quota allocation for the YouTube API.",
 				solveHint: "You can try again tomorrow or provide a custom API key.",
-				showTrace: false
+				showTrace: false,
+				canSavePlaylist: false
 			}
 		);
 	}
@@ -319,7 +324,8 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 				code: "RYV-4B",
 				message: `The channel you are shuffling from has too many uploads (${totalResults}) for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.`,
 				solveHint: "To shuffle from channels with more uploads, please use a custom API key.",
-				showTrace: false
+				showTrace: false,
+				canSavePlaylist: false
 			}
 		);
 	}
@@ -381,7 +387,8 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 				code: "RYV-4A",
 				message: "You have exceeded your daily quota allocation for the YouTube API.",
 				solveHint: "You can try again tomorrow or provide a custom API key.",
-				showTrace: false
+				showTrace: false,
+				canSavePlaylist: false
 			}
 		);
 	}
@@ -404,7 +411,8 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 				code: "RYV-4B",
 				message: `The channel you are shuffling from has too many new uploads (${totalExpectedNewResults}) for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.`,
 				solveHint: "To shuffle from channels with more uploads, please use a custom API key.",
-				showTrace: false
+				showTrace: false,
+				canSavePlaylist: false
 			}
 		);
 	}
@@ -503,6 +511,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 					apiResponse["error"]["message"],
 					apiResponse["error"]["errors"][0]["reason"],
 					"",
+					false,
 					false
 				);
 			}
@@ -516,7 +525,8 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 						code: "RYV-4B",
 						message: "The channel you are shuffling from has too many uploads for the amount of API requests you can make. To protect the userbase, each user has a limited amount of requests they can make per day.",
 						solveHint: "To shuffle from channels with more uploads, please use a custom API key.",
-						showTrace: false
+						showTrace: false,
+						canSavePlaylist: false
 					}
 				);
 			}
@@ -544,7 +554,8 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 								code: "RYV-2",
 								message: "All API keys have exceeded the allocated quota.",
 								solveHint: "Please *immediately* inform the developer. You can try again tomorrow or provide a custom API key to immediately resolve this problem.",
-								showTrace: false
+								showTrace: false,
+								canSavePlaylist: false
 							}
 						);
 					}
@@ -554,7 +565,8 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 							code: "RYV-5",
 							message: "Your custom API key has reached its daily quota allocation.",
 							solveHint: "This can easily happen if the channels you are shuffling from have a lot of uploads, or if you are using the API key for something else as well. You need to wait until the quota is reset or use a different API key.",
-							showTrace: false
+							showTrace: false,
+							canSavePlaylist: false
 						}
 					);
 				}
@@ -563,7 +575,8 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 					{
 						code: "RYV-6A",
 						message: "This channel has not uploaded any videos.",
-						showTrace: false
+						showTrace: false,
+						canSavePlaylist: false
 					}
 				);
 			} else {
@@ -677,8 +690,9 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 			{
 				code: "RYV-3",
 				message: "There are no API keys available in the database. It may be that they were removed for security reasons.",
-				solveHint: "Please check back later if this has been resolved, otherwise contact the developer. You can always use the extension by providing your custom API key via the popup, which is never uploaded to the extension's database.",
-				showTrace: false
+				solveHint: "Please check back later to see if this has been resolved, otherwise contact the developer. You can always use the extension by providing your custom API key via the popup, which is never uploaded to the extension's database.",
+				showTrace: false,
+				canSavePlaylist: false
 			}
 		);
 	}
@@ -713,7 +727,8 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 				code: "RYV-7",
 				message: `You have set an option to filter the videos that are shuffled (${activeShuffleFilterOption}), but no value for the option is set.`,
 				solveHint: "Please set a value for the active shuffle filter option in the popup, e.g. a valid date or video ID.",
-				showTrace: false
+				showTrace: false,
+				canSavePlaylist: true
 			}
 		);
 	}
@@ -781,7 +796,8 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 								code: "RYV-6B",
 								message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring/only shuffling from shorts and the channel only has/has no shorts.",
 								solveHint: "If you are ignoring shorts, disable the option in the popup to shuffle from this channel.",
-								showTrace: false
+								showTrace: false,
+								canSavePlaylist: true
 							}
 						)
 						// If we have chosen at least one video, we just return those
@@ -860,7 +876,8 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 							code: "RYV-11B",
 							message: `An unknown error occurred while testing if the video ${randomVideo} should be included in the shuffle.`,
 							solveHint: "Please contact the developer, as this should not happen.",
-							showTrace: false
+							showTrace: false,
+							canSavePlaylist: false
 						}
 					);
 				}
@@ -884,7 +901,8 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 				code: "RYV-6B",
 				message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring/only shuffling from shorts and the channel only has/has no shorts.",
 				solveHint: "If you are ignoring shorts, disable the option in the popup to shuffle from this channel.",
-				showTrace: false
+				showTrace: false,
+				canSavePlaylist: true
 			}
 		)
 	}
@@ -905,9 +923,10 @@ function getVideoType(videoId, playlistInfo) {
 	throw new RandomYoutubeVideoError(
 		{
 			code: "RYV-11A",
-			message: `The video that was tested does not exist in the local playlist ${videoId}, so it's type could not be found.`,
+			message: `The video that was tested does not exist in the local playlist ${videoId}, so it's type could not be determined.`,
 			solveHint: "Please contact the developer, as this should not happen.",
-			showTrace: false
+			showTrace: false,
+			canSavePlaylist: false
 		}
 	);
 	/* c8 ignore stop */
@@ -934,7 +953,8 @@ function applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, 
 						code: "RYV-8A",
 						message: `There are no videos that were released after the specified date (${activeOptionValue}).`,
 						solveHint: "Please change the date or use a different shuffle filter option.",
-						showTrace: false
+						showTrace: false,
+						canSavePlaylist: true
 					}
 				);
 			}
@@ -951,7 +971,8 @@ function applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, 
 						code: "RYV-8B",
 						message: `The video ID you specified (${activeOptionValue}) does not map to a video uploaded on this channel.`,
 						solveHint: "Please fix the video ID or use a different shuffle filter option.",
-						showTrace: false
+						showTrace: false,
+						canSavePlaylist: true
 					}
 				);
 			}
@@ -965,7 +986,8 @@ function applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, 
 						code: "RYV-8C",
 						message: `There are no videos that were released after the specified video ID (${activeOptionValue}), or the newest video has not yet been added to the database.`,
 						solveHint: "The extension updates playlists every 48 hours, so please wait for an update, change the video ID used in the filer or use a different filter option.",
-						showTrace: false
+						showTrace: false,
+						canSavePlaylist: true
 					}
 				);
 			}
@@ -978,7 +1000,8 @@ function applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, 
 						code: "RYV-8D",
 						message: `The percentage you specified (${activeOptionValue}%) should be between 1 and 100. Normally, you should not be able to set such a value.`,
 						solveHint: "Please fix the percentage in the popup.",
-						showTrace: false
+						showTrace: false,
+						canSavePlaylist: true
 					}
 				);
 			}
@@ -1093,7 +1116,8 @@ function validatePlaylistInfo(playlistInfo) {
 				code: "RYV-10",
 				message: `The playlistInfo object is missing one or more required keys (Got: ${Object.keys(playlistInfo)}, videos key: ${Object.keys(playlistInfo["videos"]) ?? "No keys"}).`,
 				solveHint: "Please try again and inform the developer if the error is not resolved.",
-				showTrace: false
+				showTrace: false,
+				canSavePlaylist: false
 			}
 		);
 	}
@@ -1137,5 +1161,17 @@ async function tryGetPlaylistFromLocalStorage(playlistId) {
 }
 
 async function savePlaylistToLocalStorage(playlistId, playlistInfo) {
-	await chrome.storage.local.set({ [playlistId]: playlistInfo });
+	// Update the playlist locally
+	console.log("Saving playlist to local storage...");
+
+	// Only save the wanted keys
+	const playlistInfoForLocalStorage = {
+		// Remember the last time the playlist was accessed locally (==now)
+		"lastAccessedLocally": new Date().toISOString(),
+		"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
+		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
+		"videos": playlistInfo["videos"] ?? {}
+	};
+
+	await chrome.storage.local.set({ [playlistId]: playlistInfoForLocalStorage });
 }
