@@ -3,7 +3,15 @@ import { shufflingHints } from "../config.js";
 
 // ---------- Public ----------
 // ----- Shuffling Hints -----
-export async function displayShufflingHint(displayElement, currentHintIndex = null) {
+export async function buildShufflingHints(domElements) {
+	let currentHint = await displayShufflingHint(domElements.shufflingHintP);
+	// Add click listener to the "New hint" button
+	domElements.nextHintButton.addEventListener("click", async function () {
+		currentHint = await displayShufflingHint(domElements.shufflingHintP, currentHint);
+	});
+}
+
+async function displayShufflingHint(displayElement, currentHintIndex = null) {
 	// Choose a (new) random hint from the JSON file and display it
 	let randomHintIndex = currentHintIndex;
 	while (randomHintIndex === currentHintIndex) {

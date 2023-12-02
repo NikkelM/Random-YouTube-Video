@@ -4,6 +4,27 @@ import { configSync, setSyncStorageValue, removeSyncStorageValue } from "../../c
 import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv } from "./popupUtils.js";
 import { tryFocusingTab } from "../htmlUtils.js";
 
+// ----- Setup -----
+const isPopup = chrome.extension.getViews({ type: "popup" }).length > 0;
+if (isPopup) {
+	const tabs = await chrome.tabs.query({});
+	const activeTab = tabs.filter(tab => tab.active);
+	const popupURL = chrome.runtime.getURL("html/popup.html");
+
+	// If the options page is focused, do not open the popup
+	if (activeTab[0].url === popupURL) {
+		window.close();
+	} else {
+		// Else, close the options page in the background
+		for (const tab of tabs) {
+			if (tab.url === popupURL) {
+				chrome.tabs.remove(tab.id);
+				break;
+			}
+		}
+	}
+}
+
 const domElements = getPopupDomElements();
 await setPopupDomElementValuesFromConfig(domElements);
 await setPopupDomElemenEventListeners(domElements);
@@ -351,7 +372,7 @@ async function setPopupDomElemenEventListeners(domElements) {
 
 	// Popup shuffle button
 	domElements.popupShuffleButton.addEventListener("click", async function () {
-		const tabUrl = chrome.runtime.getURL("html/shufflingPage.html");
+		const shufflingPage = chrome.runtime.getURL("html/shufflingPage.html");
 
 		// Get the status of the shufflingPage, if it exists
 		const shufflingPageIsShuffling = await chrome.runtime.sendMessage({ command: "getShufflingPageShuffleStatus" });
@@ -359,16 +380,16 @@ async function setPopupDomElemenEventListeners(domElements) {
 		if (!shufflingPageIsShuffling) {
 			const tabs = await chrome.tabs.query({});
 			for (const tab of tabs) {
-				if (tab.url === tabUrl) {
+				if (tab.url === shufflingPage) {
 					chrome.tabs.remove(tab.id);
 					break;
 				}
 			}
 		}
 
-		let mustOpenTab = await tryFocusingTab(tabUrl);
+		let mustOpenTab = await tryFocusingTab(shufflingPage);
 		if (mustOpenTab) {
-			window.open(tabUrl, "_blank");
+			await chrome.tabs.create({ url: shufflingPage });
 		}
 
 		// Close the popup
@@ -379,14 +400,13 @@ async function setPopupDomElemenEventListeners(domElements) {
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
 
-		const tabUrl = chrome.runtime.getURL("html/changelog.html");
-		let mustOpenTab = await tryFocusingTab(tabUrl);
+		const changelogPage = chrome.runtime.getURL("html/changelog.html");
+		let mustOpenTab = await tryFocusingTab(changelogPage);
 		if (mustOpenTab) {
-			window.open(tabUrl, "_blank");
+			await chrome.tabs.create({ url: changelogPage });
 		}
 
-		// Close the popup
-		window.close();
+		domElements.viewChangelogButton.classList.remove("highlight-green");
 	});
 }
 

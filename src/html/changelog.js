@@ -1,10 +1,10 @@
 // Contains logic for the "Changelog" page
 import { delay } from "../utils.js";
-import { displayShufflingHint } from "./htmlUtils.js";
+import { buildShufflingHints } from "./htmlUtils.js";
 
 // ----- Setup -----
 const domElements = getDomElements();
-await buildShufflingHints();
+await buildShufflingHints(domElements);
 
 // --- Set headers ---
 const currentVersion = chrome.runtime.getManifest().version;
@@ -63,8 +63,6 @@ async function fetchChangelog(forVersion = `v${currentVersion}`) {
 // Get all relevant DOM elements
 function getDomElements() {
 	return {
-		// The div containing all other elements
-		randomYoutubeVideo: document.getElementById("randomYoutubeVideo"),
 		// The document heading with the current version
 		updateHeading: document.getElementById("updateHeading"),
 		// Text that is shown if there is no changelog for the currently installed version
@@ -85,7 +83,6 @@ function getDomElements() {
 		nextHintButton: document.getElementById("nextHintButton"),
 	}
 }
-
 
 // ----- Changelog -----
 async function updateChangelog(forVersion = `v${currentVersion}`) {
@@ -131,13 +128,4 @@ async function displayErrorAfterWaiting(ms = 2000) {
 	if (domElements.belowHeadingDiv.classList.contains("hidden")) {
 		domElements.genericErrorDiv.classList.remove("hidden");
 	}
-}
-
-// ----- Shuffling Hints -----
-async function buildShufflingHints() {
-	let currentHint = await displayShufflingHint(domElements.shufflingHintP);
-	// Add click listener to the "New hint" button
-	domElements.nextHintButton.addEventListener("click", async function () {
-		currentHint = await displayShufflingHint(domElements.shufflingHintP, currentHint);
-	});
 }

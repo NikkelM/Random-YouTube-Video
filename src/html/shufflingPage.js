@@ -1,7 +1,7 @@
 // Contains logic for the "shufflingPage" that is opened when the user clicks the "Shuffle" button from the popup
 import { delay, setDOMTextWithDelay } from "../utils.js";
 import { configSync, setSyncStorageValue } from "../chromeStorage.js";
-import { displayShufflingHint, tryFocusingTab } from "./htmlUtils.js";
+import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
 import { chooseRandomVideo } from "../shuffleVideo.js";
 
 // ----- Setup -----
@@ -20,6 +20,19 @@ try {
 const port = chrome.runtime.connect({ name: "shufflingPage" });
 
 const domElements = getDomElements();
+await setDomElemenEventListeners(domElements);
+
+// If this page is open, it means the user has clicked the shuffle button
+shuffleButtonClicked();
+
+// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
+if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
+	domElements.viewChangelogButton.classList.add("highlight-green");
+}
+
+await buildShufflingHints(domElements);
+// Only show the contents of the page after a short delay, so that the user doesn't see the page at all for short loading times
+waitUntilShowingDivContents();
 
 // Get all relevant DOM elements
 function getDomElements() {
@@ -45,18 +58,8 @@ function getDomElements() {
 	}
 }
 
-// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
-if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
-	domElements.viewChangelogButton.classList.add("highlight-green");
-}
-
 // Set event listeners for DOM elements
 async function setDomElemenEventListeners(domElements) {
-	// Add click listener to the "New hint" button
-	domElements.nextHintButton.addEventListener("click", async function () {
-		currentHint = await displayShufflingHint(domElements.shufflingHintP, currentHint);
-	});
-
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
@@ -69,29 +72,28 @@ async function setDomElemenEventListeners(domElements) {
 	});
 }
 
-await setDomElemenEventListeners(domElements);
-
-// ----- Main -----
-// If this page is open, it means the user has clicked the shuffle button
-shuffleButtonClicked();
-
-// Only show the contents of the page after a short delay, so that the user doesn't see the page at all for short loading times
-waitUntilShowingDivContents();
-
-// ----- Shuffling Hints -----
-let currentHint = await displayShufflingHint(domElements.shufflingHintP);
-
 // Called when the randomize-button from the popup is clicked
 async function shuffleButtonClicked() {
 	try {
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
+		const shuffleButtonTextElement = domElements.fetchPercentageNotice;
 
-		setDOMTextWithDelay(domElements.fetchPercentageNotice, "Applying filters...", 2000, () => { console.log(domElements.fetchPercentageNotice.innerText); return (domElements.fetchPercentageNotice.innerText === "Please wait..." || domElements.fetchPercentageNotice.innerText === "\xa0Fetching: 100%"); });
-		setDOMTextWithDelay(domElements.fetchPercentageNotice, "Should be done soon...", 5000, () => { return (domElements.fetchPercentageNotice.innerText === "Applying filters..." || domElements.fetchPercentageNotice.innerText === "\xa0Fetching: 100%"); });
+		setDOMTextWithDelay(shuffleButtonTextElement, "Applying filters...", 4000, () => { return ((shuffleButtonTextElement.innerText === "Please wait..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
+		setDOMTextWithDelay(shuffleButtonTextElement, "Should be done soon...", 8000, () => { return (shuffleButtonTextElement.innerText === "Applying filters..." || shuffleButtonTextElement.innerText === "Fetching: 100%"); });
+		
 		if (configSync.shuffleIgnoreShortsOption != "1") {
-			setDOMTextWithDelay(domElements.fetchPercentageNotice, "Sorting shorts...", 9000, () => { return (domElements.fetchPercentageNotice.innerText === "Should be done soon..." || domElements.fetchPercentageNotice.innerText === "\xa0Fetching: 100%"); });
+			setDOMTextWithDelay(shuffleButtonTextElement, "Sorting shorts...", 12000, () => { return ((shuffleButtonTextElement.innerText === "Should be done soon..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
+			if (configSync.shuffleIgnoreShortsOption == "2") {
+				setDOMTextWithDelay(shuffleButtonTextElement, "Lots of shorts...", 20000, () => { return ((shuffleButtonTextElement.innerText === "Sorting shorts..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
+			} else if (configSync.shuffleIgnoreShortsOption == "0") {
+				setDOMTextWithDelay(shuffleButtonTextElement, "Not many shorts...", 20000, () => { return ((shuffleButtonTextElement.innerText === "Sorting shorts..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
+			}
+			setDOMTextWithDelay(shuffleButtonTextElement, "Still sorting...", 35000, () => { return ((shuffleButtonTextElement.innerText === "Lots of shorts..." || shuffleButtonTextElement.innerText === "Not many shorts..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
+		} else {
+			setDOMTextWithDelay(shuffleButtonTextElement, "Still shuffling...", 20000, () => { return ((shuffleButtonTextElement.innerText === "Should be done soon..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
 		}
-		await chooseRandomVideo(configSync.currentChannelId, true, domElements.fetchPercentageNotice);
+
+		await chooseRandomVideo(configSync.currentChannelId, true, shuffleButtonTextElement);
 
 		// Focus this tab when the shuffle completes
 		chrome.tabs.query({ url: chrome.runtime.getURL('html/shufflingPage.html') }, function (tabs) {
