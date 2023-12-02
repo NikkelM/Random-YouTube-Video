@@ -28,16 +28,28 @@ if (isPopup) {
 const domElements = getPopupDomElements();
 await setPopupDomElementValuesFromConfig(domElements);
 await setPopupDomElemenEventListeners(domElements);
+await determineOverlayVisibility(domElements);
 
 // ----- DOM -----
 // --- Private ---
 // Get relevant DOM elements
 function getPopupDomElements() {
-	/* global customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv */
+	/* global reviewDonationDiv, reviewDiv, donationDiv, customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv */
 	/* eslint no-undef: "error" */
 	return {
-		// Body element
 		body: document.body,
+
+		// OVERLAY
+		// Review/Donation div
+		reviewDonationDiv: document.getElementById("reviewDonationDiv"),
+		// Review div
+		reviewDiv: reviewDonationDiv.children.namedItem("reviewDiv"),
+		// Review close button
+		reviewOverlayCloseButton: reviewDiv.children.namedItem("reviewOverlayCloseButton"),
+		// Donation div
+		donationDiv: reviewDonationDiv.children.namedItem("donationDiv"),
+		// Donation close button
+		donationOverlayCloseButton: donationDiv.children.namedItem("donationOverlayCloseButton"),
 
 		// GLOBAL SETTINGS
 		// Custom API key: Option toggle
@@ -407,6 +419,32 @@ async function setPopupDomElemenEventListeners(domElements) {
 		}
 
 		domElements.viewChangelogButton.classList.remove("highlight-green");
+	});
+}
+
+async function determineOverlayVisibility(domElements) {
+	if (!configSync.reviewMessageShown && configSync.numShuffledVideosTotal < 150 && configSync.numShuffledVideosTotal >= 20) {
+		domElements.reviewDonationDiv.classList.remove("hidden");
+		domElements.reviewDiv.classList.remove("hidden");
+		await setSyncStorageValue("reviewMessageShown", true);
+
+		domElements.reviewOverlayCloseButton.addEventListener("click", function () {
+			domElements.reviewDonationDiv.classList.add("hidden");
+		});
+	} else if (!configSync.donationMessageShown && configSync.numShuffledVideosTotal >= 150) {
+		domElements.reviewDonationDiv.classList.remove("hidden");
+		domElements.donationDiv.classList.remove("hidden");
+		await setSyncStorageValue("donationMessageShown", true);
+
+		domElements.donationOverlayCloseButton.addEventListener("click", function () {
+			domElements.reviewDonationDiv.classList.add("hidden");
+		});
+	}
+
+	domElements.reviewDonationDiv.addEventListener("click", function (event) {
+		if (event.target === this) {
+			this.classList.add("hidden");
+		}
 	});
 }
 

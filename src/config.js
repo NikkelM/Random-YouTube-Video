@@ -24,6 +24,7 @@ export const configSyncDefaults = {
 	"currentChannelId": null,
 	"currentChannelName": null,
 	// The number of videos the user has shuffled so far
+	// Does not count multiple times if a playlist is shuffled, so is actually numShuffledTimesTotal
 	"numShuffledVideosTotal": 0,
 	// These two properties determine the amount of quota remaining today, and the time at which the quota will next reset (daily resets at midnight)
 	"userQuotaRemainingToday": 200,
@@ -37,6 +38,10 @@ export const configSyncDefaults = {
 	"wasLastRickRolledInYear": "1970",
 	// Used when updating the extension
 	"previousVersion": null,
+	// If the message asking for a review has been shown yet
+	"reviewMessageShown": false,
+	// If the message asking for a donation has been shown yet
+	"donationMessageShown": false,
 };
 
 export const shufflingHints = [
