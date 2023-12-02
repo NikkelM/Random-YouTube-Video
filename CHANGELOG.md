@@ -12,6 +12,7 @@
 - The playlist that is opened when shuffling (if the option is enabled) now has a better title and tooltip.
 - The shuffle button now feels more responsive when clicked, and will give more information if it takes a bit longer to shuffle.
 - The popup now feels smoother in some places, and will make it clearer when some inputs are invalid.
+- If certain errors are encountered, the playlist will still be saved locally and in the database, to speed up the next shuffle.
 - Fixed bugs that would prevent some initialization logic to run after the extension is updated.
 <!--Releasenotes end-->
 
