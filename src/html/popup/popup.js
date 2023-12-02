@@ -371,7 +371,7 @@ async function setPopupDomElemenEventListeners(domElements) {
 
 	// Popup shuffle button
 	domElements.popupShuffleButton.addEventListener("click", async function () {
-		const tabUrl = chrome.runtime.getURL("html/shufflingPage.html");
+		const shufflingPage = chrome.runtime.getURL("html/shufflingPage.html");
 
 		// Get the status of the shufflingPage, if it exists
 		const shufflingPageIsShuffling = await chrome.runtime.sendMessage({ command: "getShufflingPageShuffleStatus" });
@@ -379,16 +379,16 @@ async function setPopupDomElemenEventListeners(domElements) {
 		if (!shufflingPageIsShuffling) {
 			const tabs = await chrome.tabs.query({});
 			for (const tab of tabs) {
-				if (tab.url === tabUrl) {
+				if (tab.url === shufflingPage) {
 					chrome.tabs.remove(tab.id);
 					break;
 				}
 			}
 		}
 
-		let mustOpenTab = await tryFocusingTab(tabUrl);
+		let mustOpenTab = await tryFocusingTab(shufflingPage);
 		if (mustOpenTab) {
-			window.open(tabUrl, "_blank");
+			await chrome.tabs.create({ url: shufflingPage });
 		}
 
 		// Close the popup
@@ -399,10 +399,10 @@ async function setPopupDomElemenEventListeners(domElements) {
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
 
-		const tabUrl = chrome.runtime.getURL("html/changelog.html");
-		let mustOpenTab = await tryFocusingTab(tabUrl);
+		const changelogPage = chrome.runtime.getURL("html/changelog.html");
+		let mustOpenTab = await tryFocusingTab(changelogPage);
 		if (mustOpenTab) {
-			await chrome.tabs.create({ url: "html/changelog.html" });
+			await chrome.tabs.create({ url: changelogPage });
 		}
 
 		domElements.viewChangelogButton.classList.remove("highlight-green");
