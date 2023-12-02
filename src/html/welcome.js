@@ -15,18 +15,16 @@ chrome.tabs.query({}, function (tabs) {
 	}
 });
 
-await buildShufflingHints();
-
 // --- Set headers ---
 const currentVersion = chrome.runtime.getManifest().version;
 domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
+
+await buildShufflingHints();
 
 // ---------- DOM ----------
 // Get all relevant DOM elements
 function getDomElements() {
 	return {
-		// The div containing all other elements
-		randomYoutubeVideo: document.getElementById("randomYoutubeVideo"),
 		// The document heading with the current version
 		updateHeading: document.getElementById("updateHeading"),
 
@@ -41,7 +39,6 @@ function getDomElements() {
 		openOptionsPageButton: document.getElementById("openOptionsPageButton"),
 
 		// SHUFFLING HINTS
-		versionText: document.getElementById("versionText"),
 		// The p element containing the shuffle hint
 		shufflingHintP: document.getElementById("shufflingHintP"),
 		// The button that displays the next shuffle hint

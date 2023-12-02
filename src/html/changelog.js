@@ -63,8 +63,6 @@ async function fetchChangelog(forVersion = `v${currentVersion}`) {
 // Get all relevant DOM elements
 function getDomElements() {
 	return {
-		// The div containing all other elements
-		randomYoutubeVideo: document.getElementById("randomYoutubeVideo"),
 		// The document heading with the current version
 		updateHeading: document.getElementById("updateHeading"),
 		// Text that is shown if there is no changelog for the currently installed version
