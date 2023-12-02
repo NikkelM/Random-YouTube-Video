@@ -22,7 +22,7 @@ Firefox:
 	<img src="https://img.shields.io/amo/stars/random-youtube-video?label=rating"
 		alt="Firefox rating"></a>
 <a href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/">
-	<img alt="Mozilla Add-on" src="https://img.shields.io/amo/users/random-youtube-video?label=users"
+	<img alt="Firefox Add-on" src="https://img.shields.io/amo/users/random-youtube-video?label=users"
 		alt="Firefox users"></a>
 <br>
 <br>

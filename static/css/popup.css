@@ -140,6 +140,27 @@
 	margin-bottom: 4px;
 }
 
+.overlayDiv {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1000;
+	background-color: rgba(0, 0, 0, 0.8);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.overlayDiv div {
+	background-color: var(--randomYoutubeVideo-bg-color);
+	color: var(--randomYoutubeVideo-fg-color);
+	padding: 15px;
+	border-radius: 5px;
+	margin: 0px 20px;
+}
+
 /*
  * Options Row
  */
@@ -336,14 +357,8 @@ select:hover {
 	color: var(--randomYoutubeVideo-grey-fg-color);
 }
 
-/*
- * Footer
- */
-#randomYoutubeVideoFooter {
-	padding: 8px 0;
-}
-
-#randomYoutubeVideoFooter .footerLink {
+/* A link that looks like a button */
+.buttonLink {
 	color: var(--randomYoutubeVideo-fg-color);
 	display: inline-block;
 	text-decoration: none;
@@ -354,10 +369,17 @@ select:hover {
 	margin: 2px 1px;
 }
 
-#randomYoutubeVideoFooter .footerLink:hover {
+.buttonLink:hover {
 	background-color: #444;
 }
 
-#randomYoutubeVideoFooter .footerLink:active {
+.buttonLink:active {
 	background-color: #555;
+}
+
+/*
+ * Footer
+ */
+#randomYoutubeVideoFooter {
+	padding: 8px 0;
 }

@@ -12,6 +12,72 @@
 		<div id="randomYoutubeVideo">
 			<h1>Random YouTube Video</h1>
 
+			<!-- OVERLAY DIVS -->
+			<div id="reviewDonationDiv" class="overlayDiv hidden">
+				<div id="reviewDiv" class="hidden">
+					<div style="display: flex; flex-direction: row; align-items: center; justify-content: center; height: 100%; font-size: 18px">
+						<img src="../icons/icon-32-red.png" alt="Random YouTube Video icon" />
+						<p>&nbsp;+ You =&nbsp;</p>
+						<img src="../icons/heart.png" alt="Random YouTube Video icon" />
+						<p>&nbsp;?</p>
+					</div>
+					<p>
+						Are you enjoying the extension?<br />
+						Please consider leaving a review - it helps other people find it!
+					</p>
+					<br />
+					<p>
+						Review on:
+						<a
+							class="buttonLink"
+							href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
+							target="_blank"
+							rel="noopener"
+							title="Leave a review on the Chrome Web Store"
+							>Chrome</a
+						>
+						<a class="buttonLink" href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/" target="_blank" rel="noopener" title="Leave a review on the Firefox Add-Ons page"
+							>Firefox</a
+						>
+						<a
+							class="buttonLink"
+							href="https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe"
+							target="_blank"
+							rel="noopener"
+							title="Leave a review on the Edge Add-Ons page"
+							>Edge</a
+						>
+						<br />
+						<br />
+					</p>
+					<button id="reviewOverlayCloseButton" class="randomYoutubeVideoButton" type="button">Maybe later</button>
+				</div>
+
+				<div id="donationDiv" class="hidden">
+					<div style="display: flex; flex-direction: row; align-items: center; justify-content: center; height: 100%; font-size: 18px">
+						<img src="../icons/icon-32-red.png" alt="Random YouTube Video icon" />
+						<p>&nbsp;+ You =&nbsp;</p>
+						<img src="../icons/heart.png" alt="Random YouTube Video icon" />
+						<p>&nbsp;?</p>
+					</div>
+					<p>
+						You've been using the extension a lot - thank you!
+						<br />
+						<br />
+						Please consider donating to make it possible for me to keep developing and maintaining it in the future.
+					</p>
+					<br />
+					<a class="buttonLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension">Donate on Ko-Fi</a>
+					<p style="display: inline">or</p>
+					<a class="buttonLink" href="https://github.com/sponsors/NikkelM" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension"
+						>Sponsor on GitHub</a
+					>
+					<br />
+					<br />
+					<button id="donationOverlayCloseButton" class="randomYoutubeVideoButton" type="button">Maybe later</button>
+				</div>
+			</div>
+
 			<!-- OPTIONS START -->
 			<!-- <h2>Extension Settings</h2> -->
 			<p class="grey-text">Hover over an option to view a more detailed explanation.</p>
@@ -205,16 +271,16 @@
 			<footer id="randomYoutubeVideoFooter">
 				Leave a review:
 				<a
-					class="footerLink"
+					class="buttonLink"
 					href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
 					target="_blank"
 					rel="noopener"
 					title="Leave a review on the Chrome Web Store"
 					>Chrome</a
 				>
-				<a class="footerLink" href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/" target="_blank" rel="noopener" title="Leave a review on the Mozilla Add-Ons page">Firefox</a>
+				<a class="buttonLink" href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/" target="_blank" rel="noopener" title="Leave a review on the Firefox Add-Ons page">Firefox</a>
 				<a
-					class="footerLink"
+					class="buttonLink"
 					href="https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe"
 					target="_blank"
 					rel="noopener"
@@ -222,9 +288,9 @@
 					>Edge</a
 				>
 				<br />
-				<a class="footerLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank" rel="noopener" title="View the source code or get into contact with the developer">GitHub</a>
+				<a class="buttonLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank" rel="noopener" title="View the source code or get into contact with the developer">GitHub</a>
 				<button class="randomYoutubeVideoButton" id="viewChangelogButton" type="button" title="View the latest changes to the extension">Changelog</button>
-				<a class="footerLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension">Donate</a>
+				<a class="buttonLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension">Donate</a>
 			</footer>
 		</div>
 

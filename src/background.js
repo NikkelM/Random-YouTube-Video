@@ -10,7 +10,8 @@ async function initExtension() {
 	if (configSync.previousVersion === null) {
 		console.log(`Extension was installed for the first time (v${manifestData.version})`);
 		await setSyncStorageValue("previousVersion", manifestData.version);
-		await chrome.tabs.create({ url: "html/welcome.html" });
+		const welcomeUrl = chrome.runtime.getURL("html/welcome.html");
+		await chrome.tabs.create({ url: welcomeUrl });
 	} else if (configSync.previousVersion < manifestData.version) {
 		await handleExtensionUpdate(manifestData, configSync.previousVersion);
 	}

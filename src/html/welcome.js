@@ -73,17 +73,18 @@ async function setPopupDomElemenEventListeners(domElements) {
 
 	// Open options page button
 	domElements.openOptionsPageButton.addEventListener("click", async function () {
-		await chrome.tabs.create({ url: "html/popup.html" });
+		const optionsUrl = chrome.runtime.getURL("html/popup.html");
+		await chrome.tabs.create({ url: optionsUrl });
 	});
 
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
 
-		const tabUrl = chrome.runtime.getURL("html/changelog.html");
-		let mustOpenTab = await tryFocusingTab(tabUrl);
+		const changelogUrl = chrome.runtime.getURL("html/changelog.html");
+		let mustOpenTab = await tryFocusingTab(changelogUrl);
 		if (mustOpenTab) {
-			await chrome.tabs.create({ url: "html/changelog.html" });
+			await chrome.tabs.create({ url: changelogUrl });
 		}
 	});
 }
