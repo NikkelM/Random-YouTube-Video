@@ -424,26 +424,30 @@ async function setPopupDomElemenEventListeners(domElements) {
 
 async function determineOverlayVisibility(domElements) {
 	if (!configSync.reviewMessageShown && configSync.numShuffledVideosTotal < 150 && configSync.numShuffledVideosTotal >= 20) {
-		domElements.reviewDonationDiv.classList.remove("hidden");
 		domElements.reviewDiv.classList.remove("hidden");
+		domElements.reviewDonationDiv.classList.remove("hidden");
 		await setSyncStorageValue("reviewMessageShown", true);
 
 		domElements.reviewOverlayCloseButton.addEventListener("click", function () {
 			domElements.reviewDonationDiv.classList.add("hidden");
+			domElements.reviewDiv.classList.add("hidden");
 		});
 	} else if (!configSync.donationMessageShown && configSync.numShuffledVideosTotal >= 150) {
-		domElements.reviewDonationDiv.classList.remove("hidden");
 		domElements.donationDiv.classList.remove("hidden");
+		domElements.reviewDonationDiv.classList.remove("hidden");
 		await setSyncStorageValue("donationMessageShown", true);
 
 		domElements.donationOverlayCloseButton.addEventListener("click", function () {
 			domElements.reviewDonationDiv.classList.add("hidden");
+			domElements.donationDiv.classList.add("hidden");
 		});
 	}
 
 	domElements.reviewDonationDiv.addEventListener("click", function (event) {
 		if (event.target === this) {
-			this.classList.add("hidden");
+			reviewDonationDiv.classList.add("hidden");
+			domElements.reviewDiv.classList.add("hidden");
+			domElements.donationDiv.classList.add("hidden");
 		}
 	});
 }
