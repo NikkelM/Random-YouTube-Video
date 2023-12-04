@@ -1128,7 +1128,7 @@ function validatePlaylistInfo(playlistInfo) {
 /* c8 ignore stop */
 
 function updateProgressTextElement(progressTextElement, largeButtonText, smallButtonText) {
-	if (progressTextElement.id.includes("large-shuffle-button")) {
+	if (progressTextElement.id.includes("large-shuffle-button") || progressTextElement.id == "fetchPercentageNoticeShufflingPage") {
 		progressTextElement.innerText = largeButtonText;
 	} else {
 		// Make it the icon style if an icon is set, otherwise the text style
