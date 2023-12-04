@@ -40,7 +40,7 @@ function getDomElements() {
 		// The div containing all other elements
 		randomYoutubeVideo: document.getElementById("randomYoutubeVideo"),
 		// Shows the percentage of videos that have been fetched
-		fetchPercentageNotice: document.getElementById("fetchPercentageNotice"),
+		fetchPercentageNoticeShufflingPage: document.getElementById("fetchPercentageNoticeShufflingPage"),
 		// The text that is displayed when an error has occurred
 		shuffleErrorText: document.getElementById("shuffleErrorText"),
 		// Div containing all elements that should only be displayed if we are still shuffling
@@ -76,11 +76,11 @@ async function setDomElemenEventListeners(domElements) {
 async function shuffleButtonClicked() {
 	try {
 		domElements.shufflingFromChannelHeading.innerText = configSync.currentChannelName;
-		const shuffleButtonTextElement = domElements.fetchPercentageNotice;
+		const shuffleButtonTextElement = domElements.fetchPercentageNoticeShufflingPage;
 
 		setDOMTextWithDelay(shuffleButtonTextElement, "Applying filters...", 4000, () => { return ((shuffleButtonTextElement.innerText === "Please wait..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
 		setDOMTextWithDelay(shuffleButtonTextElement, "Should be done soon...", 8000, () => { return (shuffleButtonTextElement.innerText === "Applying filters..." || shuffleButtonTextElement.innerText === "Fetching: 100%"); });
-		
+
 		if (configSync.shuffleIgnoreShortsOption != "1") {
 			setDOMTextWithDelay(shuffleButtonTextElement, "Sorting shorts...", 12000, () => { return ((shuffleButtonTextElement.innerText === "Should be done soon..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
 			if (configSync.shuffleIgnoreShortsOption == "2") {
@@ -93,6 +93,7 @@ async function shuffleButtonClicked() {
 			setDOMTextWithDelay(shuffleButtonTextElement, "Still shuffling...", 20000, () => { return ((shuffleButtonTextElement.innerText === "Should be done soon..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
 		}
 
+		// await delay(100000);
 		await chooseRandomVideo(configSync.currentChannelId, true, shuffleButtonTextElement);
 
 		// Focus this tab when the shuffle completes
@@ -125,7 +126,7 @@ async function shuffleButtonClicked() {
 		const errorMessage = `${error.message ?? ""}${error.reason ? "\n" + error.reason : ""}${error.solveHint ? "\n" + error.solveHint : ""}${error.showTrace !== false ? "\n\n" + error.stack : ""}`;
 
 		// Immediately display the error
-		domElements.fetchPercentageNotice.innerText = errorHeading;
+		domElements.fetchPercentageNoticeShufflingPage.innerText = errorHeading;
 		domElements.shuffleErrorText.innerText = errorMessage;
 		domElements.shuffleErrorText.classList.remove("hidden");
 

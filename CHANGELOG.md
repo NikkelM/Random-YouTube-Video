@@ -1,10 +1,14 @@
 # Changelog
 
-## v3.0.1
+## v3.0.2
 
 <!--Releasenotes start-->
-- Fixed the old "Ignore shorts" option not being updated to the new format correctly.
+- Fixed the fetch percentage in the shuffling page being misaligned.
 <!--Releasenotes end-->
+
+## v3.0.1
+
+- Fixed the old "Ignore shorts" option not being updated to the new format correctly.
 
 ## v3.0.0
 
