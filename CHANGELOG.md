@@ -1,8 +1,13 @@
 # Changelog
 
-## v3.0.0
+## v3.0.1
 
 <!--Releasenotes start-->
+- Fixed the old "Ignore shorts" option not being updated to the new format correctly.
+<!--Releasenotes end-->
+
+## v3.0.0
+
 - Shorts pages are now supported! Shuffle buttons can now be found on all shorts pages.
 - Added a new option to shuffle only from shorts.
 - Added a 'welcome' page that will be shown when you first install the extension and guide you through the first steps.
@@ -14,7 +19,6 @@
 - The popup now feels smoother in some places, and will make it clearer when some inputs are invalid.
 - If certain errors are encountered, the playlist will still be saved locally and in the database, to speed up the next shuffle.
 - Fixed bugs that would prevent some initialization logic to run after the extension is updated.
-<!--Releasenotes end-->
 
 ## v2.3.0
 
