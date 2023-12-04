@@ -38,7 +38,7 @@ Firefox:
     alt="View changelog"></a>
 </p>
 
-Download the extension for: [Chrome/Chromium](https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf) | [Edge](https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe) | [Firefox](https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/) 
+Download the extension for: [Chrome/Chromium](https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf) | [Firefox](https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/) | [Edge](https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe)
 
 *The Chrome Web Store version can be installed on any Chromium-based browser, such as Edge, Brave, Opera and many more.*
 

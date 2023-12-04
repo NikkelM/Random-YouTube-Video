@@ -12,7 +12,9 @@ async function initExtension() {
 		await setSyncStorageValue("previousVersion", manifestData.version);
 		const welcomeUrl = chrome.runtime.getURL("html/welcome.html");
 		await chrome.tabs.create({ url: welcomeUrl });
-	} else if (configSync.previousVersion < manifestData.version) {
+	}
+	// 3.0.0 introduced the previousVersion config value, so the update would not be handled correctly here
+	if (configSync.previousVersion < manifestData.version || configSync.previousVersion === "3.0.0") {
 		await handleExtensionUpdate(manifestData, configSync.previousVersion);
 	}
 
@@ -72,9 +74,9 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 }
 
 async function handleVersionSpecificUpdates(previousVersion) {
-	// v3.0.0 changed the data type for the shuffleIgnoreShortsOption from boolean to number
-	if (previousVersion < "3.0.0") {
-		console.log("Updating sync storage to v3.0.0 format...");
+	// v3.0.1 changed the data type for the shuffleIgnoreShortsOption from boolean to number
+	if (previousVersion < "3.0.1") {
+		console.log("Updating sync storage to v3.0.1 format...");
 		const syncStorageContents = await chrome.storage.sync.get();
 		if (syncStorageContents["shuffleIgnoreShortsOption"] == true) {
 			await setSyncStorageValue("shuffleIgnoreShortsOption", 2);
