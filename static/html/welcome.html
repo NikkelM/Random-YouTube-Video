@@ -11,10 +11,17 @@
 		<div id="randomYoutubeVideo" style="margin-top: 10px">
 			<h1 id="updateHeading">Random YouTube Video</h1>
 			<h2>Welcome!</h2>
+			<br />
 
-			<br />
-			<br />
+			<div id="firefoxPermissionsDiv" class="hidden">
+				<br />
+				<h3>To be able to use the extension, you <b>MUST</b></h3>
+				<button id="giveFirefoxPermissionsButton" class="randomYoutubeVideoButton highlight-green" style="font-size: 20px">give the extension permission to access YouTube</button>
+			</div>
+
 			<div id="needToReloadYouTubePagesDiv" class="hidden">
+				<br />
+				<br />
 				<h3>Before you can start and see 'Shuffle' buttons, you need to</h3>
 				<button id="reloadAllYouTubePagesButton" class="randomYoutubeVideoButton highlight-green" style="font-size: 20px">click me to reload all <i>YouTube.com</i> pages</button>
 				<p>or do so manually.</p>

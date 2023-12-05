@@ -3,6 +3,7 @@
 import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 
 // ---------- Initialization/Chrome event listeners ----------
+const isFirefox = typeof browser !== "undefined";
 
 // Check whether a new version was installed
 async function initExtension() {
@@ -25,8 +26,9 @@ await initExtension();
 // Make sure we are not using too much local storage
 async function checkLocalStorageCapacity() {
 	// If over 90% of the storage quota for playlists is used, remove playlists that have not been accessed in a long time
-	const utilizedStorage = await chrome.storage.local.getBytesInUse();
-	const maxLocalStorage = chrome.storage.local.QUOTA_BYTES;
+	const utilizedStorage = isFirefox ? JSON.stringify(await chrome.storage.local.get()).length : await chrome.storage.local.getBytesInUse();
+	// Firefox does not offer a way to get the maximum local storage capacity, so we use 5MB as per the documentation
+	const maxLocalStorage = isFirefox ? 5000000 : chrome.storage.local.QUOTA_BYTES;
 
 	console.log(`${((utilizedStorage / maxLocalStorage) * 100).toFixed(2)}% of local storage is used. (${utilizedStorage}/${maxLocalStorage} bytes)`);
 

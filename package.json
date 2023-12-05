@@ -6,10 +6,12 @@
 		"dev": "concurrently \"npm run dev:chromium\" \"npm run dev:firefox\"",
     "dev:chromium": "webpack --env browser=chromium --watch --config webpack.dev.cjs",
     "dev:firefox": "concurrently --kill-others \"webpack --env browser=firefox --watch --config webpack.dev.cjs\" \"web-ext run --source-dir ./dist/firefox\"",
+    "dev:android": "concurrently --kill-others \"webpack --env browser=firefox --watch --config webpack.dev.cjs\" \"web-ext run --source-dir ./dist/firefox -t firefox-android --adb-device emulator-5554 --firefox-apk org.mozilla.fenix\"",
     "build": "npm run build:chromium && npm run build:firefox",
     "build:chromium": "webpack --env browser=chromium --config webpack.prod.cjs",
     "build:firefox": "webpack --env browser=firefox --config webpack.prod.cjs",
     "lint": "eslint --ext .ts,.js --max-warnings=0 . --ignore-path .eslintignore",
+    "lint:firefox": "web-ext lint --source-dir ./dist/firefox",
     "test": "c8 --reporter=lcov --reporter=text mocha ./test/testSetup.js ./test/chromeStorage.test.js ./test/**/*.test.js --require mocha-suppress-logs"
   },
   "type": "module",
