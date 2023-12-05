@@ -3,7 +3,6 @@
 ## v3.1.0 (Unreleased)
 
 <!--Releasenotes start-->
-- Added support for Firefox for Android!
 - Firefox: The welcome page now prompts users to allow the extension to access the youtube.com domain, this is needed for the extension to function.
 - Firefox: Fixed the options page not being accessible.
 - Firefox: Fixed a bug where the extension was unable to retrieve the amount of local storage used.
