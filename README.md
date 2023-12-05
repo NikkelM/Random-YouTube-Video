@@ -49,9 +49,10 @@ Do you have a favourite YouTube channel, but don't know what to watch? This exte
 The Random YouTube Video extension adds a 'Shuffle' button to YouTube channel, video and shorts pages, which will play a truly random video from the current channel. You can use the extension's popup to customize your experience further.
 
 Highlighted Features:<br>
+- The shuffle button fits right in with the YouTube interface you're used to, for an optimal experience when browsing!
 - Choose from a wide range of options to individualize your experience, such as ignoring shorts, only shuffling from the most recent videos, shuffling multiple videos into a playlist, and much more!
-- You don't need to open YouTube to shuffle from your favourite channels - the extension popup allows you to shuffle from your most recently visited channel at any time!
-- If another user has already shuffled from the channel you want to watch, the extension will run faster for you as video IDs are shared!
+- Shuffle at any time by using the shuffle button in the extension popup, which allows you to shuffle from your most recently visited channel at any time!
+- Shuffles run even faster for you if another user has already shuffled from the channel you're watching, as video IDs are shared!
 
 ## Contribution
 
@@ -88,6 +89,14 @@ Loading the extension like this will persist it until you remove it manually.
 
 Loading the extension like this will persist it only *until you restart Firefox*. 
 You may also test the extension with Firefox by running `npm run dev:firefox`, which uses `web-ext` to load the extension in a temporary Firefox profile. 
+
+### Firefox for Android
+
+- Make sure to have an Android device or Emulator set up for developer mode and running (follow [these instructions](https://extensionworkshop.com/documentation/develop/developing-extensions-for-firefox-for-android/#install-and-run-your-extension-in-firefox-for-android) to learn how to do so).
+- Run `adb devices` to get the device ID of your device or emulator.
+- Exchange the device ID in the `dev:android` script in `package.json` with the ID you just got. The default is `emulator-5554`.
+- Run `npm run dev:android` to load the extension in Firefox for Android.
+- Your device or emulator should now open Firefox for Android with the extension loaded.
 
 ---
 
