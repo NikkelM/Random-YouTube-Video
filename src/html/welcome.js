@@ -1,15 +1,21 @@
 // Contains logic for the "Welcome" page
 import { setSyncStorageValue } from "../chromeStorage.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
+import { delay } from "../utils.js";
 
 // ----- Setup -----
+const isFirefox = typeof browser !== "undefined";
 const domElements = getDomElements();
 
-// Show the "Reload all YouTube pages" div if there are youtube pages open
+let mayShowReloadAllYouTubePagesDiv = false;
 chrome.tabs.query({}, function (tabs) {
 	for (let i = 0; i <= tabs.length - 1; i++) {
 		if (tabs[i].url.split("/")[2]?.includes("youtube")) {
-			domElements.needToReloadYouTubePagesDiv.classList.remove("hidden");
+			mayShowReloadAllYouTubePagesDiv = true;
+			// Immediately show if we are not waiting for Firefox permissions
+			if (!isFirefox) {
+				domElements.needToReloadYouTubePagesDiv.classList.remove("hidden");
+			}
 			break;
 		}
 	}
@@ -28,6 +34,12 @@ function getDomElements() {
 	return {
 		// The document heading with the current version
 		updateHeading: document.getElementById("updateHeading"),
+
+		// FIREFOX PERMISSIONS
+		// The div containing the permission request button
+		firefoxPermissionsDiv: document.getElementById("firefoxPermissionsDiv"),
+		// The button to request permissions
+		giveFirefoxPermissionsButton: document.getElementById("giveFirefoxPermissionsButton"),
 
 		// RELOAD YOUTUBE PAGES
 		// The div containing the button and texts to reload all YouTube pages
@@ -53,6 +65,28 @@ function getDomElements() {
 
 // Set event listeners for DOM elements
 async function setPopupDomElemenEventListeners(domElements) {
+	// Firefox permissions button
+	if (isFirefox && !await browser.permissions.contains({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] })) {
+		domElements.firefoxPermissionsDiv.classList.remove("hidden");
+
+		// This is so important that we will use a browser alert window to make sure the user sees and acknowledges it
+		await delay(50);
+		alert("You need to grant the extension permission to run on YouTube in order to use it. Please grant permissions using the highlighted button.")
+
+		domElements.giveFirefoxPermissionsButton.addEventListener("click", async function () {
+			await requestFirefoxPermissions();
+			// If permissions were not granted we must ask again, without them the extension does not work
+			if (!await browser.permissions.contains({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] })) {
+				alert("You need to grant the extension permission to run on YouTube in order to use it. Please grant permissions.")
+			} else {
+				domElements.firefoxPermissionsDiv.classList.add("hidden");
+				if (mayShowReloadAllYouTubePagesDiv) {
+					domElements.needToReloadYouTubePagesDiv.classList.remove("hidden");
+				}
+			}
+		});
+	}
+
 	// Reload all YouTube pages button
 	domElements.reloadAllYouTubePagesButton.addEventListener("click", async function () {
 		let tabs = await chrome.tabs.query({});
@@ -87,4 +121,12 @@ async function setPopupDomElemenEventListeners(domElements) {
 			await chrome.tabs.create({ url: changelogUrl });
 		}
 	});
+}
+
+async function requestFirefoxPermissions() {
+	const permissionsToRequest = {
+		permissions: ["tabs"],
+		origins: ["*://*.youtube.com/*"]
+	}
+	await browser.permissions.request(permissionsToRequest);
 }

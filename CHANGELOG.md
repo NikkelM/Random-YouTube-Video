@@ -1,10 +1,17 @@
 # Changelog
 
-## v3.0.2
+## v3.1.0
 
 <!--Releasenotes start-->
-- Fixed the fetch percentage in the shuffling page being misaligned.
+- Firefox: The welcome page now prompts users to allow the extension to access the youtube.com domain, this is needed for the extension to function.
+- Fixed a bug where the shuffle button in the popup would only work on the second try.
+- Firefox: Fixed the options page not being accessible.
+- Firefox: Fixed a bug where the extension was unable to retrieve the amount of local storage used.
 <!--Releasenotes end-->
+
+## v3.0.2
+
+- Fixed the fetch percentage in the shuffling page being misaligned.
 
 ## v3.0.1
 
