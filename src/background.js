@@ -13,6 +13,13 @@ async function initExtension() {
 		await setSyncStorageValue("previousVersion", manifestData.version);
 		const welcomeUrl = chrome.runtime.getURL("html/welcome.html");
 		await chrome.tabs.create({ url: welcomeUrl });
+	} else if (isFirefox) {
+		if (!await browser.permissions.contains({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] })) {
+			console.log("The extension is running in Firefox and does not have the required permissions.");
+			const welcomeUrl = chrome.runtime.getURL("html/welcome.html");
+			await chrome.tabs.create({ url: welcomeUrl });
+		}
+
 	}
 	// 3.0.0 introduced the previousVersion config value, so the update would not be handled correctly here
 	if (configSync.previousVersion < manifestData.version || configSync.previousVersion === "3.0.0") {
