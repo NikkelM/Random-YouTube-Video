@@ -30,6 +30,13 @@ await setPopupDomElementValuesFromConfig(domElements);
 await setPopupDomElemenEventListeners(domElements);
 await determineOverlayVisibility(domElements);
 
+// Restart the background script if it was stopped to make sure the shuffle button immediately works
+try {
+	await chrome.runtime.sendMessage({ command: "connectionTest" });
+} catch (error) {
+	console.log("The background worker was stopped and had to be restarted.");
+}
+
 // ----- DOM -----
 // --- Private ---
 // Get relevant DOM elements
