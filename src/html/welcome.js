@@ -70,7 +70,7 @@ async function setPopupDomElemenEventListeners(domElements) {
 		domElements.firefoxPermissionsDiv.classList.remove("hidden");
 
 		// This is so important that we will use a browser alert window to make sure the user sees and acknowledges it
-		await delay(20);
+		await delay(50);
 		alert("You need to grant the extension permission to run on YouTube in order to use it. Please grant permissions using the highlighted button.")
 
 		domElements.giveFirefoxPermissionsButton.addEventListener("click", async function () {
