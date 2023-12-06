@@ -1,6 +1,6 @@
 # Changelog
 
-## v3.1.0 (Unreleased)
+## v3.1.0
 
 <!--Releasenotes start-->
 - Firefox: The welcome page now prompts users to allow the extension to access the youtube.com domain, this is needed for the extension to function.
