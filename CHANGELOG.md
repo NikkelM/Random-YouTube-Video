@@ -1,13 +1,18 @@
 # Changelog
 
-## v3.1.0
+## v3.1.1
 
 <!--Releasenotes start-->
+- Fixed a bug where the extension would rename all playlists, instead of just the ones created by the extension.
+- The collapsed playlist menu will now also have the correct playlist name.
+<!--Releasenotes end-->
+
+## v3.1.0
+
 - Firefox: The welcome page now prompts users to allow the extension to access the youtube.com domain, this is needed for the extension to function.
 - Fixed a bug where the shuffle button in the popup would only work on the second try.
 - Firefox: Fixed the options page not being accessible.
 - Firefox: Fixed a bug where the extension was unable to retrieve the amount of local storage used.
-<!--Releasenotes end-->
 
 ## v3.0.2
 
