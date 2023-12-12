@@ -4,6 +4,7 @@
 
 <!--Releasenotes start-->
 - Fixed a bug where the extension would rename all playlists, instead of just the ones created by the extension.
+- The collapsed playlist menu will now also have the correct playlist name.
 <!--Releasenotes end-->
 
 ## v3.1.0
