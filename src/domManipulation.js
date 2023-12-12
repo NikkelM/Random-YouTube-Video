@@ -132,12 +132,16 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 	});
 }
 
+// With the way that YouTube handles navigation, the playlist title somehow won't get updated correctly when navigating if we change it here at any point
+// So we need to change it back if the user moves to a different playlist
 export function tryRenameUntitledList() {
-	let untitledListElement = document.querySelector('ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy').querySelector('yt-formatted-string');
+	let pagePlaylistElement = document.querySelector('ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy').querySelector('yt-formatted-string');
 
-	if (untitledListElement) {
-		untitledListElement.innerText = "Random YouTube Video - Playlist";
-		untitledListElement.title = "This playlist is unlisted, temporary and cannot be saved. Until it is removed by YouTube (which will happen automatically), you can revisit it using the link in the URL bar.";
+	if (pagePlaylistElement && window.location.href.includes("&list=TL") && pagePlaylistElement.title == "Untitled List") {
+		pagePlaylistElement.innerText = "Random YouTube Video - Playlist";
+		pagePlaylistElement.title = "This playlist is unlisted, temporary and cannot be saved. Until it is removed by YouTube (which will happen automatically), you can revisit it using the link in the URL bar.";
+	} else if (pagePlaylistElement) {
+		pagePlaylistElement.innerText = pagePlaylistElement.title;
 	}
 }
 
