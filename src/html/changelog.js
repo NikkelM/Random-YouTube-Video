@@ -7,7 +7,7 @@ const domElements = getDomElements();
 await buildShufflingHints(domElements);
 
 // --- Set headers ---
-const currentVersion = chrome.runtime.getManifest().version;
+const currentVersion = chrome.runtime.getManifest().version_name ?? chrome.runtime.getManifest().version;
 domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
 domElements.whatsNewHeader.innerText = `What's new in v${currentVersion}:`;
 
@@ -92,7 +92,7 @@ async function updateChangelog(forVersion = `v${currentVersion}`) {
 	domElements.whatsNewHeader.innerText = `What's new in ${forVersion}:`;
 
 	// Get the text between "## ${version}" and the next "##", or if there is none, the end of the changelog
-	const versionIndex = changelogText.indexOf(`## ${forVersion}`);
+	const versionIndex = changelogText.indexOf(`## ${forVersion}\r\n`);
 	const nextVersionIndex = changelogText.indexOf("##", versionIndex + `## ${forVersion}`.length);
 	// If there is no next version, use the end of the changelog
 	const endIndex = nextVersionIndex !== -1 ? nextVersionIndex : changelogText.length;

@@ -1,11 +1,16 @@
 # Changelog
 
-## v3.1.1
+## v3.1.2-beta
 
 <!--Releasenotes start-->
+- Fixed a bug that would cause the changelog page to show changes from an incorrect version in some cases.
+- Updated versioning scheme for a better distinction between stable and beta versions.
+<!--Releasenotes end-->
+
+## v3.1.1
+
 - Fixed a bug where the extension would rename all playlists, instead of just the ones created by the extension.
 - The collapsed playlist menu will now also have the correct playlist name.
-<!--Releasenotes end-->
 
 ## v3.1.0
 

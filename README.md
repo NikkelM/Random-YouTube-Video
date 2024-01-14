@@ -90,13 +90,22 @@ Loading the extension like this will persist it until you remove it manually.
 Loading the extension like this will persist it only *until you restart Firefox*. 
 You may also test the extension with Firefox by running `npm run dev:firefox`, which uses `web-ext` to load the extension in a temporary Firefox profile. 
 
-### Firefox for Android
+#### Firefox for Android
 
 - Make sure to have an Android device or Emulator set up for developer mode and running (follow [these instructions](https://extensionworkshop.com/documentation/develop/developing-extensions-for-firefox-for-android/#install-and-run-your-extension-in-firefox-for-android) to learn how to do so).
 - Run `adb devices` to get the device ID of your device or emulator.
 - Exchange the device ID in the `dev:android` script in `package.json` with the ID you just got. The default is `emulator-5554`.
 - Run `npm run dev:android` to load the extension in Firefox for Android.
 - Your device or emulator should now open Firefox for Android with the extension loaded.
+
+### Versioning
+
+The `manifest.json` contains two version numbers: `version` and `version_name`.
+Packages that are released/uploaded to webstores will have both of these version numbers set to the same value.
+During development, smaller changes may get pushed to the `main` branch.
+These packages will have the same `version` number as the latest release, but a newer `version_name` number, often including a `-beta` suffix, to distinguish them from the latest release.
+
+This naming scheme is used to allow users to test and distinguish new changes before their release, but to keep the integrity of the automated release pipeline, which uses the `version` property to determine whether a new release should be created.
 
 ---
 
