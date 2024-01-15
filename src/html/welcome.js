@@ -22,7 +22,7 @@ chrome.tabs.query({}, function (tabs) {
 });
 
 // --- Set headers ---
-const currentVersion = chrome.runtime.getManifest().version;
+const currentVersion = chrome.runtime.getManifest().version_name ?? chrome.runtime.getManifest().version;
 domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
 
 await buildShufflingHints(domElements);
