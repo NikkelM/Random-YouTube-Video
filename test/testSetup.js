@@ -4,6 +4,12 @@ import crypto from 'crypto';
 import { configSyncDefaults } from '../src/config.js';
 import { deepCopy, localPlaylistPermutations, databasePermutations } from './playlistPermutations.js';
 
+Object.defineProperty(globalThis, 'crypto', {
+  value: {
+    getRandomValues: arr => crypto.randomBytes(arr.length)
+  }
+});
+
 global.chrome = sinonChrome;
 
 // ---------- Sync storage ----------
