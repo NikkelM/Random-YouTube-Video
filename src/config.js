@@ -42,7 +42,20 @@ export const configSyncDefaults = {
 	"reviewMessageShown": false,
 	// If the message asking for a donation has been shown yet
 	"donationMessageShown": false,
+	// The user's unique ID, used to identify them in the database. Default value should generate a unique ID
+	"userID": generateUserID()
 };
+
+function generateUserID() {
+	console.log("Generating new user ID");
+	const randomPool = new Uint8Array(32);
+	crypto.getRandomValues(randomPool);
+	let hex = '';
+	for (let i = 0; i < randomPool.length; ++i) {
+		hex += randomPool[i].toString(16);
+	}
+	return hex;
+}
 
 export const shufflingHints = [
 	// General extension hints

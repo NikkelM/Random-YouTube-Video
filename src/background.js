@@ -10,7 +10,6 @@ async function initExtension() {
 	const manifestData = chrome.runtime.getManifest();
 	if (configSync.previousVersion === null) {
 		console.log(`Extension was installed for the first time (v${manifestData.version})`);
-		await setSyncStorageValue("userID", generateUserID());
 		await setSyncStorageValue("previousVersion", manifestData.version);
 		const welcomeUrl = chrome.runtime.getURL("html/welcome.html");
 		await chrome.tabs.create({ url: welcomeUrl });
@@ -81,17 +80,6 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 }
 
 async function handleVersionSpecificUpdates(previousVersion) {
-	// TODO: Use correct version
-	// v3.1.2 introduced userIDs, so we need to generate one for existing users
-	if (previousVersion < "3.1.2") {
-		if (configSync.userID) {
-			console.log("User already has a userID. No need to generate one.");
-		} else {
-			console.log("Generating userID, as it does not exist yet...");
-			await setSyncStorageValue("userID", generateUserID());
-		}
-	}
-
 	// v3.0.1 changed the data type for the shuffleIgnoreShortsOption from boolean to number
 	if (previousVersion < "3.0.1") {
 		console.log("Updating sync storage to v3.0.1 format...");
@@ -129,16 +117,6 @@ async function handleVersionSpecificUpdates(previousVersion) {
 			await chrome.storage.local.remove("youtubeAPIKey");
 		}
 	}
-}
-
-function generateUserID() {
-	const randomPool = new Uint8Array(32);
-	crypto.getRandomValues(randomPool);
-	let hex = '';
-	for (let i = 0; i < randomPool.length; ++i) {
-		hex += randomPool[i].toString(16);
-	}
-	return hex;
 }
 
 // The shuffling page will open a port when it is started
