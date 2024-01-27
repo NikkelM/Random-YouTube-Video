@@ -1,4 +1,5 @@
 import sinonChrome from 'sinon-chrome';
+import crypto from 'crypto';
 
 import { configSyncDefaults } from '../src/config.js';
 import { deepCopy, localPlaylistPermutations, databasePermutations } from './playlistPermutations.js';

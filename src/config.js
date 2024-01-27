@@ -47,7 +47,6 @@ export const configSyncDefaults = {
 };
 
 function generateUserID() {
-	console.log("Generating new user ID");
 	const randomPool = new Uint8Array(32);
 	crypto.getRandomValues(randomPool);
 	let hex = '';
