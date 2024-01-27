@@ -48,7 +48,15 @@ export const configSyncDefaults = {
 
 function generateUserID() {
 	const randomPool = new Uint8Array(32);
-	crypto.getRandomValues(randomPool);
+	try {
+		crypto.getRandomValues(randomPool);
+	} catch (err) {
+		// If the browser does not support crypto.getRandomValues, fall back to Math.random
+		console.log("Browser does not support crypto.getRandomValues, falling back to Math.random")
+		for (let i = 0; i < randomPool.length; ++i) {
+			randomPool[i] = Math.floor(Math.random() * 256);
+		}
+	}
 	let hex = '';
 	for (let i = 0; i < randomPool.length; ++i) {
 		hex += randomPool[i].toString(16);

@@ -1,11 +1,4 @@
 import sinonChrome from 'sinon-chrome';
-import crypto from 'crypto';
-
-Object.defineProperty(globalThis, 'crypto', {
-  value: {
-    getRandomValues: arr => crypto.randomBytes(arr.length)
-  }
-});
 
 import { configSyncDefaults } from '../src/config.js';
 import { deepCopy, localPlaylistPermutations, databasePermutations } from './playlistPermutations.js';
