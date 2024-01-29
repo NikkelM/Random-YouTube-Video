@@ -20,6 +20,7 @@ module.exports = env => {
 			htmlUtils: './src/html/htmlUtils.js',
 			shufflingPage: './src/html/shufflingPage.js',
 			welcome: './src/html/welcome.js',
+			shufflePlus: './src/html/shufflePlus.js',
 			// POPUP
 			popup: './src/html/popup/popup.js',
 			popupUtils: './src/html/popup/popupUtils.js',
