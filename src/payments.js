@@ -73,7 +73,9 @@ async function googleLogin() {
     chrome.storage.local.get("latestCSRFToken", function (result) {
       console.log(result);
       if (result.latestCSRFToken === returnedState) {
-
+        console.log("CSRF token matches");
+      } else {
+        console.log("CSRF token does not match");
       }
     });
   });
