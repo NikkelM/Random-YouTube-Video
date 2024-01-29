@@ -17,7 +17,8 @@
 	],
 	"permissions": [
 		"storage",
-		"tabs"
+		"tabs",
+		"identity"
 	],
 	"action": {
 		"default_popup": "html/popup.html",
@@ -33,5 +34,13 @@
 		"32": "icons/icon-32-red.png",
 		"48": "icons/icon-48-red.png",
 		"128": "icons/icon-128-red.png"
+	},
+	"oauth2": {
+		"client_id": "141257152664-kndulmd1g00s3ak81sqie4d6jlaiv6sj.apps.googleusercontent.com",
+		"scopes": [
+			"https://www.googleapis.com/auth/userinfo.email",
+			"https://www.googleapis.com/auth/userinfo.profile",
+			"https://www.googleapis.com/auth/youtube.readonly"
+		]
 	}
 }
