@@ -14,6 +14,7 @@ module.exports = env => {
 			shuffleVideo: './src/shuffleVideo.js',
 			utils: './src/utils.js',
 			chromeStorage: './src/chromeStorage.js',
+			payments: './src/payments.js',
 			// HTML
 			changelog: './src/html/changelog.js',
 			htmlUtils: './src/html/htmlUtils.js',
