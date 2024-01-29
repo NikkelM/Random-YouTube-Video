@@ -1,7 +1,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot } from 'firebase/firestore';
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
@@ -18,9 +18,10 @@ const db = getFirestore(app);
 
 // TODO: Add domains for Firefox and Edge stores to authorized domains in Firebase console
 // User authentication using Google
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
-auth.useDeviceLanguage();
+// const auth = getAuth(app);
+// const provider = new GoogleAuthProvider();
+// provider.addScope('https://www.googleapis.com/auth/youtube.readonly');
+// auth.useDeviceLanguage();
 
 // Get products and pricing information from Firestore/Stripe
 async function getProducts() {
@@ -51,15 +52,15 @@ async function getProducts() {
   return products;
 }
 
-async function googleLogin() {
+export async function googleLogin() {
   const randomPool = crypto.getRandomValues(new Uint8Array(32));
-	let state = '';
-	for (let i = 0; i < randomPool.length; ++i) {
-		state += randomPool[i].toString(16);
-	}
+  let state = '';
+  for (let i = 0; i < randomPool.length; ++i) {
+    state += randomPool[i].toString(16);
+  }
   await chrome.storage.local.set({ "latestCSRFToken": state });
-  // use launchWebAuthFlow to get token
-  return chrome.identity.launchWebAuthFlow({
+
+  chrome.identity.launchWebAuthFlow({
     'url': `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${state}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=https://kijgnjhogkjodpakfmhgleobifempckf.chromiumapp.org/&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
     'interactive': true
   }, function (redirect_url) {
@@ -76,8 +77,20 @@ async function googleLogin() {
         console.log("CSRF token matches");
       } else {
         console.log("CSRF token does not match");
+        throw new Error("CSRF token does not match");
       }
     });
+    /*
+    Next, get an access and refresh token
+    Note that the client secret cannot be exposed, so we need to proxy this through firebase functions
+    code=xxx&redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&client_id=407408718192.apps.googleusercontent.com&client_secret=************&scope=&grant_type=authorization_code
+    */
+    // fetch result from https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange
+    fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?code=${returnedCode}&state=${returnedState}`)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+      });
   });
 }
 
