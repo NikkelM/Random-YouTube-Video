@@ -53,6 +53,8 @@ async function getProducts() {
 }
 
 export async function googleLogin() {
+  // TODO: If we still have a refresh token, use it to get a new access token
+
   const randomPool = crypto.getRandomValues(new Uint8Array(32));
   let state = '';
   for (let i = 0; i < randomPool.length; ++i) {
@@ -63,13 +65,12 @@ export async function googleLogin() {
   chrome.identity.launchWebAuthFlow({
     'url': `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${state}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=https://kijgnjhogkjodpakfmhgleobifempckf.chromiumapp.org/&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
     'interactive': true
-  }, function (redirect_url) {
+  }, async function (redirect_url) {
     console.log(redirect_url);
     // Get the token from the redirect URL
     const returnedState = redirect_url.split("state=")[1].split("&")[0];
     const returnedCode = redirect_url.split("code=")[1].split("&")[0];
-    console.log(returnedState);
-    console.log(returnedCode);
+
     // Check if the returned state matches the one we sent
     chrome.storage.local.get("latestCSRFToken", function (result) {
       console.log(result);
@@ -80,17 +81,26 @@ export async function googleLogin() {
         throw new Error("CSRF token does not match");
       }
     });
-    /*
-    Next, get an access and refresh token
-    Note that the client secret cannot be exposed, so we need to proxy this through firebase functions
-    code=xxx&redirect_uri=https%3A%2F%2Fdevelopers.google.com%2Foauthplayground&client_id=407408718192.apps.googleusercontent.com&client_secret=************&scope=&grant_type=authorization_code
-    */
-    // fetch result from https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange
-    fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?code=${returnedCode}&state=${returnedState}`)
+
+    // Allowed actions are codeExchange and refreshTokenExchange. The code or refresh token must be provided in the token parameter
+    let access_token, refresh_token, expiresIn, state;
+    await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=codeExchange&token=${returnedCode}&state=${returnedState}`)
       .then(response => response.json())
       .then(data => {
         console.log(data);
+        access_token = data.access_token;
+        refresh_token = data.refresh_token;
+        expiresIn = data.expires_in;
+        state = data.state;
+        if(state !== returnedState) {
+          throw new Error("CSRF token does not match");
+        }
       });
+      console.log(access_token, refresh_token, expiresIn);
+      // Save the tokens in local storage
+      await chrome.storage.local.set({ "access_token": access_token });
+      await chrome.storage.local.set({ "refresh_token": refresh_token });
+      await chrome.storage.local.set({ "expiresIn": expiresIn }); // TODO: Convert this to a timestamp
   });
 }
 
