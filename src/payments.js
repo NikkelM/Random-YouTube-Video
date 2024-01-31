@@ -1,7 +1,6 @@
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot } from 'firebase/firestore';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
@@ -15,13 +14,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-// TODO: Add domains for Firefox and Edge stores to authorized domains in Firebase console
-// User authentication using Google
-// const auth = getAuth(app);
-// const provider = new GoogleAuthProvider();
-// provider.addScope('https://www.googleapis.com/auth/youtube.readonly');
-// auth.useDeviceLanguage();
 
 // Get products and pricing information from Firestore/Stripe
 async function getProducts() {
