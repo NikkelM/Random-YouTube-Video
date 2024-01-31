@@ -48,33 +48,29 @@ export async function googleLogin() {
   // TODO: If we still have a refresh token, use it to get a new access token
 
   const randomPool = crypto.getRandomValues(new Uint8Array(32));
-  let state = '';
+  let generatedState = '';
   for (let i = 0; i < randomPool.length; ++i) {
-    state += randomPool[i].toString(16);
+    generatedState += randomPool[i].toString(16);
   }
-  await chrome.storage.local.set({ "latestCSRFToken": state });
 
   chrome.identity.launchWebAuthFlow({
-    'url': `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${state}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=https://kijgnjhogkjodpakfmhgleobifempckf.chromiumapp.org/&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
+    'url': `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${generatedState}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=https://kijgnjhogkjodpakfmhgleobifempckf.chromiumapp.org/&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
     'interactive': true
   }, async function (redirect_url) {
-    console.log(redirect_url);
     // Get the token from the redirect URL
     const returnedState = redirect_url.split("state=")[1].split("&")[0];
     const returnedCode = redirect_url.split("code=")[1].split("&")[0];
 
     // Check if the returned state matches the one we sent
-    chrome.storage.local.get("latestCSRFToken", function (result) {
-      console.log(result);
-      if (result.latestCSRFToken === returnedState) {
-        console.log("CSRF token matches");
-      } else {
-        console.log("CSRF token does not match");
-        throw new Error("CSRF token does not match");
-      }
-    });
+    if (generatedState === returnedState) {
+      console.log("CSRF token matches");
+    } else {
+      console.log("CSRF token does not match");
+      throw new Error("CSRF token does not match");
+    }
 
     // Allowed actions are codeExchange and refreshTokenExchange. The code or refresh token must be provided in the token parameter
+    // TODO: New action to get a new refresh token
     let access_token, refresh_token, expiresIn, state;
     await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=codeExchange&token=${returnedCode}&state=${returnedState}`)
       .then(response => response.json())
@@ -84,15 +80,16 @@ export async function googleLogin() {
         refresh_token = data.refresh_token;
         expiresIn = data.expires_in;
         state = data.state;
-        if(state !== returnedState) {
+        if (state !== returnedState) {
           throw new Error("CSRF token does not match");
         }
       });
-      console.log(access_token, refresh_token, expiresIn);
-      // Save the tokens in local storage
-      await chrome.storage.local.set({ "access_token": access_token });
-      await chrome.storage.local.set({ "refresh_token": refresh_token });
-      await chrome.storage.local.set({ "expiresIn": expiresIn }); // TODO: Convert this to a timestamp
+    console.log(access_token, refresh_token, expiresIn);
+    // Save the tokens in local storage, under a new dictionary called "google_oauth"
+    // If the google_oauth dictionary does not exist, create it
+    // If the google_oauth dictionary does exist, update it with the new values
+    // TODO: Convert expiresIn to a timestamp expiresOn
+    await chrome.storage.local.set({ "google_oauth": { "access_token": access_token, "refresh_token": refresh_token, "expiresIn": expiresIn } });
   });
 }
 
