@@ -88,9 +88,9 @@ export async function googleLogin() {
     console.log(access_token, refresh_token, expiresOn);
     let google_oauth = await chrome.storage.local.get("google_oauth") || {};
     google_oauth.access_token = access_token;
-    google_oauth.refresh_token = refresh_token;
+    google_oauth.expiresOn = expiresOn;
     if (refresh_token) {
-      google_oauth.expiresOn = expiresOn;
+      google_oauth.refresh_token = refresh_token;
     }
     await chrome.storage.local.set({ "google_oauth": google_oauth });
   });
