@@ -1,6 +1,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
@@ -44,56 +45,121 @@ async function getProducts() {
   return products;
 }
 
+// Get a Google accessToken, and save relevant data locally
 export async function googleLogin() {
-  // TODO: If we still have a refresh token, use it to get a new access token
+  let googleOauth = (await chrome.storage.local.get("googleOauth")).googleOauth || {};
 
-  const randomPool = crypto.getRandomValues(new Uint8Array(32));
-  let generatedState = '';
-  for (let i = 0; i < randomPool.length; ++i) {
-    generatedState += randomPool[i].toString(16);
-  }
+  // The access token should be valid for at least another 5 minutes
+  if (googleOauth.accessToken && googleOauth.expiresOn > new Date().getTime() + 300000) {
+    console.log("Using cached access token");
+    // Login the user to Firebase
+    const auth = getAuth(app);
+    const credential = GoogleAuthProvider.credential(googleOauth.idToken, googleOauth.accessToken);
+    console.log(credential);
+    const userCredential = await signInWithCredential(auth, credential);
+    console.log(userCredential);
+    // The userCredential contains a uid for Firebase
 
-  // TODO: Use the chrome native login flow if it's available?
-  chrome.identity.launchWebAuthFlow({
-    'url': `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${generatedState}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=https://kijgnjhogkjodpakfmhgleobifempckf.chromiumapp.org/&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
-    'interactive': true
-  }, async function (redirect_url) {
-    // Get the token from the redirect URL
-    const returnedState = redirect_url.split("state=")[1].split("&")[0];
-    const returnedCode = redirect_url.split("code=")[1].split("&")[0];
-
-    // Check if the returned state matches the one we sent
-    if (generatedState === returnedState) {
-      console.log("CSRF token matches");
-    } else {
-      console.log("CSRF token does not match");
-      throw new Error("CSRF token does not match");
+    return googleOauth;
+  } else {
+    const randomPool = crypto.getRandomValues(new Uint8Array(32));
+    let generatedState = '';
+    for (let i = 0; i < randomPool.length; ++i) {
+      generatedState += randomPool[i].toString(16);
     }
+    let accessToken, refreshToken, idToken, expiresOn, state, action, passedToken;
 
-    // Allowed actions are codeExchange and refreshTokenExchange. The code or refresh token must be provided in the token parameter
-    let access_token, refresh_token, expiresOn, state;
-    await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=codeExchange&token=${returnedCode}&state=${returnedState}`)
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-        access_token = data.access_token;
-        refresh_token = data.refresh_token;
-        expiresOn = new Date().getTime() + (data.expires_in * 1000);
-        state = data.state;
-        if (state !== returnedState) {
+    if (googleOauth.refreshToken) {
+      console.log("Using refresh token");
+      action = "refreshTokenExchange";
+      passedToken = googleOauth.refreshToken;
+
+      console.log("Exchanging refresh token for access token");
+      // Get an access, refresh and id token
+      await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=${action}&token=${passedToken}&state=${generatedState}`)
+        .then(response => response.json())
+        .then(data => {
+          console.log(data);
+          accessToken = data.access_token;
+          refreshToken = data.refresh_token;
+          idToken = data.id_token;
+          expiresOn = new Date().getTime() + (data.expires_in * 1000);
+          state = data.state;
+          if (state !== generatedState) {
+            throw new Error("CSRF token does not match");
+          }
+        });
+
+      googleOauth.accessToken = accessToken;
+      googleOauth.expiresOn = expiresOn;
+      googleOauth.idToken = idToken;
+      if (refreshToken) {
+        googleOauth.refreshToken = refreshToken;
+      }
+      await chrome.storage.local.set({ "googleOauth": googleOauth });
+
+      // Create a GoogleAuthProvider and login with credential
+      const auth = getAuth(app);
+      const provider = new GoogleAuthProvider();
+      const credential = provider.credential(idToken, accessToken);
+      console.log(credential);
+      // const userCredential = await signInWithCredential(auth, credential);
+      // console.log(userCredential);
+    } else {
+      console.log("Using code exchange");
+      action = "codeExchange";
+      // TODO: Use the chrome native login flow if it's available?
+      chrome.identity.launchWebAuthFlow({
+        'url': `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${generatedState}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=https://kijgnjhogkjodpakfmhgleobifempckf.chromiumapp.org/&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
+        'interactive': true
+      }, async function (redirect_url) {
+        const returnedState = redirect_url.split("state=")[1].split("&")[0];
+        passedToken = redirect_url.split("code=")[1].split("&")[0];
+
+        // Check if the returned state matches the one we sent
+        if (generatedState === returnedState) {
+          console.log("CSRF token matches");
+        } else {
+          console.log("CSRF token does not match");
           throw new Error("CSRF token does not match");
         }
-      });
 
-    console.log(access_token, refresh_token, expiresOn);
-    let google_oauth = await chrome.storage.local.get("google_oauth") || {};
-    google_oauth.access_token = access_token;
-    google_oauth.expiresOn = expiresOn;
-    if (refresh_token) {
-      google_oauth.refresh_token = refresh_token;
+        console.log("Exchanging code for access token");
+        // Get an access, refresh and id token
+        await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=${action}&token=${passedToken}&state=${generatedState}`)
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+            accessToken = data.access_token;
+            refreshToken = data.refresh_token;
+            idToken = data.id_token;
+            expiresOn = new Date().getTime() + (data.expires_in * 1000);
+            state = data.state;
+            if (state !== generatedState) {
+              throw new Error("CSRF token does not match");
+            }
+          });
+
+        googleOauth.accessToken = accessToken;
+        googleOauth.expiresOn = expiresOn;
+        googleOauth.idToken = idToken;
+        if (refreshToken) {
+          googleOauth.refreshToken = refreshToken;
+        }
+        console.log(googleOauth);
+        console.log(googleOauth.googleOauth);
+        await chrome.storage.local.set({ "googleOauth": googleOauth });
+
+        // Create a GoogleAuthProvider and login with credential
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        const credential = provider.credential(idToken, accessToken);
+        console.log(credential);
+        // const userCredential = await signInWithCredential(auth, credential);
+        // console.log(userCredential);
+      });
     }
-    await chrome.storage.local.set({ "google_oauth": google_oauth });
-  });
+  }
 }
 
 export async function openStripeCheckout() {
