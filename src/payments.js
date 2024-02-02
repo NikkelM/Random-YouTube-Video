@@ -53,6 +53,7 @@ export async function googleLogin() {
     generatedState += randomPool[i].toString(16);
   }
 
+  // TODO: Use the chrome native login flow if it's available?
   chrome.identity.launchWebAuthFlow({
     'url': `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${generatedState}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=https://kijgnjhogkjodpakfmhgleobifempckf.chromiumapp.org/&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
     'interactive': true
@@ -70,26 +71,28 @@ export async function googleLogin() {
     }
 
     // Allowed actions are codeExchange and refreshTokenExchange. The code or refresh token must be provided in the token parameter
-    // TODO: New action to get a new refresh token
-    let access_token, refresh_token, expiresIn, state;
+    let access_token, refresh_token, expiresOn, state;
     await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=codeExchange&token=${returnedCode}&state=${returnedState}`)
       .then(response => response.json())
       .then(data => {
         console.log(data);
         access_token = data.access_token;
         refresh_token = data.refresh_token;
-        expiresIn = data.expires_in;
+        expiresOn = new Date().getTime() + (data.expires_in * 1000);
         state = data.state;
         if (state !== returnedState) {
           throw new Error("CSRF token does not match");
         }
       });
-    console.log(access_token, refresh_token, expiresIn);
-    // Save the tokens in local storage, under a new dictionary called "google_oauth"
-    // If the google_oauth dictionary does not exist, create it
-    // If the google_oauth dictionary does exist, update it with the new values
-    // TODO: Convert expiresIn to a timestamp expiresOn
-    await chrome.storage.local.set({ "google_oauth": { "access_token": access_token, "refresh_token": refresh_token, "expiresIn": expiresIn } });
+
+    console.log(access_token, refresh_token, expiresOn);
+    let google_oauth = await chrome.storage.local.get("google_oauth") || {};
+    google_oauth.access_token = access_token;
+    google_oauth.refresh_token = refresh_token;
+    if (refresh_token) {
+      google_oauth.expiresOn = expiresOn;
+    }
+    await chrome.storage.local.set({ "google_oauth": google_oauth });
   });
 }
 
