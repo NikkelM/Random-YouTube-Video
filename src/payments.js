@@ -107,13 +107,24 @@ async function googleLogin() {
       (generatedState += Math.random().toString(36).slice(2)).substring(2, 34);
     }
 
+    let redirectUri;
+    if (isFirefox) {
+      // We cannot verify ownership of the normal redirect URL, but local loopbacks are always allowed
+      const baseRedirectUrl = browser.identity.getRedirectURL();
+      const redirectSubdomain = baseRedirectUrl.slice(0, baseRedirectUrl.indexOf('.')).replace('https://', '');
+      redirectUri = `http://127.0.0.1/mozoauth2/${redirectSubdomain}`;
+    } else {
+      // For chromium based browsers, we can use the normal redirect URL, as it is verified by the extension key
+      redirectUri = chrome.identity.getRedirectURL();
+    }
+
     if (googleOauth.refreshToken) {
       console.log("Exchanging refresh token for access token");
-      googleOauth = await runGoogleOauthAuthentication("refreshTokenExchange", googleOauth.refreshToken, generatedState, googleOauth, auth);
+      googleOauth = await runGoogleOauthAuthentication("refreshTokenExchange", googleOauth.refreshToken, generatedState, redirectUri, googleOauth, auth);
     } else {
       console.log("Using code exchange, as there is no access or refresh token available.");
       // Before we can run the Google Oauth authentication flow, we need to get an authentication code from Google
-      googleOauth = await runWebAuthFlow(generatedState, googleOauth, auth);
+      googleOauth = await runWebAuthFlow(generatedState, redirectUri, googleOauth, auth);
       console.log("Completed the web auth flow.")
     }
   }
@@ -121,24 +132,14 @@ async function googleLogin() {
   return googleOauth.userInfo;
 }
 
-async function runWebAuthFlow(generatedState, googleOauth, auth) {
+async function runWebAuthFlow(generatedState, redirectUri, googleOauth, auth) {
   console.log("Running the web auth flow")
   // TODO: Use the chrome native login flow if it's available? Is there an upside to this?
-  let redirectURI;
-  if (isFirefox) {
-    // We cannot verify ownership of the normal redirect URL, but local loopbacks are always allowed
-    const baseRedirectUrl = browser.identity.getRedirectURL();
-    const redirectSubdomain = baseRedirectUrl.slice(0, baseRedirectUrl.indexOf('.')).replace('https://', '');
-    redirectURI = `http://127.0.0.1/mozoauth2/${redirectSubdomain}`;
-  } else {
-    // For chromium based browsers, we can use the normal redirect URL, as it is verified by the extension key
-    redirectURI = chrome.identity.getRedirectURL();
-  }
 
   return new Promise((resolve, reject) => {
     // Launch a popup that prompts the user to login to their Google account and grant the app permissions as requested
     chrome.identity.launchWebAuthFlow({
-      "url": `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${generatedState}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=${redirectURI}&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
+      "url": `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${generatedState}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=${redirectUri}&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
       "interactive": true
     }, async function (redirect_url) {
       const returnedState = redirect_url.split("state=")[1].split("&")[0];
@@ -151,7 +152,7 @@ async function runWebAuthFlow(generatedState, googleOauth, auth) {
 
       console.log("Exchanging authentication code for access token");
       const returnedToken = redirect_url.split("code=")[1].split("&")[0];
-      googleOauth = await runGoogleOauthAuthentication("codeExchange", returnedToken, generatedState, googleOauth, auth);
+      googleOauth = await runGoogleOauthAuthentication("codeExchange", returnedToken, generatedState, redirectUri, googleOauth, auth);
       resolve(googleOauth);
     });
   });
@@ -172,10 +173,10 @@ async function fetchRefreshTokenFromFirestore(googleOauth) {
 }
 
 // Exchanges a code or refresh token for an access token using the backend Google Cloud Function
-async function runGoogleOauthAuthentication(action, passedToken, generatedState, googleOauth, auth) {
+async function runGoogleOauthAuthentication(action, passedToken, generatedState, redirectUri, googleOauth, auth) {
   let accessToken, refreshToken, idToken, expiresOn, returnedState;
   // Get an access, refresh and id token (unused) for the user
-  await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=${action}&token=${passedToken}&state=${generatedState}`)
+  await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=${action}&token=${passedToken}&state=${generatedState}&redirectUri=${redirectUri}`)
     .then(response => response.json())
     .then(data => {
       accessToken = data.access_token;
