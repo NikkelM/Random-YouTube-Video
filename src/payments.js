@@ -45,7 +45,7 @@ async function getProducts() {
   return products;
 }
 
-// Get a Google accessToken, and save relevant data locally
+// Run the Google Oauth flow until the user is logged in to Google and Firebase
 export async function googleLogin() {
   const auth = getAuth(app);
   onAuthStateChanged(auth, async (user) => {
@@ -72,8 +72,6 @@ export async function googleLogin() {
     if (!googleOauth.refreshToken) {
       await fetchRefreshTokenFromFirestore(googleOauth);
     }
-
-    return googleOauth;
   } else {
     let generatedState = "";
     while (generatedState.length < 32) {
