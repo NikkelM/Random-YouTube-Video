@@ -46,6 +46,7 @@ async function getProducts() {
 }
 
 // Run the Google Oauth flow until the user is logged in to Google and Firebase
+// TODO: Handle the case where the user has revoked access to the app. Would probably be getting a 400/401 error when refreshing the token?
 export async function googleLogin() {
   const auth = getAuth(app);
   onAuthStateChanged(auth, async (user) => {
@@ -108,6 +109,8 @@ export async function googleLogin() {
       });
     }
   }
+
+  return getAuth().currentUser;
 }
 
 // Gets the Google Oauth refresh token for the current user from Firestore and saves it locally
@@ -117,8 +120,8 @@ async function fetchRefreshTokenFromFirestore(googleOauth) {
   const userDoc = await getDoc(userRef);
   if (userDoc.exists()) {
     const data = userDoc.data();
-    if (data.refreshToken) {
-      googleOauth.refreshToken = data.refreshToken;
+    if (data.googleRefreshToken) {
+      googleOauth.refreshToken = data.googleRefreshToken;
       await chrome.storage.local.set({ "googleOauth": googleOauth });
     }
   }
@@ -158,7 +161,7 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
     // Save the refresh token to Firestore
     const userRef = doc(db, "users", getAuth().currentUser.uid);
     await setDoc(userRef, {
-      refreshToken: refreshToken
+      googleRefreshToken: refreshToken
     }, { merge: true });
   } else if (!googleOauth.refreshToken) {
     await fetchRefreshTokenFromFirestore(googleOauth);
@@ -166,7 +169,7 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 }
 
 export async function openStripeCheckout() {
-  const currentUser = await googleLogin();
+  const currentUser = getAuth().currentUser ?? await googleLogin();
   // console.log(currentUser);
 
   // const products = await getProducts();

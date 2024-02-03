@@ -1,11 +1,8 @@
-// Entry point for the popup page
-import { delay } from "../utils.js";
-import { configSync, setSyncStorageValue, removeSyncStorageValue } from "../chromeStorage.js";
-import { tryFocusingTab } from "./htmlUtils.js";
+// Entry point for the Shuffle+ page
 import { googleLogin } from "../payments.js";
 
 // ----- Setup -----
-
+let user;
 const domElements = getPopupDomElements();
 await setPopupDomElementValuesFromConfig(domElements);
 await setPopupDomElemenEventListeners(domElements);
@@ -14,11 +11,18 @@ await setPopupDomElemenEventListeners(domElements);
 // --- Private ---
 // Get relevant DOM elements
 function getPopupDomElements() {
+	/* global googleLoginButtonDiv */
+	/* eslint no-undef: "error" */
 	return {
 		body: document.body,
+		// HEADER
+		// Welcome ${username}
+		welcomeHeader: document.getElementById("welcomeHeader"),
+
 		// LOGIN
 		// Google login button
-		googleLoginButton: document.getElementById("googleLoginButton"),
+		googleLoginButtonDiv: document.getElementById("googleLoginButtonDiv"),
+		googleLoginButton: googleLoginButtonDiv.children.namedItem("googleLoginButton"),
 
 		// FOOTER
 		// View changelog button
@@ -30,21 +34,25 @@ function getPopupDomElements() {
 
 // Set default values from configSync == user preferences
 async function setPopupDomElementValuesFromConfig(domElements) {
-	return;
+	// TODO: Save username locally for faster access when the page is loaded
+	// TODO: Separate functions for just getting locally saved metadata and actually logging in to firebase/refreshing tokens
+	user = await googleLogin();
+	if (user) {
+		domElements.welcomeHeader.textContent = `Welcome ${user.displayName.split(" ")[0]}!`;
+	} else {
+		domElements.googleLoginButtonDiv.style.display = "block";
+	}
 }
 
 // Set event listeners for DOM elements
 async function setPopupDomElemenEventListeners(domElements) {
 	// Google login button
 	domElements.googleLoginButton.addEventListener("click", async function () {
-		await googleLogin();
+		user = await googleLogin();
+		if (user) {
+			domElements.welcomeHeader = `Welcome ${user.displayName.split(" ")[0]}!`;
+		} else {
+			// TODO: Display error message
+		}
 	});
-}
-
-function onSignIn(googleUser) {
-  var profile = googleUser.getBasicProfile();
-  console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-  console.log('Name: ' + profile.getName());
-  console.log('Image URL: ' + profile.getImageUrl());
-  console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
 }
