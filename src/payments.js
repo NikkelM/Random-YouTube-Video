@@ -1,7 +1,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot } from 'firebase/firestore';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential } from "firebase/auth";
+import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
@@ -47,18 +47,30 @@ async function getProducts() {
 
 // Get a Google accessToken, and save relevant data locally
 export async function googleLogin() {
+  const auth = getAuth(app);
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      // User is signed in, see docs for a list of available properties
+      // https://firebase.google.com/docs/reference/js/auth.user
+      const uid = user.uid;
+      console.log("User is signed in")
+      console.log(await user.getIdToken());
+      // ...
+    } else {
+      // User is signed out
+      console.log("User is signed out")
+      // ...
+    }
+  });
+
   let googleOauth = (await chrome.storage.local.get("googleOauth")).googleOauth || {};
 
   // The access token should be valid for at least another 5 minutes
   if (googleOauth.accessToken && googleOauth.expiresOn > new Date().getTime() + 300000) {
     console.log("Using cached access token");
     // Login the user to Firebase
-    const auth = getAuth(app);
     const credential = GoogleAuthProvider.credential(googleOauth.idToken, googleOauth.accessToken);
-    console.log(credential);
-    const userCredential = await signInWithCredential(auth, credential);
-    console.log(userCredential);
-    // The userCredential contains a uid for Firebase
+    await signInWithCredential(auth, credential);
 
     return googleOauth;
   } else {
@@ -98,13 +110,10 @@ export async function googleLogin() {
       }
       await chrome.storage.local.set({ "googleOauth": googleOauth });
 
-      // Create a GoogleAuthProvider and login with credential
-      const auth = getAuth(app);
-      const provider = new GoogleAuthProvider();
-      const credential = provider.credential(idToken, accessToken);
-      console.log(credential);
-      // const userCredential = await signInWithCredential(auth, credential);
-      // console.log(userCredential);
+      // Login the user to Firebase
+      const credential = GoogleAuthProvider.credential(googleOauth.idToken, googleOauth.accessToken);
+      await signInWithCredential(auth, credential);
+
     } else {
       console.log("Using code exchange");
       action = "codeExchange";
@@ -150,13 +159,9 @@ export async function googleLogin() {
         console.log(googleOauth.googleOauth);
         await chrome.storage.local.set({ "googleOauth": googleOauth });
 
-        // Create a GoogleAuthProvider and login with credential
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-        const credential = provider.credential(idToken, accessToken);
-        console.log(credential);
-        // const userCredential = await signInWithCredential(auth, credential);
-        // console.log(userCredential);
+        // Login the user to Firebase
+        const credential = GoogleAuthProvider.credential(googleOauth.idToken, googleOauth.accessToken);
+        await signInWithCredential(auth, credential);
       });
     }
   }
