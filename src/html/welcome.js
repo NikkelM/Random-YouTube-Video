@@ -71,13 +71,13 @@ async function setPopupDomElemenEventListeners(domElements) {
 
 		// This is so important that we will use a browser alert window to make sure the user sees and acknowledges it
 		await delay(50);
-		alert("You need to grant the extension permission to run on YouTube in order to use it. Please grant permissions using the highlighted button.")
+		alert("You must grant the extension the permission to access YouTube.com in order to use it. Please grant the permission using the highlighted button.");
 
 		domElements.giveFirefoxPermissionsButton.addEventListener("click", async function () {
 			await requestFirefoxPermissions();
 			// If permissions were not granted we must ask again, without them the extension does not work
 			if (!await browser.permissions.contains({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] })) {
-				alert("You need to grant the extension permission to run on YouTube in order to use it. Please grant permissions.")
+				alert("You must grant the extension the permission to access YouTube.com in order to use it. Please grant the permission using the highlighted button.");
 			} else {
 				domElements.firefoxPermissionsDiv.classList.add("hidden");
 				if (mayShowReloadAllYouTubePagesDiv) {
