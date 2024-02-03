@@ -1,6 +1,6 @@
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot, doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFirestore, query, collection, where, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 
 const firebaseConfig = {
@@ -50,12 +50,11 @@ export async function googleLogin() {
   const auth = getAuth(app);
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      const uid = user.uid;
       console.log("Signed in successfully!");
+      const uid = user.uid;
 
       // Save the user's uid to sync storage
       await chrome.storage.sync.set({ "userID": uid });
-
     } else {
       console.log("Signed out successfully, or the sign in flow was started!");
     }
@@ -71,61 +70,28 @@ export async function googleLogin() {
     await signInWithCredential(auth, credential);
 
     if (!googleOauth.refreshToken) {
-      console.log("Getting the Google Oauth refresh token from Firestore, as it does not exist locally.");
-      const userRef = doc(db, "users", getAuth().currentUser.uid);
-      const userDoc = await getDoc(userRef);
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        if (data.refreshToken) {
-          googleOauth.refreshToken = data.refreshToken;
-          await chrome.storage.local.set({ "googleOauth": googleOauth });
-        }
-      }
+      await fetchRefreshTokenFromFirestore(googleOauth);
     }
 
     return googleOauth;
   } else {
-    const randomPool = crypto.getRandomValues(new Uint8Array(32));
-    let generatedState = '';
-    for (let i = 0; i < randomPool.length; ++i) {
-      generatedState += randomPool[i].toString(16);
+    let generatedState = "";
+    while (generatedState.length < 32) {
+      (generatedState += Math.random().toString(36).slice(2)).substring(2, 34);
     }
-    let accessToken, refreshToken, idToken, expiresOn, state, action, passedToken;
+
+    let action, passedToken;
 
     if (googleOauth.refreshToken) {
       console.log("Exchanging refresh token for access token");
       action = "refreshTokenExchange";
       passedToken = googleOauth.refreshToken;
 
-      await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=${action}&token=${passedToken}&state=${generatedState}`)
-        .then(response => response.json())
-        .then(data => {
-          accessToken = data.access_token;
-          refreshToken = data.refresh_token;
-          idToken = data.id_token;
-          expiresOn = new Date().getTime() + (data.expires_in * 1000);
-          state = data.state;
-          if (state !== generatedState) {
-            throw new Error("CSRF token does not match");
-          }
-        });
-
-      googleOauth.accessToken = accessToken;
-      googleOauth.expiresOn = expiresOn;
-      googleOauth.idToken = idToken;
-      if (refreshToken) {
-        googleOauth.refreshToken = refreshToken;
-      }
-      await chrome.storage.local.set({ "googleOauth": googleOauth });
-
-      // Login the user to Firebase
-      const credential = GoogleAuthProvider.credential(googleOauth.idToken, googleOauth.accessToken);
-      await signInWithCredential(auth, credential);
-
+      await runGoogleOauthAuthentication(action, passedToken, generatedState, googleOauth, auth);
     } else {
       console.log("Using code exchange, as there is no access or refresh token available.");
       action = "codeExchange";
-      // TODO: Use the chrome native login flow if it's available?
+      // TODO: Use the chrome native login flow if it's available? Is there an upside to this?
       chrome.identity.launchWebAuthFlow({
         'url': `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${generatedState}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=https://kijgnjhogkjodpakfmhgleobifempckf.chromiumapp.org/&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
         'interactive': true
@@ -133,61 +99,71 @@ export async function googleLogin() {
         const returnedState = redirect_url.split("state=")[1].split("&")[0];
         passedToken = redirect_url.split("code=")[1].split("&")[0];
 
-        // Check if the returned state matches the one we sent
-        if (generatedState === returnedState) {
-          console.log("CSRF token matches");
-        } else {
+        if (generatedState != returnedState) {
+          // TODO: Handle this error
           console.log("CSRF token does not match");
           throw new Error("CSRF token does not match");
         }
 
         console.log("Exchanging code for access token");
-        // Get an access, refresh and id token
-        await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=${action}&token=${passedToken}&state=${generatedState}`)
-          .then(response => response.json())
-          .then(data => {
-            accessToken = data.access_token;
-            refreshToken = data.refresh_token;
-            idToken = data.id_token;
-            expiresOn = new Date().getTime() + (data.expires_in * 1000);
-            state = data.state;
-            if (state !== generatedState) {
-              throw new Error("CSRF token does not match");
-            }
-          });
-
-        googleOauth.accessToken = accessToken;
-        googleOauth.expiresOn = expiresOn;
-        googleOauth.idToken = idToken;
-        if (refreshToken) {
-          googleOauth.refreshToken = refreshToken;
-        }
-        await chrome.storage.local.set({ "googleOauth": googleOauth });
-
-        // Login the user to Firebase
-        const credential = GoogleAuthProvider.credential(googleOauth.idToken, googleOauth.accessToken);
-        await signInWithCredential(auth, credential);
-
-        if (refreshToken) {
-          // Save the refresh token to Firestore
-          const userRef = doc(db, "users", getAuth().currentUser.uid);
-          await setDoc(userRef, {
-            refreshToken: refreshToken
-          }, { merge: true });
-        } else if (!googleOauth.refreshToken) {
-          console.log("Getting the Google Oauth refresh token from Firestore, as it does not exist locally.");
-          const userRef = doc(db, "users", getAuth().currentUser.uid);
-          const userDoc = await getDoc(userRef);
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            if (data.refreshToken) {
-              googleOauth.refreshToken = data.refreshToken;
-              await chrome.storage.local.set({ "googleOauth": googleOauth });
-            }
-          }
-        }
+        await runGoogleOauthAuthentication(action, passedToken, generatedState, googleOauth, auth);
       });
     }
+  }
+}
+
+// Gets the Google Oauth refresh token for the current user from Firestore and saves it locally
+async function fetchRefreshTokenFromFirestore(googleOauth) {
+  console.log("Getting the Google Oauth refresh token from Firestore, as it does not exist locally.");
+  const userRef = doc(db, "users", getAuth().currentUser.uid);
+  const userDoc = await getDoc(userRef);
+  if (userDoc.exists()) {
+    const data = userDoc.data();
+    if (data.refreshToken) {
+      googleOauth.refreshToken = data.refreshToken;
+      await chrome.storage.local.set({ "googleOauth": googleOauth });
+    }
+  }
+}
+
+// Exchanges a code or refresh token for an access token using the backend Google Cloud Function
+async function runGoogleOauthAuthentication(action, passedToken, generatedState, googleOauth, auth) {
+  let accessToken, refreshToken, idToken, expiresOn, state;
+  // Get an access, refresh and id token
+  await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=${action}&token=${passedToken}&state=${generatedState}`)
+    .then(response => response.json())
+    .then(data => {
+      accessToken = data.access_token;
+      refreshToken = data.refresh_token;
+      idToken = data.id_token;
+      expiresOn = new Date().getTime() + (data.expires_in * 1000);
+      state = data.state;
+      if (state != generatedState) {
+        // TODO: Handle this error
+        throw new Error("CSRF token does not match");
+      }
+    });
+
+  googleOauth.accessToken = accessToken;
+  googleOauth.expiresOn = expiresOn;
+  googleOauth.idToken = idToken;
+  if (refreshToken) {
+    googleOauth.refreshToken = refreshToken;
+  }
+  await chrome.storage.local.set({ "googleOauth": googleOauth });
+
+  // Login the user to Firebase
+  const credential = GoogleAuthProvider.credential(googleOauth.idToken, googleOauth.accessToken);
+  await signInWithCredential(auth, credential);
+
+  if (refreshToken) {
+    // Save the refresh token to Firestore
+    const userRef = doc(db, "users", getAuth().currentUser.uid);
+    await setDoc(userRef, {
+      refreshToken: refreshToken
+    }, { merge: true });
+  } else if (!googleOauth.refreshToken) {
+    await fetchRefreshTokenFromFirestore(googleOauth);
   }
 }
 
