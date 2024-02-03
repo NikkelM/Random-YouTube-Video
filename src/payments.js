@@ -1,6 +1,6 @@
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot } from 'firebase/firestore';
+import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot, doc, getDoc, setDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 
 const firebaseConfig = {
@@ -50,16 +50,14 @@ export async function googleLogin() {
   const auth = getAuth(app);
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      // User is signed in, see docs for a list of available properties
-      // https://firebase.google.com/docs/reference/js/auth.user
       const uid = user.uid;
-      console.log("User is signed in")
-      console.log(await user.getIdToken());
-      // ...
+      console.log("Signed in successfully!");
+
+      // Save the user's uid to sync storage
+      await chrome.storage.sync.set({ "userID": uid });
+
     } else {
-      // User is signed out
-      console.log("User is signed out")
-      // ...
+      console.log("Signed out successfully, or the sign in flow was started!");
     }
   });
 
@@ -72,6 +70,19 @@ export async function googleLogin() {
     const credential = GoogleAuthProvider.credential(googleOauth.idToken, googleOauth.accessToken);
     await signInWithCredential(auth, credential);
 
+    if (!googleOauth.refreshToken) {
+      console.log("Getting the Google Oauth refresh token from Firestore, as it does not exist locally.");
+      const userRef = doc(db, "users", getAuth().currentUser.uid);
+      const userDoc = await getDoc(userRef);
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        if (data.refreshToken) {
+          googleOauth.refreshToken = data.refreshToken;
+          await chrome.storage.local.set({ "googleOauth": googleOauth });
+        }
+      }
+    }
+
     return googleOauth;
   } else {
     const randomPool = crypto.getRandomValues(new Uint8Array(32));
@@ -82,16 +93,13 @@ export async function googleLogin() {
     let accessToken, refreshToken, idToken, expiresOn, state, action, passedToken;
 
     if (googleOauth.refreshToken) {
-      console.log("Using refresh token");
+      console.log("Exchanging refresh token for access token");
       action = "refreshTokenExchange";
       passedToken = googleOauth.refreshToken;
 
-      console.log("Exchanging refresh token for access token");
-      // Get an access, refresh and id token
       await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=${action}&token=${passedToken}&state=${generatedState}`)
         .then(response => response.json())
         .then(data => {
-          console.log(data);
           accessToken = data.access_token;
           refreshToken = data.refresh_token;
           idToken = data.id_token;
@@ -115,7 +123,7 @@ export async function googleLogin() {
       await signInWithCredential(auth, credential);
 
     } else {
-      console.log("Using code exchange");
+      console.log("Using code exchange, as there is no access or refresh token available.");
       action = "codeExchange";
       // TODO: Use the chrome native login flow if it's available?
       chrome.identity.launchWebAuthFlow({
@@ -138,7 +146,6 @@ export async function googleLogin() {
         await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=${action}&token=${passedToken}&state=${generatedState}`)
           .then(response => response.json())
           .then(data => {
-            console.log(data);
             accessToken = data.access_token;
             refreshToken = data.refresh_token;
             idToken = data.id_token;
@@ -155,13 +162,30 @@ export async function googleLogin() {
         if (refreshToken) {
           googleOauth.refreshToken = refreshToken;
         }
-        console.log(googleOauth);
-        console.log(googleOauth.googleOauth);
         await chrome.storage.local.set({ "googleOauth": googleOauth });
 
         // Login the user to Firebase
         const credential = GoogleAuthProvider.credential(googleOauth.idToken, googleOauth.accessToken);
         await signInWithCredential(auth, credential);
+
+        if (refreshToken) {
+          // Save the refresh token to Firestore
+          const userRef = doc(db, "users", getAuth().currentUser.uid);
+          await setDoc(userRef, {
+            refreshToken: refreshToken
+          }, { merge: true });
+        } else if (!googleOauth.refreshToken) {
+          console.log("Getting the Google Oauth refresh token from Firestore, as it does not exist locally.");
+          const userRef = doc(db, "users", getAuth().currentUser.uid);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data.refreshToken) {
+              googleOauth.refreshToken = data.refreshToken;
+              await chrome.storage.local.set({ "googleOauth": googleOauth });
+            }
+          }
+        }
       });
     }
   }
