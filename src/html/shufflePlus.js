@@ -34,8 +34,6 @@ function getPopupDomElements() {
 
 // Set default values from configSync == user preferences
 async function setPopupDomElementValuesFromConfig(domElements) {
-	// TODO: Save username locally for faster access when the page is loaded
-	// TODO: Separate functions for just getting locally saved metadata and actually logging in to firebase/refreshing tokens
 	user = await getUser(true);
 	if (user) {
 		domElements.welcomeHeader.textContent = `Welcome ${user.displayName.split(" ")[0]}!`;
