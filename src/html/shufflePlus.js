@@ -1,5 +1,5 @@
 // Entry point for the Shuffle+ page
-import { googleLogin } from "../payments.js";
+import { getUser } from "../payments.js";
 
 // ----- Setup -----
 let user;
@@ -36,7 +36,7 @@ function getPopupDomElements() {
 async function setPopupDomElementValuesFromConfig(domElements) {
 	// TODO: Save username locally for faster access when the page is loaded
 	// TODO: Separate functions for just getting locally saved metadata and actually logging in to firebase/refreshing tokens
-	user = await googleLogin();
+	user = await getUser(true);
 	if (user) {
 		domElements.welcomeHeader.textContent = `Welcome ${user.displayName.split(" ")[0]}!`;
 	} else {
@@ -48,11 +48,12 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 async function setPopupDomElemenEventListeners(domElements) {
 	// Google login button
 	domElements.googleLoginButton.addEventListener("click", async function () {
-		user = await googleLogin();
+		user = await getUser(false);
 		if (user) {
-			domElements.welcomeHeader = `Welcome ${user.displayName.split(" ")[0]}!`;
+			domElements.welcomeHeader.textContent = `Welcome ${user.displayName.split(" ")[0]}!`;
+			domElements.googleLoginButtonDiv.style.display = "none";
 		} else {
-			// TODO: Display error message
+			// TODO: Display error message below button
 		}
 	});
 }
