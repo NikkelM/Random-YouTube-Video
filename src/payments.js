@@ -46,80 +46,115 @@ async function getProducts() {
   return products;
 }
 
+// Get user information from local storage or by logging in to Google
+// If localOnly is set to true, the function will not attempt to log in to Google if there is no local information
+export async function getUser(localOnly) {
+  console.log(`Getting user info. Local only: ${localOnly}`);
+  if (localOnly) {
+    const googleOauth = (await chrome.storage.local.get("googleOauth")).googleOauth;
+    if (googleOauth?.userInfo) {
+      return googleOauth.userInfo;
+    }
+    console.log("No local user info found");
+    return null;
+  } else {
+    console.log("Attempting to log in to Google");
+    return await googleLogin();
+  }
+}
+
 // Run the Google Oauth flow until the user is logged in to Google and Firebase
 // TODO: Handle the case where the user has revoked access to the app. Would probably be getting a 400/401 error when refreshing the token?
-export async function googleLogin() {
+async function googleLogin() {
+  // Get local information about the user's Google Oauth state
+  let googleOauth = (await chrome.storage.local.get("googleOauth")).googleOauth || {};
+
+  // Set up the Firebase authentication handler
   const auth = getAuth(app);
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       console.log("Signed in successfully!");
-      const uid = user.uid;
+      // Extract the user info we need and save it locally
+      googleOauth.userInfo = {
+        displayName: user.displayName,
+        email: user.email,
+        firebaseUid: user.uid
+      };
 
-      // Save the user's uid to sync storage
-      await chrome.storage.sync.set({ "userID": uid });
+      await chrome.storage.local.set({ "googleOauth": googleOauth });
     } else {
       console.log("Signed out successfully, or the sign in flow was started!");
     }
   });
 
-  let googleOauth = (await chrome.storage.local.get("googleOauth")).googleOauth || {};
-
-  // The access token should be valid for at least another 5 minutes
+  // If we still have a valid access token, use it to authenticate to Firebase
   if (googleOauth.accessToken && googleOauth.expiresOn > new Date().getTime() + 300000) {
     console.log("Using cached access token");
     // Login the user to Firebase
     const credential = GoogleAuthProvider.credential(googleOauth.idToken, googleOauth.accessToken);
     await signInWithCredential(auth, credential);
 
+    // If the response from Google Oauth didn't include a refresh token, it means the user has previously granted the app access to their account
+    // That means that we will have the refresh token saved in the database 
     if (!googleOauth.refreshToken) {
       await fetchRefreshTokenFromFirestore(googleOauth);
     }
+    // If there is no current access token, we will need to either use the refresh token or get a code to exchange for an access token
   } else {
+    // Generate a random string to use as a CSRF token
     let generatedState = "";
     while (generatedState.length < 32) {
       (generatedState += Math.random().toString(36).slice(2)).substring(2, 34);
     }
 
-    let action, passedToken;
-
     if (googleOauth.refreshToken) {
       console.log("Exchanging refresh token for access token");
-      action = "refreshTokenExchange";
-      passedToken = googleOauth.refreshToken;
-
-      await runGoogleOauthAuthentication(action, passedToken, generatedState, googleOauth, auth);
+      googleOauth = await runGoogleOauthAuthentication("refreshTokenExchange", googleOauth.refreshToken, generatedState, googleOauth, auth);
     } else {
       console.log("Using code exchange, as there is no access or refresh token available.");
-      action = "codeExchange";
-      // TODO: Use the chrome native login flow if it's available? Is there an upside to this?
-      let redirectURI;
-      if (isFirefox) {
-        const baseRedirectUrl = browser.identity.getRedirectURL();
-        const redirectSubdomain = baseRedirectUrl.slice(0, baseRedirectUrl.indexOf('.')).replace('https://', '');
-        redirectURI = 'http://127.0.0.1/mozoauth2/' + redirectSubdomain;
-      } else {
-        redirectURI = chrome.identity.getRedirectURL();
-      }
-      chrome.identity.launchWebAuthFlow({
-        'url': `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${generatedState}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=${redirectURI}&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
-        'interactive': true
-      }, async function (redirect_url) {
-        const returnedState = redirect_url.split("state=")[1].split("&")[0];
-        passedToken = redirect_url.split("code=")[1].split("&")[0];
-
-        if (generatedState != returnedState) {
-          // TODO: Handle this error
-          console.log("CSRF token does not match");
-          throw new Error("CSRF token does not match");
-        }
-
-        console.log("Exchanging code for access token");
-        await runGoogleOauthAuthentication(action, passedToken, generatedState, googleOauth, auth);
-      });
+      // Before we can run the Google Oauth authentication flow, we need to get an authentication code from Google
+      googleOauth = await runWebAuthFlow(generatedState, googleOauth, auth);
+      console.log("Completed the web auth flow.")
     }
   }
 
-  return getAuth().currentUser;
+  return googleOauth.userInfo;
+}
+
+async function runWebAuthFlow(generatedState, googleOauth, auth) {
+  console.log("Running the web auth flow")
+  // TODO: Use the chrome native login flow if it's available? Is there an upside to this?
+  let redirectURI;
+  if (isFirefox) {
+    // We cannot verify ownership of the normal redirect URL, but local loopbacks are always allowed
+    const baseRedirectUrl = browser.identity.getRedirectURL();
+    const redirectSubdomain = baseRedirectUrl.slice(0, baseRedirectUrl.indexOf('.')).replace('https://', '');
+    redirectURI = `http://127.0.0.1/mozoauth2/${redirectSubdomain}`;
+  } else {
+    // For chromium based browsers, we can use the normal redirect URL, as it is verified by the extension key
+    redirectURI = chrome.identity.getRedirectURL();
+  }
+
+  return new Promise((resolve, reject) => {
+    // Launch a popup that prompts the user to login to their Google account and grant the app permissions as requested
+    chrome.identity.launchWebAuthFlow({
+      "url": `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${generatedState}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=${redirectURI}&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
+      "interactive": true
+    }, async function (redirect_url) {
+      const returnedState = redirect_url.split("state=")[1].split("&")[0];
+
+      if (generatedState != returnedState) {
+        // TODO: Handle this error
+        console.log("CSRF token does not match");
+        reject(new Error("CSRF token does not match"));
+      }
+
+      console.log("Exchanging authentication code for access token");
+      const returnedToken = redirect_url.split("code=")[1].split("&")[0];
+      googleOauth = await runGoogleOauthAuthentication("codeExchange", returnedToken, generatedState, googleOauth, auth);
+      resolve(googleOauth);
+    });
+  });
 }
 
 // Gets the Google Oauth refresh token for the current user from Firestore and saves it locally
@@ -138,18 +173,16 @@ async function fetchRefreshTokenFromFirestore(googleOauth) {
 
 // Exchanges a code or refresh token for an access token using the backend Google Cloud Function
 async function runGoogleOauthAuthentication(action, passedToken, generatedState, googleOauth, auth) {
-  let accessToken, refreshToken, idToken, expiresOn, state;
-  // Get an access, refresh and id token
+  let accessToken, refreshToken, idToken, expiresOn, returnedState;
+  // Get an access, refresh and id token (unused) for the user
   await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=${action}&token=${passedToken}&state=${generatedState}`)
     .then(response => response.json())
     .then(data => {
       accessToken = data.access_token;
       refreshToken = data.refresh_token;
-      // TODO: Do we need the id token?
-      idToken = data.id_token;
       expiresOn = new Date().getTime() + (data.expires_in * 1000);
-      state = data.state;
-      if (state != generatedState) {
+      returnedState = data.state;
+      if (returnedState != generatedState) {
         // TODO: Handle this error
         throw new Error("CSRF token does not match");
       }
@@ -176,10 +209,12 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
   } else if (!googleOauth.refreshToken) {
     await fetchRefreshTokenFromFirestore(googleOauth);
   }
+
+  return googleOauth;
 }
 
 export async function openStripeCheckout() {
-  const currentUser = getAuth().currentUser ?? await googleLogin();
+  const currentUser = await getUser(false);
   // console.log(currentUser);
 
   // const products = await getProducts();
