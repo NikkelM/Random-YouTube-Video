@@ -3,6 +3,7 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, query, collection, where, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 
+const isFirefox = typeof browser !== "undefined";
 const firebaseConfig = {
   apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
   authDomain: "random--video-ex-chrome.firebaseapp.com",
@@ -91,8 +92,16 @@ export async function googleLogin() {
       console.log("Using code exchange, as there is no access or refresh token available.");
       action = "codeExchange";
       // TODO: Use the chrome native login flow if it's available? Is there an upside to this?
+      let redirectURI;
+      if (isFirefox) {
+        const baseRedirectUrl = browser.identity.getRedirectURL();
+        const redirectSubdomain = baseRedirectUrl.slice(0, baseRedirectUrl.indexOf('.')).replace('https://', '');
+        redirectURI = 'http://127.0.0.1/mozoauth2/' + redirectSubdomain;
+      } else {
+        redirectURI = chrome.identity.getRedirectURL();
+      }
       chrome.identity.launchWebAuthFlow({
-        'url': `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${generatedState}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=https://kijgnjhogkjodpakfmhgleobifempckf.chromiumapp.org/&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
+        'url': `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${generatedState}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=${redirectURI}&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
         'interactive': true
       }, async function (redirect_url) {
         const returnedState = redirect_url.split("state=")[1].split("&")[0];
@@ -136,6 +145,7 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
     .then(data => {
       accessToken = data.access_token;
       refreshToken = data.refresh_token;
+      // TODO: Do we need the id token?
       idToken = data.id_token;
       expiresOn = new Date().getTime() + (data.expires_in * 1000);
       state = data.state;
