@@ -1,10 +1,6 @@
 {
 	"name": "Random YouTube Video",
 	"author": "Nikkel Mollenhauer",
-	"developer": {
-		"name": "Nikkel Mollenhauer",
-		"url": "https://nikkelm.dev"
-	},
 	"description": "Customize, shuffle and play random videos from any YouTube channel.",
 	"version": "3.1.1",
 	"version_name": "3.1.2-beta",

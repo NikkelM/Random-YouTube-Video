@@ -1,4 +1,8 @@
 {
+	"developer": {
+		"name": "Nikkel Mollenhauer",
+		"url": "https://nikkelm.dev"
+	},
 	"background": {
 		"scripts": [
 			"background.js"
