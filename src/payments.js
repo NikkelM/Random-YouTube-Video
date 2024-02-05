@@ -63,7 +63,7 @@ export async function getUser(localOnly) {
   }
 }
 
-// Run the Google Oauth flow until the user is logged in to Google and Firebase
+// Run the Google Oauth flow until the user is logged in to Google and Firebase.
 // TODO: Handle the case where the user has revoked access to the app. Would probably be getting a 400/401 error when refreshing the token?
 // TODO: Offer functionality to self-revoke access to the app/for the user to be forgotten
 // See above: Also useful if we lose the refresh token
