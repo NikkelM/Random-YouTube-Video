@@ -1,5 +1,7 @@
 // Contains logic for interacting with Stripe for payment handling
+import { initializeApp } from 'firebase/app';
 import { getFirestore, query, collection, where, getDocs } from 'firebase/firestore';
+import {getUser } from './googleOauth.js';
 
 const firebaseConfig = {
 	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
