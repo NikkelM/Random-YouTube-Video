@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html id="randomYoutubeVideoHTML" lang="en">
 	<head>
-		<title>Welcome - Random YouTube Video</title>
+		<title>Shuffle+ - Random YouTube Video</title>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link id="RandomYoutubeVideoStyleSheet" rel="stylesheet" href="../css/popup.css" />
@@ -9,44 +9,16 @@
 
 	<body id="randomYoutubeVideoBody">
 		<div id="randomYoutubeVideo" style="margin-top: 10px">
-			<h1 id="updateHeading">Random YouTube Video</h1>
-			<h2>Welcome!</h2>
+			<h1>Shuffle+</h1>
+			<h2 id="welcomeHeader">Welcome! Sign in below to get started</h2>
 			<br />
 
-			<div id="firefoxPermissionsDiv" class="hidden">
-				<br />
-				<h3>To be able to use the extension, you <b>MUST</b></h3>
-				<button id="giveFirefoxPermissionsButton" class="randomYoutubeVideoButton highlight-green" style="font-size: 20px">give the extension permission to access YouTube.com</button>
+			<div id="googleLoginButtonDiv" style="display: none">
+				<button id="googleLoginButton" class="randomYoutubeVideoButton" type="button">Sign in with Google</button>
 			</div>
-
-			<div id="needToReloadYouTubePagesDiv" class="hidden">
-				<br />
-				<br />
-				<h3>Before you can start and see 'Shuffle' buttons, you need to</h3>
-				<button id="reloadAllYouTubePagesButton" class="randomYoutubeVideoButton highlight-green" style="font-size: 20px">click me to reload all <i>YouTube.com</i> pages</button>
-				<p>or do so manually.</p>
-				<p id="reloadText">
-					<br />
-					<br />
-					If you have any open YouTube pages, you will need to reload them to have 'Shuffle' buttons added to them.<br />
-					Don't have any videos running? Use the button above to automatically reload all YouTube pages open in your browser.
-				</p>
+			<div id="googleLoginErrorDiv" style="display: none">
+				<p id="googleLoginErrorP"></p>
 			</div>
-
-			<br />
-			<br />
-			<h3>Customize your experience:</h3>
-			<button id="openOptionsPageButton" class="randomYoutubeVideoButton highlight-green" style="font-size: 20px">Open the options page</button>
-			<p>or open the popup for the same experience at any time.</p>
-			<br />
-			<p>
-				Some options are shown depending on the last channel you've visited - try opening the popup after doing so! <br />
-				Pin the popup to easily access the options at all times.
-			</p>
-
-			<br />
-			<br />
-			<p><i>Happy shuffling!</i></p>
 
 			<br />
 			<br />
@@ -86,6 +58,6 @@
 
 		<script src="../utils.js" type="text/javascript"></script>
 		<script src="../htmlUtils.js" type="text/javascript"></script>
-		<script src="../welcome.js" type="module"></script>
+		<script src="../shufflePlus.js" type="module"></script>
 	</body>
 </html>

@@ -119,6 +119,8 @@ function getPopupDomElements() {
 		// FOOTER
 		// View changelog button
 		viewChangelogButton: document.getElementById("viewChangelogButton"),
+		// Shuffle+ button
+		shufflePlusButton: document.getElementById("shufflePlusButton"),
 	}
 }
 
@@ -426,6 +428,15 @@ async function setPopupDomElemenEventListeners(domElements) {
 		}
 
 		domElements.viewChangelogButton.classList.remove("highlight-green");
+	});
+
+	// Shuffle+ subscribe button
+	domElements.shufflePlusButton.addEventListener("click", async function () {
+		const shufflePlusPage = chrome.runtime.getURL("html/shufflePlus.html");
+		let mustOpenTab = await tryFocusingTab(shufflePlusPage);
+		if (mustOpenTab) {
+			await chrome.tabs.create({ url: shufflePlusPage });
+		}
 	});
 }
 

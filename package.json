@@ -3,7 +3,7 @@
   "version": "3.1.1",
   "description": "Customize, shuffle and play random videos from any YouTube channel.",
   "scripts": {
-		"dev": "concurrently \"npm run dev:chromium\" \"npm run dev:firefox\"",
+    "dev": "concurrently \"npm run dev:chromium\" \"npm run dev:firefox\"",
     "dev:chromium": "webpack --env browser=chromium --watch --config webpack.dev.cjs",
     "dev:firefox": "concurrently --kill-others \"webpack --env browser=firefox --watch --config webpack.dev.cjs\" \"web-ext run --source-dir ./dist/firefox\"",
     "dev:android": "concurrently --kill-others \"webpack --env browser=firefox --watch --config webpack.dev.cjs\" \"web-ext run --source-dir ./dist/firefox -t firefox-android --adb-device emulator-5554 --firefox-apk org.mozilla.fenix\"",
@@ -47,6 +47,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.18.6",
+    "@stripe/firestore-stripe-payments": "^0.0.6",
     "firebase": "^9.22.0"
   },
   "lint-staged": {

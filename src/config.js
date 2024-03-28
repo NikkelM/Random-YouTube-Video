@@ -42,6 +42,8 @@ export const configSyncDefaults = {
 	"reviewMessageShown": false,
 	// If the message asking for a donation has been shown yet
 	"donationMessageShown": false,
+	// Contains user infortmation and tokens if the user is logged in with Google
+	"googleOauth": null
 };
 
 export const shufflingHints = [

@@ -783,8 +783,8 @@ describe('shuffleVideo', function () {
 												});
 											}
 										} else if (config.shuffleIgnoreShortsOption == "1") {
-											if (!input.playlistId.includes('LocalPlaylistContainsNoShorts') && !input.playlistId.includes('LocalPlaylistContainsOnlyShorts')) {
-												// This works because we choose more videos than there are only videos OR shorts in the playlist, so there will always be one of each
+											if (!input.playlistId.includes('LocalPlaylistContainsNoShorts') && !input.playlistId.includes('LocalPlaylistContainsOnlyShorts') && input.playlistId.includes("NoNewVideoUploaded")) {
+												// This works because we choose more videos than there are only videos OR shorts in the playlist, so there will always be at least one of each
 												// If this suddenly starts failing, it may be that that assumption was changed
 												it('should be able to choose both shorts and videos', async function () {
 													await chooseRandomVideo(input.channelId, false, domElement);

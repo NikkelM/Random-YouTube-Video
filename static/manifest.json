@@ -1,5 +1,6 @@
 {
 	"name": "Random YouTube Video",
+	"author": "Nikkel Mollenhauer",
 	"description": "Customize, shuffle and play random videos from any YouTube channel.",
 	"version": "3.1.1",
 	"version_name": "3.1.2-beta",
@@ -17,7 +18,8 @@
 	],
 	"permissions": [
 		"storage",
-		"tabs"
+		"tabs",
+		"identity"
 	],
 	"action": {
 		"default_popup": "html/popup.html",
