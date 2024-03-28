@@ -1,6 +1,6 @@
 // Entry point for the Shuffle+ page
 import { setSyncStorageValue } from "../chromeStorage.js";
-import { getUser } from "../payments.js";
+import { getUser } from "../googleOauth.js";
 import { tryFocusingTab } from "./htmlUtils.js";
 
 // ----- Setup -----
