@@ -46,19 +46,19 @@ async function getProducts() {
   return products;
 }
 
-// Get user information from local storage or by logging in to Google
-// If localOnly is set to true, the function will not attempt to log in to Google if there is no local information
+// Get user information from storage or by logging in to Google
+// If localOnly is set to true, the function will not attempt to log in to Google if there is no local information (==in sync storage)
 export async function getUser(localOnly) {
-  console.log(`Getting user info. Local only: ${localOnly}`);
+  console.log(`Getting user info. localOnly: ${localOnly}`);
   if (localOnly) {
-    const googleOauth = (await chrome.storage.local.get("googleOauth")).googleOauth;
+    const googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth;
     if (googleOauth?.userInfo) {
       return googleOauth.userInfo;
     }
     console.log("No local user info found");
     return null;
   } else {
-    console.log("Attempting to log in to Google");
+    console.log("Attempting to log in using Google Oauth");
     return await googleLogin();
   }
 }
@@ -69,22 +69,22 @@ export async function getUser(localOnly) {
 // See above: Also useful if we lose the refresh token
 // See https://stackoverflow.com/questions/18030486/google-oauth2-application-remove-self-from-user-authenticated-applications
 async function googleLogin() {
-  // Get local information about the user's Google Oauth state
-  let googleOauth = (await chrome.storage.local.get("googleOauth")).googleOauth || {};
+  // Get sync storage information about the user's Google Oauth state
+  let googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth || {};
 
   // Set up the Firebase authentication handler
   const auth = getAuth(app);
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       console.log("Signed in successfully!");
-      // Extract the user info we need and save it locally
+      // Extract the user info we need and save it to sync storage
       googleOauth.userInfo = {
         displayName: user.displayName,
         email: user.email,
         firebaseUid: user.uid
       };
 
-      await chrome.storage.local.set({ "googleOauth": googleOauth });
+      await chrome.storage.sync.set({ "googleOauth": googleOauth });
     } else {
       console.log("Signed out successfully, or the sign in flow was started!");
     }
@@ -117,7 +117,7 @@ async function googleLogin() {
       const redirectSubdomain = baseRedirectUrl.slice(0, baseRedirectUrl.indexOf('.')).replace('https://', '');
       redirectUri = `http://127.0.0.1/mozoauth2/${redirectSubdomain}`;
     } else {
-      // For chromium based browsers, we can use the normal redirect URL, as it is verified by the extension key
+      // For chromium based browsers, we can use the normal redirect URL, as it is verified through the extension's public key
       redirectUri = chrome.identity.getRedirectURL();
     }
 
@@ -170,7 +170,7 @@ async function fetchRefreshTokenFromFirestore(googleOauth) {
     const data = userDoc.data();
     if (data.googleRefreshToken) {
       googleOauth.refreshToken = data.googleRefreshToken;
-      await chrome.storage.local.set({ "googleOauth": googleOauth });
+      await chrome.storage.sync.set({ "googleOauth": googleOauth });
     }
   }
 }
@@ -198,7 +198,7 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
   if (refreshToken) {
     googleOauth.refreshToken = refreshToken;
   }
-  await chrome.storage.local.set({ "googleOauth": googleOauth });
+  await chrome.storage.sync.set({ "googleOauth": googleOauth });
 
   // Login the user to Firebase
   const credential = GoogleAuthProvider.credential(googleOauth.idToken, googleOauth.accessToken);
