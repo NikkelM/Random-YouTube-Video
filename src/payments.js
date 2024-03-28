@@ -133,7 +133,7 @@ async function googleLogin() {
 		}
 	}
 
-	return googleOauth.userInfo;
+	return googleOauth.userInfo ? googleOauth.userInfo : googleOauth
 }
 
 async function runWebAuthFlow(generatedState, redirectUri, googleOauth, auth) {
@@ -180,18 +180,25 @@ async function fetchRefreshTokenFromFirestore(googleOauth) {
 async function runGoogleOauthAuthentication(action, passedToken, generatedState, redirectUri, googleOauth, auth) {
 	let accessToken, refreshToken, idToken, expiresOn, returnedState;
 	// Get an access, refresh and id token (unused) for the user
-	await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=${action}&token=${passedToken}&state=${generatedState}&redirectUri=${redirectUri}`)
-		.then(response => response.json())
-		.then(data => {
-			accessToken = data.access_token;
-			refreshToken = data.refresh_token;
-			expiresOn = new Date().getTime() + (data.expires_in * 1000);
-			returnedState = data.state;
-			if (returnedState != generatedState) {
-				// TODO: Handle this error
-				throw new Error("CSRF token does not match");
-			}
-		});
+	try {
+		await fetch(`https://europe-west1-random-youtube-video-ex-chrome.cloudfunctions.net/google-oauth-token-exchange?action=${action}&token=${passedToken}&state=${generatedState}&redirectUri=${redirectUri}`)
+			.then(response => response.json())
+			.then(data => {
+				accessToken = data.access_token;
+				refreshToken = data.refresh_token;
+				expiresOn = new Date().getTime() + (data.expires_in * 1000);
+				returnedState = data.state;
+				if (returnedState != generatedState) {
+					throw new Error("CSRF token does not match");
+				}
+			});
+	} catch (error) {
+		console.error(error);
+		return { 
+			error: error,
+			code: "GO-1"
+		 };
+	}
 
 	googleOauth.accessToken = accessToken;
 	googleOauth.expiresOn = expiresOn;
