@@ -53,11 +53,12 @@ async function setPopupDomElemenEventListeners(domElements) {
 	domElements.googleLoginButton.addEventListener("click", async function () {
 		domElements.googleLoginButton.textContent = "Logging in...";
 		user = await getUser(false);
-		if (user.accessToken) {
+		if (user.displayName) {
 			domElements.welcomeHeader.textContent = `Login successful! Welcome ${user.displayName.split(" ")[0]}!`;
 			domElements.googleLoginButtonDiv.style.display = "none";
 			domElements.googleLoginErrorDiv.style.display = "none";
 		} else {
+			console.log(user);
 			domElements.googleLoginButton.textContent = `Login failed with error: ${user.code ? user.code : 'Unknown Error'}`;
 			domElements.googleLoginErrorDiv.style.display = "block";
 			domElements.googleLoginError.textContent = user.error;

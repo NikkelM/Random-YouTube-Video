@@ -128,7 +128,15 @@ async function googleLogin() {
 		} else {
 			console.log("Using code exchange, as there is no access or refresh token available.");
 			// Before we can run the Google Oauth authentication flow, we need to get an authentication code from Google
-			googleOauth = await runWebAuthFlow(generatedState, redirectUri, googleOauth, auth);
+			try {
+				googleOauth = await runWebAuthFlow(generatedState, redirectUri, googleOauth, auth);
+			} catch (error) {
+				console.error(error);
+				return {
+					error: error,
+					code: "GO-2"
+				};
+			}
 			console.log("Completed the web auth flow.")
 		}
 	}
@@ -149,9 +157,8 @@ async function runWebAuthFlow(generatedState, redirectUri, googleOauth, auth) {
 			const returnedState = redirect_url.split("state=")[1].split("&")[0];
 
 			if (generatedState != returnedState) {
-				// TODO: Handle this error
-				console.log("CSRF token does not match");
-				reject(new Error("CSRF token does not match"));
+				reject(new Error("CSRF token mismatch communicating with Google. Please try again or report this issue."));
+				return;
 			}
 
 			console.log("Exchanging authentication code for access token");
@@ -189,15 +196,15 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 				expiresOn = new Date().getTime() + (data.expires_in * 1000);
 				returnedState = data.state;
 				if (returnedState != generatedState) {
-					throw new Error("CSRF token does not match");
+					throw new Error("CSRF token mismatch during token exchange. Please try again or report this issue.");
 				}
 			});
 	} catch (error) {
 		console.error(error);
-		return { 
+		return {
 			error: error,
 			code: "GO-1"
-		 };
+		};
 	}
 
 	googleOauth.accessToken = accessToken;
