@@ -1,5 +1,7 @@
 // Entry point for the Shuffle+ page
+import { setSyncStorageValue } from "../chromeStorage.js";
 import { getUser } from "../payments.js";
+import { tryFocusingTab } from "./htmlUtils.js";
 
 // ----- Setup -----
 let user;
@@ -54,5 +56,18 @@ async function setPopupDomElemenEventListeners(domElements) {
 		} else {
 			domElements.googleLoginButton.textContent = "Login failed. Try again";
 		}
+	});
+
+	// View changelog button
+	domElements.viewChangelogButton.addEventListener("click", async function () {
+		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
+
+		const changelogPage = chrome.runtime.getURL("html/changelog.html");
+		let mustOpenTab = await tryFocusingTab(changelogPage);
+		if (mustOpenTab) {
+			await chrome.tabs.create({ url: changelogPage });
+		}
+
+		domElements.viewChangelogButton.classList.remove("highlight-green");
 	});
 }
