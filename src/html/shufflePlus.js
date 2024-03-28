@@ -46,12 +46,13 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 async function setPopupDomElemenEventListeners(domElements) {
 	// Google login button
 	domElements.googleLoginButton.addEventListener("click", async function () {
+		domElements.googleLoginButton.textContent = "Logging in...";
 		user = await getUser(false);
 		if (user) {
-			domElements.welcomeHeader.textContent = `Welcome ${user.displayName.split(" ")[0]}!`;
+			domElements.welcomeHeader.textContent = `Login successful! Welcome ${user.displayName.split(" ")[0]}!`;
 			domElements.googleLoginButtonDiv.style.display = "none";
 		} else {
-			// TODO: Display error message below button
+			domElements.googleLoginButton.textContent = "Login failed. Try again";
 		}
 	});
 }
