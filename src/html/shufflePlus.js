@@ -1,13 +1,14 @@
 // Entry point for the Shuffle+ page
 import { setSyncStorageValue } from "../chromeStorage.js";
 import { getUser } from "../googleOauth.js";
-import { tryFocusingTab } from "./htmlUtils.js";
+import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
 
 // ----- Setup -----
 let user;
 const domElements = getPopupDomElements();
 await setPopupDomElementValuesFromConfig(domElements);
 await setPopupDomElemenEventListeners(domElements);
+await buildShufflingHints(domElements);
 
 // ----- DOM -----
 // --- Private ---
@@ -28,6 +29,12 @@ function getPopupDomElements() {
 		// Login Error Div
 		googleLoginErrorDiv: document.getElementById("googleLoginErrorDiv"),
 		googleLoginError: document.getElementById("googleLoginErrorP"),
+
+		// SHUFFLING HINTS
+		// The p element containing the shuffle hint
+		shufflingHintP: document.getElementById("shufflingHintP"),
+		// The button that displays the next shuffle hint
+		nextHintButton: document.getElementById("nextHintButton"),
 
 		// FOOTER
 		// View changelog button
