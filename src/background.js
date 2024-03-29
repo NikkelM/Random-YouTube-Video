@@ -81,6 +81,7 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 }
 
 async function handleVersionSpecificUpdates(previousVersion) {
+	// TODO: Add a popup introducing Shuffle+ after updating to a version that introduces it
 	// v3.0.1 changed the data type for the shuffleIgnoreShortsOption from boolean to number
 	if (previousVersion < "3.0.1") {
 		console.log("Updating sync storage to v3.0.1 format...");
