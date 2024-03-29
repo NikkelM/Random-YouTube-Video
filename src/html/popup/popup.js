@@ -25,9 +25,9 @@ if (isPopup) {
 	}
 }
 
-const domElements = getPopupDomElements();
-await setPopupDomElementValuesFromConfig(domElements);
-await setPopupDomElemenEventListeners(domElements);
+const domElements = getDomElements();
+await setDomElementValuesFromConfig(domElements);
+await setDomElementEventListeners(domElements);
 await determineOverlayVisibility(domElements);
 
 // Restart the background script if it was stopped to make sure the shuffle button immediately works
@@ -40,7 +40,7 @@ try {
 // ----- DOM -----
 // --- Private ---
 // Get relevant DOM elements
-function getPopupDomElements() {
+function getDomElements() {
 	/* global reviewDonationDiv, reviewDiv, donationDiv, customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv */
 	/* eslint no-undef: "error" */
 	return {
@@ -125,7 +125,7 @@ function getPopupDomElements() {
 }
 
 // Set default values from configSync == user preferences
-async function setPopupDomElementValuesFromConfig(domElements) {
+async function setDomElementValuesFromConfig(domElements) {
 	// Disable animations to prevent them from playing when setting the values
 	toggleAnimations(domElements);
 
@@ -194,7 +194,7 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 }
 
 // Set event listeners for DOM elements
-async function setPopupDomElemenEventListeners(domElements) {
+async function setDomElementEventListeners(domElements) {
 	// Custom API key: Option toggle
 	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
 		await setSyncStorageValue("useCustomApiKeyOption", this.checked);

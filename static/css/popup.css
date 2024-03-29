@@ -237,12 +237,12 @@
 
 @keyframes gradient {
 	0% { background-position: 0% 50%; }
-	50% { background-position: 100% 50%; }
+	50% { background-position: 100% 0%; }
 	100% { background-position: 0% 50%; }
 }
 
 .randomYoutubeVideoButton.highlight-green-animated {
-	background: linear-gradient(45deg, #058101, #058f00, #06bb00, #09ff00);
+	background: linear-gradient(45deg, #058101, #079c02, #09ff00);
 	background-size: 400% 400%;
 	animation: gradient 5s ease infinite;
 }

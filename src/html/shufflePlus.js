@@ -5,15 +5,15 @@ import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
 
 // ----- Setup -----
 let user;
-const domElements = getPopupDomElements();
-await setPopupDomElementValuesFromConfig(domElements);
-await setPopupDomElemenEventListeners(domElements);
+const domElements = getDomElements();
+await setDomElementValuesFromConfig(domElements);
+await setDomElementEventListeners(domElements);
 await buildShufflingHints(domElements);
 
 // ----- DOM -----
 // --- Private ---
 // Get relevant DOM elements
-function getPopupDomElements() {
+function getDomElements() {
 	/* global googleLoginButtonDiv */
 	/* eslint no-undef: "error" */
 	return {
@@ -48,7 +48,7 @@ function getPopupDomElements() {
 }
 
 // Set default values from configSync == user preferences
-async function setPopupDomElementValuesFromConfig(domElements) {
+async function setDomElementValuesFromConfig(domElements) {
 	user = await getUser(true);
 	if (user) {
 		domElements.welcomeHeader.textContent = `Welcome ${user.displayName.split(" ")[0]}!`;
@@ -59,7 +59,7 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 }
 
 // Set event listeners for DOM elements
-async function setPopupDomElemenEventListeners(domElements) {
+async function setDomElementEventListeners(domElements) {
 	// Google login button
 	domElements.googleLoginButton.addEventListener("click", async function () {
 		domElements.googleLoginButton.textContent = "Logging in...";

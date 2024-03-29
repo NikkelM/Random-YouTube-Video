@@ -1,10 +1,11 @@
 // Contains logic for the "Changelog" page
 import { delay } from "../utils.js";
-import { buildShufflingHints } from "./htmlUtils.js";
+import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
 
 // ----- Setup -----
 const domElements = getDomElements();
 await buildShufflingHints(domElements);
+await setDomElementEventListeners(domElements);
 
 // --- Set headers ---
 const currentVersion = chrome.runtime.getManifest().version_name ?? chrome.runtime.getManifest().version;
@@ -77,11 +78,29 @@ function getDomElements() {
 		changelogDiv: document.getElementById("changelogDiv"),
 		// The dropdown menu for selecting a version
 		chooseChangelogVersionDropdown: document.getElementById("chooseChangelogVersionDropdown"),
+
+		// SHUFFLING HINTS
 		// The p element containing the shuffle hint
 		shufflingHintP: document.getElementById("shufflingHintP"),
 		// The button that displays the next shuffle hint
 		nextHintButton: document.getElementById("nextHintButton"),
+
+		// FOOTER
+		// Shuffle+ button
+		shufflePlusButton: document.getElementById("shufflePlusButton"),
 	}
+}
+
+// Set event listeners for DOM elements
+async function setDomElementEventListeners(domElements) {
+	// Shuffle+ subscribe button
+	domElements.shufflePlusButton.addEventListener("click", async function () {
+		const shufflePlusPage = chrome.runtime.getURL("html/shufflePlus.html");
+		let mustOpenTab = await tryFocusingTab(shufflePlusPage);
+		if (mustOpenTab) {
+			await chrome.tabs.create({ url: shufflePlusPage });
+		}
+	});
 }
 
 // ----- Changelog -----

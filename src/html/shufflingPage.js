@@ -20,7 +20,7 @@ try {
 const port = chrome.runtime.connect({ name: "shufflingPage" });
 
 const domElements = getDomElements();
-await setDomElemenEventListeners(domElements);
+await setDomElementEventListeners(domElements);
 
 // If this page is open, it means the user has clicked the shuffle button
 shuffleButtonClicked();
@@ -54,12 +54,14 @@ function getDomElements() {
 
 		// FOOTER
 		// View changelog button
-		viewChangelogButton: document.getElementById("viewChangelogButton")
+		viewChangelogButton: document.getElementById("viewChangelogButton"),
+		// Shuffle+ button
+		shufflePlusButton: document.getElementById("shufflePlusButton"),
 	}
 }
 
 // Set event listeners for DOM elements
-async function setDomElemenEventListeners(domElements) {
+async function setDomElementEventListeners(domElements) {
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
@@ -68,6 +70,15 @@ async function setDomElemenEventListeners(domElements) {
 		let mustOpenTab = await tryFocusingTab(tabUrl);
 		if (mustOpenTab) {
 			window.open(tabUrl, "_blank");
+		}
+	});
+
+	// Shuffle+ subscribe button
+	domElements.shufflePlusButton.addEventListener("click", async function () {
+		const shufflePlusPage = chrome.runtime.getURL("html/shufflePlus.html");
+		let mustOpenTab = await tryFocusingTab(shufflePlusPage);
+		if (mustOpenTab) {
+			await chrome.tabs.create({ url: shufflePlusPage });
 		}
 	});
 }

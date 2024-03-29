@@ -26,7 +26,7 @@ const currentVersion = chrome.runtime.getManifest().version_name ?? chrome.runti
 domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
 
 await buildShufflingHints(domElements);
-await setPopupDomElemenEventListeners(domElements);
+await setDomElementEventListeners(domElements);
 
 // ---------- DOM ----------
 // Get all relevant DOM elements
@@ -60,11 +60,13 @@ function getDomElements() {
 		// FOOTER
 		// View changelog button
 		viewChangelogButton: document.getElementById("viewChangelogButton"),
+		// Shuffle+ button
+		shufflePlusButton: document.getElementById("shufflePlusButton"),
 	}
 }
 
 // Set event listeners for DOM elements
-async function setPopupDomElemenEventListeners(domElements) {
+async function setDomElementEventListeners(domElements) {
 	// Firefox permissions button
 	if (isFirefox && !await browser.permissions.contains({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] })) {
 		domElements.firefoxPermissionsDiv.classList.remove("hidden");
@@ -119,6 +121,15 @@ async function setPopupDomElemenEventListeners(domElements) {
 		let mustOpenTab = await tryFocusingTab(changelogUrl);
 		if (mustOpenTab) {
 			await chrome.tabs.create({ url: changelogUrl });
+		}
+	});
+
+	// Shuffle+ subscribe button
+	domElements.shufflePlusButton.addEventListener("click", async function () {
+		const shufflePlusPage = chrome.runtime.getURL("html/shufflePlus.html");
+		let mustOpenTab = await tryFocusingTab(shufflePlusPage);
+		if (mustOpenTab) {
+			await chrome.tabs.create({ url: shufflePlusPage });
 		}
 	});
 }
