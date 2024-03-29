@@ -28,7 +28,10 @@ function getPopupDomElements() {
 		googleLoginButton: googleLoginButtonDiv.children.namedItem("googleLoginButton"),
 		// Login Error Div
 		googleLoginErrorDiv: document.getElementById("googleLoginErrorDiv"),
-		googleLoginError: document.getElementById("googleLoginErrorP"),
+		googleLoginErrorP: document.getElementById("googleLoginErrorP"),
+		// Login Success Div
+		googleLoginSuccessDiv: document.getElementById("googleLoginSuccessDiv"),
+		googleLoginSuccessP: document.getElementById("googleLoginSuccessP"),
 
 		// SHUFFLING HINTS
 		// The p element containing the shuffle hint
@@ -49,6 +52,7 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 	user = await getUser(true);
 	if (user) {
 		domElements.welcomeHeader.textContent = `Welcome ${user.displayName.split(" ")[0]}!`;
+		domElements.googleLoginSuccessDiv.style.display = "block";
 	} else {
 		domElements.googleLoginButtonDiv.style.display = "block";
 	}
@@ -64,11 +68,13 @@ async function setPopupDomElemenEventListeners(domElements) {
 			domElements.welcomeHeader.textContent = `Login successful! Welcome ${user.displayName.split(" ")[0]}!`;
 			domElements.googleLoginButtonDiv.style.display = "none";
 			domElements.googleLoginErrorDiv.style.display = "none";
+			domElements.googleLoginSuccessDiv.style.display = "block";
 		} else {
 			console.log(user);
 			domElements.googleLoginButton.textContent = `Login failed with error: ${user.code ? user.code : 'Unknown Error'}`;
+			domElements.googleLoginSuccessDiv.style.display = "none";
 			domElements.googleLoginErrorDiv.style.display = "block";
-			domElements.googleLoginError.textContent = user.error;
+			domElements.googleLoginErrorP.textContent = user.error;
 		}
 	});
 
