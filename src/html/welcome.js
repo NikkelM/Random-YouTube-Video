@@ -1,10 +1,10 @@
 // Contains logic for the "Welcome" page
 import { setSyncStorageValue } from "../chromeStorage.js";
+import { isFirefox } from "../config.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
 import { delay } from "../utils.js";
 
 // ----- Setup -----
-const isFirefox = typeof browser !== "undefined";
 const domElements = getDomElements();
 
 let mayShowReloadAllYouTubePagesDiv = false;

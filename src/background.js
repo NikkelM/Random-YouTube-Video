@@ -1,10 +1,11 @@
 // Background service worker for the extension, which is run ("started") on extension initialization
 // Handles communication between the extension and the content script as well as Firebase interactions
 import { configSync, setSyncStorageValue } from "./chromeStorage.js";
+import { isFirefox, firebaseConfig } from "./config.js";
+import { initializeApp } from 'firebase/app';
+import { getDatabase, ref, child, update, get, remove } from 'firebase/database';
 
 // ---------- Initialization/Chrome event listeners ----------
-const isFirefox = typeof browser !== "undefined";
-
 // Check whether a new version was installed
 async function initExtension() {
 	const manifestData = chrome.runtime.getManifest();
@@ -194,19 +195,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ---------- Firebase ----------
-import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, child, update, get, remove } from 'firebase/database';
-
-const firebaseConfig = {
-	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
-	authDomain: "random--video-ex-chrome.firebaseapp.com",
-	projectId: "random-youtube-video-ex-chrome",
-	storageBucket: "random-youtube-video-ex-chrome.appspot.com",
-	messagingSenderId: "141257152664",
-	appId: "1:141257152664:web:f70e46e35d02921a8818ed",
-	databaseURL: "https://random-youtube-video-ex-chrome-default-rtdb.europe-west1.firebasedatabase.app"
-};
-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 

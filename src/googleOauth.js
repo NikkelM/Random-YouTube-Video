@@ -1,19 +1,9 @@
 // Contains logic to login and authenticate users through Google Oauth and Firebase Auth
 import { setSyncStorageValue } from "./chromeStorage.js";
+import { isFirefox, firebaseConfig } from "./config.js";
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
-
-const isFirefox = typeof browser !== "undefined";
-const firebaseConfig = {
-	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
-	authDomain: "random--video-ex-chrome.firebaseapp.com",
-	projectId: "random-youtube-video-ex-chrome",
-	storageBucket: "random-youtube-video-ex-chrome.appspot.com",
-	messagingSenderId: "141257152664",
-	appId: "1:141257152664:web:f70e46e35d02921a8818ed",
-	databaseURL: "https://random-youtube-video-ex-chrome-default-rtdb.europe-west1.firebasedatabase.app"
-};
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);

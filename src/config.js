@@ -46,6 +46,18 @@ export const configSyncDefaults = {
 	"googleOauth": null
 };
 
+export const isFirefox = typeof browser !== "undefined";
+
+export const firebaseConfig = {
+	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
+	authDomain: "random--video-ex-chrome.firebaseapp.com",
+	projectId: "random-youtube-video-ex-chrome",
+	storageBucket: "random-youtube-video-ex-chrome.appspot.com",
+	messagingSenderId: "141257152664",
+	appId: "1:141257152664:web:f70e46e35d02921a8818ed",
+	databaseURL: "https://random-youtube-video-ex-chrome-default-rtdb.europe-west1.firebasedatabase.app"
+};
+
 export const shufflingHints = [
 	// General extension hints
 	"The extension adds a 'Shuffle' button to all channel, video and shorts pages on YouTube. This button has the same behaviour as shuffling from the popup!",
