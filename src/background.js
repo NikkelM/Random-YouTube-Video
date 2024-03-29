@@ -8,6 +8,7 @@ import { getDatabase, ref, child, update, get, remove } from 'firebase/database'
 // ---------- Initialization/Chrome event listeners ----------
 // Check whether a new version was installed
 async function initExtension() {
+	// TODO: Change the extension icon if the user is subscribed to Shuffle+
 	const manifestData = chrome.runtime.getManifest();
 	if (configSync.previousVersion === null) {
 		console.log(`Extension was installed for the first time (v${manifestData.version})`);

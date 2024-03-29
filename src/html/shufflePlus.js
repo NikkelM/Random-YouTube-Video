@@ -69,6 +69,8 @@ async function setDomElementEventListeners(domElements) {
 			domElements.googleLoginButtonDiv.style.display = "none";
 			domElements.googleLoginErrorDiv.style.display = "none";
 			domElements.googleLoginSuccessDiv.style.display = "block";
+			// TODO: If the user is logged in and subscribed, change the extension icon, e.g.:
+			// chrome.action.setIcon({ path: chrome.runtime.getURL('icons/icon-128-white.png') });
 		} else {
 			console.log(user);
 			domElements.googleLoginButton.textContent = `Login failed with error: ${user.code ? user.code : 'Unknown Error'}`;

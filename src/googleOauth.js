@@ -93,9 +93,15 @@ async function googleLogin() {
 				googleOauth = await runWebAuthFlow(generatedState, redirectUri, googleOauth, auth);
 			} catch (error) {
 				console.error(error);
+				let code = "GO-0"; // Unknown error
+				if (error.message.includes("CSRF token mismatch")) {
+					code = "GO-2";
+				} else if (error.message.includes("User closed the authorization window")) {
+					code = "GO-3";
+				}
 				return {
 					error: error,
-					code: "GO-2"
+					code: code
 				};
 			}
 			console.log("Completed the web auth flow.")
@@ -114,19 +120,29 @@ async function runWebAuthFlow(generatedState, redirectUri, googleOauth, auth) {
 		chrome.identity.launchWebAuthFlow({
 			"url": `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&state=${generatedState}&client_id=141257152664-9ps6uugd281t3b581q5phdl1qd245tcf.apps.googleusercontent.com&redirect_uri=${redirectUri}&scope=https://www.googleapis.com/auth/userinfo.email%20https://www.googleapis.com/auth/userinfo.profile%20https://www.googleapis.com/auth/youtube.readonly`,
 			"interactive": true
-		}, async function (redirect_url) {
-			const returnedState = redirect_url.split("state=")[1].split("&")[0];
+		}, async function (redirectURL) {
+			try {
+				if (redirectURL == undefined || redirectURL == null || redirectURL == "") {
+					reject(new Error("User closed the authorization window."));
+					return;
+				}
+				const returnedState = redirectURL.split("state=")[1].split("&")[0];
 
-			if (generatedState != returnedState) {
-				reject(new Error("CSRF token mismatch communicating with Google. Please try again or report this issue."));
-				return;
+				if (generatedState != returnedState) {
+					reject(new Error("CSRF token mismatch communicating with Google. Please try again or report this issue."));
+					return;
+				}
+
+				console.log("Exchanging authentication code for access token");
+				const returnedToken = redirectURL.split("code=")[1].split("&")[0];
+				googleOauth = await runGoogleOauthAuthentication("codeExchange", returnedToken, generatedState, redirectUri, googleOauth, auth);
+				resolve(googleOauth);
+			} catch (error) {
+				reject(error);
 			}
-
-			console.log("Exchanging authentication code for access token");
-			const returnedToken = redirect_url.split("code=")[1].split("&")[0];
-			googleOauth = await runGoogleOauthAuthentication("codeExchange", returnedToken, generatedState, redirectUri, googleOauth, auth);
-			resolve(googleOauth);
 		});
+	}).catch(error => {
+		throw error;
 	});
 }
 
