@@ -29,7 +29,7 @@ export async function getUser(localOnly) {
 // Run the Google Oauth flow until the user is logged in to Google and Firebase.
 // If the user manually revoked access to the app, the attempt to get a token will return a 400 TOKEN_EXPIRED error and automatically launch the normal flow.
 // TODO: Make sure we can have access to the YouTube account auto-ticked in the Google Oauth flow, or get notified if the user didn't do so so we can notify them afterwards and reprompt
-async function googleLogin() {
+async function googleLogin(allowSelfRevoke = true) {
 	// Get sync storage information about the user's Google Oauth state
 	let googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth || {};
 
@@ -47,7 +47,7 @@ async function googleLogin() {
 
 			await setSyncStorageValue("googleOauth", googleOauth);
 		} else {
-			console.log("Signed out successfully, or the sign in flow was started!");
+			console.log("Sign in flow was started!");
 		}
 	});
 
@@ -60,7 +60,7 @@ async function googleLogin() {
 
 		if (!googleOauth.refreshToken) {
 			try {
-				await fetchRefreshTokenFromFirestore(googleOauth);
+				await fetchRefreshTokenFromFirestore(googleOauth, allowSelfRevoke);
 			} catch (error) {
 				console.error(error);
 				return {
@@ -90,12 +90,12 @@ async function googleLogin() {
 
 		if (googleOauth.refreshToken) {
 			console.log("Exchanging refresh token for access token");
-			googleOauth = await runGoogleOauthAuthentication("refreshTokenExchange", googleOauth.refreshToken, generatedState, redirectUri, googleOauth, auth);
+			googleOauth = await runGoogleOauthAuthentication("refreshTokenExchange", googleOauth.refreshToken, generatedState, redirectUri, googleOauth, auth, allowSelfRevoke);
 		} else {
 			console.log("Using code exchange, as there is no access or refresh token available.");
 			// Before we can run the Google Oauth authentication flow, we need to get an authentication code from Google
 			try {
-				googleOauth = await runWebAuthFlow(generatedState, redirectUri, googleOauth, auth);
+				googleOauth = await runWebAuthFlow(generatedState, redirectUri, googleOauth, auth, allowSelfRevoke);
 			} catch (error) {
 				console.error(error);
 				let code = "GO-0"; // Unknown error
@@ -116,7 +116,7 @@ async function googleLogin() {
 	return googleOauth.userInfo ? googleOauth.userInfo : googleOauth
 }
 
-async function runWebAuthFlow(generatedState, redirectUri, googleOauth, auth) {
+async function runWebAuthFlow(generatedState, redirectUri, googleOauth, auth, allowSelfRevoke) {
 	console.log("Running the web auth flow");
 	return new Promise((resolve, reject) => {
 		// Launch a popup that prompts the user to login to their Google account and grant the app permissions as requested
@@ -138,7 +138,7 @@ async function runWebAuthFlow(generatedState, redirectUri, googleOauth, auth) {
 
 				console.log("Exchanging authentication code for access token");
 				const returnedToken = redirectURL.split("code=")[1].split("&")[0];
-				googleOauth = await runGoogleOauthAuthentication("codeExchange", returnedToken, generatedState, redirectUri, googleOauth, auth);
+				googleOauth = await runGoogleOauthAuthentication("codeExchange", returnedToken, generatedState, redirectUri, googleOauth, auth, allowSelfRevoke);
 				resolve(googleOauth);
 			} catch (error) {
 				reject(error);
@@ -150,7 +150,7 @@ async function runWebAuthFlow(generatedState, redirectUri, googleOauth, auth) {
 }
 
 // Gets the Google Oauth refresh token for the current user from Firestore and saves it locally
-async function fetchRefreshTokenFromFirestore(googleOauth) {
+async function fetchRefreshTokenFromFirestore(googleOauth, allowSelfRevoke) {
 	console.log("Getting the Google Oauth refresh token from Firestore, as it does not exist locally.");
 	let haveRefreshToken = true;
 
@@ -168,15 +168,18 @@ async function fetchRefreshTokenFromFirestore(googleOauth) {
 		haveRefreshToken = false;
 	}
 
-	if (!haveRefreshToken) {
+	if (!haveRefreshToken && allowSelfRevoke) {
 		console.error("No refresh token available in Firestore. Self-revoking app access.");
 		await revokeAccess();
 		throw new Error("Getting required authentication data failed. Please grant the app access again.");
+	} else if(!haveRefreshToken) {
+		console.error("No refresh token available in Firestore, but self-revoking access is not allowed.");
+		throw new Error("Getting required authentication data failed. Please go to your Google account dashboard and revoke access to the extension, then try again.");
 	}
 }
 
 // Exchanges a code or refresh token for an access token using the backend Google Cloud Function
-async function runGoogleOauthAuthentication(action, passedToken, generatedState, redirectUri, googleOauth, auth) {
+async function runGoogleOauthAuthentication(action, passedToken, generatedState, redirectUri, googleOauth, auth, allowSelfRevoke) {
 	let accessToken, refreshToken, idToken, expiresOn, returnedState;
 	// Get an access, refresh and id token (unused) for the user
 	try {
@@ -213,13 +216,14 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 
 	if (refreshToken) {
 		// Save the refresh token to Firestore
+		// TODO: Save it in a different document, to keep separate from stripe data and rules (no write allowed for stripe data)
 		const userRef = doc(db, "users", getAuth().currentUser.uid);
 		await setDoc(userRef, {
 			googleRefreshToken: refreshToken
 		}, { merge: true });
 	} else if (!googleOauth.refreshToken) {
 		try {
-			await fetchRefreshTokenFromFirestore(googleOauth);
+			await fetchRefreshTokenFromFirestore(googleOauth, allowSelfRevoke);
 		} catch (error) {
 			console.error(error);
 			return {
@@ -235,7 +239,7 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 // Revokes access to the app for the current user, and deletes it if requested and there is no active subscription
 export async function revokeAccess(deleteUser = false) {
 	// Make sure there is an active token and the user is authenticated with Firebase
-	await googleLogin();
+	await googleLogin(false);
 	const googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth;
 	const usedToken = googleOauth.accessToken || googleOauth.refreshToken;
 
@@ -274,7 +278,7 @@ export async function revokeAccess(deleteUser = false) {
 		// TODO: Find out if user has an active subscription. If they do, we cannot delete their account as the association will be lost
 		const activeSubscription = false;
 		if (revokeSuccessful && deleteUser && !activeSubscription) {
-			// TODO: When deleting the user, also delete the entry in Firestore
+			// TODO: When deleting the user account, also delete the user entry in Firestore db
 			const user = getAuth(app).currentUser;
 			user.delete().then(() => {
 				console.log('User deleted');
