@@ -11,6 +11,7 @@ const db = getFirestore(app);
 // Get user information from storage or by logging in to Google
 // If localOnly is set to true, the function will not attempt to log in to Google if there is no local information (==in sync storage)
 export async function getUser(localOnly) {
+	// TODO: If there is a user and an active subscription, fetch a new access token in the background script on startup, and validate the subscription status
 	console.log(`Getting user info. localOnly: ${localOnly}`);
 	if (localOnly) {
 		const googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth;
@@ -234,7 +235,12 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 // Revokes access to the app for the current user, and deletes it if requested and there is no active subscription
 export async function revokeAccess(deleteUser = false) {
 	const googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth;
-	const usedToken = googleOauth.accessToken || googleOauth.refreshToken;
+	let usedToken;
+	if (googleOauth.accessToken && googleOauth.expiresOn > new Date().getTime() + 60000) {
+		usedToken = googleOauth.accessToken;
+	} else {
+		usedToken = googleOauth.refreshToken;
+	}
 	if (usedToken) {
 		let postOptions = {
 			method: 'POST',
@@ -270,6 +276,7 @@ export async function revokeAccess(deleteUser = false) {
 		// TODO: Find out if user has an active subscription. If they do, we cannot delete their account as the association will be lost
 		const activeSubscription = false;
 		if (revokeSuccessful && deleteUser && !activeSubscription) {
+			// TODO: When deleting the user, also delete the entry in Firestore
 			const user = getAuth().currentUser;
 			user.delete().then(() => {
 				console.log('User deleted');

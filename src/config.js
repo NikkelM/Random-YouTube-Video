@@ -58,6 +58,7 @@ export const firebaseConfig = {
 	databaseURL: "https://random-youtube-video-ex-chrome-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
+// TODO: Add hints for Shuffle+
 export const shufflingHints = [
 	// General extension hints
 	"The extension adds a 'Shuffle' button to all channel, video and shorts pages on YouTube. This button has the same behaviour as shuffling from the popup!",
