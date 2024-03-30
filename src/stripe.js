@@ -2,7 +2,7 @@
 import { firebaseConfig } from "./config.js";
 import { getUser } from './googleOauth.js';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, query, collection, where, getDocs } from 'firebase/firestore';
+import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot } from 'firebase/firestore';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -24,50 +24,67 @@ async function getProducts() {
 		const pricesCollection = collection(productDoc.ref, 'prices');
 		const priceQuerySnapshot = await getDocs(pricesCollection);
 
-		// assume there is only one price per product
-		const priceDoc = priceQuerySnapshot.docs[0];
-		productInfo['priceId'] = priceDoc.id;
-		productInfo['priceInfo'] = priceDoc.data();
+		// iterate over all price documents
+		const pricesInfo = priceQuerySnapshot.docs.map((priceDoc) => {
+			return {
+				priceId: priceDoc.id,
+				priceInfo: priceDoc.data()
+			};
+		});
+
+		productInfo['prices'] = pricesInfo;
 		return productInfo;
 	});
 
-	// 'products' is an array of products (including price info)
 	const products = await Promise.all(productsPromises);
 	return products;
 }
 
 export async function openStripeCheckout() {
 	const currentUser = await getUser(false);
-	// console.log(currentUser);
+	console.log(currentUser);
 
-	// const products = await getProducts();
-	// console.log(products);
+	const products = await getProducts();
+	console.log(products);
 
-	// // TODO: This must be done without reliance on the name being the same in case it changes
-	// const monthlyPrice = products.find(p => p.name === "One Month of Shuffle+");
-	// const yearlyPrice = products.find(p => p.name === "One Year of Shuffle+");
+	// TODO: This must be done without reliance on the name being the same in case it changes
+	const shufflePlusTestProduct = products.find(p => p.name === "Shuffle+ (Test)");
+	// const shufflePlusProduct = products.find(p => p.name === "Shuffle+");
 
-	// // For testing, assume a monthly subscription
-	// let checkoutSessionData = {
-	//   price: monthlyPrice.priceId,
-	//   // success_url: window.location.origin, // can set this to a custom page
-	//   // cancel_url: window.location.origin   // can set this to a custom page
-	// };
+	console.log(shufflePlusTestProduct);
 
-	// const checkoutSessionRef = await addDoc(
-	//   // currentUser is provided by firebase, via getAuth().currentUser
-	//   collection(db, `customers/${currentUser.uid}/checkout_sessions`),
-	//   checkoutSessionData
-	// );
+	// Get the available prices, which is a subkey prices on the product
+	const shufflePlusTestPrices = shufflePlusTestProduct.prices;
 
-	// // The Stripe extension creates a payment link for us
-	// onSnapshot(checkoutSessionRef, (snap) => {
-	//   const { error, url } = snap.data();
-	//   if (error) {
-	//     // handle error
-	//   }
-	//   if (url) {
-	//     window.location.assign(url);  // redirect to payment link
-	//   }
-	// });
+	console.log(shufflePlusTestPrices);
+
+	console.log(chrome.runtime.getURL('stripe.html'))
+	// For testing, use the yearly price
+	let checkoutSessionData = {
+		price: shufflePlusTestPrices.find(p => p.priceInfo.type === 'recurring' && p.priceInfo.recurring.interval === 'year').priceId,
+		success_url: 'http://localhost:3000/success'//chrome.runtime.getURL('stripe.html')
+	};
+
+	const checkoutSessionRef = await addDoc(
+		// currentUser is provided by firebase, via getAuth().currentUser
+		collection(db, `users/${currentUser.firebaseUid}/checkout_sessions`),
+		checkoutSessionData
+	);
+
+	console.log(checkoutSessionRef);
+
+	// The Stripe extension creates a payment link for us
+	onSnapshot(checkoutSessionRef, (snap) => {
+		const { error, url } = snap.data();
+		if (error) {
+			console.error(error);
+			// handle error
+		}
+		if (url) {
+			console.log(url)
+			// Open a new page with the payment link
+			chrome.tabs.create({ url });
+			// window.location.assign(url);  // redirect to payment link
+		}
+	});
 }

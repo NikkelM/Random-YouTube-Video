@@ -2,6 +2,7 @@
 import { setSyncStorageValue } from "../chromeStorage.js";
 import { getUser, revokeAccess } from "../googleOauth.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
+import { openStripeCheckout } from "../stripe.js";
 
 // ----- Setup -----
 let user;
@@ -32,6 +33,11 @@ function getDomElements() {
 		// Login Success
 		googleLoginSuccessDiv: document.getElementById("googleLoginSuccessDiv"),
 		googleLoginSuccessP: document.getElementById("googleLoginSuccessP"),
+
+		// SUBSCRIBE
+		// Subscribe button
+		subscribeButtonDiv: document.getElementById("subscribeButtonDiv"),
+		subscribeButton: document.getElementById("subscribeButton"),
 
 		// FORGET ME
 		// Forget me button
@@ -92,6 +98,11 @@ async function setDomElementEventListeners(domElements) {
 			domElements.googleLoginErrorDiv.classList.remove("hidden");
 			domElements.googleLoginErrorP.textContent = user.error;
 		}
+	});
+
+	// Subscribe button
+	domElements.subscribeButton.addEventListener("click", async function () {
+		await openStripeCheckout();
 	});
 
 	// Forget me button
