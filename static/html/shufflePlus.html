@@ -14,7 +14,10 @@
 			<br />
 
 			<div id="googleLoginButtonDiv" style="display: none">
-				<button id="googleLoginButton" class="randomYoutubeVideoButton" type="button">Sign in with Google</button>
+				<button id="googleLoginButton" class="randomYoutubeVideoButton" type="button"
+					title="Sign in to Random YouTube Video with your Google account to enable the extension to view your YouTube account. Subscribe to Shuffle+ to take full advantage of the offered features!">
+					Sign in with Google
+				</button>
 			</div>
 			<div id="googleLoginErrorDiv" style="display: none">
 				<p id="googleLoginErrorP"></p>
@@ -22,6 +25,15 @@
 			<div id="googleLoginSuccessDiv" style="display: none">
 				<!-- TODO: Display if user is subscribed, and depending on result, display pricing table etc. or remaining time on subscription etc. -->
 				<p id="googleLoginSuccessP">If you are subscribed to Shuffle+, you now have access to all premium features!</p>
+			</div>
+			
+			<div id="googleRevokeAccessButtonDiv" style="display: none">
+				<br />
+				<!-- TODO: Delete user data in Firebase if no active subscription, otherwise keep it. -->
+				<button id="googleRevokeAccessButton" class="randomYoutubeVideoButton" type="button"
+					title="Sign out and revoke access to your Google account for the extension. Your anonymous user ID will remain in the extension's database in case you have an active Shuffle+ subscription and log in again.">
+					Forget my user
+				</button>
 			</div>
 
 			<br />

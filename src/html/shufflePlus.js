@@ -1,6 +1,6 @@
 // Entry point for the Shuffle+ page
 import { setSyncStorageValue } from "../chromeStorage.js";
-import { getUser } from "../googleOauth.js";
+import { getUser, revokeAccess } from "../googleOauth.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
 
 // ----- Setup -----
@@ -26,12 +26,17 @@ function getDomElements() {
 		// Google login button
 		googleLoginButtonDiv: document.getElementById("googleLoginButtonDiv"),
 		googleLoginButton: googleLoginButtonDiv.children.namedItem("googleLoginButton"),
-		// Login Error Div
+		// Login Error
 		googleLoginErrorDiv: document.getElementById("googleLoginErrorDiv"),
 		googleLoginErrorP: document.getElementById("googleLoginErrorP"),
-		// Login Success Div
+		// Login Success
 		googleLoginSuccessDiv: document.getElementById("googleLoginSuccessDiv"),
 		googleLoginSuccessP: document.getElementById("googleLoginSuccessP"),
+
+		// LOGOUT
+		// Google logout button
+		googleRevokeAccessButtonDiv: document.getElementById("googleRevokeAccessButtonDiv"),
+		googleRevokeAccessButton: document.getElementById("googleRevokeAccessButton"),
 
 		// SHUFFLING HINTS
 		// The p element containing the shuffle hint
@@ -53,6 +58,7 @@ async function setDomElementValuesFromConfig(domElements) {
 	if (user) {
 		domElements.welcomeHeader.textContent = `Welcome ${user.displayName.split(" ")[0]}!`;
 		domElements.googleLoginSuccessDiv.style.display = "block";
+		domElements.googleRevokeAccessButtonDiv.style.display = "block";
 	} else {
 		domElements.googleLoginButtonDiv.style.display = "block";
 	}
@@ -62,13 +68,15 @@ async function setDomElementValuesFromConfig(domElements) {
 async function setDomElementEventListeners(domElements) {
 	// Google login button
 	domElements.googleLoginButton.addEventListener("click", async function () {
-		domElements.googleLoginButton.textContent = "Logging in...";
+		domElements.googleLoginButton.textContent = "Signing in...";
 		user = await getUser(false);
 		if (user.displayName) {
 			domElements.welcomeHeader.textContent = `Login successful! Welcome ${user.displayName.split(" ")[0]}!`;
+			domElements.googleLoginButton.textContent = "Sign in with Google";
 			domElements.googleLoginButtonDiv.style.display = "none";
 			domElements.googleLoginErrorDiv.style.display = "none";
 			domElements.googleLoginSuccessDiv.style.display = "block";
+			domElements.googleRevokeAccessButtonDiv.style.display = "block";
 			// TODO: If the user is logged in and subscribed, change the extension icon, e.g.:
 			// chrome.action.setIcon({ path: chrome.runtime.getURL('icons/icon-128-white.png') });
 		} else {
@@ -77,6 +85,21 @@ async function setDomElementEventListeners(domElements) {
 			domElements.googleLoginSuccessDiv.style.display = "none";
 			domElements.googleLoginErrorDiv.style.display = "block";
 			domElements.googleLoginErrorP.textContent = user.error;
+		}
+	});
+
+	// Google logout button
+	// TODO: Ask for confirmation before revoking access
+	domElements.googleRevokeAccessButton.addEventListener("click", async function () {
+		const loggedOut = await revokeAccess();
+		console.log(loggedOut);
+		if (loggedOut) {
+			domElements.googleLoginButtonDiv.style.display = "block";
+			domElements.googleLoginSuccessDiv.style.display = "none";
+			domElements.googleRevokeAccessButtonDiv.style.display = "none";
+			domElements.welcomeHeader.textContent = "App access revoked successfully! Sign in below to get started again";
+		} else {
+			domElements.googleRevokeAccessButton.textContent = "Logout failed!";
 		}
 	});
 

@@ -1,8 +1,8 @@
 // Contains logic to login and authenticate users through Google Oauth and Firebase Auth
 import { setSyncStorageValue } from "./chromeStorage.js";
 import { isFirefox, firebaseConfig } from "./config.js";
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 
 const app = initializeApp(firebaseConfig);
@@ -28,9 +28,6 @@ export async function getUser(localOnly) {
 // Run the Google Oauth flow until the user is logged in to Google and Firebase.
 // If the user manually revoked access to the app, the attempt to get a token will return a 400 TOKEN_EXPIRED error and automatically launch the normal flow.
 // TODO: Make sure we can have access to the YouTube account auto-ticked in the Google Oauth flow, or get notified if the user didn't do so so we can notify them afterwards and reprompt
-// TODO: Offer functionality to self-revoke access to the app/for the user to be forgotten
-// See above: Also useful if we lose the refresh token
-// See https://stackoverflow.com/questions/18030486/google-oauth2-application-remove-self-from-user-authenticated-applications
 async function googleLogin() {
 	// Get sync storage information about the user's Google Oauth state
 	let googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth || {};
@@ -206,4 +203,46 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 	}
 
 	return googleOauth;
+}
+
+// Revokes access to the app for the current user
+export async function revokeAccess() {
+	const googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth;
+	const usedToken = googleOauth.accessToken || googleOauth.refreshToken;
+	if (usedToken) {
+		// Build the string for the POST request
+		let postData = `token=${usedToken}`;
+
+		// Options for POST request to Google's OAuth 2.0 server to revoke a token
+		let postOptions = {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: postData
+		};
+
+		// Make the request
+		// TODO: Do some better error handling with user feedback
+		return fetch('https://oauth2.googleapis.com/revoke', postOptions)
+			.then(response => async function() {
+				if (response.ok) {
+					await setSyncStorageValue("googleOauth", {});
+					// TODO: If there is no active subscription, remove user data from Firebase
+					return true;
+				} else {
+					return response.json().then(error => {
+						console.error('Error:', error);
+						return false;
+					});
+				}
+			})
+			.catch(error => {
+				console.error('Network error:', error);
+				return false;
+			});
+	} else {
+		console.log("No token to revoke.");
+		return true;
+	}
 }
