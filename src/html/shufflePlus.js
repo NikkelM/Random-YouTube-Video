@@ -33,8 +33,8 @@ function getDomElements() {
 		googleLoginSuccessDiv: document.getElementById("googleLoginSuccessDiv"),
 		googleLoginSuccessP: document.getElementById("googleLoginSuccessP"),
 
-		// LOGOUT
-		// Google logout button
+		// FORGET ME
+		// Forget me button
 		googleRevokeAccessButtonDiv: document.getElementById("googleRevokeAccessButtonDiv"),
 		googleRevokeAccessButton: document.getElementById("googleRevokeAccessButton"),
 
@@ -88,18 +88,18 @@ async function setDomElementEventListeners(domElements) {
 		}
 	});
 
-	// Google logout button
+	// Forget me button
 	// TODO: Ask for confirmation before revoking access
 	domElements.googleRevokeAccessButton.addEventListener("click", async function () {
-		const loggedOut = await revokeAccess();
-		console.log(loggedOut);
-		if (loggedOut) {
+		const forgotUser = await revokeAccess(true);
+		if (forgotUser) {
 			domElements.googleLoginButtonDiv.style.display = "block";
 			domElements.googleLoginSuccessDiv.style.display = "none";
 			domElements.googleRevokeAccessButtonDiv.style.display = "none";
 			domElements.welcomeHeader.textContent = "App access revoked successfully! Sign in below to get started again";
 		} else {
-			domElements.googleRevokeAccessButton.textContent = "Logout failed!";
+			domElements.googleLoginSuccessDiv.style.display = "none";
+			domElements.googleRevokeAccessButton.textContent = "Signout failed!";
 		}
 	});
 

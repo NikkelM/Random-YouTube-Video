@@ -36,7 +36,7 @@ async function googleLogin() {
 	const auth = getAuth(app);
 	onAuthStateChanged(auth, async (user) => {
 		if (user) {
-			console.log("Signed in successfully!");
+			console.log("Signed in to Firebase successfully!");
 			// Extract the user info we need and save it to sync storage
 			googleOauth.userInfo = {
 				displayName: user.displayName,
@@ -57,10 +57,16 @@ async function googleLogin() {
 		const credential = GoogleAuthProvider.credential(googleOauth.idToken, googleOauth.accessToken);
 		await signInWithCredential(auth, credential);
 
-		// If the response from Google Oauth didn't include a refresh token, it means the user has previously granted the app access to their account
-		// That means that we will have the refresh token saved in the database 
 		if (!googleOauth.refreshToken) {
-			await fetchRefreshTokenFromFirestore(googleOauth);
+			try {
+				await fetchRefreshTokenFromFirestore(googleOauth);
+			} catch (error) {
+				console.error(error);
+				return {
+					error: error,
+					code: "GO-4"
+				};
+			}
 		}
 		// If there is no current access token, we will need to either use the refresh token or get a code to exchange for an access token
 	} else {
@@ -145,6 +151,8 @@ async function runWebAuthFlow(generatedState, redirectUri, googleOauth, auth) {
 // Gets the Google Oauth refresh token for the current user from Firestore and saves it locally
 async function fetchRefreshTokenFromFirestore(googleOauth) {
 	console.log("Getting the Google Oauth refresh token from Firestore, as it does not exist locally.");
+	let haveRefreshToken = true;
+
 	const userRef = doc(db, "users", getAuth().currentUser.uid);
 	const userDoc = await getDoc(userRef);
 	if (userDoc.exists()) {
@@ -152,7 +160,17 @@ async function fetchRefreshTokenFromFirestore(googleOauth) {
 		if (data.googleRefreshToken) {
 			googleOauth.refreshToken = data.googleRefreshToken;
 			await setSyncStorageValue("googleOauth", googleOauth);
+		} else {
+			haveRefreshToken = false;
 		}
+	} else {
+		haveRefreshToken = false;
+	}
+
+	if (!haveRefreshToken) {
+		console.error("No refresh token available in Firestore. Self-revoking app access.");
+		await revokeAccess();
+		throw new Error("Getting required authentication data failed. Please grant the app access again.");
 	}
 }
 
@@ -199,50 +217,71 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 			googleRefreshToken: refreshToken
 		}, { merge: true });
 	} else if (!googleOauth.refreshToken) {
-		await fetchRefreshTokenFromFirestore(googleOauth);
+		try {
+			await fetchRefreshTokenFromFirestore(googleOauth);
+		} catch (error) {
+			console.error(error);
+			return {
+				error: error,
+				code: "GO-4"
+			};
+		}
 	}
 
 	return googleOauth;
 }
 
-// Revokes access to the app for the current user
-export async function revokeAccess() {
+// Revokes access to the app for the current user, and deletes it if requested and there is no active subscription
+export async function revokeAccess(deleteUser = false) {
 	const googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth;
 	const usedToken = googleOauth.accessToken || googleOauth.refreshToken;
 	if (usedToken) {
-		// Build the string for the POST request
-		let postData = `token=${usedToken}`;
-
-		// Options for POST request to Google's OAuth 2.0 server to revoke a token
 		let postOptions = {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/x-www-form-urlencoded',
 			},
-			body: postData
+			body: `token=${usedToken}`
 		};
 
-		// Make the request
-		// TODO: Do some better error handling with user feedback
-		return fetch('https://oauth2.googleapis.com/revoke', postOptions)
-			.then(response => async function() {
+		const revokeSuccessful = await fetch('https://oauth2.googleapis.com/revoke', postOptions)
+			.then(response => {
 				if (response.ok) {
-					await setSyncStorageValue("googleOauth", {});
-					// TODO: If there is no active subscription, remove user data from Firebase
-					return true;
-				} else {
-					return response.json().then(error => {
-						console.error('Error:', error);
-						return false;
+					console.log('Token revoked successfully.')
+					return setSyncStorageValue("googleOauth", null).then(async () => {
+						// TODO: If there is no active subscription, remove all user data from Firebase
+						// We always remove the refreshToken, as it is no longer active
+						const userRef = doc(db, "users", getAuth().currentUser.uid);
+						await setDoc(userRef, {
+							googleRefreshToken: null
+						});
+						return true;
 					});
+				} else {
+					console.error('Failed to revoke token:', response);
+					return false;
 				}
 			})
 			.catch(error => {
 				console.error('Network error:', error);
 				return false;
 			});
+
+		// TODO: Find out if user has an active subscription. If they do, we cannot delete their account as the association will be lost
+		const activeSubscription = false;
+		if (revokeSuccessful && deleteUser && !activeSubscription) {
+			const user = getAuth().currentUser;
+			user.delete().then(() => {
+				console.log('User deleted');
+			}).catch((error) => {
+				console.error('Error deleting user:', error);
+			});
+		}
+
+		return revokeSuccessful;
 	} else {
 		console.log("No token to revoke.");
+		await setSyncStorageValue("googleOauth", null);
 		return true;
 	}
 }
