@@ -112,9 +112,7 @@ async function googleLogin() {
 }
 
 async function runWebAuthFlow(generatedState, redirectUri, googleOauth, auth) {
-	console.log("Running the web auth flow")
-	// TODO: Use the chrome native login flow if it's available? Is there an upside to this?
-
+	console.log("Running the web auth flow");
 	return new Promise((resolve, reject) => {
 		// Launch a popup that prompts the user to login to their Google account and grant the app permissions as requested
 		chrome.identity.launchWebAuthFlow({
