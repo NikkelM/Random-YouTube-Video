@@ -37,6 +37,12 @@ function getDomElements() {
 		// Forget me button
 		googleRevokeAccessButtonDiv: document.getElementById("googleRevokeAccessButtonDiv"),
 		googleRevokeAccessButton: document.getElementById("googleRevokeAccessButton"),
+		// Confirmation popup
+		googleRevokeAccessConfirmationPopup: document.getElementById("googleRevokeAccessConfirmationPopup"),
+		// Confirm button in popup
+		googleRevokeAccessConfirmButton: document.getElementById("googleRevokeAccessConfirmButton"),
+		// Cancel button in popup
+		googleRevokeAccessCancelButton: document.getElementById("googleRevokeAccessCancelButton"),
 
 		// SHUFFLING HINTS
 		// The p element containing the shuffle hint
@@ -57,10 +63,10 @@ async function setDomElementValuesFromConfig(domElements) {
 	user = await getUser(true);
 	if (user) {
 		domElements.welcomeHeader.textContent = `Welcome ${user.displayName.split(" ")[0]}!`;
-		domElements.googleLoginSuccessDiv.style.display = "block";
-		domElements.googleRevokeAccessButtonDiv.style.display = "block";
+		domElements.googleLoginSuccessDiv.classList.remove("hidden");
+		domElements.googleRevokeAccessButtonDiv.classList.remove("hidden");
 	} else {
-		domElements.googleLoginButtonDiv.style.display = "block";
+		domElements.googleLoginButtonDiv.classList.remove("hidden");
 	}
 }
 
@@ -73,32 +79,59 @@ async function setDomElementEventListeners(domElements) {
 		if (user.displayName) {
 			domElements.welcomeHeader.textContent = `Login successful! Welcome ${user.displayName.split(" ")[0]}!`;
 			domElements.googleLoginButton.textContent = "Sign in with Google";
-			domElements.googleLoginButtonDiv.style.display = "none";
-			domElements.googleLoginErrorDiv.style.display = "none";
-			domElements.googleLoginSuccessDiv.style.display = "block";
-			domElements.googleRevokeAccessButtonDiv.style.display = "block";
+			domElements.googleLoginButtonDiv.classList.add("hidden");
+			domElements.googleLoginErrorDiv.classList.add("hidden");
+			domElements.googleLoginSuccessDiv.classList.remove("hidden");
+			domElements.googleRevokeAccessButtonDiv.classList.remove("hidden");
 			// TODO: If the user is logged in and subscribed, change the extension icon, e.g.:
 			// chrome.action.setIcon({ path: chrome.runtime.getURL('icons/icon-128-white.png') });
 		} else {
 			console.log(user);
 			domElements.googleLoginButton.textContent = `Login failed with error: ${user.code ? user.code : 'Unknown Error'}`;
-			domElements.googleLoginSuccessDiv.style.display = "none";
-			domElements.googleLoginErrorDiv.style.display = "block";
+			domElements.googleLoginSuccessDiv.classList.add("hidden");
+			domElements.googleLoginErrorDiv.classList.remove("hidden");
 			domElements.googleLoginErrorP.textContent = user.error;
 		}
 	});
 
 	// Forget me button
-	// TODO: Ask for confirmation before revoking access
-	domElements.googleRevokeAccessButton.addEventListener("click", async function () {
+	let enableConfirmButtonTimout;
+	domElements.googleRevokeAccessButton.addEventListener("click", function () {
+		domElements.googleRevokeAccessConfirmationPopup.classList.remove("hidden");
+		domElements.googleRevokeAccessConfirmButton.disabled = true;
+		domElements.googleRevokeAccessConfirmButton.classList.add("button-fillup");
+
+		// Enable the confirm button after 5 seconds
+		enableConfirmButtonTimout = setTimeout(function () {
+			domElements.googleRevokeAccessConfirmButton.disabled = false;
+			domElements.googleRevokeAccessConfirmButton.classList.remove("button-fillup");
+		}, 10000);
+	});
+
+	domElements.googleRevokeAccessConfirmationPopup.addEventListener("click", function (event) {
+		if (event.target === this) {
+			domElements.googleRevokeAccessConfirmationPopup.classList.add("hidden");
+			clearTimeout(enableConfirmButtonTimout);
+		}
+	});
+
+	// Forget me - cancel button
+	domElements.googleRevokeAccessCancelButton.addEventListener("click", function () {
+		domElements.googleRevokeAccessConfirmationPopup.classList.add("hidden");
+		clearTimeout(enableConfirmButtonTimout);
+	});
+
+	// Forget me - confirm button
+	domElements.googleRevokeAccessConfirmButton.addEventListener("click", async function () {
+		domElements.googleRevokeAccessConfirmationPopup.classList.add("hidden");
 		const forgotUser = await revokeAccess(true);
 		if (forgotUser) {
-			domElements.googleLoginButtonDiv.style.display = "block";
-			domElements.googleLoginSuccessDiv.style.display = "none";
-			domElements.googleRevokeAccessButtonDiv.style.display = "none";
+			domElements.googleLoginButtonDiv.classList.remove("hidden");
+			domElements.googleLoginSuccessDiv.classList.add("hidden");
+			domElements.googleRevokeAccessButtonDiv.classList.add("hidden");
 			domElements.welcomeHeader.textContent = "App access revoked successfully! Sign in below to get started again";
 		} else {
-			domElements.googleLoginSuccessDiv.style.display = "none";
+			domElements.googleLoginSuccessDiv.classList.add("hidden");
 			domElements.googleRevokeAccessButton.textContent = "Signout failed!";
 		}
 	});

@@ -247,6 +247,19 @@
 	animation: gradient 5s ease infinite;
 }
 
+@keyframes fillup {
+	0% { background-size: 0% 100%; }
+	100% { background-size: 100% 100%; }
+}
+
+/* The timing of the animation is synced up with other timers associated with these buttons */
+.randomYoutubeVideoButton.button-fillup {
+	background: linear-gradient(to right, #333, #333);
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
+	animation: fillup 10s forwards;
+}
+
 /* 
  * Input 
  */

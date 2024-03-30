@@ -13,27 +13,18 @@
 			<h2 id="welcomeHeader">Welcome! Sign in below to get started</h2>
 			<br />
 
-			<div id="googleLoginButtonDiv" style="display: none">
+			<div id="googleLoginButtonDiv" class="hidden">
 				<button id="googleLoginButton" class="randomYoutubeVideoButton" type="button"
 					title="Sign in to Random YouTube Video with your Google account to enable the extension to view your YouTube account. Subscribe to Shuffle+ to take full advantage of the offered features!">
 					Sign in with Google
 				</button>
 			</div>
-			<div id="googleLoginErrorDiv" style="display: none">
+			<div id="googleLoginErrorDiv" class="hidden">
 				<p id="googleLoginErrorP"></p>
 			</div>
-			<div id="googleLoginSuccessDiv" style="display: none">
+			<div id="googleLoginSuccessDiv" class="hidden">
 				<!-- TODO: Display if user is subscribed, and depending on result, display pricing table etc. or remaining time on subscription etc. -->
 				<p id="googleLoginSuccessP">If you are subscribed to Shuffle+, you now have access to all premium features!</p>
-			</div>
-			
-			<div id="googleRevokeAccessButtonDiv" style="display: none">
-				<br />
-				<!-- TODO: Delete user data in Firebase if no active subscription, otherwise keep it. -->
-				<button id="googleRevokeAccessButton" class="randomYoutubeVideoButton" type="button"
-					title="Sign out and revoke the extension's access to your Google account and delete your user account with the extension. If you have an active Shuffle+ subscription, your user account will not be deleted. If you wish to delete your user account before your subscription runs out, you will need to cancel it.">
-					Forget me permanently
-				</button>
 			</div>
 
 			<br />
@@ -69,6 +60,37 @@
 					title="Leave a review on the Edge Add-Ons page"
 					>Edge</a
 				></footer>
+
+			<br />
+			<div id="googleRevokeAccessButtonDiv" class="hidden">
+				<br />
+				<button id="googleRevokeAccessButton" class="randomYoutubeVideoButton" type="button"
+					title="Sign out and revoke the extension's access to your Google account and delete your user account with the extension. If you have an active Shuffle+ subscription, your user account will not be deleted. If you wish to delete your user account before your subscription runs out, you will need to cancel it.">
+					Forget me permanently
+				</button>
+			</div>
+			<div id="googleRevokeAccessConfirmationPopup" class="overlayDiv hidden">
+				<div>
+					<h2>Are you sure you want to leave?</h3>
+					<br />
+					<p>Revoking access to your Google account and deleting your user account is irreversible!</p>
+					<p>You can always create a new account by signing in again.</p>
+					<br />
+					<br />
+					<p>If you still have an active Shuffle+ subscription, your user account will not be deleted,</p>
+					<p>but you will be logged out and the extension will no longer have access to your Google account.</p>
+					<br />
+					<p>Signing in again will restore your account and subscription.</p>
+					<br />
+					<button id="googleRevokeAccessCancelButton" class="randomYoutubeVideoButton" type="button">
+						Cancel
+					</button>
+					<button id="googleRevokeAccessConfirmButton" class="randomYoutubeVideoButton" type="button" disabled
+						title="This action is irreversible.">
+						Forget me permanently
+					</button>
+				</div>
+			</div>
 		</div>
 
 		<script src="../utils.js" type="text/javascript"></script>
