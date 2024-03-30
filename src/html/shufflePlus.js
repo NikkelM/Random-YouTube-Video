@@ -124,6 +124,7 @@ async function setDomElementEventListeners(domElements) {
 	// Forget me - confirm button
 	domElements.googleRevokeAccessConfirmButton.addEventListener("click", async function () {
 		domElements.googleRevokeAccessConfirmationPopup.classList.add("hidden");
+		domElements.googleRevokeAccessButton.textContent = "Removing user account...";
 		const forgotUser = await revokeAccess(true);
 		if (forgotUser) {
 			domElements.googleLoginButtonDiv.classList.remove("hidden");

@@ -234,13 +234,11 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 
 // Revokes access to the app for the current user, and deletes it if requested and there is no active subscription
 export async function revokeAccess(deleteUser = false) {
+	// Make sure there is an active token and the user is authenticated with Firebase
+	await googleLogin();
 	const googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth;
-	let usedToken;
-	if (googleOauth.accessToken && googleOauth.expiresOn > new Date().getTime() + 60000) {
-		usedToken = googleOauth.accessToken;
-	} else {
-		usedToken = googleOauth.refreshToken;
-	}
+	const usedToken = googleOauth.accessToken || googleOauth.refreshToken;
+
 	if (usedToken) {
 		let postOptions = {
 			method: 'POST',
@@ -257,7 +255,7 @@ export async function revokeAccess(deleteUser = false) {
 					return setSyncStorageValue("googleOauth", null).then(async () => {
 						// TODO: If there is no active subscription, remove all user data from Firebase
 						// We always remove the refreshToken, as it is no longer active
-						const userRef = doc(db, "users", getAuth().currentUser.uid);
+						const userRef = doc(db, "users", getAuth(app).currentUser.uid);
 						await setDoc(userRef, {
 							googleRefreshToken: null
 						});
@@ -277,7 +275,7 @@ export async function revokeAccess(deleteUser = false) {
 		const activeSubscription = false;
 		if (revokeSuccessful && deleteUser && !activeSubscription) {
 			// TODO: When deleting the user, also delete the entry in Firestore
-			const user = getAuth().currentUser;
+			const user = getAuth(app).currentUser;
 			user.delete().then(() => {
 				console.log('User deleted');
 			}).catch((error) => {
