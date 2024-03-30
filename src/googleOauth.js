@@ -26,7 +26,8 @@ export async function getUser(localOnly) {
 }
 
 // Run the Google Oauth flow until the user is logged in to Google and Firebase.
-// TODO: Handle the case where the user has revoked access to the app. Would probably be getting a 400/401 error when refreshing the token?
+// If the user manually revoked access to the app, the attempt to get a token will return a 400 TOKEN_EXPIRED error and automatically launch the normal flow.
+// TODO: Make sure we can have access to the YouTube account auto-ticked in the Google Oauth flow, or get notified if the user didn't do so so we can notify them afterwards and reprompt
 // TODO: Offer functionality to self-revoke access to the app/for the user to be forgotten
 // See above: Also useful if we lose the refresh token
 // See https://stackoverflow.com/questions/18030486/google-oauth2-application-remove-self-from-user-authenticated-applications
