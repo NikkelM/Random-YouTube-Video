@@ -2,7 +2,7 @@
 import { setSyncStorageValue } from "../chromeStorage.js";
 import { getUser, revokeAccess } from "../googleOauth.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
-import { openStripeCheckout } from "../stripe.js";
+import { openStripeCheckout, getSubscriptions } from "../stripe.js";
 
 // ----- Setup -----
 let user;
@@ -71,9 +71,47 @@ async function setDomElementValuesFromConfig(domElements) {
 		domElements.welcomeHeader.textContent = `Welcome ${user.displayName.split(" ")[0]}!`;
 		domElements.googleLoginSuccessDiv.classList.remove("hidden");
 		domElements.googleRevokeAccessButtonDiv.classList.remove("hidden");
+
+		const subscriptionStatus = await getSubscriptionStatus(user);
+		if (subscriptionStatus.hasActiveSubscription) {
+			domElements.subscribeButtonDiv.classList.add("hidden");
+			domElements.googleLoginSuccessP.textContent = `You have an active subscription that ends on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} and will renew automatically.`;
+		} else {
+			if (subscriptionStatus.subscriptionEnd) {
+				if (subscriptionStatus.subscriptionEnd > Date.now()) {
+					domElements.googleLoginSuccessP.textContent = `Your benefits will expire on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} if you do not renew your subscription beforehand!`;
+				} else {
+					domElements.googleLoginSuccessP.textContent = `Your benefits expired on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()}`;
+				}
+			}
+			domElements.subscribeButtonDiv.classList.remove("hidden");
+		}
 	} else {
 		domElements.googleLoginButtonDiv.classList.remove("hidden");
 	}
+}
+
+// Gets the subscription status for the current user
+async function getSubscriptionStatus(user = null) {
+	const subscriptions = await getSubscriptions(user, false);
+
+	if (subscriptions.length > 0) {
+		const activeSubscription = subscriptions.find(s => s.status === "active");
+		if (activeSubscription) {
+			return {
+				hasActiveSubscription: true,
+				subscriptionEnd: activeSubscription.current_period_end.seconds * 1000
+			};
+		} else {
+			// Get the most recently run out subscription
+			const lastSubscription = subscriptions.reduce((prev, current) => (prev.current_period_end > current.current_period_end) ? prev : current);
+			return {
+				hasActiveSubscription: false,
+				subscriptionEnd: lastSubscription.current_period_end.seconds * 1000
+			};
+		}
+	}
+	return { hasActiveSubscription: false };
 }
 
 // Set event listeners for DOM elements
@@ -101,6 +139,7 @@ async function setDomElementEventListeners(domElements) {
 	});
 
 	// Subscribe button
+	// TODO: Update logic?
 	domElements.subscribeButton.addEventListener("click", async function () {
 		await openStripeCheckout();
 	});
@@ -119,6 +158,7 @@ async function setDomElementEventListeners(domElements) {
 		}, 10000);
 	});
 
+	// Forget me - popup click handler
 	domElements.googleRevokeAccessConfirmationPopup.addEventListener("click", function (event) {
 		if (event.target === this) {
 			domElements.googleRevokeAccessConfirmationPopup.classList.add("hidden");
