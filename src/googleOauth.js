@@ -11,7 +11,7 @@ const db = getFirestore(app);
 
 // Get user information from storage or by logging in to Google
 // If localOnly is set to true, the function will not attempt to log in to Google if there is no local information (==in sync storage)
-export async function getUser(localOnly, allowSelfRevoke = true) {
+export async function getUser(localOnly = false, allowSelfRevoke = true) {
 	// TODO: If there is a user and an active subscription, fetch a new access token in the background script on startup, and validate the subscription status
 	console.log(`Getting user info. localOnly: ${localOnly}`);
 	if (localOnly) {
@@ -238,9 +238,9 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 }
 
 // Revokes access to the app for the current user, and deletes it if requested and there is no active subscription
-export async function revokeAccess(deleteUser = false) {
+export async function revokeAccess(user = null, deleteUser = false) {
 	// Make sure there is an active token and the user is authenticated with Firebase
-	await getUser(false, false);
+	user ??= await getUser(false, false);
 	const googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth;
 	const usedToken = googleOauth.accessToken || googleOauth.refreshToken;
 
@@ -254,7 +254,7 @@ export async function revokeAccess(deleteUser = false) {
 		};
 
 		// We need to do this before revoking the tokens as it needs a valid authorization
-		const hasActiveSubscription = (await getSubscriptions(true)).length > 0;
+		const hasActiveSubscription = (await getSubscriptions(user, true)).length > 0;
 
 		const revokeSuccessful = await fetch('https://oauth2.googleapis.com/revoke', postOptions)
 			.then(response => {

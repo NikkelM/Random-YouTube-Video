@@ -72,6 +72,7 @@ async function setDomElementValuesFromConfig(domElements) {
 		domElements.googleLoginSuccessDiv.classList.remove("hidden");
 		domElements.googleRevokeAccessButtonDiv.classList.remove("hidden");
 
+		user = await getUser();
 		const subscriptionStatus = await getSubscriptionStatus(user);
 		if (subscriptionStatus.hasActiveSubscription) {
 			domElements.subscribeButtonDiv.classList.add("hidden");
@@ -119,7 +120,7 @@ async function setDomElementEventListeners(domElements) {
 	// Google login button
 	domElements.googleLoginButton.addEventListener("click", async function () {
 		domElements.googleLoginButton.textContent = "Signing in...";
-		user = await getUser(false);
+		user = await getUser();
 		if (user.displayName) {
 			domElements.welcomeHeader.textContent = `Login successful! Welcome ${user.displayName.split(" ")[0]}!`;
 			domElements.googleLoginButton.textContent = "Sign in with Google";
@@ -139,9 +140,10 @@ async function setDomElementEventListeners(domElements) {
 	});
 
 	// Subscribe button
-	// TODO: Update logic?
 	domElements.subscribeButton.addEventListener("click", async function () {
-		await openStripeCheckout();
+		// TODO: Get local currency of the user
+		let currency = "usd";
+		await openStripeCheckout(user, currency);
 	});
 
 	// Forget me button
@@ -176,7 +178,7 @@ async function setDomElementEventListeners(domElements) {
 	domElements.googleRevokeAccessConfirmButton.addEventListener("click", async function () {
 		domElements.googleRevokeAccessConfirmationPopup.classList.add("hidden");
 		domElements.googleRevokeAccessButton.textContent = "Removing user account...";
-		const forgotUser = await revokeAccess(true);
+		const forgotUser = await revokeAccess(user, true);
 		if (forgotUser) {
 			domElements.googleLoginButtonDiv.classList.remove("hidden");
 			domElements.googleLoginSuccessDiv.classList.add("hidden");

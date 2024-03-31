@@ -55,8 +55,8 @@ async function getProducts(currency = 'usd') {
 	return products.filter(product => product !== null);
 }
 
-export async function openStripeCheckout(currency = 'usd') {
-	const currentUser = await getUser(false);
+export async function openStripeCheckout(user = null, currency = 'usd') {
+	user ??= await getUser();
 	const products = await getProducts(currency);
 
 	// TODO: This must be done without reliance on the name being the same in case it changes
@@ -70,14 +70,14 @@ export async function openStripeCheckout(currency = 'usd') {
 	// For testing, use the monthly price
 	let checkoutSessionData = {
 		price: shufflePlusTestProductPrices.find(p => p.priceInfo.type === 'recurring' && p.priceInfo.recurring.interval === 'month').priceId,
-		// TODO: Proper redirect URL, cancellation URL
+		// TODO: Proper redirect URL, cancellation URL. Current URL does nothing after completion
 		success_url: 'https://tinyurl.com/RYVShufflePlus',
 		allow_promotion_codes: true
 	};
 
 	const checkoutSessionRef = await addDoc(
-		// currentUser is provided by firebase, via getAuth().currentUser
-		collection(db, `users/${currentUser.firebaseUid}/checkout_sessions`),
+		// user is provided by firebase, via getAuth().user
+		collection(db, `users/${user.firebaseUid}/checkout_sessions`),
 		checkoutSessionData
 	);
 
@@ -97,9 +97,9 @@ export async function openStripeCheckout(currency = 'usd') {
 }
 
 // Gets all (active) subscriptions for the current user
-export async function getSubscriptions(activeOnly = true) {
-	const currentUser = await getUser(false);
-	if (!currentUser) {
+export async function getSubscriptions(user = null, activeOnly = true) {
+	user ??= await getUser();
+	if (!user) {
 		console.log("No user found");
 		return [];
 	}
@@ -107,11 +107,11 @@ export async function getSubscriptions(activeOnly = true) {
 	let q;
 	if (activeOnly) {
 		q = query(
-			collection(db, `users/${currentUser.firebaseUid}/subscriptions`),
+			collection(db, `users/${user.firebaseUid}/subscriptions`),
 			where('status', 'in', ['active', 'trialing'])
 		);
 	} else {
-		q = collection(db, `users/${currentUser.firebaseUid}/subscriptions`);
+		q = collection(db, `users/${user.firebaseUid}/subscriptions`);
 	}
 
 	const querySnapshot = await getDocs(q);
