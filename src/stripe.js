@@ -8,7 +8,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Get products and pricing information from Firestore/Stripe
-async function getProducts() {
+async function getProducts(currency = 'usd') {
 	const q = query(
 		collection(db, 'products'),
 		where('active', '==', true)
@@ -16,65 +16,62 @@ async function getProducts() {
 
 	const querySnapshot = await getDocs(q);
 
-	// for each product, get the product price info
+	// For each product, get the product price info
 	const productsPromises = querySnapshot.docs.map(async (productDoc) => {
 		let productInfo = productDoc.data();
 
-		// fetch prices subcollection per product
+		// If the product's currency doesn't match the given currency, skip this product
+		if (productInfo.metadata.currency !== currency) {
+			return null;
+		}
+
+		// Fetch prices subcollection per product
 		const pricesCollection = collection(productDoc.ref, 'prices');
 		const priceQuerySnapshot = await getDocs(pricesCollection);
 
-		// iterate over all price documents
+		// Iterate over all price documents and filter by currency
 		const pricesInfo = priceQuerySnapshot.docs.map((priceDoc) => {
-			return {
-				priceId: priceDoc.id,
-				priceInfo: priceDoc.data()
-			};
-		});
+			const priceInfo = priceDoc.data();
+			return priceInfo.currency === currency ? { priceId: priceDoc.id, priceInfo } : null;
+		}).filter(price => price !== null);
+
+		// If no prices in the given currency, get the USD price
+		if (pricesInfo.length === 0) {
+			const usdPrice = priceQuerySnapshot.docs.find((priceDoc) => priceDoc.data().currency === 'usd');
+			if (usdPrice) {
+				pricesInfo.push({
+					priceId: usdPrice.id,
+					priceInfo: usdPrice.data()
+				});
+			}
+		}
 
 		productInfo['prices'] = pricesInfo;
 		return productInfo;
 	});
 
 	const products = await Promise.all(productsPromises);
-	return products;
+
+	return products.filter(product => product !== null);
 }
 
-export async function openStripeCheckout() {
+export async function openStripeCheckout(currency = 'usd') {
 	const currentUser = await getUser(false);
-	console.log(currentUser);
-
-	const products = await getProducts();
-	console.log(products);
+	const products = await getProducts(currency);
 
 	// TODO: This must be done without reliance on the name being the same in case it changes
+	// In theory, there should always only be one matching product returned by getProducts
 	const shufflePlusTestProducts = products.find(p => p.name == "Shuffle+ (Test)");
 	// const shufflePlusProduct = products.find(p => p.name == "Shuffle+");
 
-	console.log(shufflePlusTestProducts);
-
-	// Choose the product whose prices match the user's local currency
-	// For that we need to check one of the prices for the currency
-	let localCurrencyProduct;
-	for (let product of products) {
-		const localCurrencyPrice = product.prices.find(p => p.priceInfo.currency === 'eur');
-		if (localCurrencyPrice) {
-			localCurrencyProduct = product;
-			break;
-		}
-	}
-
-	console.log(localCurrencyProduct);
-
 	// Get the available prices, which is a subkey prices on the product
-	const shufflePlusTestProductPrices = localCurrencyProduct.prices;
-
-	console.log(shufflePlusTestProductPrices);
+	const shufflePlusTestProductPrices = shufflePlusTestProducts.prices;
 
 	// For testing, use the monthly price
 	let checkoutSessionData = {
 		price: shufflePlusTestProductPrices.find(p => p.priceInfo.type === 'recurring' && p.priceInfo.recurring.interval === 'month').priceId,
-		success_url: 'https://tinyurl.com/RYVShufflePlus',//chrome.runtime.getURL('stripe.html'),
+		// TODO: Proper redirect URL, cancellation URL
+		success_url: 'https://tinyurl.com/RYVShufflePlus',
 		allow_promotion_codes: true
 	};
 
@@ -84,20 +81,17 @@ export async function openStripeCheckout() {
 		checkoutSessionData
 	);
 
-	console.log(checkoutSessionRef);
-
 	// The Stripe extension creates a payment link for us
 	onSnapshot(checkoutSessionRef, (snap) => {
 		const { error, url } = snap.data();
 		if (error) {
 			console.error(error);
-			// handle error
+			// TODO: Handle error
 		}
 		if (url) {
-			console.log(url)
-			// Open a new page with the payment link
+			// TODO: Decide whether to open a new tab or redirect the current tab
 			chrome.tabs.create({ url });
-			// window.location.assign(url);  // redirect to payment link
+			// window.location.assign(url);
 		}
 	});
 }
