@@ -48,21 +48,34 @@ export async function openStripeCheckout() {
 	console.log(products);
 
 	// TODO: This must be done without reliance on the name being the same in case it changes
-	const shufflePlusTestProduct = products.find(p => p.name === "Shuffle+ (Test)");
-	// const shufflePlusProduct = products.find(p => p.name === "Shuffle+");
+	const shufflePlusTestProducts = products.find(p => p.name == "Shuffle+ (Test)");
+	// const shufflePlusProduct = products.find(p => p.name == "Shuffle+");
 
-	console.log(shufflePlusTestProduct);
+	console.log(shufflePlusTestProducts);
+
+	// Choose the product whose prices match the user's local currency
+	// For that we need to check one of the prices for the currency
+	let localCurrencyProduct;
+	for (let product of products) {
+		const localCurrencyPrice = product.prices.find(p => p.priceInfo.currency === 'eur');
+		if (localCurrencyPrice) {
+			localCurrencyProduct = product;
+			break;
+		}
+	}
+
+	console.log(localCurrencyProduct);
 
 	// Get the available prices, which is a subkey prices on the product
-	const shufflePlusTestPrices = shufflePlusTestProduct.prices;
+	const shufflePlusTestProductPrices = localCurrencyProduct.prices;
 
-	console.log(shufflePlusTestPrices);
+	console.log(shufflePlusTestProductPrices);
 
-	console.log(chrome.runtime.getURL('stripe.html'))
-	// For testing, use the yearly price
+	// For testing, use the monthly price
 	let checkoutSessionData = {
-		price: shufflePlusTestPrices.find(p => p.priceInfo.type === 'recurring' && p.priceInfo.recurring.interval === 'year').priceId,
-		success_url: 'http://localhost:3000/success'//chrome.runtime.getURL('stripe.html')
+		price: shufflePlusTestProductPrices.find(p => p.priceInfo.type === 'recurring' && p.priceInfo.recurring.interval === 'month').priceId,
+		success_url: 'https://tinyurl.com/RYVShufflePlus',//chrome.runtime.getURL('stripe.html'),
+		allow_promotion_codes: true
 	};
 
 	const checkoutSessionRef = await addDoc(
