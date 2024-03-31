@@ -1,8 +1,9 @@
 // Contains logic to login and authenticate users through Google Oauth and Firebase Auth
 import { setSyncStorageValue } from "./chromeStorage.js";
 import { isFirefox, firebaseConfig } from "./config.js";
+import { getSubscriptions } from "./stripe.js";
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 
 const app = initializeApp(firebaseConfig);
@@ -10,7 +11,7 @@ const db = getFirestore(app);
 
 // Get user information from storage or by logging in to Google
 // If localOnly is set to true, the function will not attempt to log in to Google if there is no local information (==in sync storage)
-export async function getUser(localOnly) {
+export async function getUser(localOnly, allowSelfRevoke = true) {
 	// TODO: If there is a user and an active subscription, fetch a new access token in the background script on startup, and validate the subscription status
 	console.log(`Getting user info. localOnly: ${localOnly}`);
 	if (localOnly) {
@@ -22,7 +23,7 @@ export async function getUser(localOnly) {
 		return null;
 	} else {
 		console.log("Attempting to log in using Google Oauth");
-		return await googleLogin();
+		return await googleLogin(allowSelfRevoke);
 	}
 }
 
@@ -172,7 +173,7 @@ async function fetchRefreshTokenFromFirestore(googleOauth, allowSelfRevoke) {
 		console.error("No refresh token available in Firestore. Self-revoking app access.");
 		await revokeAccess();
 		throw new Error("Getting required authentication data failed. Please grant the app access again.");
-	} else if(!haveRefreshToken) {
+	} else if (!haveRefreshToken) {
 		console.error("No refresh token available in Firestore, but self-revoking access is not allowed.");
 		throw new Error("Getting required authentication data failed. Please go to your Google account dashboard and revoke access to the extension, then try again.");
 	}
@@ -239,7 +240,7 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 // Revokes access to the app for the current user, and deletes it if requested and there is no active subscription
 export async function revokeAccess(deleteUser = false) {
 	// Make sure there is an active token and the user is authenticated with Firebase
-	await googleLogin(false);
+	await getUser(false, false);
 	const googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth;
 	const usedToken = googleOauth.accessToken || googleOauth.refreshToken;
 
@@ -251,6 +252,9 @@ export async function revokeAccess(deleteUser = false) {
 			},
 			body: `token=${usedToken}`
 		};
+
+		// We need to do this before revoking the tokens as it needs a valid authorization
+		const hasActiveSubscription = (await getSubscriptions(true)).length > 0;
 
 		const revokeSuccessful = await fetch('https://oauth2.googleapis.com/revoke', postOptions)
 			.then(response => {
@@ -275,15 +279,22 @@ export async function revokeAccess(deleteUser = false) {
 				return false;
 			});
 
-		// TODO: Find out if user has an active subscription. If they do, we cannot delete their account as the association will be lost
-		const activeSubscription = false;
-		if (revokeSuccessful && deleteUser && !activeSubscription) {
-			// TODO: When deleting the user account, also delete the user entry in Firestore db
+		console.log(revokeSuccessful, deleteUser, hasActiveSubscription)
+		if (revokeSuccessful && deleteUser && !hasActiveSubscription) {
 			const user = getAuth(app).currentUser;
-			user.delete().then(() => {
-				console.log('User deleted');
+
+			const userRef = doc(db, "users", user.uid);
+			deleteDoc(userRef).then(() => {
+				console.log('Firestore document deleted');
+
+				// Delete the user account
+				user.delete().then(() => {
+					console.log('User deleted');
+				}).catch((error) => {
+					console.error('Error deleting user:', error);
+				});
 			}).catch((error) => {
-				console.error('Error deleting user:', error);
+				console.error('Error deleting Firestore document:', error);
 			});
 		}
 

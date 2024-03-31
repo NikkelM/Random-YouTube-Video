@@ -141,6 +141,7 @@ async function setDomElementEventListeners(domElements) {
 			domElements.googleLoginButtonDiv.classList.remove("hidden");
 			domElements.googleLoginSuccessDiv.classList.add("hidden");
 			domElements.googleRevokeAccessButtonDiv.classList.add("hidden");
+			domElements.googleRevokeAccessButton.textContent = "Forget me permanently";
 			domElements.welcomeHeader.textContent = "User account removed successfully! Sign in below to get started again";
 		} else {
 			domElements.googleLoginSuccessDiv.classList.add("hidden");

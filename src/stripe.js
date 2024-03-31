@@ -101,3 +101,26 @@ export async function openStripeCheckout() {
 		}
 	});
 }
+
+// Gets all (active) subscriptions for the current user
+export async function getSubscriptions(activeOnly = true) {
+	const currentUser = await getUser(false);
+	if (!currentUser) {
+		console.log("No user found");
+		return [];
+	}
+
+	let q;
+	if (activeOnly) {
+		q = query(
+			collection(db, `users/${currentUser.firebaseUid}/subscriptions`),
+			where('status', 'in', ['active', 'trialing'])
+		);
+	} else {
+		q = collection(db, `users/${currentUser.firebaseUid}/subscriptions`);
+	}
+
+	const querySnapshot = await getDocs(q);
+	const subscriptions = querySnapshot.docs.map((doc) => doc.data());
+	return subscriptions;
+}
