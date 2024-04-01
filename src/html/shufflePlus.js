@@ -73,46 +73,10 @@ async function setDomElementValuesFromConfig(domElements) {
 		domElements.googleRevokeAccessButtonDiv.classList.remove("hidden");
 
 		user = await getUser();
-		const subscriptionStatus = await getSubscriptionStatus(user);
-		if (subscriptionStatus.hasActiveSubscription) {
-			domElements.subscribeButtonDiv.classList.add("hidden");
-			domElements.googleLoginSuccessP.textContent = `You have an active subscription that ends on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} and will renew automatically.`;
-		} else {
-			if (subscriptionStatus.subscriptionEnd) {
-				if (subscriptionStatus.subscriptionEnd > Date.now()) {
-					domElements.googleLoginSuccessP.textContent = `Your benefits will expire on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} if you do not renew your subscription beforehand!`;
-				} else {
-					domElements.googleLoginSuccessP.textContent = `Your benefits expired on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()}`;
-				}
-			}
-			domElements.subscribeButtonDiv.classList.remove("hidden");
-		}
+		await setSubscriptionUI(domElements, user);
 	} else {
 		domElements.googleLoginButtonDiv.classList.remove("hidden");
 	}
-}
-
-// Gets the subscription status for the current user
-async function getSubscriptionStatus(user = null) {
-	const subscriptions = await getSubscriptions(user, false);
-
-	if (subscriptions.length > 0) {
-		const activeSubscription = subscriptions.find(s => s.status === "active");
-		if (activeSubscription) {
-			return {
-				hasActiveSubscription: true,
-				subscriptionEnd: activeSubscription.current_period_end.seconds * 1000
-			};
-		} else {
-			// Get the most recently run out subscription
-			const lastSubscription = subscriptions.reduce((prev, current) => (prev.current_period_end > current.current_period_end) ? prev : current);
-			return {
-				hasActiveSubscription: false,
-				subscriptionEnd: lastSubscription.current_period_end.seconds * 1000
-			};
-		}
-	}
-	return { hasActiveSubscription: false };
 }
 
 // Set event listeners for DOM elements
@@ -128,10 +92,10 @@ async function setDomElementEventListeners(domElements) {
 			domElements.googleLoginErrorDiv.classList.add("hidden");
 			domElements.googleLoginSuccessDiv.classList.remove("hidden");
 			domElements.googleRevokeAccessButtonDiv.classList.remove("hidden");
+			await setSubscriptionUI(domElements, user);
 			// TODO: If the user is logged in and subscribed, change the extension icon, e.g.:
 			// chrome.action.setIcon({ path: chrome.runtime.getURL('icons/icon-128-white.png') });
 		} else {
-			console.log(user);
 			domElements.googleLoginButton.textContent = `Login failed with error: ${user.code ? user.code : 'Unknown Error'}`;
 			domElements.googleLoginSuccessDiv.classList.add("hidden");
 			domElements.googleLoginErrorDiv.classList.remove("hidden");
@@ -144,7 +108,7 @@ async function setDomElementEventListeners(domElements) {
 		// TODO: Get configuration from UI
 		let requestedProduct = "Shuffle+ (Test)";
 		let requestedCurrency = "eur";
-		let requestedInterval = "year";
+		let requestedInterval = "month";
 		await openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval);
 	});
 
@@ -205,4 +169,45 @@ async function setDomElementEventListeners(domElements) {
 
 		domElements.viewChangelogButton.classList.remove("highlight-green");
 	});
+}
+
+// Sets UI elements according to the user's subscription status
+async function setSubscriptionUI(domElements, user) {
+	const subscriptionStatus = await getSubscriptionStatus(user);
+	if (subscriptionStatus.hasActiveSubscription) {
+		domElements.subscribeButtonDiv.classList.add("hidden");
+		domElements.googleLoginSuccessP.textContent = `You have an active subscription that ends on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} and will renew automatically.`;
+	} else {
+		if (subscriptionStatus.subscriptionEnd) {
+			if (subscriptionStatus.subscriptionEnd > Date.now()) {
+				domElements.googleLoginSuccessP.textContent = `Your benefits will expire on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} if you do not renew your subscription beforehand!`;
+			} else {
+				domElements.googleLoginSuccessP.textContent = `Your benefits expired on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()}`;
+			}
+		}
+		domElements.subscribeButtonDiv.classList.remove("hidden");
+	}
+}
+
+// Gets the subscription status for the current user
+async function getSubscriptionStatus(user = null) {
+	const subscriptions = await getSubscriptions(user, false);
+
+	if (subscriptions.length > 0) {
+		const activeSubscription = subscriptions.find(s => s.status === "active");
+		if (activeSubscription) {
+			return {
+				hasActiveSubscription: true,
+				subscriptionEnd: activeSubscription.current_period_end.seconds * 1000
+			};
+		} else {
+			// Get the most recently run out subscription
+			const lastSubscription = subscriptions.reduce((prev, current) => (prev.current_period_end > current.current_period_end) ? prev : current);
+			return {
+				hasActiveSubscription: false,
+				subscriptionEnd: lastSubscription.current_period_end.seconds * 1000
+			};
+		}
+	}
+	return { hasActiveSubscription: false };
 }
