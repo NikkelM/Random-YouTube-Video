@@ -87,7 +87,6 @@
 	margin: auto;
 }
 
-/* Disables various transitions */
 .no-transitions * {
 	transition: none !important;
 }
@@ -329,17 +328,9 @@ input.invalid-input {
 }
 
 @keyframes flash {
-	0% {
-		opacity: 1;
-	}
-
-	50% {
-		opacity: 0.5;
-	}
-
-	100% {
-		opacity: 1;
-	}
+	0% { opacity: 1; }
+	50% { opacity: 0.5; }
+	100% { opacity: 1; }
 }
 
 /* 
