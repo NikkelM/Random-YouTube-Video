@@ -76,7 +76,6 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 	};
 
 	const checkoutSessionRef = await addDoc(
-		// user is provided by firebase, via getAuth().user
 		collection(db, `users/${user.firebaseUid}/checkout_sessions`),
 		checkoutSessionData
 	);
