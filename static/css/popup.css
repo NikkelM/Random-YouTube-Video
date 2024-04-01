@@ -40,21 +40,13 @@
 }
 
 @keyframes slideDown {
-  0% {
-    max-height: 0;
-  }
-  100% {
-    max-height: 120px;
-  }
+  0% { max-height: 0; }
+  100% { max-height: 120px; }
 }
 
 @keyframes slideUp {
-  0% {
-    max-height: 120px;
-  }
-  100% {
-    max-height: 0;
-  }
+  0% { max-height: 120px; }
+  100% { max-height: 0; }
 }
 
 .hiddenTransition {

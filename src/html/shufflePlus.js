@@ -19,6 +19,8 @@ function getDomElements() {
 	/* eslint no-undef: "error" */
 	return {
 		body: document.body,
+		loadingOverlay: document.getElementById("loadingOverlay"),
+
 		// HEADER
 		// Welcome ${username}
 		welcomeHeader: document.getElementById("welcomeHeader"),
@@ -76,7 +78,10 @@ async function setDomElementValuesFromConfig(domElements) {
 		await setSubscriptionUI(domElements, user);
 	} else {
 		domElements.googleLoginButtonDiv.classList.remove("hidden");
+		domElements.manageSubscribtionButtonDiv.classList.add("hidden");
 	}
+
+	domElements.loadingOverlay.classList.add("fadeOut");
 }
 
 // Set event listeners for DOM elements
@@ -92,6 +97,7 @@ async function setDomElementEventListeners(domElements) {
 			domElements.googleLoginErrorDiv.classList.add("hidden");
 			domElements.googleLoginSuccessDiv.classList.remove("hidden");
 			domElements.googleRevokeAccessButtonDiv.classList.remove("hidden");
+			domElements.manageSubscribtionButtonDiv.classList.remove("hidden");
 			await setSubscriptionUI(domElements, user);
 			// TODO: If the user is logged in and subscribed, change the extension icon, e.g.:
 			// chrome.action.setIcon({ path: chrome.runtime.getURL('icons/icon-128-white.png') });
@@ -155,6 +161,7 @@ async function setDomElementEventListeners(domElements) {
 			domElements.googleLoginButtonDiv.classList.remove("hidden");
 			domElements.googleLoginSuccessDiv.classList.add("hidden");
 			domElements.googleRevokeAccessButtonDiv.classList.add("hidden");
+			domElements.manageSubscribtionButtonDiv.classList.add("hidden");
 			domElements.googleRevokeAccessButton.textContent = "Forget me permanently";
 			domElements.welcomeHeader.textContent = "User account removed successfully! Sign in below to get started again";
 		} else {
@@ -185,7 +192,7 @@ async function setSubscriptionUI(domElements, user) {
 		if (subscriptionStatus.isCancelled) {
 			domElements.googleLoginSuccessP.textContent = `Your benefits will expire on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} if you do not renew your subscription beforehand!`;
 		} else {
-			domElements.googleLoginSuccessP.textContent = `Your subscription gives you access to all Shuffle+ benefits until ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} and renew automatically.`;
+			domElements.googleLoginSuccessP.textContent = `Your subscription gives you access to all Shuffle+ benefits until ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} and will renew automatically.`;
 		}
 		domElements.manageSubscribtionButton.textContent = "Manage your subscription";
 	} else {
