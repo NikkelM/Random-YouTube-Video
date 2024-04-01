@@ -92,6 +92,7 @@ async function setDomElementEventListeners(domElements) {
 		user = await getUser();
 		if (user.displayName) {
 			domElements.welcomeHeader.textContent = `Login successful! Welcome ${user.displayName.split(" ")[0]}!`;
+			domElements.googleLoginSuccessP.textContent = "If you are subscribed to Shuffle+, you now have access to all premium features!";
 			domElements.googleLoginButton.textContent = "Sign in with Google";
 			domElements.googleLoginButtonDiv.classList.add("hidden");
 			domElements.googleLoginErrorDiv.classList.add("hidden");
@@ -163,7 +164,7 @@ async function setDomElementEventListeners(domElements) {
 			domElements.googleRevokeAccessButtonDiv.classList.add("hidden");
 			domElements.manageSubscribtionButtonDiv.classList.add("hidden");
 			domElements.googleRevokeAccessButton.textContent = "Forget me permanently";
-			domElements.welcomeHeader.textContent = "User account removed successfully! Sign in below to get started again";
+			domElements.welcomeHeader.textContent = "Logged out successfully! Sign in below to get started again";
 		} else {
 			domElements.googleLoginSuccessDiv.classList.add("hidden");
 			domElements.googleRevokeAccessButton.textContent = "Signout failed!";
