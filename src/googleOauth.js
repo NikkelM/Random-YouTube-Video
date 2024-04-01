@@ -155,10 +155,10 @@ async function fetchRefreshTokenFromFirestore(googleOauth, allowSelfRevoke) {
 	console.log("Getting the Google Oauth refresh token from Firestore, as it does not exist locally.");
 	let haveRefreshToken = true;
 
-	const userRef = doc(db, "users", getAuth().currentUser.uid);
-	const userDoc = await getDoc(userRef);
-	if (userDoc.exists()) {
-		const data = userDoc.data();
+	const authMetadataRef = doc(db, "users", getAuth().currentUser.uid, "authMetadata", "google");
+	const authMetadataDoc = await getDoc(authMetadataRef);
+	if (authMetadataDoc.exists()) {
+		const data = authMetadataDoc.data();
 		if (data.googleRefreshToken) {
 			googleOauth.refreshToken = data.googleRefreshToken;
 			await setSyncStorageValue("googleOauth", googleOauth);
@@ -217,9 +217,9 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 
 	if (refreshToken) {
 		// Save the refresh token to Firestore
-		// TODO: Save it in a different document, to keep separate from stripe data and rules (no write allowed for stripe data)
-		const userRef = doc(db, "users", getAuth().currentUser.uid);
-		await setDoc(userRef, {
+		// TODO: DONE? Save it in a different document, to keep separate from stripe data and rules (no write allowed for stripe data)
+		const authMetadataRef = doc(db, "users", getAuth().currentUser.uid, "authMetadata", "google");
+		await setDoc(authMetadataRef, {
 			googleRefreshToken: refreshToken
 		}, { merge: true });
 	} else if (!googleOauth.refreshToken) {
@@ -263,10 +263,8 @@ export async function revokeAccess(user = null, deleteUser = false) {
 					return setSyncStorageValue("googleOauth", null).then(async () => {
 						// TODO: If there is no active subscription, remove all user data from Firebase
 						// We always remove the refreshToken, as it is no longer active
-						const userRef = doc(db, "users", getAuth(app).currentUser.uid);
-						await setDoc(userRef, {
-							googleRefreshToken: null
-						});
+						const authMetadataRef = doc(db, "users", getAuth(app).currentUser.uid, "authMetadata", "google");
+						await deleteDoc(authMetadataRef);
 						return true;
 					});
 				} else {
@@ -282,18 +280,11 @@ export async function revokeAccess(user = null, deleteUser = false) {
 		if (revokeSuccessful && deleteUser && !hasActiveSubscription) {
 			const user = getAuth(app).currentUser;
 
-			const userRef = doc(db, "users", user.uid);
-			deleteDoc(userRef).then(() => {
-				console.log('Firestore document deleted');
-
-				// Delete the user account
-				user.delete().then(() => {
-					console.log('User deleted');
-				}).catch((error) => {
-					console.error('Error deleting user:', error);
-				});
+			// Delete the user account. Stripe should clean up the Firestore document
+			user.delete().then(() => {
+				console.log('User deleted');
 			}).catch((error) => {
-				console.error('Error deleting Firestore document:', error);
+				console.error('Error deleting user:', error);
 			});
 		}
 
