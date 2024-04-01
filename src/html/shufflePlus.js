@@ -36,8 +36,8 @@ function getDomElements() {
 
 		// SUBSCRIBE
 		// Subscribe button
-		subscribeButtonDiv: document.getElementById("subscribeButtonDiv"),
-		subscribeButton: document.getElementById("subscribeButton"),
+		manageSubscribtionButtonDiv: document.getElementById("manageSubscribtionButtonDiv"),
+		manageSubscribtionButton: document.getElementById("manageSubscribtionButton"),
 
 		// FORGET ME
 		// Forget me button
@@ -103,13 +103,19 @@ async function setDomElementEventListeners(domElements) {
 		}
 	});
 
-	// Subscribe button
-	domElements.subscribeButton.addEventListener("click", async function () {
-		// TODO: Get configuration from UI
-		let requestedProduct = "Shuffle+ (Test)";
-		let requestedCurrency = "eur";
-		let requestedInterval = "month";
-		await openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval);
+	// Manage subscription button
+	domElements.manageSubscribtionButton.addEventListener("click", async function () {
+		if ((await getSubscriptionStatus(user)).hasActiveSubscription) {
+			// TODO: This is the test URL
+			const url = `https://billing.stripe.com/p/login/test_7sI5lw95Afu5fzqbII?prefilled_email=${user.email}`;
+			await chrome.tabs.create({ url });
+		} else {
+			// TODO: Get configuration from UI
+			let requestedProduct = "Shuffle+ (Test)";
+			let requestedCurrency = "usd";
+			let requestedInterval = "month";
+			await openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval);
+		}
 	});
 
 	// Forget me button
@@ -174,9 +180,10 @@ async function setDomElementEventListeners(domElements) {
 // Sets UI elements according to the user's subscription status
 async function setSubscriptionUI(domElements, user) {
 	const subscriptionStatus = await getSubscriptionStatus(user);
+
 	if (subscriptionStatus.hasActiveSubscription) {
-		domElements.subscribeButtonDiv.classList.add("hidden");
 		domElements.googleLoginSuccessP.textContent = `You have an active subscription that ends on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} and will renew automatically.`;
+		domElements.manageSubscribtionButton.textContent = "Manage your subscription";
 	} else {
 		if (subscriptionStatus.subscriptionEnd) {
 			if (subscriptionStatus.subscriptionEnd > Date.now()) {
@@ -185,7 +192,6 @@ async function setSubscriptionUI(domElements, user) {
 				domElements.googleLoginSuccessP.textContent = `Your benefits expired on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()}`;
 			}
 		}
-		domElements.subscribeButtonDiv.classList.remove("hidden");
 	}
 }
 
@@ -209,5 +215,8 @@ async function getSubscriptionStatus(user = null) {
 			};
 		}
 	}
-	return { hasActiveSubscription: false };
+	return {
+		hasActiveSubscription: false,
+		subscriptionEnd: null
+	};
 }
