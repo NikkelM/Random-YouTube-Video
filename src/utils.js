@@ -15,19 +15,26 @@ console.log = function () {
 
 // ----- URLs -----
 export function isVideoUrl(url) {
-	if (!url) return false;
+	if (!url) {
+		return false;
+	}
 
 	const urlParts = url.split("/");
-	if (!urlParts[2]?.includes("youtube")) return false;
+	if (!urlParts[2]?.includes("youtube")) {
+		return false;
+	}
 	return urlParts[3]?.startsWith("watch?v=") ?? false;
 }
 
 export function getPageTypeFromURL(url) {
-	if (!url) return null;
+	if (!url) {
+		return null;
+	}
 
 	const urlParts = url.split("/");
-	if (!urlParts[2]?.includes("youtube")) return null;
-	if (urlParts[3]?.startsWith("watch?v=")) {
+	if (!urlParts[2]?.includes("youtube")) {
+		return null;
+	} else if (urlParts[3]?.startsWith("watch?v=")) {
 		return "video";
 	} else if (urlParts[3]?.startsWith("shorts")) {
 		return "short";

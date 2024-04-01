@@ -17,6 +17,7 @@
   },
   "rules": {
     "@typescript-eslint/no-var-requires": 0,
-    "semi": ["error", "always"]
+    "semi": ["error", "always"],
+    "curly": "error"
   }
 }
