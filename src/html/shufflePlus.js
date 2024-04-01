@@ -182,14 +182,18 @@ async function setSubscriptionUI(domElements, user) {
 	const subscriptionStatus = await getSubscriptionStatus(user);
 
 	if (subscriptionStatus.hasActiveSubscription) {
-		domElements.googleLoginSuccessP.textContent = `You have an active subscription that ends on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} and will renew automatically.`;
+		if (subscriptionStatus.isCancelled) {
+			domElements.googleLoginSuccessP.textContent = `Your benefits will expire on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} if you do not renew your subscription beforehand!`;
+		} else {
+			domElements.googleLoginSuccessP.textContent = `Your subscription gives you access to all Shuffle+ benefits until ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} and renew automatically.`;
+		}
 		domElements.manageSubscribtionButton.textContent = "Manage your subscription";
 	} else {
 		if (subscriptionStatus.subscriptionEnd) {
 			if (subscriptionStatus.subscriptionEnd > Date.now()) {
 				domElements.googleLoginSuccessP.textContent = `Your benefits will expire on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} if you do not renew your subscription beforehand!`;
 			} else {
-				domElements.googleLoginSuccessP.textContent = `Your benefits expired on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()}`;
+				domElements.googleLoginSuccessP.textContent = `Your benefits expired on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()}. Renew your subscription now to restore access to all Shuffle+ benefits!`;
 			}
 		}
 	}
@@ -200,23 +204,39 @@ async function getSubscriptionStatus(user = null) {
 	const subscriptions = await getSubscriptions(user, false);
 
 	if (subscriptions.length > 0) {
-		const activeSubscription = subscriptions.find(s => s.status === "active");
+		const activeSubscription = subscriptions.find(s => s.status == "active");
 		if (activeSubscription) {
+			if (activeSubscription.cancel_at_period_end) {
+				return {
+					hasActiveSubscription: true,
+					isCancelled: true,
+					subscriptionEnd: activeSubscription.current_period_end.seconds * 1000
+				};
+			} else if (activeSubscription.cancel_at) {
+				return {
+					hasActiveSubscription: true,
+					isCancelled: true,
+					subscriptionEnd: activeSubscription.cancel_at.seconds * 1000
+				};
+			}
 			return {
 				hasActiveSubscription: true,
+				isCancelled: false,
 				subscriptionEnd: activeSubscription.current_period_end.seconds * 1000
 			};
 		} else {
 			// Get the most recently run out subscription
-			const lastSubscription = subscriptions.reduce((prev, current) => (prev.current_period_end > current.current_period_end) ? prev : current);
+			const lastSubscription = subscriptions.reduce((prev, current) => (prev.ended_at > current.ended_at) ? prev : current);
 			return {
 				hasActiveSubscription: false,
-				subscriptionEnd: lastSubscription.current_period_end.seconds * 1000
+				isCancelled: true,
+				subscriptionEnd: lastSubscription.ended_at.seconds * 1000
 			};
 		}
 	}
 	return {
 		hasActiveSubscription: false,
+		isCancelled: null,
 		subscriptionEnd: null
 	};
 }
