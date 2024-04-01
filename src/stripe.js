@@ -60,7 +60,7 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 	// In theory, there should always only be one matching product returned by getProducts
 	const shufflePlusTestProducts = products.find(p => p.name == requestedProduct);
 
-	let paymentMethods = ['paypal', 'card'];
+	let paymentMethods = ['paypal', 'card', 'link'];
 	if (currency == 'gbp') {
 		// TODO: Confirm payment method works
 		paymentMethods.push('revolut_pay');
