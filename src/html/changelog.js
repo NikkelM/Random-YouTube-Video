@@ -88,7 +88,7 @@ function getDomElements() {
 		// FOOTER
 		// Shuffle+ button
 		shufflePlusButton: document.getElementById("shufflePlusButton"),
-	}
+	};
 }
 
 // Set event listeners for DOM elements

@@ -121,7 +121,7 @@ function getDomElements() {
 		viewChangelogButton: document.getElementById("viewChangelogButton"),
 		// Shuffle+ button
 		shufflePlusButton: document.getElementById("shufflePlusButton"),
-	}
+	};
 }
 
 // Set default values from configSync == user preferences
@@ -291,7 +291,7 @@ async function setDomElementEventListeners(domElements) {
 			await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value));
 
 			manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value);
-		})
+		});
 	});
 
 	// Custom options per channel: Dropdown menu
@@ -388,7 +388,7 @@ async function setDomElementEventListeners(domElements) {
 			}
 
 			manageDependents(domElements, domElements.channelCustomOptionsPercentageOptionInput, this.value);
-		})
+		});
 	});
 
 	// Popup shuffle button

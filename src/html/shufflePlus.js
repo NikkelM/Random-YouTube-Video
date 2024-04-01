@@ -61,7 +61,7 @@ function getDomElements() {
 		viewChangelogButton: document.getElementById("viewChangelogButton"),
 		// Shuffle+ button
 		shufflePlusButton: document.getElementById("shufflePlusButton"),
-	}
+	};
 }
 
 // Set default values from configSync == user preferences
@@ -142,7 +142,7 @@ async function setDomElementEventListeners(domElements) {
 	// Subscribe button
 	domElements.subscribeButton.addEventListener("click", async function () {
 		// TODO: Get local currency of the user
-		let currency = "usd";
+		let currency = "gbp";
 		await openStripeCheckout(user, currency);
 	});
 

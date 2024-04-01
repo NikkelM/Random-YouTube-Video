@@ -57,7 +57,7 @@ function getDomElements() {
 		viewChangelogButton: document.getElementById("viewChangelogButton"),
 		// Shuffle+ button
 		shufflePlusButton: document.getElementById("shufflePlusButton"),
-	}
+	};
 }
 
 // Set event listeners for DOM elements

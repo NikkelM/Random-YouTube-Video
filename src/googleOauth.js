@@ -110,11 +110,11 @@ async function googleLogin(allowSelfRevoke = true) {
 					code: code
 				};
 			}
-			console.log("Completed the web auth flow.")
+			console.log("Completed the web auth flow.");
 		}
 	}
 
-	return googleOauth.userInfo ? googleOauth.userInfo : googleOauth
+	return googleOauth.userInfo ? googleOauth.userInfo : googleOauth;
 }
 
 async function runWebAuthFlow(generatedState, redirectUri, googleOauth, auth, allowSelfRevoke) {
@@ -259,7 +259,7 @@ export async function revokeAccess(user = null, deleteUser = false) {
 		const revokeSuccessful = await fetch('https://oauth2.googleapis.com/revoke', postOptions)
 			.then(response => {
 				if (response.ok) {
-					console.log('Token revoked successfully.')
+					console.log('Token revoked successfully.');
 					return setSyncStorageValue("googleOauth", null).then(async () => {
 						// TODO: If there is no active subscription, remove all user data from Firebase
 						// We always remove the refreshToken, as it is no longer active
@@ -279,7 +279,6 @@ export async function revokeAccess(user = null, deleteUser = false) {
 				return false;
 			});
 
-		console.log(revokeSuccessful, deleteUser, hasActiveSubscription)
 		if (revokeSuccessful && deleteUser && !hasActiveSubscription) {
 			const user = getAuth(app).currentUser;
 

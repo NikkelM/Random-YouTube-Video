@@ -153,7 +153,7 @@ async function shuffleVideos() {
 					showTrace: false,
 					canSavePlaylist: false
 				}
-			)
+			);
 		}
 
 		// We need this variable to make sure the button text is only changed if the shuffle hasn't finished within the time limit
@@ -256,7 +256,7 @@ async function shuffleVideos() {
 
 The extension's background worker was reloaded. This happens after an extension update, or after you interrupted a shuffle that was started from the popup.
 
-The page will reload and you can try again.`)
+The page will reload and you can try again.`);
 
 			// Reload the page
 			window.location.reload();

@@ -104,4 +104,4 @@ export const shufflingHints = [
 	"If you want to stay up-to-date with the extension's development, consider starring the GitHub repository!",
 	"This extension is a hobby project - you can support it by sponsoring me on GitHub or donating on Ko-Fi!",
 	"The extension's source code is available on GitHub: https://github.com/NikkelM/Random-YouTube-Video"
-]
+];

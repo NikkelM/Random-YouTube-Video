@@ -799,7 +799,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 								showTrace: false,
 								canSavePlaylist: true
 							}
-						)
+						);
 						// If we have chosen at least one video, we just return those
 						/* c8 ignore start - Same behaviour as earlier, but this only triggers if the last chosen videos was a deleted one */
 					} else {
@@ -808,7 +808,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 					}
 				}
 				/* c8 ignore stop */
-			} while (!await testVideoExistence(randomVideo, allVideos[randomVideo]))
+			} while (!await testVideoExistence(randomVideo, allVideos[randomVideo]));
 		}
 
 		// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
@@ -904,7 +904,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 				showTrace: false,
 				canSavePlaylist: true
 			}
-		)
+		);
 	}
 	console.log(`${chosenVideos.length} random video${chosenVideos.length > 1 ? "s have" : " has"} been chosen: [${chosenVideos}]`);
 
@@ -1151,7 +1151,7 @@ async function tryGetPlaylistFromLocalStorage(playlistId) {
 			if (result[playlistId]["videos"] === undefined) {
 				// Remove from localStorage
 				await chrome.storage.local.remove([playlistId]);
-				return {}
+				return {};
 			}
 			/* c8 ignore stop */
 			return result[playlistId];

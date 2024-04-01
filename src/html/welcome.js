@@ -62,7 +62,7 @@ function getDomElements() {
 		viewChangelogButton: document.getElementById("viewChangelogButton"),
 		// Shuffle+ button
 		shufflePlusButton: document.getElementById("shufflePlusButton"),
-	}
+	};
 }
 
 // Set event listeners for DOM elements
@@ -138,6 +138,6 @@ async function requestFirefoxPermissions() {
 	const permissionsToRequest = {
 		permissions: ["tabs"],
 		origins: ["*://*.youtube.com/*"]
-	}
+	};
 	await browser.permissions.request(permissionsToRequest);
 }

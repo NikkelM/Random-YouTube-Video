@@ -8,7 +8,7 @@ console.log = function () {
 		Array.prototype.unshift.call(arguments, '[random-youtube-video]:');
 	}
 	oldLog.apply(this, arguments);
-}
+};
 /* c8 ignore stop */
 
 // ---------- Utility functions ----------
