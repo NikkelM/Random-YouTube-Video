@@ -69,8 +69,8 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 	let checkoutSessionData = {
 		price: shufflePlusTestProducts.prices.find(p => p.priceInfo.type == 'recurring' && p.priceInfo.recurring.interval == requestedInterval).priceId,
 		// TODO: Proper redirect URL, cancellation URL. Current URL does nothing after completion
-		success_url: 'https://tinyurl.com/RYVShufflePlus',
-		cancel_url: 'https://google.com',
+		success_url: 'https://tinyurl.com/RYVShufflePlus?sessionId={CHECKOUT_SESSION_ID}',
+		cancel_url: 'https://google.com?sessionId={CHECKOUT_SESSION_ID}',
 		allow_promotion_codes: true,
 		payment_method_types: paymentMethods
 	};
