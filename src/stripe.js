@@ -3,6 +3,7 @@ import { firebaseConfig } from "./config.js";
 import { getUser } from './googleOauth.js';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot, FieldPath } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -116,4 +117,16 @@ export async function getSubscriptions(user = null, activeOnly = true) {
 	const querySnapshot = await getDocs(q);
 	const subscriptions = querySnapshot.docs.map((doc) => doc.data());
 	return subscriptions;
+}
+
+export async function hasActiveSubscriptionRole() {
+	const stripeRole = await getStripeRole();
+	return stripeRole === 'shufflePlus';
+}
+
+// This will return shufflePlus if the user has an active subscription
+async function getStripeRole() {
+	const decodedToken = await getAuth().currentUser.getIdTokenResult();
+	console.log(decodedToken);
+	return decodedToken.claims?.stripeRole ?? null;
 }
