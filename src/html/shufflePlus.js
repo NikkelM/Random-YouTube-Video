@@ -142,8 +142,10 @@ async function setDomElementEventListeners(domElements) {
 	// Subscribe button
 	domElements.subscribeButton.addEventListener("click", async function () {
 		// TODO: Get local currency of the user
-		let currency = "gbp";
-		await openStripeCheckout(user, currency);
+		let requestedProduct = "Shuffle+ (Test)";
+		let requestedCurrency = "eur";
+		let requestedInterval = "year";
+		await openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval);
 	});
 
 	// Forget me button

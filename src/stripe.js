@@ -2,49 +2,36 @@
 import { firebaseConfig } from "./config.js";
 import { getUser } from './googleOauth.js';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot } from 'firebase/firestore';
+import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot, FieldPath } from 'firebase/firestore';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Get products and pricing information from Firestore/Stripe
-async function getProducts(currency = 'usd') {
-	const q = query(
+async function getProducts(currency) {
+	const currencyRef = new FieldPath('metadata', 'currency');
+	const productCurrencyQuery = query(
 		collection(db, 'products'),
-		where('active', '==', true)
+		where('active', '==', true),
+		where(currencyRef, '==', currency)
 	);
 
-	const querySnapshot = await getDocs(q);
+	const productSnapshot = await getDocs(productCurrencyQuery);
 
+	// TODO: Currently returns null if no product with currency is found. Should return USD price instead
 	// For each product, get the product price info
-	const productsPromises = querySnapshot.docs.map(async (productDoc) => {
+	const productsPromises = productSnapshot.docs.map(async (productDoc) => {
 		let productInfo = productDoc.data();
 
-		// If the product's currency doesn't match the given currency, skip this product
-		if (productInfo.metadata.currency !== currency) {
-			return null;
-		}
-
 		// Fetch prices subcollection per product
-		const pricesCollection = collection(productDoc.ref, 'prices');
-		const priceQuerySnapshot = await getDocs(pricesCollection);
+		const priceQuerySnapshot = await getDocs(collection(productDoc.ref, 'prices'));
 
 		// Iterate over all price documents and filter by currency
+		// Even though we already filtered by currency in the product query, we filter again here to make sure to only get correct prices
 		const pricesInfo = priceQuerySnapshot.docs.map((priceDoc) => {
 			const priceInfo = priceDoc.data();
 			return priceInfo.currency === currency ? { priceId: priceDoc.id, priceInfo } : null;
 		}).filter(price => price !== null);
-
-		// If no prices in the given currency, get the USD price
-		if (pricesInfo.length === 0) {
-			const usdPrice = priceQuerySnapshot.docs.find((priceDoc) => priceDoc.data().currency === 'usd');
-			if (usdPrice) {
-				pricesInfo.push({
-					priceId: usdPrice.id,
-					priceInfo: usdPrice.data()
-				});
-			}
-		}
 
 		productInfo['prices'] = pricesInfo;
 		return productInfo;
@@ -52,27 +39,40 @@ async function getProducts(currency = 'usd') {
 
 	const products = await Promise.all(productsPromises);
 
-	return products.filter(product => product !== null);
+	// If no products with the requested currency are found, return products with USD pricing
+	if (products.length == 0) {
+		console.log(`No products found with currency ${currency}`);
+		return getProducts('usd');
+	}
+
+	return {
+		products: products.filter(product => product !== null),
+		currency: currency
+	};
 }
 
-export async function openStripeCheckout(user = null, currency = 'usd') {
+export async function openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval) {
 	user ??= await getUser();
-	const products = await getProducts(currency);
+	// TODO: Do we want to scope to requestedProduct in getProducts as well?
+	// In case the requested currency is not available, we default to USD
+	const { products, currency } = await getProducts(requestedCurrency);
 
-	// TODO: This must be done without reliance on the name being the same in case it changes
 	// In theory, there should always only be one matching product returned by getProducts
-	const shufflePlusTestProducts = products.find(p => p.name == "Shuffle+ (Test)");
-	// const shufflePlusProduct = products.find(p => p.name == "Shuffle+");
+	const shufflePlusTestProducts = products.find(p => p.name == requestedProduct);
 
-	// Get the available prices, which is a subkey prices on the product
-	const shufflePlusTestProductPrices = shufflePlusTestProducts.prices;
+	let paymentMethods = ['paypal', 'card'];
+	if (currency == 'gbp') {
+		// TODO: Confirm payment method works
+		paymentMethods.push('revolut_pay');
+	}
 
-	// For testing, use the monthly price
 	let checkoutSessionData = {
-		price: shufflePlusTestProductPrices.find(p => p.priceInfo.type === 'recurring' && p.priceInfo.recurring.interval === 'month').priceId,
+		price: shufflePlusTestProducts.prices.find(p => p.priceInfo.type == 'recurring' && p.priceInfo.recurring.interval == requestedInterval).priceId,
 		// TODO: Proper redirect URL, cancellation URL. Current URL does nothing after completion
 		success_url: 'https://tinyurl.com/RYVShufflePlus',
-		allow_promotion_codes: true
+		cancel_url: 'https://google.com',
+		allow_promotion_codes: true,
+		payment_method_types: paymentMethods
 	};
 
 	const checkoutSessionRef = await addDoc(
