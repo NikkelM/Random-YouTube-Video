@@ -1,7 +1,7 @@
 // Contains logic to login and authenticate users through Google Oauth and Firebase Auth
 import { setSyncStorageValue } from "./chromeStorage.js";
 import { isFirefox, firebaseConfig } from "./config.js";
-import { getSubscriptions } from "./stripe.js";
+import { hasActiveSubscriptionRole } from "./stripe.js";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
@@ -18,8 +18,8 @@ export async function getUser(localOnly, allowSelfRevoke, signupIfNull) {
 	const googleOauth = await getLocalGoogleOauth();
 
 	if (localOnly) {
-		if (googleOauth?.userInfo) {
-			return googleOauth.userInfo;
+		if (googleOauth) {
+			return googleOauth;
 		}
 		console.log("No local user info found.");
 		return null;
@@ -117,7 +117,7 @@ async function googleLogin(allowSelfRevoke = true) {
 		}
 	}
 
-	return googleOauth.userInfo ? googleOauth.userInfo : googleOauth;
+	return googleOauth;
 }
 
 async function runWebAuthFlow(generatedState, redirectUri, googleOauth, auth, allowSelfRevoke) {
@@ -285,7 +285,7 @@ export async function revokeAccess(user = null, deleteUser = false) {
 		};
 
 		// We need to do this before revoking the tokens as it needs a valid authorization
-		const hasActiveSubscription = (await getSubscriptions(user, true)).length > 0;
+		const hasActiveSubscription = await hasActiveSubscriptionRole();
 
 		const revokeSuccessful = await fetch("https://oauth2.googleapis.com/revoke", postOptions)
 			.then(response => {
@@ -309,13 +309,13 @@ export async function revokeAccess(user = null, deleteUser = false) {
 			});
 
 		if (revokeSuccessful && deleteUser && !hasActiveSubscription) {
-			const user = getAuth(app).currentUser;
+			const firebaseUser = getAuth(app).currentUser;
 
-			// Delete the user account. Stripe should clean up the Firestore document
-			user.delete().then(() => {
+			// Delete the user account
+			firebaseUser.delete().then(() => {
 				console.log("User deleted");
 			}).catch((error) => {
-				console.error("Error deleting user:", error);
+				console.error("Error deleting user in Firebase:", error);
 			});
 		}
 

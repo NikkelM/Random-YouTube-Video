@@ -2,7 +2,7 @@
 import { setSyncStorageValue } from "../chromeStorage.js";
 import { getUser, revokeAccess } from "../googleOauth.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
-import { openStripeCheckout, getSubscriptions } from "../stripe.js";
+import { openStripeCheckout, getSubscriptions, hasActiveSubscriptionRole } from "../stripe.js";
 
 // ----- Setup -----
 let user;
@@ -70,7 +70,7 @@ function getDomElements() {
 async function setDomElementValuesFromConfig(domElements) {
 	user = await getUser(true, false, false);
 	if (user) {
-		domElements.welcomeHeader.textContent = `Welcome ${user.displayName.split(" ")[0]}!`;
+		domElements.welcomeHeader.textContent = `Welcome ${user.userInfo.displayName.split(" ")[0]}!`;
 		domElements.googleLoginSuccessDiv.classList.remove("hidden");
 		domElements.googleRevokeAccessButtonDiv.classList.remove("hidden");
 
@@ -91,8 +91,9 @@ async function setDomElementEventListeners(domElements) {
 	domElements.googleLoginButton.addEventListener("click", async function () {
 		domElements.googleLoginButton.textContent = "Signing in...";
 		user = await getUser(false, true, true);
-		if (user.displayName) {
-			domElements.welcomeHeader.textContent = `Login successful! Welcome ${user.displayName.split(" ")[0]}!`;
+
+		if (user.userInfo.displayName) {
+			domElements.welcomeHeader.textContent = `Login successful! Welcome ${user.userInfo.displayName.split(" ")[0]}!`;
 			domElements.googleLoginSuccessP.textContent = "If you are subscribed to Shuffle+, you now have access to all premium features!";
 			domElements.googleLoginButton.textContent = "Sign in with Google";
 			domElements.googleLoginButtonDiv.classList.add("hidden");
@@ -113,9 +114,9 @@ async function setDomElementEventListeners(domElements) {
 
 	// Manage subscription button
 	domElements.manageSubscribtionButton.addEventListener("click", async function () {
-		if ((await getSubscriptionStatus(user)).hasActiveSubscription) {
+		if (await hasActiveSubscriptionRole()) {
 			// TODO: This is the test URL
-			const url = `https://billing.stripe.com/p/login/test_7sI5lw95Afu5fzqbII?prefilled_email=${user.email}`;
+			const url = `https://billing.stripe.com/p/login/test_7sI5lw95Afu5fzqbII?prefilled_email=${user.userInfo.email}`;
 			await chrome.tabs.create({ url });
 		} else {
 			domElements.manageSubscribtionButton.textContent = "Preparing subscription...";

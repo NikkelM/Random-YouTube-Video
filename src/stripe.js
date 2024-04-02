@@ -77,7 +77,7 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 	};
 
 	const checkoutSessionRef = await addDoc(
-		collection(db, `users/${user.firebaseUid}/checkout_sessions`),
+		collection(db, `users/${user.userInfo.firebaseUid}/checkout_sessions`),
 		checkoutSessionData
 	);
 
@@ -107,11 +107,11 @@ export async function getSubscriptions(user = null, activeOnly = true) {
 	let q;
 	if (activeOnly) {
 		q = query(
-			collection(db, `users/${user.firebaseUid}/subscriptions`),
+			collection(db, `users/${user.userInfo.firebaseUid}/subscriptions`),
 			where("status", "in", ["active", "trialing"])
 		);
 	} else {
-		q = collection(db, `users/${user.firebaseUid}/subscriptions`);
+		q = collection(db, `users/${user.userInfo.firebaseUid}/subscriptions`);
 	}
 
 	const querySnapshot = await getDocs(q);
@@ -119,14 +119,14 @@ export async function getSubscriptions(user = null, activeOnly = true) {
 	return subscriptions;
 }
 
-export async function hasActiveSubscriptionRole() {
-	const stripeRole = await getStripeRole();
-	return stripeRole === "shufflePlus";
-}
-
 // This will return shufflePlus if the user has an active subscription
 async function getStripeRole() {
 	const decodedToken = await getAuth().currentUser.getIdTokenResult();
-	console.log(decodedToken);
 	return decodedToken.claims?.stripeRole ?? null;
+}
+
+// TODO: Use this, as it is probably faster and cheaper than querying Firestore
+export async function hasActiveSubscriptionRole() {
+	const stripeRole = await getStripeRole();
+	return stripeRole === "shufflePlus";
 }
