@@ -23,7 +23,7 @@ export async function getUser(localOnly, allowSelfRevoke, signupIfNull) {
 		}
 		console.log("No local user info found.");
 		return null;
-	} else if (googleOauth == null && signupIfNull) {
+	} else if (googleOauth || (googleOauth == null && signupIfNull)) {
 		console.log("Attempting to sign up using Google Oauth.");
 		// This will also refresh the access token if it has expired
 		return await googleLogin(allowSelfRevoke);
