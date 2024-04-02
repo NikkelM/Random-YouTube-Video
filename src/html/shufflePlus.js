@@ -118,11 +118,13 @@ async function setDomElementEventListeners(domElements) {
 			const url = `https://billing.stripe.com/p/login/test_7sI5lw95Afu5fzqbII?prefilled_email=${user.email}`;
 			await chrome.tabs.create({ url });
 		} else {
+			domElements.manageSubscribtionButton.textContent = "Preparing subscription...";
 			// TODO: Get configuration from UI
 			let requestedProduct = "Shuffle+ (Test)";
 			let requestedCurrency = "usd";
 			let requestedInterval = "month";
 			await openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval);
+			domElements.manageSubscribtionButton.textContent = "Subscribe to Shuffle+";
 		}
 	});
 
