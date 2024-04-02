@@ -68,13 +68,14 @@ function getDomElements() {
 
 // Set default values from configSync == user preferences
 async function setDomElementValuesFromConfig(domElements) {
-	user = await getUser(true);
+	user = await getUser(true, false, false);
 	if (user) {
 		domElements.welcomeHeader.textContent = `Welcome ${user.displayName.split(" ")[0]}!`;
 		domElements.googleLoginSuccessDiv.classList.remove("hidden");
 		domElements.googleRevokeAccessButtonDiv.classList.remove("hidden");
 
-		user = await getUser();
+		// Doing this again here to save time if there is no user, but refresh the access token if there is
+		user = await getUser(false, true, false);
 		await setSubscriptionUI(domElements, user);
 	} else {
 		domElements.googleLoginButtonDiv.classList.remove("hidden");
@@ -89,7 +90,7 @@ async function setDomElementEventListeners(domElements) {
 	// Google login button
 	domElements.googleLoginButton.addEventListener("click", async function () {
 		domElements.googleLoginButton.textContent = "Signing in...";
-		user = await getUser();
+		user = await getUser(false, true, true);
 		if (user.displayName) {
 			domElements.welcomeHeader.textContent = `Login successful! Welcome ${user.displayName.split(" ")[0]}!`;
 			domElements.googleLoginSuccessP.textContent = "If you are subscribed to Shuffle+, you now have access to all premium features!";

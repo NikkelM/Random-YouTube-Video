@@ -8,22 +8,28 @@ import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential }
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 // Get user information from storage or by logging in to Google
 // If localOnly is set to true, the function will not attempt to log in to Google if there is no local information (==in sync storage)
-export async function getUser(localOnly = false, allowSelfRevoke = true) {
+export async function getUser(localOnly, allowSelfRevoke, signupIfNull) {
 	// TODO: If there is a user and an active subscription, fetch a new access token in the background script on startup, and validate the subscription status
-	console.log(`Getting user info. localOnly: ${localOnly}`);
+	console.log("Getting user info.");
+	const googleOauth = await getLocalGoogleOauth();
+
 	if (localOnly) {
-		const googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth;
 		if (googleOauth?.userInfo) {
 			return googleOauth.userInfo;
 		}
-		console.log("No local user info found");
+		console.log("No local user info found.");
 		return null;
-	} else {
-		console.log("Attempting to log in using Google Oauth");
+	} else if (googleOauth == null && signupIfNull) {
+		console.log("Attempting to sign up using Google Oauth.");
+		// This will also refresh the access token if it has expired
 		return await googleLogin(allowSelfRevoke);
+	} else {
+		console.log("No local user info found, and not attempting to sign up.");
+		return null;
 	}
 }
 
@@ -32,10 +38,8 @@ export async function getUser(localOnly = false, allowSelfRevoke = true) {
 // TODO: Make sure we can have access to the YouTube account auto-ticked in the Google Oauth flow, or get notified if the user didn't do so so we can notify them afterwards and reprompt
 async function googleLogin(allowSelfRevoke = true) {
 	// Get sync storage information about the user's Google Oauth state
-	let googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth || {};
+	let googleOauth = await getLocalGoogleOauth() || {};
 
-	// Set up the Firebase authentication handler
-	const auth = getAuth(app);
 	onAuthStateChanged(auth, async (user) => {
 		if (user) {
 			console.log("Signed in to Firebase successfully!");
@@ -47,8 +51,6 @@ async function googleLogin(allowSelfRevoke = true) {
 			};
 
 			await setSyncStorageValue("googleOauth", googleOauth);
-		} else {
-			console.log("Sign in flow was started!");
 		}
 	});
 
@@ -78,6 +80,7 @@ async function googleLogin(allowSelfRevoke = true) {
 			(generatedState += Math.random().toString(36).slice(2)).substring(2, 34);
 		}
 
+		// TODO: Refactor to separate function
 		let redirectUri;
 		if (isFirefox) {
 			// We cannot verify ownership of the normal redirect URL, but local loopbacks are always allowed
@@ -217,7 +220,6 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 
 	if (refreshToken) {
 		// Save the refresh token to Firestore
-		// TODO: DONE? Save it in a different document, to keep separate from stripe data and rules (no write allowed for stripe data)
 		const authMetadataRef = doc(db, "users", getAuth().currentUser.uid, "authMetadata", "google");
 		await setDoc(authMetadataRef, {
 			googleRefreshToken: refreshToken
@@ -237,11 +239,40 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 	return googleOauth;
 }
 
+async function getLocalGoogleOauth() {
+	const googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth;
+	return googleOauth;
+}
+
+// Gets all scopes granted by the user
+// TODO: Use this to check if the user has granted the youtube scope before we can enable features using it
+export async function getGrantedOauthScopes() {
+	// Refreshes the access token
+	const user = await getUser(false, false, false);
+	if (!user) {
+		console.log("No user found");
+		return [];
+	}
+
+	const accessToken = (await getLocalGoogleOauth()).accessToken;
+	// Use  https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=
+	const tokenInfo = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${accessToken}`)
+		.then(response => response.json())
+		.then(data => {
+			return data.scope ?? "";
+		});
+	let grantedScopes = tokenInfo.split(' ').map(scope => {
+		const parts = scope.split('/');
+		return parts[parts.length - 1];
+	});
+	return grantedScopes;
+}
+
 // Revokes access to the app for the current user, and deletes it if requested and there is no active subscription
 export async function revokeAccess(user = null, deleteUser = false) {
 	// Make sure there is an active token and the user is authenticated with Firebase
-	user ??= await getUser(false, false);
-	const googleOauth = (await chrome.storage.sync.get("googleOauth")).googleOauth;
+	user ??= await getUser(false, false, false);
+	const googleOauth = await getLocalGoogleOauth();
 	const usedToken = googleOauth.accessToken || googleOauth.refreshToken;
 
 	if (usedToken) {

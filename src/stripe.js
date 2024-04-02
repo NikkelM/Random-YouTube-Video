@@ -53,7 +53,7 @@ async function getProducts(currency) {
 }
 
 export async function openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval) {
-	user ??= await getUser();
+	user ??= await getUser(false, true, true);
 	// TODO: Do we want to scope to requestedProduct in getProducts as well?
 	// In case the requested currency is not available, we default to USD
 	const { products, currency } = await getProducts(requestedCurrency);
@@ -98,7 +98,7 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 
 // Gets all (active) subscriptions for the current user
 export async function getSubscriptions(user = null, activeOnly = true) {
-	user ??= await getUser();
+	user ??= await getUser(false, true, false);
 	if (!user) {
 		console.log("No user found");
 		return [];
