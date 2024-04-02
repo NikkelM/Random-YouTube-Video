@@ -204,6 +204,8 @@ async function setSubscriptionUI(domElements, user) {
 			} else {
 				domElements.googleLoginSuccessP.textContent = `Your benefits expired on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()}. Renew your subscription now to restore access to all Shuffle+ benefits!`;
 			}
+		} else {
+			domElements.googleLoginSuccessP.textContent = "Subscribe to Shuffle+ to get access to all premium features!";
 		}
 	}
 }
