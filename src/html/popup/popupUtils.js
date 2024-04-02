@@ -154,9 +154,9 @@ export async function validateApiKey(customAPIKey, domElements) {
 		domElements.customApiKeyInputInfoText.innerText = "This API key is used by the extension. Please enter your own.";
 		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 		
-		domElements.customApiKeyInputField.classList.add('invalid-input');
+		domElements.customApiKeyInputField.classList.add("invalid-input");
 		setTimeout(() => {
-			domElements.customApiKeyInputField.classList.remove('invalid-input');
+			domElements.customApiKeyInputField.classList.remove("invalid-input");
 		}, 1500);
 		return false;
 	}
@@ -169,9 +169,9 @@ export async function validateApiKey(customAPIKey, domElements) {
 		domElements.customApiKeyInputInfoText.innerText = "Error: " + apiResponse["error"]["message"];
 		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 
-		domElements.customApiKeyInputField.classList.add('invalid-input');
+		domElements.customApiKeyInputField.classList.add("invalid-input");
 		setTimeout(() => {
-			domElements.customApiKeyInputField.classList.remove('invalid-input');
+			domElements.customApiKeyInputField.classList.remove("invalid-input");
 		}, 1500);
 		return false;
 	}

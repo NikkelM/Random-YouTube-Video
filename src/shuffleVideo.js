@@ -164,7 +164,7 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 	if (playlistInfo && playlistInfo["videos"] && Array.isArray(playlistInfo["videos"])) {
 		console.log("The playlist was found in the database, but it is in an old format (before v1.0.0). Removing...");
 
-		await chrome.runtime.sendMessage({ command: 'updateDBPlaylistToV1.0.0', data: { key: playlistId } });
+		await chrome.runtime.sendMessage({ command: "updateDBPlaylistToV1.0.0", data: { key: playlistId } });
 		return {};
 	}
 
@@ -255,7 +255,7 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsP
 	// Only upload the wanted keys
 	const playlistInfoForDatabase = {
 		"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"] ?? new Date().toISOString(),
-		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
+		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + "Z",
 		"videos": videosToDatabase
 	};
 
@@ -275,7 +275,7 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsP
 
 	// Send the playlist info to the database
 	const msg = {
-		command: encounteredDeletedVideos ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
+		command: encounteredDeletedVideos ? "overwritePlaylistInfoInDB" : "updatePlaylistInfoInDB",
 		data: {
 			key: uploadsPlaylistId,
 			val: playlistInfoForDatabase
@@ -831,7 +831,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 
 					// Case 2: isShort && ignoreShorts => Failure
 				} else if (videoIsShort && configSync.shuffleIgnoreShortsOption == "2") {
-					console.log('A chosen video was a short, but shorts are ignored. Choosing a new random video.');
+					console.log("A chosen video was a short, but shorts are ignored. Choosing a new random video.");
 
 					// Move the video to the knownShorts subdictionary
 					playlistInfo["videos"]["knownShorts"][randomVideo] = playlistInfo["videos"]["unknownType"][randomVideo];
@@ -856,7 +856,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 
 					// Case 4: !isShort && onlyShorts => Failure
 				} else if (!videoIsShort && configSync.shuffleIgnoreShortsOption == "0") {
-					console.log('A chosen video was not a short, but only shorts should be shuffled. Choosing a new random video.');
+					console.log("A chosen video was not a short, but only shorts should be shuffled. Choosing a new random video.");
 
 					// Move the video to the knownVideos subdictionary
 					playlistInfo["videos"]["knownVideos"][randomVideo] = playlistInfo["videos"]["unknownType"][randomVideo];
@@ -1034,24 +1034,24 @@ async function playVideo(chosenVideos, firedFromPopup) {
 		const pageType = getPageTypeFromURL(window.location.href);
 		// Video page: Pause the current video if it is playing
 		if (pageType === "video") {
-			const player = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
-			if (player && player.classList.contains('playing-mode') && !player.classList.contains('unstarted-mode')) {
+			const player = document.querySelector("ytd-player#ytd-player")?.children[0]?.children[0];
+			if (player && player.classList.contains("playing-mode") && !player.classList.contains("unstarted-mode")) {
 				player.children[0].click();
 			}
 		} else if (pageType === "channel") {
 			// Channel page: Pause the featured video if it exists and is playing
-			const featuredPlayer = document.querySelector('ytd-player#player')?.children[0]?.children[0];
-			if (featuredPlayer && featuredPlayer.classList.contains('playing-mode') && !featuredPlayer.classList.contains('unstarted-mode')) {
+			const featuredPlayer = document.querySelector("ytd-player#player")?.children[0]?.children[0];
+			if (featuredPlayer && featuredPlayer.classList.contains("playing-mode") && !featuredPlayer.classList.contains("unstarted-mode")) {
 				featuredPlayer.children[0].click();
 			}
 			// Any page: Pause the miniplayer if it exists and is playing
-			const miniPlayer = document.querySelector('ytd-player#ytd-player')?.children[0]?.children[0];
-			if (miniPlayer && miniPlayer.classList.contains('playing-mode') && !miniPlayer.classList.contains('unstarted-mode')) {
+			const miniPlayer = document.querySelector("ytd-player#ytd-player")?.children[0]?.children[0];
+			if (miniPlayer && miniPlayer.classList.contains("playing-mode") && !miniPlayer.classList.contains("unstarted-mode")) {
 				miniPlayer.children[0].click();
 			}
 		} else if (pageType === "short") {
-			const player = document.querySelector('ytd-player#player')?.children[0]?.children[0];
-			if (player && player.classList.contains('playing-mode') && !player.classList.contains('unstarted-mode')) {
+			const player = document.querySelector("ytd-player#player")?.children[0]?.children[0];
+			if (player && player.classList.contains("playing-mode") && !player.classList.contains("unstarted-mode")) {
 				player.children[0].click();
 			}
 		} else {
@@ -1067,7 +1067,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 
 			// If there is no reusable tab or the option is disabled, open the video in a new tab
 		} else {
-			window.open(randomVideoURL, '_blank').focus();
+			window.open(randomVideoURL, "_blank").focus();
 
 			// Save the ID of the opened tab as the new reusable tab
 			await setSyncStorageValue("shuffleTabId", await chrome.runtime.sendMessage({ command: "getCurrentTabId" }));
@@ -1095,7 +1095,7 @@ async function aprilFoolsJoke() {
 	if (now.getMonth() === 3 && now.getDate() === 1 && configSync.wasLastRickRolledInYear !== String(now.getFullYear())) {
 		await setSyncStorageValue("wasLastRickRolledInYear", String(now.getFullYear()));
 
-		window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", '_blank').focus();
+		window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "_blank").focus();
 	}
 }
 
@@ -1169,7 +1169,7 @@ async function savePlaylistToLocalStorage(playlistId, playlistInfo) {
 		// Remember the last time the playlist was accessed locally (==now)
 		"lastAccessedLocally": new Date().toISOString(),
 		"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
-		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
+		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + "Z",
 		"videos": playlistInfo["videos"] ?? {}
 	};
 

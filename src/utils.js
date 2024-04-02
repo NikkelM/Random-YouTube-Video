@@ -5,7 +5,7 @@
 var oldLog = console.log;
 console.log = function () {
 	if (arguments[0] !== "[random-youtube-video]:") {
-		Array.prototype.unshift.call(arguments, '[random-youtube-video]:');
+		Array.prototype.unshift.call(arguments, "[random-youtube-video]:");
 	}
 	oldLog.apply(this, arguments);
 };

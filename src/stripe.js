@@ -1,20 +1,20 @@
 // Contains logic for interacting with Stripe for payment handling
 import { firebaseConfig } from "./config.js";
-import { getUser } from './googleOauth.js';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot, FieldPath } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getUser } from "./googleOauth.js";
+import { initializeApp } from "firebase/app";
+import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot, FieldPath } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Get products and pricing information from Firestore/Stripe
 async function getProducts(currency) {
-	const currencyRef = new FieldPath('metadata', 'currency');
+	const currencyRef = new FieldPath("metadata", "currency");
 	const productCurrencyQuery = query(
-		collection(db, 'products'),
-		where('active', '==', true),
-		where(currencyRef, '==', currency)
+		collection(db, "products"),
+		where("active", "==", true),
+		where(currencyRef, "==", currency)
 	);
 
 	const productSnapshot = await getDocs(productCurrencyQuery);
@@ -25,7 +25,7 @@ async function getProducts(currency) {
 		let productInfo = productDoc.data();
 
 		// Fetch prices subcollection per product
-		const priceQuerySnapshot = await getDocs(collection(productDoc.ref, 'prices'));
+		const priceQuerySnapshot = await getDocs(collection(productDoc.ref, "prices"));
 
 		// Iterate over all price documents and filter by currency
 		// Even though we already filtered by currency in the product query, we filter again here to make sure to only get correct prices
@@ -34,7 +34,7 @@ async function getProducts(currency) {
 			return priceInfo.currency === currency ? { priceId: priceDoc.id, priceInfo } : null;
 		}).filter(price => price !== null);
 
-		productInfo['prices'] = pricesInfo;
+		productInfo["prices"] = pricesInfo;
 		return productInfo;
 	});
 
@@ -43,7 +43,7 @@ async function getProducts(currency) {
 	// If no products with the requested currency are found, return products with USD pricing
 	if (products.length == 0) {
 		console.log(`No products found with currency ${currency}`);
-		return getProducts('usd');
+		return getProducts("usd");
 	}
 
 	return {
@@ -61,17 +61,17 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 	// In theory, there should always only be one matching product returned by getProducts
 	const shufflePlusTestProducts = products.find(p => p.name == requestedProduct);
 
-	let paymentMethods = ['paypal', 'card', 'link'];
-	if (currency == 'gbp') {
+	let paymentMethods = ["paypal", "card", "link"];
+	if (currency == "gbp") {
 		// TODO: Confirm payment method works
-		paymentMethods.push('revolut_pay');
+		paymentMethods.push("revolut_pay");
 	}
 
 	let checkoutSessionData = {
-		price: shufflePlusTestProducts.prices.find(p => p.priceInfo.type == 'recurring' && p.priceInfo.recurring.interval == requestedInterval).priceId,
+		price: shufflePlusTestProducts.prices.find(p => p.priceInfo.type == "recurring" && p.priceInfo.recurring.interval == requestedInterval).priceId,
 		// TODO: Proper redirect URL, cancellation URL. Current URL does nothing after completion
-		success_url: 'https://tinyurl.com/RYVShufflePlus?sessionId={CHECKOUT_SESSION_ID}',
-		cancel_url: 'https://google.com?sessionId={CHECKOUT_SESSION_ID}',
+		success_url: "https://tinyurl.com/RYVShufflePlus?sessionId={CHECKOUT_SESSION_ID}",
+		cancel_url: "https://google.com?sessionId={CHECKOUT_SESSION_ID}",
 		allow_promotion_codes: true,
 		payment_method_types: paymentMethods
 	};
@@ -108,7 +108,7 @@ export async function getSubscriptions(user = null, activeOnly = true) {
 	if (activeOnly) {
 		q = query(
 			collection(db, `users/${user.firebaseUid}/subscriptions`),
-			where('status', 'in', ['active', 'trialing'])
+			where("status", "in", ["active", "trialing"])
 		);
 	} else {
 		q = collection(db, `users/${user.firebaseUid}/subscriptions`);
@@ -121,7 +121,7 @@ export async function getSubscriptions(user = null, activeOnly = true) {
 
 export async function hasActiveSubscriptionRole() {
 	const stripeRole = await getStripeRole();
-	return stripeRole === 'shufflePlus';
+	return stripeRole === "shufflePlus";
 }
 
 // This will return shufflePlus if the user has an active subscription

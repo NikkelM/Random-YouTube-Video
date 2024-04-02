@@ -108,7 +108,7 @@ async function shuffleButtonClicked() {
 		await chooseRandomVideo(configSync.currentChannelId, true, shuffleButtonTextElement);
 
 		// Focus this tab when the shuffle completes
-		chrome.tabs.query({ url: chrome.runtime.getURL('html/shufflingPage.html') }, function (tabs) {
+		chrome.tabs.query({ url: chrome.runtime.getURL("html/shufflingPage.html") }, function (tabs) {
 			if (tabs.length > 0) {
 				// Focus the tab
 				chrome.tabs.update(tabs[0].id, { active: true });

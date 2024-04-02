@@ -85,7 +85,7 @@ async function googleLogin(allowSelfRevoke = true) {
 		if (isFirefox) {
 			// We cannot verify ownership of the normal redirect URL, but local loopbacks are always allowed
 			const baseRedirectUrl = browser.identity.getRedirectURL();
-			const redirectSubdomain = baseRedirectUrl.slice(0, baseRedirectUrl.indexOf('.')).replace('https://', '');
+			const redirectSubdomain = baseRedirectUrl.slice(0, baseRedirectUrl.indexOf(".")).replace("https://", "");
 			redirectUri = `http://127.0.0.1/mozoauth2/${redirectSubdomain}`;
 		} else {
 			// For chromium based browsers, we can use the normal redirect URL, as it is verified through the extension's public key
@@ -261,8 +261,8 @@ export async function getGrantedOauthScopes() {
 		.then(data => {
 			return data.scope ?? "";
 		});
-	let grantedScopes = tokenInfo.split(' ').map(scope => {
-		const parts = scope.split('/');
+	let grantedScopes = tokenInfo.split(" ").map(scope => {
+		const parts = scope.split("/");
 		return parts[parts.length - 1];
 	});
 	return grantedScopes;
@@ -277,9 +277,9 @@ export async function revokeAccess(user = null, deleteUser = false) {
 
 	if (usedToken) {
 		let postOptions = {
-			method: 'POST',
+			method: "POST",
 			headers: {
-				'Content-Type': 'application/x-www-form-urlencoded',
+				"Content-Type": "application/x-www-form-urlencoded",
 			},
 			body: `token=${usedToken}`
 		};
@@ -287,10 +287,10 @@ export async function revokeAccess(user = null, deleteUser = false) {
 		// We need to do this before revoking the tokens as it needs a valid authorization
 		const hasActiveSubscription = (await getSubscriptions(user, true)).length > 0;
 
-		const revokeSuccessful = await fetch('https://oauth2.googleapis.com/revoke', postOptions)
+		const revokeSuccessful = await fetch("https://oauth2.googleapis.com/revoke", postOptions)
 			.then(response => {
 				if (response.ok) {
-					console.log('Token revoked successfully.');
+					console.log("Token revoked successfully.");
 					return setSyncStorageValue("googleOauth", null).then(async () => {
 						// TODO: If there is no active subscription, remove all user data from Firebase
 						// We always remove the refreshToken, as it is no longer active
@@ -299,12 +299,12 @@ export async function revokeAccess(user = null, deleteUser = false) {
 						return true;
 					});
 				} else {
-					console.error('Failed to revoke token:', response);
+					console.error("Failed to revoke token:", response);
 					return false;
 				}
 			})
 			.catch(error => {
-				console.error('Network error:', error);
+				console.error("Network error:", error);
 				return false;
 			});
 
@@ -313,9 +313,9 @@ export async function revokeAccess(user = null, deleteUser = false) {
 
 			// Delete the user account. Stripe should clean up the Firestore document
 			user.delete().then(() => {
-				console.log('User deleted');
+				console.log("User deleted");
 			}).catch((error) => {
-				console.error('Error deleting user:', error);
+				console.error("Error deleting user:", error);
 			});
 		}
 

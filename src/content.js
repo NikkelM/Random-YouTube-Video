@@ -22,7 +22,7 @@ if (videoShuffleButton || channelShuffleButton || shortShuffleButton) {
 	window.location.reload(true);
 }
 
-// After every navigation event, we need to check if this page needs a 'Shuffle' button
+// After every navigation event, we need to check if this page needs a "Shuffle" button
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
 async function startDOMObserver(event) {
@@ -85,7 +85,7 @@ async function startDOMObserver(event) {
 }
 
 async function channelDetectedAction(pageType, channelId, channelName) {
-	// It might be that we got here after shuffling, in which case we want to check if there is a 'Untitled List' that we can rename
+	// It might be that we got here after shuffling, in which case we want to check if there is a "Untitled List" that we can rename
 	// We do this before anything else to prevent the previous text from showing shortly
 	if (pageType === "video") {
 		tryRenameUntitledList();
@@ -97,7 +97,7 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 		await chrome.runtime.sendMessage({ command: "connectionTest" });
 	} catch (error) {
 		// If the extension's background worker was reloaded, we need to reload the page to re-connect to the background worker
-		if (error.message === 'Extension context invalidated.') {
+		if (error.message === "Extension context invalidated.") {
 			window.location.reload();
 		}
 	}
@@ -131,7 +131,7 @@ function resetShuffleButtonText() {
 }
 
 // ---------- Shuffle ----------
-// Called when the 'Shuffle' button is clicked
+// Called when the "Shuffle" button is clicked
 async function shuffleVideos() {
 	resetShuffleButtonText();
 
@@ -141,7 +141,7 @@ async function shuffleVideos() {
 	let channelId;
 	try {
 		// Get the saved channelId from the button
-		channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerText;
+		channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem("channelId")?.innerText;
 
 		// If the channelId somehow wasn't saved, throw an error
 		if (!channelId) {
@@ -247,7 +247,7 @@ async function shuffleVideos() {
 		}
 
 		// Special case: If the extension's background worker was reloaded, we need to reload the page to get the correct reference to the shuffle function again
-		if (error.message === 'Extension context invalidated.') {
+		if (error.message === "Extension context invalidated.") {
 			// We don't want the button text to change before the page is reloaded
 			hasBeenShuffled = true;
 

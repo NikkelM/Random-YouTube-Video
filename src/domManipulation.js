@@ -1,4 +1,4 @@
-// Builds the 'Shuffle' buttons that are used by the extension, and handles other dom related tasks
+// Builds the "Shuffle" buttons that are used by the extension, and handles other dom related tasks
 
 // ----- Public -----
 export let shuffleButton;
@@ -34,7 +34,7 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 			return;
 	}
 
-	// If we are on a video page, modify the "min-width" of the two divs holding the buttons to make room for the 'Shuffle' button
+	// If we are on a video page, modify the "min-width" of the two divs holding the buttons to make room for the "Shuffle" button
 	// This doesn't fix them overlapping in all cases, but most times it does
 	if (pageType == "video") {
 		buttonDivOwner[0].style.minWidth = "calc(50% + 50px)";
@@ -44,7 +44,7 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 	// If the button should not be visible but exists, hide it
 	if (document.getElementById(buttonDivID) && !channelId) {
 		document.getElementById(buttonDivID).style.display = "none";
-		console.log('No channelId found: Button should not be visible, hiding it.');
+		console.log("No channelId found: Button should not be visible, hiding it.");
 		return;
 	}
 
@@ -68,7 +68,7 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 		button.style.display = "flex";
 
 		// Update the channelId
-		button.children[0].children[0].children[0].children.namedItem('channelId').innerText = channelId ?? "";
+		button.children[0].children[0].children[0].children.namedItem("channelId").innerText = channelId ?? "";
 
 		// Set the variables to the correct button reference
 		shuffleButton = button;
@@ -135,8 +135,8 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 // With the way that YouTube handles navigation, the playlist title somehow won't get updated correctly when navigating if we change it here at any point
 // So we need to change it back if the user moves to a different playlist
 export function tryRenameUntitledList() {
-	let mainPlaylistElement = document.querySelector('ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy').querySelector('yt-formatted-string.title.style-scope.ytd-playlist-panel-renderer');
-	let collapsedPlaylistElement = document.querySelector('ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy').querySelector('yt-formatted-string.byline-title.style-scope.ytd-playlist-panel-renderer');
+	let mainPlaylistElement = document.querySelector("ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy").querySelector("yt-formatted-string.title.style-scope.ytd-playlist-panel-renderer");
+	let collapsedPlaylistElement = document.querySelector("ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy").querySelector("yt-formatted-string.byline-title.style-scope.ytd-playlist-panel-renderer");
 
 	for(let playlistType of [mainPlaylistElement, collapsedPlaylistElement]) {
 		if (playlistType && window.location.href.includes("&list=TL") && playlistType.title == "Untitled List") {

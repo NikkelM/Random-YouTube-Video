@@ -18,6 +18,7 @@
   "rules": {
     "@typescript-eslint/no-var-requires": 0,
     "semi": ["error", "always"],
-    "curly": "error"
+    "curly": "error",
+    "quotes": ["error", "double", { "avoidEscape": true, "allowTemplateLiterals": true }]
   }
 }

@@ -2,8 +2,8 @@
 // Handles communication between the extension and the content script as well as Firebase interactions
 import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 import { isFirefox, firebaseConfig } from "./config.js";
-import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, child, update, get, remove } from 'firebase/database';
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, child, update, get, remove } from "firebase/database";
 
 // ---------- Initialization/Chrome event listeners ----------
 // Check whether a new version was installed
@@ -154,19 +154,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			break;
 		// Tries to get a playlist from Firebase
 		case "getPlaylistFromDB":
-			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
+			readDataOnce("uploadsPlaylists/" + request.data).then(sendResponse);
 			break;
 		// Updates (not overwriting videos) a playlist in Firebase 
 		case "updatePlaylistInfoInDB":
-			updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, false).then(sendResponse);
+			updatePlaylistInfoInDB("uploadsPlaylists/" + request.data.key, request.data.val, false).then(sendResponse);
 			break;
 		// Updates (overwriting videos) a playlist in Firebase
 		case "overwritePlaylistInfoInDB":
-			updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, true).then(sendResponse);
+			updatePlaylistInfoInDB("uploadsPlaylists/" + request.data.key, request.data.val, true).then(sendResponse);
 			break;
 		// Before v1.0.0 the videos were stored in an array without upload times, so they need to all be refetched
-		case 'updateDBPlaylistToV1.0.0':
-			updateDBPlaylistToV1_0_0('uploadsPlaylists/' + request.data.key).then(sendResponse);
+		case "updateDBPlaylistToV1.0.0":
+			updateDBPlaylistToV1_0_0("uploadsPlaylists/" + request.data.key).then(sendResponse);
 			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":
@@ -210,14 +210,14 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 
 	if (overwriteVideos || !playlistExists) {
 		console.log("Setting playlistInfo in the database...");
-		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested within the playlist
+		// Update the entire object. Due to the way Firebase works, this will overwrite the existing "videos" object, as it is nested within the playlist
 		update(ref(db, playlistId), playlistInfo);
 	} else {
 		console.log("Updating playlistInfo in the database...");
 		// Contains all properties except the videos
 		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => (key !== "videos")));
 
-		// Upload the 'metadata'
+		// Upload the "metadata"
 		update(ref(db, playlistId), playlistInfoWithoutVideos);
 
 		// Update the videos separately to not overwrite existing videos
@@ -229,7 +229,7 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 
 async function updateDBPlaylistToV1_0_0(playlistId) {
 	// Remove all videos from the database
-	remove(ref(db, playlistId + '/videos'));
+	remove(ref(db, playlistId + "/videos"));
 
 	return "Videos were removed from the database playlist.";
 }

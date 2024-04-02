@@ -270,9 +270,9 @@ async function setDomElementEventListeners(domElements) {
 				// Set the previous value if the input is empty, or set it to 10 if there is no previous value
 				this.value = configSync.shuffleNumVideosInPlaylist ?? 10;
 
-				this.classList.add('invalid-input');
+				this.classList.add("invalid-input");
 				setTimeout(() => {
-					this.classList.remove('invalid-input');
+					this.classList.remove("invalid-input");
 				}, 1500);
 			}
 
@@ -282,9 +282,9 @@ async function setDomElementEventListeners(domElements) {
 			if (this.value < minValue || this.value > maxValue) {
 				this.value = Math.min(Math.max(Math.round(this.value), minValue), maxValue);
 
-				this.classList.add('invalid-input');
+				this.classList.add("invalid-input");
 				setTimeout(() => {
-					this.classList.remove('invalid-input');
+					this.classList.remove("invalid-input");
 				}, 1500);
 			}
 
@@ -311,9 +311,9 @@ async function setDomElementEventListeners(domElements) {
 		if (selectedDate > new Date()) {
 			this.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue ?? null;
 
-			this.classList.add('invalid-input');
+			this.classList.add("invalid-input");
 			setTimeout(() => {
-				this.classList.remove('invalid-input');
+				this.classList.remove("invalid-input");
 			}, 1500);
 		}
 
@@ -345,9 +345,9 @@ async function setDomElementEventListeners(domElements) {
 				this.placeholder = "Invalid video ID";
 			}
 
-			this.classList.add('invalid-input');
+			this.classList.add("invalid-input");
 			setTimeout(() => {
-				this.classList.remove('invalid-input');
+				this.classList.remove("invalid-input");
 			}, 1500);
 		}
 
@@ -362,9 +362,9 @@ async function setDomElementEventListeners(domElements) {
 				// Set the previous value if the input is empty, or set it to 100 if there is no previous value
 				this.value = configSync.channelSettings[configSync.currentChannelId]?.percentageValue ?? 100;
 
-				this.classList.add('invalid-input');
+				this.classList.add("invalid-input");
 				setTimeout(() => {
-					this.classList.remove('invalid-input');
+					this.classList.remove("invalid-input");
 				}, 1500);
 			}
 
@@ -374,9 +374,9 @@ async function setDomElementEventListeners(domElements) {
 			if (this.value < minValue || this.value > maxValue) {
 				this.value = Math.min(Math.max(Math.round(this.value), minValue), maxValue);
 
-				this.classList.add('invalid-input');
+				this.classList.add("invalid-input");
 				setTimeout(() => {
-					this.classList.remove('invalid-input');
+					this.classList.remove("invalid-input");
 				}, 1500);
 			}
 

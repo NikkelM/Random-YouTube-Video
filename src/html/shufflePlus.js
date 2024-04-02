@@ -102,9 +102,9 @@ async function setDomElementEventListeners(domElements) {
 			domElements.manageSubscribtionButtonDiv.classList.remove("hidden");
 			await setSubscriptionUI(domElements, user);
 			// TODO: If the user is logged in and subscribed, change the extension icon, e.g.:
-			// chrome.action.setIcon({ path: chrome.runtime.getURL('icons/icon-128-white.png') });
+			// chrome.action.setIcon({ path: chrome.runtime.getURL("icons/icon-128-white.png") });
 		} else {
-			domElements.googleLoginButton.textContent = `Login failed with error: ${user.code ? user.code : 'Unknown Error'}`;
+			domElements.googleLoginButton.textContent = `Login failed with error: ${user.code ? user.code : "Unknown Error"}`;
 			domElements.googleLoginSuccessDiv.classList.add("hidden");
 			domElements.googleLoginErrorDiv.classList.remove("hidden");
 			domElements.googleLoginErrorP.textContent = user.error;
