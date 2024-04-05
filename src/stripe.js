@@ -31,7 +31,7 @@ async function getProducts(currency) {
 		// Even though we already filtered by currency in the product query, we filter again here to make sure to only get correct prices
 		const pricesInfo = priceQuerySnapshot.docs.map((priceDoc) => {
 			const priceInfo = priceDoc.data();
-			return priceInfo.currency === currency ? { priceId: priceDoc.id, priceInfo } : null;
+			return (priceInfo.currency == currency && priceInfo.active == true) ? { priceId: priceDoc.id, priceInfo } : null;
 		}).filter(price => price !== null);
 
 		productInfo["prices"] = pricesInfo;
