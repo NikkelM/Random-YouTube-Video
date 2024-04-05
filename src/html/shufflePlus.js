@@ -92,7 +92,7 @@ async function setDomElementEventListeners(domElements) {
 		domElements.googleLoginButton.textContent = "Signing in...";
 		user = await getUser(false, true, true);
 
-		if (user.userInfo.displayName) {
+		if (user.userInfo?.displayName) {
 			domElements.welcomeHeader.textContent = `Login successful! Welcome ${user.userInfo.displayName.split(" ")[0]}!`;
 			domElements.googleLoginSuccessP.textContent = "If you are subscribed to Shuffle+, you now have access to all premium features!";
 			domElements.googleLoginButton.textContent = "Sign in with Google";
