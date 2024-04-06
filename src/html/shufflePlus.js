@@ -2,7 +2,7 @@
 import { setSyncStorageValue } from "../chromeStorage.js";
 import { getUser, revokeAccess } from "../googleOauth.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
-import { openStripeCheckout, getSubscriptions } from "../stripe.js";
+import { openStripeCheckout, getSubscriptions, userHasActiveSubscriptionRole } from "../stripe.js";
 
 // ----- Setup -----
 let user;
@@ -121,7 +121,7 @@ async function setDomElementEventListeners(domElements) {
 
 	// Manage subscription button
 	domElements.manageSubscribtionButton.addEventListener("click", async function () {
-		if (await chrome.runtime.sendMessage({ command: "getUserShufflePlusStatus" })) {
+		if (await userHasActiveSubscriptionRole()) {
 			// TODO: This is the test URL
 			const url = `https://billing.stripe.com/p/login/test_7sI5lw95Afu5fzqbII?prefilled_email=${user.userInfo.email}`;
 			await chrome.tabs.create({ url });

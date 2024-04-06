@@ -76,8 +76,8 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 				p.priceInfo.recurring.interval_count == requestedIntervalCount
 		).priceId,
 		// TODO: Proper redirect URL, cancellation URL. Current URL does nothing after completion
-		success_url: "https://tinyurl.com/RYVShufflePlus?sessionId={CHECKOUT_SESSION_ID}",
-		cancel_url: "https://google.com?sessionId={CHECKOUT_SESSION_ID}",
+		success_url: chrome.runtime.getURL("html/shufflePlus.html"), //"https://tinyurl.com/RYVShufflePlus?sessionId={CHECKOUT_SESSION_ID}",
+		cancel_url: chrome.runtime.getURL("html/shufflePlus.html"), //"https://google.com?sessionId={CHECKOUT_SESSION_ID}",
 		allow_promotion_codes: true,
 		payment_method_types: paymentMethods
 	};
@@ -140,7 +140,7 @@ export async function getSubscriptions(user = null, activeOnly = true) {
 
 export async function userHasActiveSubscriptionRole(user = null) {
 	const stripeRole = await getStripeRole(user);
-	return stripeRole === "shufflePlus";
+	return stripeRole == "shufflePlus";
 }
 
 // This will return shufflePlus if the user has an active subscription

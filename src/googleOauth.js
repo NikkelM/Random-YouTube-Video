@@ -4,6 +4,7 @@ import { isFirefox, firebaseConfig } from "./config.js";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
+import { userHasActiveSubscriptionRole } from "./stripe.js";
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
@@ -268,9 +269,9 @@ export async function getGrantedOauthScopes() {
 }
 
 // Revokes access to the app for the current user, and deletes it if requested and there is no active subscription
-export async function revokeAccess(_user = null, deleteUser = false) {
+export async function revokeAccess(user = null, deleteUser = false) {
 	// Make sure there is an active token and the user is authenticated with Firebase
-	_user ??= await getUser(false, false, false);
+	user ??= await getUser(false, false, false);
 	const googleOauth = await getLocalGoogleOauth();
 	const usedToken = googleOauth.accessToken || googleOauth.refreshToken;
 
@@ -284,7 +285,7 @@ export async function revokeAccess(_user = null, deleteUser = false) {
 		};
 
 		// We need to do this before revoking the tokens as it needs a valid authorization
-		const userHasActiveSubscription = await chrome.runtime.sendMessage({ command: "getUserShufflePlusStatus" });
+		const userHasActiveSubscription = await userHasActiveSubscriptionRole(user);
 
 		const revokeSuccessful = await fetch("https://oauth2.googleapis.com/revoke", postOptions)
 			.then(response => {

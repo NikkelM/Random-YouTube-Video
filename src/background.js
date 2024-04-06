@@ -6,8 +6,6 @@ import { userHasActiveSubscriptionRole } from "./stripe.js";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase, ref, child, update, get, remove } from "firebase/database";
 
-const userHasShufflePlus = await userHasActiveSubscriptionRole();
-
 // ---------- Initialization/Chrome event listeners ----------
 // Run the extension startup logic
 async function initExtension() {
@@ -36,7 +34,7 @@ await initExtension();
 // On every startup, we check the claim roles for the user
 async function checkShufflePlusStatus() {
 	// TODO: If the user has not yet been introduced to Shuffle+, open the introduction page
-	if (userHasShufflePlus) {
+	if (await userHasActiveSubscriptionRole()) {
 		chrome.action.setIcon({
 			path: {
 				"16": chrome.runtime.getURL("icons/icon-16-white.png"),
@@ -206,10 +204,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			break;
 		case "getShufflingPageShuffleStatus":
 			sendResponse(shufflingPageIsShuffling);
-			break;
-		case "getUserShufflePlusStatus":
-			console.log(`User has Shuffle+: ${userHasShufflePlus}`);
-			sendResponse(userHasShufflePlus);
 			break;
 		default:
 			console.log(`Unknown command: ${request.command} (service worker). Hopefully another message listener will handle it.`);
