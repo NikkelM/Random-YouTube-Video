@@ -142,7 +142,7 @@ export async function getSubscriptions(user = null, activeOnly = true) {
 async function getStripeRole(user = null) {
 	user ??= await getUser(false, true, false);
 	const decodedToken = await getAuth().currentUser?.getIdTokenResult();
-	return decodedToken.claims?.stripeRole ?? null;
+	return decodedToken?.claims?.stripeRole ?? null;
 }
 
 // TODO: Use this, as it is probably faster and cheaper than querying Firestore
