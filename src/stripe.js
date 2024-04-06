@@ -52,7 +52,7 @@ async function getProducts(currency) {
 	};
 }
 
-export async function openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval) {
+export async function openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval, requestedIntervalCount) {
 	user ??= await getUser(false, true, true);
 	// TODO: Do we want to scope to requestedProduct in getProducts as well?
 	// In case the requested currency is not available, we default to USD
@@ -68,7 +68,13 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 	}
 
 	let checkoutSessionData = {
-		price: shufflePlusTestProducts.prices.find(p => p.priceInfo.type == "recurring" && p.priceInfo.recurring.interval == requestedInterval).priceId,
+		price: shufflePlusTestProducts.prices.find(
+			p =>
+				p.priceInfo.active &&
+				p.priceInfo.type == "recurring" &&
+				p.priceInfo.recurring.interval == requestedInterval &&
+				p.priceInfo.recurring.interval_count == requestedIntervalCount
+		).priceId,
 		// TODO: Proper redirect URL, cancellation URL. Current URL does nothing after completion
 		success_url: "https://tinyurl.com/RYVShufflePlus?sessionId={CHECKOUT_SESSION_ID}",
 		cancel_url: "https://google.com?sessionId={CHECKOUT_SESSION_ID}",
@@ -81,6 +87,7 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 		checkoutSessionData
 	);
 
+	let hasOpenedCheckoutTab = false;
 	// The Stripe extension creates a payment link for us
 	onSnapshot(checkoutSessionRef, (snap) => {
 		const { error, url } = snap.data();
@@ -90,10 +97,22 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 		}
 		if (url) {
 			// TODO: Decide whether to open a new tab or redirect the current tab
+			hasOpenedCheckoutTab = true;
 			chrome.tabs.create({ url });
 			// window.location.assign(url);
 		}
 	});
+
+	let hasTimedOut = false;
+	setTimeout(() => {
+		hasTimedOut = true;
+	}, 5000);
+
+	while(!hasOpenedCheckoutTab && !hasTimedOut) {
+		await new Promise(resolve => setTimeout(resolve, 100));
+	}
+
+	return hasOpenedCheckoutTab;
 }
 
 // Gets all (active) subscriptions for the current user

@@ -103,7 +103,7 @@ async function setDomElementEventListeners(domElements) {
 			domElements.manageSubscribtionButtonDiv.classList.remove("hidden");
 			await setSubscriptionUI(domElements, user);
 			// TODO: If the user is logged in and subscribed, change the extension icon, e.g.:
-			// chrome.action.setIcon({ path: chrome.runtime.getURL("icons/icon-128-white.png") });
+			chrome.action.setIcon({ path: chrome.runtime.getURL("icons/icon-128-white.png") });
 		} else {
 			domElements.googleLoginButton.textContent = `Login failed with error: ${user.code ? user.code : "Unknown Error"}`;
 			domElements.googleLoginSuccessDiv.classList.add("hidden");
@@ -122,9 +122,10 @@ async function setDomElementEventListeners(domElements) {
 			domElements.manageSubscribtionButton.textContent = "Preparing subscription...";
 			// TODO: Get configuration from UI
 			let requestedProduct = "Shuffle+ (Test)";
-			let requestedCurrency = "usd";
+			let requestedCurrency = "eur";
 			let requestedInterval = "month";
-			await openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval);
+			let requestedIntervalCount = 3;
+			await openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval, requestedIntervalCount);
 			domElements.manageSubscribtionButton.textContent = "Subscribe to Shuffle+";
 		}
 	});
