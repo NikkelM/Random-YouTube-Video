@@ -108,7 +108,7 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 		hasTimedOut = true;
 	}, 5000);
 
-	while(!hasOpenedCheckoutTab && !hasTimedOut) {
+	while (!hasOpenedCheckoutTab && !hasTimedOut) {
 		await new Promise(resolve => setTimeout(resolve, 100));
 	}
 
@@ -138,15 +138,14 @@ export async function getSubscriptions(user = null, activeOnly = true) {
 	return subscriptions;
 }
 
+export async function userHasActiveSubscriptionRole(user = null) {
+	const stripeRole = await getStripeRole(user);
+	return stripeRole === "shufflePlus";
+}
+
 // This will return shufflePlus if the user has an active subscription
 async function getStripeRole(_user = null) {
 	_user ??= await getUser(false, true, false);
 	const decodedToken = await getAuth().currentUser?.getIdTokenResult();
 	return decodedToken?.claims?.stripeRole ?? null;
-}
-
-// TODO: Use this, as it is probably faster and cheaper than querying Firestore
-export async function hasActiveSubscriptionRole(user = null) {
-	const stripeRole = await getStripeRole(user);
-	return stripeRole === "shufflePlus";
 }

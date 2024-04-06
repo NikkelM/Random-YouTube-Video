@@ -1,7 +1,6 @@
 // Contains logic to login and authenticate users through Google Oauth and Firebase Auth
 import { setSyncStorageValue } from "./chromeStorage.js";
 import { isFirefox, firebaseConfig } from "./config.js";
-import { hasActiveSubscriptionRole } from "./stripe.js";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
@@ -285,7 +284,7 @@ export async function revokeAccess(_user = null, deleteUser = false) {
 		};
 
 		// We need to do this before revoking the tokens as it needs a valid authorization
-		const hasActiveSubscription = await hasActiveSubscriptionRole();
+		const userHasActiveSubscription = await chrome.runtime.sendMessage({ command: "getUserShufflePlusStatus" });
 
 		const revokeSuccessful = await fetch("https://oauth2.googleapis.com/revoke", postOptions)
 			.then(response => {
@@ -308,7 +307,7 @@ export async function revokeAccess(_user = null, deleteUser = false) {
 				return false;
 			});
 
-		if (revokeSuccessful && deleteUser && !hasActiveSubscription) {
+		if (revokeSuccessful && deleteUser && !userHasActiveSubscription) {
 			const firebaseUser = getAuth(app).currentUser;
 
 			// Delete the user account
