@@ -102,8 +102,15 @@ async function setDomElementEventListeners(domElements) {
 			domElements.googleRevokeAccessButtonDiv.classList.remove("hidden");
 			domElements.manageSubscribtionButtonDiv.classList.remove("hidden");
 			await setSubscriptionUI(domElements, user);
-			// TODO: If the user is logged in and subscribed, change the extension icon, e.g.:
-			chrome.action.setIcon({ path: chrome.runtime.getURL("icons/icon-128-white.png") });
+
+			chrome.action.setIcon({
+				path: {
+					"16": chrome.runtime.getURL("icons/icon-16-white.png"),
+					"32": chrome.runtime.getURL("icons/icon-32-white.png"),
+					"48": chrome.runtime.getURL("icons/icon-48-white.png"),
+					"128": chrome.runtime.getURL("icons/icon-128-white.png")
+				}
+			});
 		} else {
 			domElements.googleLoginButton.textContent = `Login failed with error: ${user.code ? user.code : "Unknown Error"}`;
 			domElements.googleLoginSuccessDiv.classList.add("hidden");

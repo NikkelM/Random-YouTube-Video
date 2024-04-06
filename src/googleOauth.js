@@ -2,11 +2,11 @@
 import { setSyncStorageValue } from "./chromeStorage.js";
 import { isFirefox, firebaseConfig } from "./config.js";
 import { hasActiveSubscriptionRole } from "./stripe.js";
-import { initializeApp } from "firebase/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 
-const app = initializeApp(firebaseConfig);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
 
@@ -24,7 +24,7 @@ export async function getUser(localOnly, allowSelfRevoke, signupIfNull) {
 		console.log("No local user info found.");
 		return null;
 	} else if (googleOauth || (googleOauth == null && signupIfNull)) {
-		console.log("Attempting to sign up using Google Oauth.");
+		console.log("Attempting to sign in using Google Oauth (will attempt to sign up if no user exists).");
 		// This will also refresh the access token if it has expired
 		return await googleLogin(allowSelfRevoke);
 	} else {

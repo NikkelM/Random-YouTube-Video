@@ -1,11 +1,11 @@
 // Contains logic for interacting with Stripe for payment handling
 import { firebaseConfig } from "./config.js";
 import { getUser } from "./googleOauth.js";
-import { initializeApp } from "firebase/app";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot, FieldPath } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-const app = initializeApp(firebaseConfig);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 
 // Get products and pricing information from Firestore/Stripe
@@ -139,13 +139,14 @@ export async function getSubscriptions(user = null, activeOnly = true) {
 }
 
 // This will return shufflePlus if the user has an active subscription
-async function getStripeRole() {
-	const decodedToken = await getAuth().currentUser.getIdTokenResult();
+async function getStripeRole(user = null) {
+	user ??= await getUser(false, true, false);
+	const decodedToken = await getAuth().currentUser?.getIdTokenResult();
 	return decodedToken.claims?.stripeRole ?? null;
 }
 
 // TODO: Use this, as it is probably faster and cheaper than querying Firestore
-export async function hasActiveSubscriptionRole() {
-	const stripeRole = await getStripeRole();
+export async function hasActiveSubscriptionRole(user = null) {
+	const stripeRole = await getStripeRole(user);
 	return stripeRole === "shufflePlus";
 }

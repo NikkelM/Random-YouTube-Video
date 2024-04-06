@@ -2,13 +2,13 @@
 // Handles communication between the extension and the content script as well as Firebase interactions
 import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 import { isFirefox, firebaseConfig } from "./config.js";
-import { initializeApp } from "firebase/app";
+import { hasActiveSubscriptionRole } from "./stripe.js";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase, ref, child, update, get, remove } from "firebase/database";
 
 // ---------- Initialization/Chrome event listeners ----------
 // Check whether a new version was installed
 async function initExtension() {
-	// TODO: Change the extension icon if the user is subscribed to Shuffle+
 	const manifestData = chrome.runtime.getManifest();
 	if (configSync.previousVersion === null) {
 		console.log(`Extension was installed for the first time (v${manifestData.version})`);
@@ -25,9 +25,27 @@ async function initExtension() {
 		await handleExtensionUpdate(manifestData, configSync.previousVersion);
 	}
 
+	await checkShufflePlusStatus();
 	checkLocalStorageCapacity();
 }
+
 await initExtension();
+
+// On every startup, we check the claim roles for the user
+async function checkShufflePlusStatus() {
+	// TODO: If the user has not yet been introduced to Shuffle+, open the introduction page
+	if (await hasActiveSubscriptionRole()) {
+		console.log("User has an active Shuffle+ subscription.");
+		chrome.action.setIcon({
+			path: {
+				"16": chrome.runtime.getURL("icons/icon-16-white.png"),
+				"32": chrome.runtime.getURL("icons/icon-32-white.png"),
+				"48": chrome.runtime.getURL("icons/icon-48-white.png"),
+				"128": chrome.runtime.getURL("icons/icon-128-white.png")
+			}
+		});
+	}
+}
 
 // Make sure we are not using too much local storage
 async function checkLocalStorageCapacity() {
@@ -197,7 +215,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ---------- Firebase ----------
-const app = initializeApp(firebaseConfig);
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getDatabase(app);
 
 async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos) {
