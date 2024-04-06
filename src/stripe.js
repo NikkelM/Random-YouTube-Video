@@ -139,8 +139,8 @@ export async function getSubscriptions(user = null, activeOnly = true) {
 }
 
 // This will return shufflePlus if the user has an active subscription
-async function getStripeRole(user = null) {
-	user ??= await getUser(false, true, false);
+async function getStripeRole(_user = null) {
+	_user ??= await getUser(false, true, false);
 	const decodedToken = await getAuth().currentUser?.getIdTokenResult();
 	return decodedToken?.claims?.stripeRole ?? null;
 }

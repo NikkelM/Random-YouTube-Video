@@ -63,7 +63,7 @@ async function checkLocalStorageCapacity() {
 		const localStorageContents = await chrome.storage.local.get();
 
 		// We only need the keys that hold playlists, which is signified by the existence of the "videos" sub-key
-		const allPlaylists = Object.fromEntries(Object.entries(localStorageContents).filter(([key, value]) => value["videos"]));
+		const allPlaylists = Object.fromEntries(Object.entries(localStorageContents).filter(([_, value]) => value["videos"]));
 
 		// Sort the playlists by lastAccessedLocally value
 		const sortedPlaylists = Object.entries(allPlaylists).sort((a, b) => {
@@ -72,7 +72,7 @@ async function checkLocalStorageCapacity() {
 
 		// Remove the 20% of playlists that have not been accessed the longest
 		const playlistsToRemove = sortedPlaylists.slice(Math.floor(sortedPlaylists.length * 0.8));
-		for (const [playlistId, playlistInfo] of playlistsToRemove) {
+		for (const [playlistId, _playlistInfo] of playlistsToRemove) {
 			console.log(`Removing playlist ${playlistId} from local storage...`);
 			chrome.storage.local.remove(playlistId);
 		}
@@ -119,7 +119,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 		let configSyncValues = await chrome.storage.sync.get();
 
 		// For each object entry in channelSettings that has the "shufflePercentage" item, rename it to "percentageValue" and add a new key "activeOption": "percentageOption"
-		for (const [channelID, channelSetting] of Object.entries(configSyncValues["channelSettings"])) {
+		for (const [_channelId, channelSetting] of Object.entries(configSyncValues["channelSettings"])) {
 			if (channelSetting["shufflePercentage"]) {
 				channelSetting["percentageValue"] = channelSetting["shufflePercentage"];
 				channelSetting["activeOption"] = "percentageOption";
@@ -233,7 +233,7 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 	} else {
 		console.log("Updating playlistInfo in the database...");
 		// Contains all properties except the videos
-		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => (key !== "videos")));
+		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, _]) => (key !== "videos")));
 
 		// Upload the "metadata"
 		update(ref(db, playlistId), playlistInfoWithoutVideos);

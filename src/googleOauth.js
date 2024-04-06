@@ -269,9 +269,9 @@ export async function getGrantedOauthScopes() {
 }
 
 // Revokes access to the app for the current user, and deletes it if requested and there is no active subscription
-export async function revokeAccess(user = null, deleteUser = false) {
+export async function revokeAccess(_user = null, deleteUser = false) {
 	// Make sure there is an active token and the user is authenticated with Firebase
-	user ??= await getUser(false, false, false);
+	_user ??= await getUser(false, false, false);
 	const googleOauth = await getLocalGoogleOauth();
 	const usedToken = googleOauth.accessToken || googleOauth.refreshToken;
 
