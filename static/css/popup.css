@@ -40,25 +40,33 @@
 }
 
 @keyframes slideDown {
-  0% { max-height: 0; }
-  100% { max-height: 120px; }
+	0% {
+		max-height: 0;
+	}
+	100% {
+		max-height: 120px;
+	}
 }
 
 @keyframes slideUp {
-  0% { max-height: 120px; }
-  100% { max-height: 0; }
+	0% {
+		max-height: 120px;
+	}
+	100% {
+		max-height: 0;
+	}
 }
 
 .hiddenTransition {
-  animation: slideUp 0.9s forwards;
-  overflow: hidden;
+	animation: slideUp 0.9s forwards;
+	overflow: hidden;
 	display: hidden;
 }
 
 .visibleTransition {
-  animation: slideDown 0.9s forwards;
-  overflow: hidden;
-  display: block;
+	animation: slideDown 0.9s forwards;
+	overflow: hidden;
+	display: block;
 }
 
 .displayInline {
@@ -227,9 +235,15 @@
 }
 
 @keyframes gradient {
-	0% { background-position: 0% 50%; }
-	50% { background-position: 100% 0%; }
-	100% { background-position: 0% 50%; }
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 0%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
 }
 
 .randomYoutubeVideoButton.highlight-green-animated {
@@ -239,8 +253,12 @@
 }
 
 @keyframes fillup {
-	0% { background-size: 0% 100%; }
-	100% { background-size: 100% 100%; }
+	0% {
+		background-size: 0% 100%;
+	}
+	100% {
+		background-size: 100% 100%;
+	}
 }
 
 /* The timing of the animation is synced up with other timers associated with these buttons */
@@ -320,9 +338,15 @@ input.invalid-input {
 }
 
 @keyframes flash {
-	0% { opacity: 1; }
-	50% { opacity: 0.5; }
-	100% { opacity: 1; }
+	0% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+	100% {
+		opacity: 1;
+	}
 }
 
 /* 
