@@ -441,7 +441,7 @@ async function setDomElementEventListeners(domElements) {
 }
 
 async function determineOverlayVisibility(domElements) {
-	if (!configSync.reviewMessageShown && configSync.numShuffledVideosTotal < 150 && configSync.numShuffledVideosTotal >= 20) {
+	if (!configSync.reviewMessageShown && configSync.numShuffledVideosTotal < 75 && configSync.numShuffledVideosTotal >= 10) {
 		domElements.reviewDiv.classList.remove("hidden");
 		domElements.reviewDonationDiv.classList.remove("hidden");
 		await setSyncStorageValue("reviewMessageShown", true);
@@ -450,7 +450,7 @@ async function determineOverlayVisibility(domElements) {
 			domElements.reviewDonationDiv.classList.add("hidden");
 			domElements.reviewDiv.classList.add("hidden");
 		});
-	} else if (!configSync.donationMessageShown && configSync.numShuffledVideosTotal >= 150) {
+	} else if (!configSync.donationMessageShown && configSync.numShuffledVideosTotal >= 75) {
 		domElements.donationDiv.classList.remove("hidden");
 		domElements.reviewDonationDiv.classList.remove("hidden");
 		await setSyncStorageValue("donationMessageShown", true);
