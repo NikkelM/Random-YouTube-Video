@@ -39,48 +39,22 @@
 				</button>
 			</div>
 
+			<!-- Benefit showcase -->
 			<br />
 			<br />
-			<div id="shufflingHint">
-				<h3><i>Did you know...</i></h3>
-				<p id="shufflingHintP" class="thirdWidth">The hints could not be loaded - please report this bug on GitHub!</p>
-				<button id="nextHintButton" class="randomYoutubeVideoButton" style="margin-top: 6px">New Hint</button>
+			<div id="benefitsShowcaseDiv" style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
+				<h2>Shuffle+ benefits</h2>
+				<p>Subscribe to Shuffle+ to gain access to a wide range of new features to further improve your experience:</p>
+				<ul id="benefitsList" style="text-align: left;">
+					<li>Shuffle from your subscriptions/from multiple channels at once</li>
+					<li>Ignore already watched videos</li>
+					<li>More filter options</li>
+					<li>Favourite channels for quick access in the popup</li>
+					<li>All future premium features included</li>
+					<li>Support the development and maintenance of the extension</li>
+				</ul>
 			</div>
 
-			<br />
-			<br />
-			<footer id="randomYoutubeVideoFooter">
-				<a class="buttonLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank" rel="noopener" title="View the source code or get into contact with the developer">GitHub</a>
-				<button class="randomYoutubeVideoButton" id="viewChangelogButton" type="button" title="View the latest changes to the extension">Changelog</button>
-				<a class="buttonLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension">Donate</a>
-				<br />
-				Leave a review:
-				<a
-					class="buttonLink"
-					href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
-					target="_blank"
-					rel="noopener"
-					title="Leave a review on the Chrome Web Store"
-					>Chrome</a
-				>
-				<a class="buttonLink" href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/" target="_blank" rel="noopener" title="Leave a review on the Firefox Add-Ons page">Firefox</a>
-				<a
-					class="buttonLink"
-					href="https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe"
-					target="_blank"
-					rel="noopener"
-					title="Leave a review on the Edge Add-Ons page"
-					>Edge</a
-				></footer>
-
-			<br />
-			<div id="googleRevokeAccessButtonDiv" class="hidden">
-				<br />
-				<button id="googleRevokeAccessButton" class="randomYoutubeVideoButton" type="button"
-					title="Sign out and revoke the extension's access to your Google account and delete your user account with the extension. If you have an active Shuffle+ subscription, your user account will not be deleted. If you wish to delete your user account before your subscription runs out, you will need to cancel it.">
-					Forget me permanently
-				</button>
-			</div>
 			<div id="googleRevokeAccessConfirmationPopup" class="overlayDiv hidden">
 				<div>
 					<h2>Are you sure you want to leave?</h3>
@@ -103,6 +77,48 @@
 					</button>
 				</div>
 			</div>
+
+			<footer id="randomYoutubeVideoFooter">
+				<div id="shufflingHint">
+					<h3><i>Did you know...</i></h3>
+					<p id="shufflingHintP" class="thirdWidth">The hints could not be loaded - please report this bug on GitHub!</p>
+					<button id="nextHintButton" class="randomYoutubeVideoButton" style="margin-top: 6px">New Hint</button>
+				</div>
+
+				<br />
+				<br />
+				<a class="buttonLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank" rel="noopener" title="View the source code or get into contact with the developer">GitHub</a>
+				<button class="randomYoutubeVideoButton" id="viewChangelogButton" type="button" title="View the latest changes to the extension">Changelog</button>
+				<a class="buttonLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension">Donate</a>
+				<br />
+				Leave a review:
+				<a
+					class="buttonLink"
+					href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
+					target="_blank"
+					rel="noopener"
+					title="Leave a review on the Chrome Web Store"
+					>Chrome</a
+				>
+				<a class="buttonLink" href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/" target="_blank" rel="noopener" title="Leave a review on the Firefox Add-Ons page">Firefox</a>
+				<a
+					class="buttonLink"
+					href="https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe"
+					target="_blank"
+					rel="noopener"
+					title="Leave a review on the Edge Add-Ons page"
+					>Edge</a
+				>
+
+				<br />
+				<div id="googleRevokeAccessButtonDiv" class="hidden">
+					<br />
+					<button id="googleRevokeAccessButton" class="randomYoutubeVideoButton" type="button"
+						title="Sign out and revoke the extension's access to your Google account and delete your user account with the extension. If you have an active Shuffle+ subscription, your user account will not be deleted. If you wish to delete your user account before your subscription runs out, you will need to cancel it.">
+						Forget me permanently
+					</button>
+				</div>
+			</footer>
 		</div>
 
 		<script src="../utils.js" type="text/javascript"></script>
