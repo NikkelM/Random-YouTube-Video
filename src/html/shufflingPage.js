@@ -3,6 +3,7 @@ import { delay, setDOMTextWithDelay } from "../utils.js";
 import { configSync, setSyncStorageValue } from "../chromeStorage.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
 import { chooseRandomVideo } from "../shuffleVideo.js";
+import { userHasActiveSubscriptionRole } from "../stripe.js";
 
 // ----- Setup -----
 // Restart the background script if it was stopped to prevent a flash of an error page when shuffling
@@ -20,17 +21,13 @@ try {
 const port = chrome.runtime.connect({ name: "shufflingPage" });
 
 const domElements = getDomElements();
+await setDomElementValuesFromConfig(domElements);
+await buildShufflingHints(domElements);
 await setDomElementEventListeners(domElements);
 
 // If this page is open, it means the user has clicked the shuffle button
 shuffleButtonClicked();
 
-// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
-if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
-	domElements.viewChangelogButton.classList.add("highlight-green");
-}
-
-await buildShufflingHints(domElements);
 // Only show the contents of the page after a short delay, so that the user doesn't see the page at all for short loading times
 waitUntilShowingDivContents();
 
@@ -58,6 +55,19 @@ function getDomElements() {
 		// Shuffle+ button
 		shufflePlusButton: document.getElementById("shufflePlusButton"),
 	};
+}
+
+async function setDomElementValuesFromConfig(domElements) {
+	// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
+	if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
+		domElements.viewChangelogButton.classList.add("highlight-green");
+	}
+
+	// Enables or disables the animation of the Shuffle+ button depending on if the user is subscribed or not
+	if (!(await userHasActiveSubscriptionRole())) {
+		domElements.shufflePlusButton.classList.add("highlight-green-animated");
+		domElements.shufflePlusButton.classList.remove("highlight-green");
+	}
 }
 
 // Set event listeners for DOM elements

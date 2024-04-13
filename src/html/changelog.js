@@ -1,16 +1,14 @@
 // Contains logic for the "Changelog" page
 import { delay } from "../utils.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
+import { userHasActiveSubscriptionRole } from "../stripe.js";
 
 // ----- Setup -----
+const currentVersion = chrome.runtime.getManifest().version_name ?? chrome.runtime.getManifest().version;
 const domElements = getDomElements();
+await setDomElementValuesFromConfig(domElements);
 await buildShufflingHints(domElements);
 await setDomElementEventListeners(domElements);
-
-// --- Set headers ---
-const currentVersion = chrome.runtime.getManifest().version_name ?? chrome.runtime.getManifest().version;
-domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
-domElements.whatsNewHeader.innerText = `What's new in v${currentVersion}:`;
 
 // --- Build dropdown menu ---
 let changelogText = await fetchChangelog(`v${currentVersion}`);
@@ -22,21 +20,6 @@ try {
 	domElements.genericErrorDiv.classList.remove("hidden");
 }
 
-// Change the displayed changelog to the chosen version
-domElements.chooseChangelogVersionDropdown.addEventListener("change", async function () {
-	await updateChangelog(this.value);
-});
-
-function addVersionsToDropdown(versions) {
-	// Add all versions to the dropdown menu
-	versions.forEach(version => {
-		const option = document.createElement("option");
-		option.value = version;
-		option.innerText = version;
-		domElements.chooseChangelogVersionDropdown.appendChild(option);
-	});
-}
-
 // --- Display most recent Changelog ---
 // Do this after adding the dropdown options, so that if there is no changelog for the current version, we know the most recent version that does have a changelog
 try {
@@ -46,19 +29,6 @@ try {
 }
 // If this takes too long, display an error
 displayErrorAfterWaiting();
-
-async function fetchChangelog(forVersion = `v${currentVersion}`) {
-	// Get the current changelog from GitHub
-	let changelog = await fetch(`https://raw.githubusercontent.com/NikkelM/Random-YouTube-Video/${forVersion}/CHANGELOG.md`)
-		.then(response => response.text());
-
-	if (changelog === "404: Not Found") {
-		changelog = await fetch("https://raw.githubusercontent.com/NikkelM/Random-YouTube-Video/main/CHANGELOG.md")
-			.then(response => response.text());
-	}
-
-	return changelog;
-}
 
 // ---------- DOM ----------
 // Get all relevant DOM elements
@@ -91,8 +61,25 @@ function getDomElements() {
 	};
 }
 
+async function setDomElementValuesFromConfig(domElements) {
+	// --- Set headers ---
+	domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
+	domElements.whatsNewHeader.innerText = `What's new in v${currentVersion}:`;
+
+	// Enables or disables the animation of the Shuffle+ button depending on if the user is subscribed or not
+	if (!(await userHasActiveSubscriptionRole())) {
+		domElements.shufflePlusButton.classList.add("highlight-green-animated");
+		domElements.shufflePlusButton.classList.remove("highlight-green");
+	}
+}
+
 // Set event listeners for DOM elements
 async function setDomElementEventListeners(domElements) {
+	// Change the displayed changelog to the chosen version
+	domElements.chooseChangelogVersionDropdown.addEventListener("change", async function () {
+		await updateChangelog(this.value);
+	});
+
 	// Shuffle+ subscribe button
 	domElements.shufflePlusButton.addEventListener("click", async function () {
 		const shufflePlusPage = chrome.runtime.getURL("html/shufflePlus.html");
@@ -104,6 +91,29 @@ async function setDomElementEventListeners(domElements) {
 }
 
 // ----- Changelog -----
+async function fetchChangelog(forVersion = `v${currentVersion}`) {
+	// Get the current changelog from GitHub
+	let changelog = await fetch(`https://raw.githubusercontent.com/NikkelM/Random-YouTube-Video/${forVersion}/CHANGELOG.md`)
+		.then(response => response.text());
+
+	if (changelog === "404: Not Found") {
+		changelog = await fetch("https://raw.githubusercontent.com/NikkelM/Random-YouTube-Video/main/CHANGELOG.md")
+			.then(response => response.text());
+	}
+
+	return changelog;
+}
+
+function addVersionsToDropdown(versions) {
+	// Add all versions to the dropdown menu
+	versions.forEach(version => {
+		const option = document.createElement("option");
+		option.value = version;
+		option.innerText = version;
+		domElements.chooseChangelogVersionDropdown.appendChild(option);
+	});
+}
+
 async function updateChangelog(forVersion = `v${currentVersion}`) {
 	if (changelogText === null) {
 		changelogText = await fetchChangelog(forVersion);
@@ -140,7 +150,6 @@ async function updateChangelog(forVersion = `v${currentVersion}`) {
 	domElements.belowHeadingDiv.classList.remove("hidden");
 }
 
-// ----- Error -----
 // If the main content is not shown yet, it means the changelog could not be fetched
 async function displayErrorAfterWaiting(ms = 2000) {
 	await delay(ms);

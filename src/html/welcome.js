@@ -3,6 +3,7 @@ import { setSyncStorageValue } from "../chromeStorage.js";
 import { isFirefox } from "../config.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
 import { delay } from "../utils.js";
+import { userHasActiveSubscriptionRole } from "../stripe.js";
 
 // ----- Setup -----
 const domElements = getDomElements();
@@ -21,10 +22,7 @@ chrome.tabs.query({}, function (tabs) {
 	}
 });
 
-// --- Set headers ---
-const currentVersion = chrome.runtime.getManifest().version_name ?? chrome.runtime.getManifest().version;
-domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
-
+await setDomElementValuesFromConfig(domElements);
 await buildShufflingHints(domElements);
 await setDomElementEventListeners(domElements);
 
@@ -63,6 +61,18 @@ function getDomElements() {
 		// Shuffle+ button
 		shufflePlusButton: document.getElementById("shufflePlusButton"),
 	};
+}
+
+async function setDomElementValuesFromConfig(domElements) {
+	// --- Set headers ---
+	const currentVersion = chrome.runtime.getManifest().version_name ?? chrome.runtime.getManifest().version;
+	domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
+
+	// Enables or disables the animation of the Shuffle+ button depending on if the user is subscribed or not
+	if (!(await userHasActiveSubscriptionRole())) {
+		domElements.shufflePlusButton.classList.add("highlight-green-animated");
+		domElements.shufflePlusButton.classList.remove("highlight-green");
+	}
 }
 
 // Set event listeners for DOM elements

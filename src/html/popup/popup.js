@@ -3,6 +3,7 @@ import { delay } from "../../utils.js";
 import { configSync, setSyncStorageValue, removeSyncStorageValue } from "../../chromeStorage.js";
 import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv } from "./popupUtils.js";
 import { tryFocusingTab } from "../htmlUtils.js";
+import { userHasActiveSubscriptionRole } from "../../stripe.js";
 
 // ----- Setup -----
 const isPopup = chrome.extension.getViews({ type: "popup" }).length > 0;
@@ -187,6 +188,12 @@ async function setDomElementValuesFromConfig(domElements) {
 	// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
 	if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
 		domElements.viewChangelogButton.classList.add("highlight-green");
+	}
+
+	// Enables or disables the animation of the Shuffle+ button depending on if the user is subscribed or not
+	if (!(await userHasActiveSubscriptionRole())) {
+		domElements.shufflePlusButton.classList.add("highlight-green-animated");
+		domElements.shufflePlusButton.classList.remove("highlight-green");
 	}
 
 	// Enable animations
@@ -430,7 +437,7 @@ async function setDomElementEventListeners(domElements) {
 		domElements.viewChangelogButton.classList.remove("highlight-green");
 	});
 
-	// Shuffle+ subscribe button
+	// Shuffle+ button
 	domElements.shufflePlusButton.addEventListener("click", async function () {
 		const shufflePlusPage = chrome.runtime.getURL("html/shufflePlus.html");
 		let mustOpenTab = await tryFocusingTab(shufflePlusPage);
