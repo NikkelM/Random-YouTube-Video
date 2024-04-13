@@ -28,25 +28,9 @@
 					<br />
 					<p>
 						Review on:
-						<a
-							class="buttonLink"
-							href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
-							target="_blank"
-							rel="noopener"
-							title="Leave a review on the Chrome Web Store"
-							>Chrome</a
-						>
-						<a class="buttonLink" href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/" target="_blank" rel="noopener" title="Leave a review on the Firefox Add-Ons page"
-							>Firefox</a
-						>
-						<a
-							class="buttonLink"
-							href="https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe"
-							target="_blank"
-							rel="noopener"
-							title="Leave a review on the Edge Add-Ons page"
-							>Edge</a
-						>
+						<a class="buttonLink" href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf" target="_blank" rel="noopener" title="Leave a review on the Chrome Web Store">Chrome</a>
+						<a class="buttonLink" href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/" target="_blank" rel="noopener" title="Leave a review on the Firefox Add-Ons page">Firefox</a>
+						<a class="buttonLink" href="https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe" target="_blank" rel="noopener" title="Leave a review on the Edge Add-Ons page">Edge</a>
 						<br />
 						<br />
 					</p>
@@ -69,9 +53,7 @@
 					<br />
 					<a class="buttonLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension">Donate on Ko-Fi</a>
 					<p style="display: inline">or</p>
-					<a class="buttonLink" href="https://github.com/sponsors/NikkelM" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension"
-						>Sponsor on GitHub</a
-					>
+					<a class="buttonLink" href="https://github.com/sponsors/NikkelM" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension">Sponsor on GitHub</a>
 					<br />
 					<br />
 					<button id="donationOverlayCloseButton" class="randomYoutubeVideoButton" type="button">Maybe later</button>
@@ -87,9 +69,7 @@
 			<div class="optionsRow">
 				<!-- Shuffling: Open in new tab option toggle -->
 				<div class="toggle optionsRow-item">
-					<label
-						id="shuffleOpenInNewTabOption"
-						title="If this is enabled, shuffled videos will open in a new tab instead of the current one. This setting is ignored when using the shuffle button displayed in the popup, which will always open a new tab.">
+					<label id="shuffleOpenInNewTabOption" title="If this is enabled, shuffled videos will open in a new tab instead of the current one. This setting is ignored when using the shuffle button displayed in the popup, which will always open a new tab.">
 						Open in new tab
 						<input type="checkbox" id="shuffleOpenInNewTabOptionToggle" />
 						<span class="slider"></span>
@@ -110,10 +90,7 @@
 					<div id="shuffleIgnoreShortsOptionDropdownDiv" class="optionTextInput" style="margin-top: -4px">
 						<p class="displayInline" title="Choose if the extension should shuffle from all videos uploaded on the channel, ignore shorts, or shuffle only from shorts.">Shorts handling</p>
 						<!-- Dropdown menu START -->
-						<select
-							id="shuffleIgnoreShortsOptionDropdown"
-							class="displayInline"
-							title="Choose if the extension should shuffle from all videos uploaded on the channel, ignore shorts, or shuffle only from shorts.">
+						<select id="shuffleIgnoreShortsOptionDropdown" class="displayInline" title="Choose if the extension should shuffle from all videos uploaded on the channel, ignore shorts, or shuffle only from shorts.">
 							<option value="1" title="The extension will include both shorts and normal videos in the shuffle.">Include shorts</option>
 							<option value="2" title="Shorts will be ignored when shuffling.">Ignore shorts</option>
 							<option value="0" title="The extension will only shuffle from shorts uploaded on channels (normal videos are ignored).">Only shorts</option>
@@ -128,9 +105,7 @@
 			<div class="optionsRow">
 				<!-- Shuffling: Open as playlist option toggle -->
 				<div class="toggle optionsRow-item">
-					<label
-						id="shuffleOpenAsPlaylistOption"
-						title="If this is enabled, shuffling will choose multiple videos and open a temporary playlist that contains these videos. Use the input field to the right to choose how many videos should be in that playlist.">
+					<label id="shuffleOpenAsPlaylistOption" title="If this is enabled, shuffling will choose multiple videos and open a temporary playlist that contains these videos. Use the input field to the right to choose how many videos should be in that playlist.">
 						Open a playlist
 						<input type="checkbox" id="shuffleOpenAsPlaylistOptionToggle" />
 						<span class="slider"></span>
@@ -138,10 +113,7 @@
 				</div>
 
 				<!-- Shuffling: Open as playlist number of videos input -->
-				<div
-					id="shuffleNumVideosInPlaylistDiv"
-					class="optionsRow-item optionTextInput"
-					title="Choose how many videos should be in the playlist when shuffling. YouTube limits the number of videos in this playlist type to 50. With higher values the shuffle may take slightly longer than usual.">
+				<div id="shuffleNumVideosInPlaylistDiv" class="optionsRow-item optionTextInput" title="Choose how many videos should be in the playlist when shuffling. YouTube limits the number of videos in this playlist type to 50. With higher values the shuffle may take slightly longer than usual.">
 					<p>Videos in playlist:</p>
 					<input type="number" inputmode="numeric" class="numberInput" max="50" min="1" id="shuffleNumVideosInPlaylistInput" name="shuffleNumVideosInPlaylistInput" value="5" />
 				</div>
@@ -160,39 +132,14 @@
 						<select id="channelCustomOptionsDropdown" class="displayInline" title="Choose from one of the provided options in the dropdown to customize your shuffling experience on this channel.">
 							<option value="allVideosOption" option-width="190px" title="No filters are applied, and a random video from all uploaded videos will be chosen.">all videos on this channel.</option>
 							<option value="dateOption" option-width="205px" title="Only videos uploaded on or after the chosen date will be considered when shuffling.">videos uploaded after date:</option>
-							<option value="videoIdOption" option-width="190px" title="Only videos uploaded on or after the day the video with the given ID was uploaded will be considered when shuffling.">
-								videos after video with ID:
-							</option>
-							<option value="percentageOption" option-width="206px" title="Only the most recent X% of videos uploaded to the channel will be considered when shuffling.">
-								the most recent % of videos:
-							</option>
+							<option value="videoIdOption" option-width="190px" title="Only videos uploaded on or after the day the video with the given ID was uploaded will be considered when shuffling.">videos after video with ID:</option>
+							<option value="percentageOption" option-width="206px" title="Only the most recent X% of videos uploaded to the channel will be considered when shuffling.">the most recent % of videos:</option>
 						</select>
 						<!-- Dropdown menu END -->
 						<!-- Input fields per option START -->
-						<input
-							type="date"
-							class="hidden dateInput"
-							id="channelCustomOptionsDateOptionInput"
-							name="channelCustomOptionsDateOptionInput"
-							title="Only videos uploaded on or after the chosen date will be considered when shuffling." />
-						<input
-							type="text"
-							inputmode="text"
-							class="hidden youtubeIdInput"
-							maxlength="11"
-							id="channelCustomOptionsVideoIdOptionInput"
-							name="channelCustomOptionsVideoIdOptionInput"
-							title="Only videos uploaded on or after the day the video with the given ID was uploaded will be considered when shuffling."
-							placeholder="Enter Video ID" />
-						<input
-							type="number"
-							inputmode="numeric"
-							class="hidden displayInline numberInput noArrows"
-							max="100"
-							min="1"
-							id="channelCustomOptionsPercentageOptionInput"
-							name="channelCustomOptionsPercentageOptionInput"
-							title="Only the most recent X% of videos uploaded to the channel will be considered when shuffling." />
+						<input type="date" class="hidden dateInput" id="channelCustomOptionsDateOptionInput" name="channelCustomOptionsDateOptionInput" title="Only videos uploaded on or after the chosen date will be considered when shuffling." />
+						<input type="text" inputmode="text" class="hidden youtubeIdInput" maxlength="11" id="channelCustomOptionsVideoIdOptionInput" name="channelCustomOptionsVideoIdOptionInput" title="Only videos uploaded on or after the day the video with the given ID was uploaded will be considered when shuffling." placeholder="Enter Video ID" />
+						<input type="number" inputmode="numeric" class="hidden displayInline numberInput noArrows" max="100" min="1" id="channelCustomOptionsPercentageOptionInput" name="channelCustomOptionsPercentageOptionInput" title="Only the most recent X% of videos uploaded to the channel will be considered when shuffling." />
 						<p id="channelCustomOptionsPercentageOptionP" class="hidden displayInline" title="Only the most recent X% of videos uploaded to the channel will be considered when shuffling.">%</p>
 						<!-- Input fields per option END -->
 					</div>
@@ -236,13 +183,7 @@
 				</div>
 
 				<p style="margin-top: 6px">Your custom API key:</p>
-				<input
-					type="text"
-					id="customApiKeyInputField"
-					name="customApiKeyInputField"
-					style="width: 80%"
-					title="Enter your YouTube API key here. It will not be shared with anyone."
-					placeholder="Enter API key here. It won't be shared with anyone." />
+				<input type="text" id="customApiKeyInputField" name="customApiKeyInputField" style="width: 80%" title="Enter your YouTube API key here. It will not be shared with anyone." placeholder="Enter API key here. It won't be shared with anyone." />
 				<br />
 				<div id="customApiKeyInputInfoDiv" class="hidden">
 					<p id="customApiKeyInputInfoText"></p>
@@ -275,23 +216,9 @@
 				<button class="randomYoutubeVideoButton highlight-green-animated" id="shufflePlusButton" type="button" title="Check out the benefits and subscribe to Shuffle+">Shuffle+</button>
 				<br />
 				Leave a review:
-				<a
-					class="buttonLink"
-					href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
-					target="_blank"
-					rel="noopener"
-					title="Leave a review on the Chrome Web Store"
-					>Chrome</a
-				>
+				<a class="buttonLink" href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf" target="_blank" rel="noopener" title="Leave a review on the Chrome Web Store">Chrome</a>
 				<a class="buttonLink" href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/" target="_blank" rel="noopener" title="Leave a review on the Firefox Add-Ons page">Firefox</a>
-				<a
-					class="buttonLink"
-					href="https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe"
-					target="_blank"
-					rel="noopener"
-					title="Leave a review on the Edge Add-Ons page"
-					>Edge</a
-				>
+				<a class="buttonLink" href="https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe" target="_blank" rel="noopener" title="Leave a review on the Edge Add-Ons page">Edge</a>
 			</footer>
 		</div>
 
