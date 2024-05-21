@@ -3,6 +3,7 @@
 ## v3.1.2-beta
 
 <!--Releasenotes start-->
+- Fixed the shuffle button not showing up if the user is on a different version of the YouTube UI.
 - Fixed a bug that would cause the changelog page to show changes from an incorrect version in some cases.
 - Updated versioning scheme for a better distinction between stable and beta versions.
 <!--Releasenotes end-->
