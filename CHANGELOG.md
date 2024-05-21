@@ -1,6 +1,6 @@
 # Changelog
 
-## v3.1.2-beta
+## v3.1.2
 
 <!--Releasenotes start-->
 - Fixed the shuffle button not showing up if the user is on a different version of the YouTube UI.
