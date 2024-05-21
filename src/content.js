@@ -28,13 +28,11 @@ document.addEventListener("yt-navigate-finish", startDOMObserver);
 async function startDOMObserver(event) {
 	// Sometimes, YouTube changes contents of the event or the page structure. Whenever we encounter an identifying change, we update this variable to track it through the process
 	let eventVersion = "default";
-	console.log("yt-navigate-finish event fired");
 	resetShuffleButtonText();
-	console.log("Reset shuffle button text");
 
 	let pageType = getPageTypeFromURL(window.location.href);
-	console.log(event)
-	console.log(pageType)
+	// console.log(event)
+	// console.log(pageType)
 
 	// Get the channel id from the event data
 	let channelId;
@@ -56,8 +54,9 @@ async function startDOMObserver(event) {
 			channelName = event?.detail?.response?.response?.header?.pageHeaderRenderer?.pageTitle;
 		}
 	}
-	console.log(channelId)
-	console.log(channelName)
+	// console.log(channelId)
+	// console.log(channelName)
+	console.log(eventVersion);
 
 	if (!channelId?.startsWith("UC")) {
 		// If no valid channelId was provided in the event, we won't be able to add the button
@@ -81,8 +80,6 @@ async function startDOMObserver(event) {
 		} else if (pageType === "short") {
 			shortsPageRequiredElementLoadComplete = true;
 		}
-
-		console.log(channelPageRequiredElementLoadComplete)
 
 		// If the required element has loaded, add the shuffle button
 		if (pageType === "video" && videoPageRequiredElementLoadComplete) {

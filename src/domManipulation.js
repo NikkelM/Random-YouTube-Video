@@ -15,21 +15,23 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 	switch (pageType) {
 		case "channel":
 			buttonDivID = "youtube-random-video-large-shuffle-button-channel";
-			buttonDivExtraStyle = "margin-left: 14px;";
 			switch (eventVersion) {
 				case "default":
 					buttonDivOwner = [document.getElementById("channel-header").querySelector("#inner-header-container").children.namedItem("buttons")];
+					buttonDivExtraStyle = "margin-left: 8px;";
 					break;
 				case "newYTFinishEvent20240521":
 					buttonDivOwner = [document.getElementById("page-header").querySelector(".page-header-view-model-wiz__page-header-headline-info").getElementsByTagName("yt-flexible-actions-view-model")[0]];
 					break;
 			}
 			break;
+		// TODO: Fix video shuffle button
 		case "video":
 			buttonDivID = "youtube-random-video-large-shuffle-button-video";
 			buttonDivExtraStyle = "margin-left: 8px;";
 			buttonDivOwner = [document.getElementById("above-the-fold").children.namedItem("top-row").children.namedItem("owner")];
 			break;
+		// TODO: Shorts seem fine, but the button has a different background color from the others
 		case "short":
 			isLargeButton = false;
 			buttonDivID = "youtube-random-video-small-shuffle-button-short";
@@ -43,6 +45,7 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 
 	console.log(buttonDivOwner);
 
+	// TODO: How does this work with the new layout?
 	// If we are on a video page, modify the "min-width" of the two divs holding the buttons to make room for the 'Shuffle' button
 	// This doesn't fix them overlapping in all cases, but most times it does
 	if (pageType == "video") {
@@ -95,6 +98,7 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 
 	// Create the button div & renderer
 	let buttonDiv;
+	// TODO: Check if the new styling for video page buttons is the same as for channel page buttons
 	if (pageType === "channel" || pageType === "video") {
 		buttonDiv = `
 	<div id="${buttonDivID}" class="style-scope ytd-c4-tabbed-header-renderer" style="align-items: center; display: flex; flex-direction: row; ${buttonDivExtraStyle}">
