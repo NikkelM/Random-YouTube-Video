@@ -31,8 +31,6 @@ async function startDOMObserver(event) {
 	resetShuffleButtonText();
 
 	let pageType = getPageTypeFromURL(window.location.href);
-	// console.log(event)
-	// console.log(pageType)
 
 	// Get the channel id from the event data
 	let channelId;
@@ -44,19 +42,15 @@ async function startDOMObserver(event) {
 	} else if (pageType == "channel") {
 		channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
 		channelName = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.title;
-		// The event contents changed with a recent update. If the above doesn't work, try this:
 		if (!channelId) {
-			eventVersion = "newYTFinishEvent20240521";
+			eventVersion = "20240521";
 			channelId = event?.detail?.endpoint?.browseEndpoint?.browseId;
 		}
 		if (!channelName) {
-			eventVersion = "newYTFinishEvent20240521";
+			eventVersion = "20240521";
 			channelName = event?.detail?.response?.response?.header?.pageHeaderRenderer?.pageTitle;
 		}
 	}
-	// console.log(channelId)
-	// console.log(channelName)
-	console.log(eventVersion);
 
 	if (!channelId?.startsWith("UC")) {
 		// If no valid channelId was provided in the event, we won't be able to add the button
@@ -71,7 +65,7 @@ async function startDOMObserver(event) {
 				case "default":
 					channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
 					break;
-				case "newYTFinishEvent20240521":
+				case "20240521":
 					channelPageRequiredElementLoadComplete = document.getElementById("page-header");
 					break;
 			}
