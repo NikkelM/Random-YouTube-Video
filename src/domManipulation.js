@@ -17,12 +17,11 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 			buttonDivID = "youtube-random-video-large-shuffle-button-channel";
 			buttonDivExtraStyle = "margin-left: 14px;";
 			switch (eventVersion) {
+				case "default":
+					buttonDivOwner = [document.getElementById("channel-header").querySelector("#inner-header-container").children.namedItem("buttons")];
+					break;
 				case "newYTFinishEvent20240521":
 					buttonDivOwner = [document.getElementById("page-header").querySelector(".page-header-view-model-wiz__page-header-headline-info").getElementsByTagName("yt-flexible-actions-view-model")[0]];
-					break;
-				case "default":
-				default:
-					buttonDivOwner = [document.getElementById("channel-header").querySelector("#inner-header-container").children.namedItem("buttons")];
 					break;
 			}
 			break;

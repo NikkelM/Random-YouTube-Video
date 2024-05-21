@@ -65,17 +65,21 @@ async function startDOMObserver(event) {
 	}
 
 	// Wait until the required DOM element we add the button to is loaded
-	var observer = new MutationObserver(function (mutations, me) {
+	const observer = new MutationObserver(function (mutations, me) {
+		let channelPageRequiredElementLoadComplete, videoPageRequiredElementLoadComplete, shortsPageRequiredElementLoadComplete;
 		if (pageType === "channel") {
-			if (eventVersion === "default") {
-				var channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
-			} else if (eventVersion === "newYTFinishEvent20240521") {
-				var channelPageRequiredElementLoadComplete = document.getElementById("page-header");
+			switch (eventVersion) {
+				case "default":
+					channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
+					break;
+				case "newYTFinishEvent20240521":
+					channelPageRequiredElementLoadComplete = document.getElementById("page-header");
+					break;
 			}
 		} else if (pageType === "video") {
-			var videoPageRequiredElementLoadComplete = document.getElementById("player") && document.getElementById("above-the-fold");
+			videoPageRequiredElementLoadComplete = document.getElementById("player") && document.getElementById("above-the-fold");
 		} else if (pageType === "short") {
-			var shortsPageRequiredElementLoadComplete = true;
+			shortsPageRequiredElementLoadComplete = true;
 		}
 
 		console.log(channelPageRequiredElementLoadComplete)
@@ -96,7 +100,6 @@ async function startDOMObserver(event) {
 		}
 	});
 
-	// start observing
 	observer.observe(document, {
 		childList: true,
 		subtree: true
