@@ -30,7 +30,6 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 			buttonDivExtraStyle = "margin-left: 8px;";
 			buttonDivOwner = [document.getElementById("above-the-fold").children.namedItem("top-row").children.namedItem("owner")];
 			break;
-		// TODO: Shorts seem fine, but the button has a different background color from the others
 		case "short":
 			isLargeButton = false;
 			buttonDivID = "youtube-random-video-small-shuffle-button-short";
