@@ -4,7 +4,7 @@
 export let shuffleButton;
 export let shuffleButtonTextElement;
 
-export function buildShuffleButton(pageType, channelId, clickHandler) {
+export function buildShuffleButton(pageType, channelId, eventVersion, clickHandler) {
 	let buttonDivID;
 	let buttonDivExtraStyle = "";
 	let buttonDivOwner;
@@ -16,7 +16,15 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 		case "channel":
 			buttonDivID = "youtube-random-video-large-shuffle-button-channel";
 			buttonDivExtraStyle = "margin-left: 14px;";
-			buttonDivOwner = [document.getElementById("channel-header").querySelector("#inner-header-container").children.namedItem("buttons")];
+			switch (eventVersion) {
+				case "newYTFinishEvent20240521":
+					buttonDivOwner = [document.getElementById("page-header").querySelector(".page-header-view-model-wiz__page-header-headline-info").getElementsByTagName("yt-flexible-actions-view-model")[0]];
+					break;
+				case "default":
+				default:
+					buttonDivOwner = [document.getElementById("channel-header").querySelector("#inner-header-container").children.namedItem("buttons")];
+					break;
+			}
 			break;
 		case "video":
 			buttonDivID = "youtube-random-video-large-shuffle-button-video";
@@ -33,6 +41,8 @@ export function buildShuffleButton(pageType, channelId, clickHandler) {
 			console.warn(`Cannot build button: Unknown page type: ${pageType}`);
 			return;
 	}
+
+	console.log(buttonDivOwner);
 
 	// If we are on a video page, modify the "min-width" of the two divs holding the buttons to make room for the 'Shuffle' button
 	// This doesn't fix them overlapping in all cases, but most times it does
@@ -138,7 +148,7 @@ export function tryRenameUntitledList() {
 	let mainPlaylistElement = document.querySelector('ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy').querySelector('yt-formatted-string.title.style-scope.ytd-playlist-panel-renderer');
 	let collapsedPlaylistElement = document.querySelector('ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy').querySelector('yt-formatted-string.byline-title.style-scope.ytd-playlist-panel-renderer');
 
-	for(let playlistType of [mainPlaylistElement, collapsedPlaylistElement]) {
+	for (let playlistType of [mainPlaylistElement, collapsedPlaylistElement]) {
 		if (playlistType && window.location.href.includes("&list=TL") && playlistType.title == "Untitled List") {
 			playlistType.innerText = "Random YouTube Video - Playlist";
 			playlistType.title = "This playlist is unlisted, temporary and cannot be saved. Until it is removed by YouTube (which will happen automatically), you can revisit it using the link in the URL bar.";
