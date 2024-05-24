@@ -133,12 +133,12 @@ afterEach(async function () {
 
 // ----- Helpers -----
 // Reimplementation of the function in the background script
-async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
+async function getAPIKey(forceGetAllDefaultKeys, useAPIKeyAtIndex = null) {
 	// List of API keys that are stored in the database/locally
 	let availableAPIKeys;
 
 	// If the user has opted to use a custom API key, use that instead of the default one
-	if (!forceDefault && mockedConfigSync.useCustomApiKeyOption && mockedConfigSync.customYoutubeApiKey) {
+	if (!forceGetAllDefaultKeys && mockedConfigSync.useCustomApiKeyOption && mockedConfigSync.customYoutubeApiKey) {
 		return {
 			APIKey: mockedConfigSync.customYoutubeApiKey,
 			isCustomKey: true,
@@ -148,7 +148,7 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 		availableAPIKeys = mockedDatabase["youtubeAPIKeys"];
 	}
 
-	if (forceDefault) {
+	if (forceGetAllDefaultKeys) {
 		// Return a list of all API keys
 		return { APIKey: availableAPIKeys, isCustomKey: false, keyIndex: null };
 	}

@@ -9,7 +9,7 @@ const isFirefox = typeof browser !== "undefined";
 async function initExtension() {
 	const manifestData = chrome.runtime.getManifest();
 	if (configSync.previousVersion === null) {
-		console.log(`Extension was installed for the first time (v${manifestData.version})`);
+		console.log(`Extension was installed for the first time (v${manifestData.version})`, true);
 		await setSyncStorageValue("previousVersion", manifestData.version);
 		const welcomeUrl = chrome.runtime.getURL("html/welcome.html");
 		await chrome.tabs.create({ url: welcomeUrl });
@@ -34,10 +34,10 @@ async function checkLocalStorageCapacity() {
 	// Firefox does not offer a way to get the maximum local storage capacity, so we use 5MB as per the documentation
 	const maxLocalStorage = isFirefox ? 5000000 : chrome.storage.local.QUOTA_BYTES;
 
-	console.log(`${((utilizedStorage / maxLocalStorage) * 100).toFixed(2)}% of local storage is used. (${utilizedStorage}/${maxLocalStorage} bytes)`);
+	console.log(`${((utilizedStorage / maxLocalStorage) * 100).toFixed(2)}% of local storage is used. (${utilizedStorage}/${maxLocalStorage} bytes)`, true);
 
 	if (maxLocalStorage * 0.9 < utilizedStorage) {
-		console.log("Local storage is over 90% utilized. Removing playlists that have not been accessed the longest to free up some space...");
+		console.log("Local storage is over 90% utilized. Removing playlists that have not been accessed the longest to free up some space...", true);
 
 		// Get all playlists from local storage
 		const localStorageContents = await chrome.storage.local.get();
@@ -53,14 +53,14 @@ async function checkLocalStorageCapacity() {
 		// Remove the 20% of playlists that have not been accessed the longest
 		const playlistsToRemove = sortedPlaylists.slice(Math.floor(sortedPlaylists.length * 0.8));
 		for (const [playlistId, playlistInfo] of playlistsToRemove) {
-			console.log(`Removing playlist ${playlistId} from local storage...`);
+			console.log(`Removing playlist ${playlistId} from local storage...`, true);
 			chrome.storage.local.remove(playlistId);
 		}
 	}
 }
 
 async function handleExtensionUpdate(manifestData, previousVersion) {
-	console.log(`Extension was updated to version v${manifestData.version}`);
+	console.log(`Extension was successfully updated to version v${manifestData.version}`, true);
 	await setSyncStorageValue("previousVersion", manifestData.version);
 
 	// Handle changes that may be specific to a certain version change
@@ -74,7 +74,7 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 	const clearLocalStorageOnUpdate = false;
 
 	if (clearLocalStorageOnUpdate) {
-		console.log("The storage structure has changed and local storage must be reset. Clearing...");
+		console.log("The storage structure has changed and local storage must be reset. Clearing...", true);
 		await chrome.storage.local.clear();
 	}
 }
@@ -82,7 +82,7 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 async function handleVersionSpecificUpdates(previousVersion) {
 	// v3.0.1 changed the data type for the shuffleIgnoreShortsOption from boolean to number
 	if (previousVersion < "3.0.1") {
-		console.log("Updating sync storage to v3.0.1 format...");
+		console.log("Updating sync storage to v3.0.1 format...", true);
 		const syncStorageContents = await chrome.storage.sync.get();
 		if (syncStorageContents["shuffleIgnoreShortsOption"] == true) {
 			await setSyncStorageValue("shuffleIgnoreShortsOption", 2);
@@ -93,7 +93,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 
 	// v1.5.0 renamed some keys in the channelSettings object
 	if (previousVersion < "1.5.0") {
-		console.log("Updating channelSettings to v1.5.0 format...");
+		console.log("Updating channelSettings to v1.5.0 format...", true);
 
 		let configSyncValues = await chrome.storage.sync.get();
 
@@ -110,7 +110,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 
 	// v1.3.0 removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
 	if (previousVersion < "1.3.0") {
-		console.log("Updating local storage to v1.3.0 format...");
+		console.log("Updating local storage to v1.3.0 format...", true);
 		const localStorageContents = await chrome.storage.local.get();
 		// Delete the youtubeAPIKey from local storage if it exists
 		if (localStorageContents["youtubeAPIKey"]) {
@@ -138,7 +138,7 @@ chrome.runtime.onConnect.addListener(function (port) {
 
 // This will reload the service worker, which will invalidate the extension context for all YouTube tabs
 function reloadServiceWorker() {
-	console.log("Shuffling page was closed before the shuffle was completed. Reloading service worker to prevent freezing...");
+	console.log("Shuffling page was closed before the shuffle was completed. Reloading service worker to prevent freezing...", true);
 	chrome.runtime.reload();
 }
 
@@ -244,7 +244,6 @@ async function updateDBPlaylistToV1_0_0(playlistId) {
 	return "Videos were removed from the database playlist.";
 }
 
-// Prefers to get cached data instead of sending a request to the database
 async function readDataOnce(key) {
 	console.log(`Reading data for key ${key} from database...`);
 
@@ -256,12 +255,12 @@ async function readDataOnce(key) {
 }
 
 // ---------- Helpers ----------
-async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
+async function getAPIKey(forceGetAllDefaultKeys, useAPIKeyAtIndex = null) {
 	// List of API keys that are stored in the database/locally
 	let availableAPIKeys;
 
 	// If the user has opted to use a custom API key, use that instead of the default one
-	if (!forceDefault && configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
+	if (!forceGetAllDefaultKeys && configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
 		return {
 			APIKey: configSync.customYoutubeApiKey,
 			isCustomKey: true,
@@ -288,7 +287,7 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 		await setSyncStorageValue("nextAPIKeysCheckTime", new Date(new Date().setHours(168, 0, 0, 0)).getTime());
 	}
 
-	if (forceDefault) {
+	if (forceGetAllDefaultKeys) {
 		// Return a list of all API keys
 		return { APIKey: availableAPIKeys.map(key => rot13(key, false)), isCustomKey: false, keyIndex: null };
 	}
