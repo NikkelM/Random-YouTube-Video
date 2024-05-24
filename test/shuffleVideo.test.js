@@ -41,7 +41,6 @@ function setUpMockResponses(mockResponses) {
 		if (validResponsesForUrl.length > 1) {
 			return Promise.resolve(validResponsesForUrl.shift());
 		}
-		// console.log(`Repeating last response for url: ${url}`);
 		return Promise.resolve(validResponsesForUrl[0]);
 	});
 }

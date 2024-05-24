@@ -42,7 +42,7 @@ try {
 // --- Private ---
 // Get relevant DOM elements
 function getPopupDomElements() {
-	/* global reviewDonationDiv, reviewDiv, donationDiv, firefoxPermissionsNeededDiv, customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv */
+	/* global reviewDonationDiv, reviewDiv, donationDiv, customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv */
 	/* eslint no-undef: "error" */
 	return {
 		body: document.body,

@@ -1055,7 +1055,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 				player.children[0].click();
 			}
 		} else {
-			console.log(`The current page type (${pageType}) is not supported when checking if a video player should be paused.`);
+			console.log(`The current page type (${pageType}) is not supported when checking if a video player should be paused.`, true);
 		}
 
 		// If there is a reusable tab and the option is enabled, open the video there
