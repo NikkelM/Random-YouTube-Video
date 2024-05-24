@@ -541,7 +541,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 			if (error instanceof YoutubeAPIError && error.code === 403 && error.reason === "quotaExceeded") {
 				// We need to get another API key
 				if (!isCustomKey) {
-					console.log("Quota for this key was exceeded, refreshing API keys and trying again...");
+					console.log("Quota for this key was exceeded, refreshing API keys and trying again...", true);
 
 					// In case this is something irregular, we want to check if anything has changed with the API keys now
 					// We can force this by setting the nextAPIKeysCheckTime to a time in the past
@@ -552,7 +552,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 						throw new RandomYoutubeVideoError(
 							{
 								code: "RYV-2",
-								message: "All API keys have exceeded the allocated quota.",
+								message: "All YouTube API keys have exceeded the allocated daily quota.",
 								solveHint: "Please *immediately* inform the developer. You can try again tomorrow or provide a custom API key to immediately resolve this problem.",
 								showTrace: false,
 								canSavePlaylist: false

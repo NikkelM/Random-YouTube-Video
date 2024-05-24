@@ -255,12 +255,12 @@ async function readDataOnce(key) {
 }
 
 // ---------- Helpers ----------
-async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
+async function getAPIKey(forceGetAllDefaultKeys, useAPIKeyAtIndex = null) {
 	// List of API keys that are stored in the database/locally
 	let availableAPIKeys;
 
 	// If the user has opted to use a custom API key, use that instead of the default one
-	if (!forceDefault && configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
+	if (!forceGetAllDefaultKeys && configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
 		return {
 			APIKey: configSync.customYoutubeApiKey,
 			isCustomKey: true,
@@ -287,7 +287,7 @@ async function getAPIKey(forceDefault, useAPIKeyAtIndex = null) {
 		await setSyncStorageValue("nextAPIKeysCheckTime", new Date(new Date().setHours(168, 0, 0, 0)).getTime());
 	}
 
-	if (forceDefault) {
+	if (forceGetAllDefaultKeys) {
 		// Return a list of all API keys
 		return { APIKey: availableAPIKeys.map(key => rot13(key, false)), isCustomKey: false, keyIndex: null };
 	}
