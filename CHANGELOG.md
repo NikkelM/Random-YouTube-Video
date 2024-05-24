@@ -1,13 +1,17 @@
 # Changelog
 
-## v3.1.2
+## v3.2.0-beta
 
 <!--Releasenotes start-->
+- Beta release
+<!--Releasenotes end-->
+
+## v3.1.2
+
 - Fixed the shuffle button not showing up if the user is on a different version of the YouTube UI.
 - Firefox: If not already granted, the extension will now ask for permissions whenever the popup is opened.
 - Fixed a bug that would cause the changelog page to show changes from an incorrect version in some cases.
 - Updated versioning scheme for a better distinction between stable and beta versions.
-<!--Releasenotes end-->
 
 ## v3.1.1
 
