@@ -42,7 +42,7 @@ export const configSyncDefaults = {
 	"reviewMessageShown": false,
 	// If the message asking for a donation has been shown yet
 	"donationMessageShown": false,
-	// Contains user infortmation and tokens if the user is logged in with Google
+	// Contains user information and tokens if the user is logged in with Google
 	"googleOauth": null
 };
 
@@ -69,6 +69,9 @@ export const shufflingHints = [
 	"The list of videos uploaded on a channel is updated regularly, so don't worry if you don't immediately see a recently uploaded video when shuffling!",
 	"All video ID's are stored locally in your browser's storage, to make shuffling from a channel even faster the next time you visit it!",
 	"The 'Shuffle' button will display a progress percentage if the extension has to fetch data from the YouTube API!",
+
+	// Shuffle+
+	"Subscribe to Shuffle+ to get access to new features and enhance your shuffling experience!",
 
 	// Errors
 	"Whenever an error is encountered, an alert will open with more detailed information on what caused it, and how you may resolve it. If you still need assistence, please open an issue on GitHub and include the channel ID!",
