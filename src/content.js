@@ -26,6 +26,8 @@ if (videoShuffleButton || channelShuffleButton || shortShuffleButton) {
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
 async function startDOMObserver(event) {
+	// Sometimes, YouTube changes contents of the event or the page structure. Whenever we encounter an identifying change, we update this variable to track it through the process
+	let eventVersion = "default";
 	resetShuffleButtonText();
 
 	let pageType = getPageTypeFromURL(window.location.href);
@@ -40,6 +42,14 @@ async function startDOMObserver(event) {
 	} else if (pageType == "channel") {
 		channelId = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.channelId;
 		channelName = event?.detail?.response?.response?.header?.c4TabbedHeaderRenderer?.title;
+		if (!channelId) {
+			eventVersion = "20240521";
+			channelId = event?.detail?.endpoint?.browseEndpoint?.browseId;
+		}
+		if (!channelName) {
+			eventVersion = "20240521";
+			channelName = event?.detail?.response?.response?.header?.pageHeaderRenderer?.pageTitle;
+		}
 	}
 
 	if (!channelId?.startsWith("UC")) {
@@ -48,43 +58,46 @@ async function startDOMObserver(event) {
 	}
 
 	// Wait until the required DOM element we add the button to is loaded
-	var observer = new MutationObserver(function (mutations, me) {
-		// ----- Channel page -----
+	const observer = new MutationObserver(function (mutations, me) {
+		let channelPageRequiredElementLoadComplete, videoPageRequiredElementLoadComplete, shortsPageRequiredElementLoadComplete;
 		if (pageType === "channel") {
-			var channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
-			// ----- Video page -----
+			switch (eventVersion) {
+				case "default":
+					channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
+					break;
+				case "20240521":
+					channelPageRequiredElementLoadComplete = document.getElementById("page-header");
+					break;
+			}
 		} else if (pageType === "video") {
-			var videoPageRequiredElementLoadComplete = document.getElementById("player") && document.getElementById("above-the-fold");
-			// ----- Shorts page -----
+			videoPageRequiredElementLoadComplete = document.getElementById("player") && document.getElementById("above-the-fold");
 		} else if (pageType === "short") {
-			// As of now, we do not add a shuffle button to shorts pages, so we stop listening immediately
-			var shortsPageRequiredElementLoadComplete = true;
+			shortsPageRequiredElementLoadComplete = true;
 		}
 
-		// If we are on a video page, and the required element has loaded, add the shuffle button
+		// If the required element has loaded, add the shuffle button
 		if (pageType === "video" && videoPageRequiredElementLoadComplete) {
 			me.disconnect(); // Stop observing
-			channelDetectedAction("video", channelId, channelName);
+			channelDetectedAction("video", channelId, channelName, eventVersion);
 			return;
 		} else if (pageType === "short" && shortsPageRequiredElementLoadComplete) {
-			me.disconnect(); // Stop observing
-			channelDetectedAction("short", channelId, channelName);
+			me.disconnect();
+			channelDetectedAction("short", channelId, channelName, eventVersion);
 			return;
 		} else if (pageType === "channel" && channelPageRequiredElementLoadComplete) {
-			me.disconnect(); // Stop observing
-			channelDetectedAction("channel", channelId, channelName);
+			me.disconnect();
+			channelDetectedAction("channel", channelId, channelName, eventVersion);
 			return;
 		}
 	});
 
-	// start observing
 	observer.observe(document, {
 		childList: true,
 		subtree: true
 	});
 }
 
-async function channelDetectedAction(pageType, channelId, channelName) {
+async function channelDetectedAction(pageType, channelId, channelName, eventVersion) {
 	// It might be that we got here after shuffling, in which case we want to check if there is a "Untitled List" that we can rename
 	// We do this before anything else to prevent the previous text from showing shortly
 	if (pageType === "video") {
@@ -115,7 +128,7 @@ async function channelDetectedAction(pageType, channelId, channelName) {
 	// If we don't do this, the configSync and displayed value might diverge
 	await chrome.runtime.sendMessage({ command: "updateCurrentChannel" });
 
-	buildShuffleButton(pageType, channelId, shuffleVideos);
+	buildShuffleButton(pageType, channelId, eventVersion, shuffleVideos);
 }
 
 function resetShuffleButtonText() {

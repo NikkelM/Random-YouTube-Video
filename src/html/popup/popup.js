@@ -26,9 +26,10 @@ if (isPopup) {
 	}
 }
 
+const isFirefox = typeof browser !== "undefined";
 const domElements = getDomElements();
 await setDomElementValuesFromConfig(domElements);
-await setDomElementEventListeners(domElements);
+await setDomElemenEventListeners(domElements);
 await determineOverlayVisibility(domElements);
 
 // Restart the background script if it was stopped to make sure the shuffle button immediately works
@@ -42,7 +43,7 @@ try {
 // --- Private ---
 // Get relevant DOM elements
 function getDomElements() {
-	/* global reviewDonationDiv, reviewDiv, donationDiv, customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv */
+	/* global reviewDonationDiv, reviewDiv, donationDiv, firefoxPermissionsNeededDiv, customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv */
 	/* eslint no-undef: "error" */
 	return {
 		body: document.body,
@@ -58,6 +59,10 @@ function getDomElements() {
 		donationDiv: reviewDonationDiv.children.namedItem("donationDiv"),
 		// Donation close button
 		donationOverlayCloseButton: donationDiv.children.namedItem("donationOverlayCloseButton"),
+		// Firefox permissions needed div
+		firefoxPermissionsNeededDiv: document.getElementById("firefoxPermissionsNeededDiv"),
+		// Firefox permissions needed button
+		firefoxPermissionsNeededButton: document.getElementById("firefoxPermissionsNeededButton"),
 
 		// GLOBAL SETTINGS
 		// Custom API key: Option toggle
@@ -447,34 +452,45 @@ async function setDomElementEventListeners(domElements) {
 	});
 }
 
+// When the popup is opened, checks if an overlay should be shown
 async function determineOverlayVisibility(domElements) {
-	if (!configSync.reviewMessageShown && configSync.numShuffledVideosTotal < 75 && configSync.numShuffledVideosTotal >= 10) {
-		domElements.reviewDiv.classList.remove("hidden");
-		domElements.reviewDonationDiv.classList.remove("hidden");
-		await setSyncStorageValue("reviewMessageShown", true);
+	// If we are on Firefox and have not been granted permissions, show the overlay and then ask for permissions
+	if (isFirefox && !await browser.permissions.contains({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] })) {
+		domElements.firefoxPermissionsNeededDiv.classList.remove("hidden");
 
-		domElements.reviewOverlayCloseButton.addEventListener("click", function () {
-			domElements.reviewDonationDiv.classList.add("hidden");
-			domElements.reviewDiv.classList.add("hidden");
+		domElements.firefoxPermissionsNeededButton.addEventListener("click", async function () {
+			browser.permissions.request({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] });
+			window.close();
 		});
-	} else if (!configSync.donationMessageShown && configSync.numShuffledVideosTotal >= 75) {
-		domElements.donationDiv.classList.remove("hidden");
-		domElements.reviewDonationDiv.classList.remove("hidden");
-		await setSyncStorageValue("donationMessageShown", true);
+	} else {
+		if (!configSync.reviewMessageShown && configSync.numShuffledVideosTotal < 75 && configSync.numShuffledVideosTotal >= 10) {
+			domElements.reviewDiv.classList.remove("hidden");
+			domElements.reviewDonationDiv.classList.remove("hidden");
+			await setSyncStorageValue("reviewMessageShown", true);
 
-		domElements.donationOverlayCloseButton.addEventListener("click", function () {
-			domElements.reviewDonationDiv.classList.add("hidden");
-			domElements.donationDiv.classList.add("hidden");
+			domElements.reviewOverlayCloseButton.addEventListener("click", function () {
+				domElements.reviewDonationDiv.classList.add("hidden");
+				domElements.reviewDiv.classList.add("hidden");
+			});
+		} else if (!configSync.donationMessageShown && configSync.numShuffledVideosTotal >= 75) {
+			domElements.donationDiv.classList.remove("hidden");
+			domElements.reviewDonationDiv.classList.remove("hidden");
+			await setSyncStorageValue("donationMessageShown", true);
+
+			domElements.donationOverlayCloseButton.addEventListener("click", function () {
+				domElements.reviewDonationDiv.classList.add("hidden");
+				domElements.donationDiv.classList.add("hidden");
+			});
+		}
+
+		domElements.reviewDonationDiv.addEventListener("click", function (event) {
+			if (event.target === this) {
+				reviewDonationDiv.classList.add("hidden");
+				domElements.reviewDiv.classList.add("hidden");
+				domElements.donationDiv.classList.add("hidden");
+			}
 		});
 	}
-
-	domElements.reviewDonationDiv.addEventListener("click", function (event) {
-		if (event.target === this) {
-			reviewDonationDiv.classList.add("hidden");
-			domElements.reviewDiv.classList.add("hidden");
-			domElements.donationDiv.classList.add("hidden");
-		}
-	});
 }
 
 // Responsible for all DOM elements that need a reference to the current channel
