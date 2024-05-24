@@ -1,9 +1,12 @@
 # Changelog
 
-## v3.2.0-beta
+## v4.0.0-beta
 
 <!--Releasenotes start-->
-- Beta release
+- Introducing Shuffle+, a new way to shuffle, with more customization options than ever before.
+- Subscribe to Shuffle+ to gain access to exclusive new features, taking your shuffling experience to the next level.
+- Sign in to the extension with your YouTube account, save your preferences and settings across devices and enable new features by giving access to your subscriptions and watched videos.
+- The extension icon will now reflect your Shuffle+ subscription status.
 <!--Releasenotes end-->
 
 ## v3.1.2
