@@ -29,7 +29,7 @@ if (isPopup) {
 const isFirefox = typeof browser !== "undefined";
 const domElements = getDomElements();
 await setDomElementValuesFromConfig(domElements);
-await setDomElemenEventListeners(domElements);
+await setDomElementEventListeners(domElements);
 await determineOverlayVisibility(domElements);
 
 // Restart the background script if it was stopped to make sure the shuffle button immediately works
@@ -43,7 +43,7 @@ try {
 // --- Private ---
 // Get relevant DOM elements
 function getDomElements() {
-	/* global reviewDonationDiv, reviewDiv, donationDiv, firefoxPermissionsNeededDiv, customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv */
+	/* global reviewDonationDiv, reviewDiv, donationDiv, customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv */
 	/* eslint no-undef: "error" */
 	return {
 		body: document.body,
