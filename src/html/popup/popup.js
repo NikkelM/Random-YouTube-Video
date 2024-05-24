@@ -195,7 +195,7 @@ async function setDomElementValuesFromConfig(domElements) {
 		domElements.viewChangelogButton.classList.add("highlight-green");
 	}
 
-	// Enables or disables the animation of the Shuffle+ button depending on if the user is subscribed or not
+	// Enables or disables the animation of the Shuffle+ button depending on if the user has an active subscription or not
 	if (!(await userHasActiveSubscriptionRole())) {
 		domElements.shufflePlusButton.classList.add("highlight-green-animated");
 		domElements.shufflePlusButton.classList.remove("highlight-green");

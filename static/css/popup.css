@@ -261,7 +261,7 @@
 	}
 }
 
-/* The timing of the animation is synced up with other timers associated with these buttons */
+/* The timing of the animation is synced up with other timers associated with the buttons */
 .randomYoutubeVideoButton.button-fillup {
 	background: linear-gradient(to right, #333, #333);
 	background-size: 100% 100%;
