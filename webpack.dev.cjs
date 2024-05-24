@@ -11,6 +11,7 @@ module.exports = env => {
 	env.mode = mode;
 	env.devtool = devtool;
 	env.optimization = optimization;
+	env.NODE_ENV = mode;
 
 	return merge(common(env), {
 		mode,

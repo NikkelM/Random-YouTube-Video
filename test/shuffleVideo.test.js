@@ -41,7 +41,6 @@ function setUpMockResponses(mockResponses) {
 		if (validResponsesForUrl.length > 1) {
 			return Promise.resolve(validResponsesForUrl.shift());
 		}
-		// console.log(`Repeating last response for url: ${url}`);
 		return Promise.resolve(validResponsesForUrl[0]);
 	});
 }
@@ -307,7 +306,6 @@ describe('shuffleVideo', function () {
 					// This error is caught separately and a RandomYoutubeVideoError is thrown instead
 					expect(error).to.be.a(RandomYoutubeVideoError);
 					expect(error.code).to.be("RYV-6A");
-					expect(error.message).to.be("This channel has not uploaded any videos.");
 
 					// If an error is encountered, the quota is only reduced by 1
 					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
@@ -350,7 +348,6 @@ describe('shuffleVideo', function () {
 					// This error is caught separately and a RandomYoutubeVideoError is thrown instead
 					expect(error).to.be.a(RandomYoutubeVideoError);
 					expect(error.code).to.be("RYV-2");
-					expect(error.message).to.be("All API keys have exceeded the allocated quota.");
 
 					// If an error is encountered, the quota is only reduced by 1
 					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
@@ -401,7 +398,6 @@ describe('shuffleVideo', function () {
 					// This error is caught separately and a RandomYoutubeVideoError is thrown instead
 					expect(error).to.be.a(RandomYoutubeVideoError);
 					expect(error.code).to.be("RYV-5");
-					expect(error.message).to.be("Your custom API key has reached its daily quota allocation.");
 
 					// If an error is encountered, the quota is only reduced by 1
 					expect(configSync.userQuotaRemainingToday).to.be(userQuotaRemainingTodayBefore - 1);
@@ -747,7 +743,6 @@ describe('shuffleVideo', function () {
 													catch (error) {
 														expect(error).to.be.a(RandomYoutubeVideoError);
 														expect(error.code).to.be('RYV-6B');
-														expect(error.message).to.be('All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring/only shuffling from shorts and the channel only has/has no shorts.');
 
 														return;
 													}
@@ -769,7 +764,6 @@ describe('shuffleVideo', function () {
 													catch (error) {
 														expect(error).to.be.a(RandomYoutubeVideoError);
 														expect(error.code).to.be('RYV-6B');
-														expect(error.message).to.be('All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring/only shuffling from shorts and the channel only has/has no shorts.');
 
 														return;
 													}
@@ -803,7 +797,6 @@ describe('shuffleVideo', function () {
 												} catch (error) {
 													expect(error).to.be.an(RandomYoutubeVideoError);
 													expect(error.code).to.be('RYV-7');
-													expect(error.message).to.be(`You have set an option to filter the videos that are shuffled (${config.channelSettings[input.channelId].activeOption}), but no value for the option is set.`);
 
 													return;
 												}

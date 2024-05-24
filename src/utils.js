@@ -2,12 +2,21 @@
 
 /* c8 ignore start - The console reroutings cannot be tested correctly */
 // ---------- Console rerouting ----------
-var oldLog = console.log;
+const oldLog = console.log;
 console.log = function () {
-	if (arguments[0] !== "[random-youtube-video]:") {
-		Array.prototype.unshift.call(arguments, "[random-youtube-video]:");
+	// The last argument to console.log is a boolean that determines if the message should be shown in production
+	const showInProduction = arguments[arguments.length - 1] === true;
+	// If we are either in development or the message should be shown in production, log the message
+	if (process.env.NODE_ENV !== "production" || showInProduction) {
+		if (arguments[0] !== "[random-youtube-video]:") {
+			Array.prototype.unshift.call(arguments, "[random-youtube-video]:");
+		}
+		// Remove the showInProduction flag from the arguments so it doesn't get logged
+		if (typeof arguments[arguments.length - 1] === "boolean") {
+			Array.prototype.pop.call(arguments);
+		}
+		oldLog.apply(this, arguments);
 	}
-	oldLog.apply(this, arguments);
 };
 /* c8 ignore stop */
 
