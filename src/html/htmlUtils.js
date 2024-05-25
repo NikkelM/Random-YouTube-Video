@@ -33,7 +33,7 @@ export function animateSlideOut(targetElement) {
 		targetElement.style.height = "0px";
 
 		setTimeout(function () {
-			targetElement.style.height = targetHeight + 'px';
+			targetElement.style.height = targetHeight + "px";
 			adjustParentContainerHeight(targetElement, targetHeight);
 		}, 0);
 	} else {
@@ -58,7 +58,7 @@ function adjustParentContainerHeight(childElement, heightChange) {
 
 	if (parentElement && parentElement.classList.contains("active")) {
 		const currentParentHeight = parseInt(parentElement.style.height) || 0;
-		parentElement.style.height = (currentParentHeight + heightChange) + 'px';
+		parentElement.style.height = (currentParentHeight + heightChange) + "px";
 	}
 }
 
