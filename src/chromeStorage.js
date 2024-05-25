@@ -2,7 +2,6 @@
 import { configSyncDefaults } from "./config.js";
 
 // ----- Storage -----
-// Validate the config in sync storage
 await validateConfigSync();
 
 export let configSync = await chrome.storage.sync.get();
@@ -59,5 +58,27 @@ async function validateConfigSync() {
 		if (configSyncDefaults[key] === undefined) {
 			await chrome.storage.sync.remove(key);
 		}
+	}
+
+	// Validate that dependent values are correct
+	// Custom API key must be set if the user has enabled the custom API key option
+	if (configSyncValues.useCustomApiKeyOption && !configSyncValues.customYoutubeApiKey) {
+		await chrome.storage.sync.set({ "useCustomApiKeyOption": false });
+	}
+	// If the user has no custom API key, they must have database sharing enabled
+	if (!configSyncValues.useCustomApiKeyOption && !configSyncValues.databaseSharingEnabledOption) {
+		await chrome.storage.sync.set({ "databaseSharingEnabledOption": true });
+	}
+
+	if (!configSyncValues.shuffleOpenInNewTabOption && configSyncValues.shuffleReUseNewTabOption) {
+		await chrome.storage.sync.set({ "shuffleReUseNewTabOption": false });
+	}
+
+	if (!(0 <= configSyncValues.shuffleIgnoreShortsOption && configSyncValues.shuffleIgnoreShortsOption <= 2)) {
+		await chrome.storage.sync.set({ "shuffleIgnoreShortsOption": 1 });
+	}
+
+	if (!(1 <= configSyncValues.shuffleNumVideosInPlaylist && configSyncValues.shuffleNumVideosInPlaylist <= 50)) {
+		await chrome.storage.sync.set({ "shuffleNumVideosInPlaylist": 10 });
 	}
 }
