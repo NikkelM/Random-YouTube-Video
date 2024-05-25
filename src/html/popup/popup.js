@@ -385,6 +385,10 @@ async function setPopupDomElemenEventListeners(domElements) {
 
 	// Advanced settings expand button
 	domElements.advancedSettingsExpandButton.addEventListener("click", function () {
+		// Update the text before the animation, as the classlist will change after some time only
+		domElements.advancedSettingsExpandButton.innerText = domElements.advancedSettingsDiv.classList.contains("active") ? "Show Advanced Settings" : "Hide Advanced Settings";
+		domElements.advancedSettingsExpandButton.style.fontWeight = "bold";
+
 		animateSlideOut(domElements.advancedSettingsDiv);
 
 		manageDependents(domElements, domElements.advancedSettingsExpandButton, domElements.advancedSettingsDiv.classList.contains("active"));
