@@ -286,14 +286,14 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsP
 }
 
 // ---------- YouTube API ----------
-async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemainingToday, progressTextElement) {
+async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemainingToday, progressTextElement, disregardUserQuota = false) {
 	// Get an API key
 	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyAtIndex);
 	// We need to keep track of the original key's index, so we know when we have tried all keys
 	const originalKeyIndex = keyIndex;
 
 	// If the user does not use a custom API key and has no quota remaining, we cannot continue
-	if (!isCustomKey && userQuotaRemainingToday <= 0) {
+	if (!isCustomKey && userQuotaRemainingToday <= 0 && !disregardUserQuota) {
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-4A",
@@ -314,11 +314,12 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	let pageToken = "";
 	let apiResponse;
 
-	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
+	({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday, disregardUserQuota));
 
 	// If there are more results we need to fetch than the user has quota remaining (+leeway) and the user is not using a custom API key, we need to throw an error
+	// If we would normally disregard the user quota (e.g. if we need to refetch all videos due to the database missing videos), but there are too many uploads, we need to protect the userbase and restrict the operation as well
 	const totalResults = apiResponse["pageInfo"]["totalResults"];
-	if (totalResults / 50 >= userQuotaRemainingToday + 50 && !isCustomKey) {
+	if (totalResults / 50 >= userQuotaRemainingToday + 50 && !isCustomKey && (!disregardUserQuota || totalResults >= 5000)) {
 		throw new RandomYoutubeVideoError(
 			{
 				code: "RYV-4B",
@@ -353,7 +354,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	pageToken = apiResponse["nextPageToken"] ? apiResponse["nextPageToken"] : null;
 
 	while (pageToken !== null) {
-		({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday));
+		({ apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday } = await getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday, disregardUserQuota));
 
 		// Set the current progress as text for the shuffle button/info text
 		// We never get to this code part if there are less than or exactly 50 videos in the playlist, so we don't need to check for that
@@ -437,7 +438,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 		// Make sure that we are not missing any videos in the database
 		if (totalNumVideosOnChannel > numLocallyKnownVideos) {
 			console.log(`There are less videos saved in the database than are uploaded on the channel (${numLocallyKnownVideos}/${totalNumVideosOnChannel}), so some videos are missing. Refetching all videos...`);
-			return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement);
+			return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement, true);
 		}
 
 		return { playlistInfo, userQuotaRemainingToday };
@@ -484,14 +485,14 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	const numVideosInDatabase = numLocallyKnownVideos + getLength(playlistInfo["newVideos"]);
 	if (totalNumVideosOnChannel > numVideosInDatabase) {
 		console.log(`There are less videos saved in the database than are uploaded on the channel (${numVideosInDatabase}/${totalNumVideosOnChannel}), so some videos are missing. Refetching all videos...`);
-		return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement);
+		return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement, true);
 	}
 
 	return { playlistInfo, userQuotaRemainingToday };
 }
 
 // Send a request to the Youtube API to get a snippet of a playlist
-async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday) {
+async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustomKey, keyIndex, originalKeyIndex, userQuotaRemainingToday, disregardUserQuota = false) {
 	const originalUserQuotaRemainingToday = userQuotaRemainingToday;
 	let apiResponse;
 
@@ -519,7 +520,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 			// We allow users to go beyond the daily limit in case there are only a few more videos to be fetched.
 			// But if it goes too far, we need to cancel the operation.
 			userQuotaRemainingToday--;
-			if (userQuotaRemainingToday <= -50) {
+			if (userQuotaRemainingToday <= -50 && !isCustomKey && !disregardUserQuota) {
 				throw new RandomYoutubeVideoError(
 					{
 						code: "RYV-4B",
@@ -586,7 +587,7 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 	}
 
 	// If the user is using a custom key, we do not want to update the quota
-	userQuotaRemainingToday = isCustomKey ? originalUserQuotaRemainingToday : userQuotaRemainingToday;
+	userQuotaRemainingToday = (isCustomKey || disregardUserQuota) ? originalUserQuotaRemainingToday : userQuotaRemainingToday;
 
 	return { apiResponse, APIKey, isCustomKey, keyIndex, userQuotaRemainingToday };
 }
