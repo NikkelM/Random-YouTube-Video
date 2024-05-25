@@ -39,34 +39,17 @@
 	display: none !important;
 }
 
-@keyframes slideDown {
-  0% {
-    max-height: 0;
-  }
-  100% {
-    max-height: 120px;
-  }
+.slideOutContainer {
+	transition: height 0.9s ease-in-out;
+	overflow: hidden;
 }
 
-@keyframes slideUp {
-  0% {
-    max-height: 120px;
-  }
-  100% {
-    max-height: 0;
-  }
+.slideOutContainer.active {
+	height: auto;
 }
 
-.hiddenTransition {
-  animation: slideUp 0.9s forwards;
-  overflow: hidden;
-	display: hidden;
-}
-
-.visibleTransition {
-  animation: slideDown 0.9s forwards;
-  overflow: hidden;
-  display: block;
+.slideOutContainer:not(.active) {
+	display: none;
 }
 
 .displayInline {
@@ -202,11 +185,16 @@
 	margin: 2px 1px;
 }
 
-/* For the shuffle button, we want some more space around it */
 .shuffleButton {
 	margin-top: 8px;
 	margin-bottom: 8px;
 	font-size: 15px;
+}
+
+.importantButton {
+	font-size: 16px;
+	margin-top: 10px;
+	margin-bottom: 6px;
 }
 
 .randomYoutubeVideoButton:hover {

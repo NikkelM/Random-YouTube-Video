@@ -2,7 +2,7 @@
 import { delay } from "../../utils.js";
 import { configSync, setSyncStorageValue, removeSyncStorageValue } from "../../chromeStorage.js";
 import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv } from "./popupUtils.js";
-import { tryFocusingTab } from "../htmlUtils.js";
+import { tryFocusingTab, animateSlideOut } from "../htmlUtils.js";
 
 // ----- Setup -----
 const isPopup = chrome.extension.getViews({ type: "popup" }).length > 0;
@@ -64,18 +64,6 @@ function getPopupDomElements() {
 		firefoxPermissionsNeededButton: document.getElementById("firefoxPermissionsNeededButton"),
 
 		// GLOBAL SETTINGS
-		// Custom API key: Option toggle
-		useCustomApiKeyOptionToggle: document.getElementById("useCustomApiKeyOptionToggle"),
-		// Custom API key: Input
-		customApiKeyInputDiv: document.getElementById("customApiKeyInputDiv"),
-		customApiKeyInputField: customApiKeyInputDiv.children.namedItem("customApiKeyInputField"),
-		customApiKeySubmitButton: customApiKeyInputDiv.children.namedItem("customApiKeySubmitButton"),
-		customApiKeyInputInfoDiv: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoDiv"),
-		customApiKeyInputInfoText: customApiKeyInputInfoDiv.children.namedItem("customApiKeyInputInfoText"),
-		customApiKeyHowToGetDiv: document.getElementById("customApiKeyHowToGetDiv"),
-
-		// Database sharing: Option toggle
-		dbSharingOptionToggle: document.getElementById("dbSharingOptionToggle"),
 		// Shuffling: Open in new tab option toggle
 		shuffleOpenInNewTabOptionToggle: document.getElementById("shuffleOpenInNewTabOptionToggle"),
 		// Shuffling: Reuse tab option toggle
@@ -110,6 +98,24 @@ function getPopupDomElements() {
 
 		// Popup shuffle button
 		popupShuffleButton: document.getElementById("popupShuffleButton"),
+
+		// ADVANCED SETTINGS
+		// Advanced settings div
+		advancedSettingsDiv: document.getElementById("advancedSettingsDiv"),
+		// Advanced settings expand button
+		advancedSettingsExpandButton: document.getElementById("advancedSettingsExpandButton"),
+
+		// Custom API key: Option toggle
+		useCustomApiKeyOptionToggle: document.getElementById("useCustomApiKeyOptionToggle"),
+		// Custom API key: Input
+		customApiKeyInputDiv: document.getElementById("customApiKeyInputDiv"),
+		customApiKeyInputField: customApiKeyInputDiv.children.namedItem("customApiKeyInputField"),
+		customApiKeySubmitButton: customApiKeyInputDiv.children.namedItem("customApiKeySubmitButton"),
+		customApiKeyInputInfoDiv: customApiKeyInputDiv.children.namedItem("customApiKeyInputInfoDiv"),
+		customApiKeyInputInfoText: customApiKeyInputInfoDiv.children.namedItem("customApiKeyInputInfoText"),
+
+		// Database sharing: Option toggle
+		dbSharingOptionToggle: document.getElementById("dbSharingOptionToggle"),
 
 		// FYI - FOR YOUR INFORMATION
 		// FYI div
@@ -150,10 +156,6 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 	}
 	// Set the value of the custom API key input field to the value in sync storage
 	domElements.customApiKeyInputField.value = configSync.customYoutubeApiKey ? configSync.customYoutubeApiKey : "";
-
-	if (configSync.useCustomApiKeyOption && configSync.customYoutubeApiKey) {
-		domElements.customApiKeyHowToGetDiv.classList.add("hidden");
-	}
 
 	// ----- Shuffling: Open in new tab option toggle -----
 	domElements.shuffleOpenInNewTabOptionToggle.checked = configSync.shuffleOpenInNewTabOption;
@@ -198,45 +200,6 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 
 // Set event listeners for DOM elements
 async function setPopupDomElemenEventListeners(domElements) {
-	// Custom API key: Option toggle
-	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("useCustomApiKeyOption", this.checked);
-
-		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked);
-	});
-
-	// Database sharing: Option toggle
-	domElements.dbSharingOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("databaseSharingEnabledOption", this.checked);
-
-		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked);
-	});
-
-	// Custom API key: Input
-	domElements.customApiKeySubmitButton.addEventListener("click", async function () {
-		// Make sure the passed API key is valid
-		const newAPIKey = domElements.customApiKeyInputField.value;
-		const oldApiKey = configSync.customYoutubeApiKey;
-
-		if (newAPIKey.length > 0 && await validateApiKey(newAPIKey, domElements)) {
-			await setSyncStorageValue("customYoutubeApiKey", newAPIKey);
-		} else {
-			await removeSyncStorageValue("customYoutubeApiKey");
-			await setSyncStorageValue("databaseSharingEnabledOption", true);
-			domElements.customApiKeyInputField.value = "";
-		}
-
-		// If the user removed the API key, show a message in the info div
-		if (oldApiKey != undefined && newAPIKey.length === 0) {
-			domElements.customApiKeyInputInfoText.innerText = "Custom API key was successfully removed.";
-			domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
-		}
-
-		manageDbOptOutOption(domElements);
-
-		manageDependents(domElements, domElements.customApiKeySubmitButton, null);
-	});
-
 	// Shuffling: Open in new tab option toggle
 	domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", async function () {
 		await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked);
@@ -418,6 +381,56 @@ async function setPopupDomElemenEventListeners(domElements) {
 
 		// Close the popup
 		window.close();
+	});
+
+	// Advanced settings expand button
+	domElements.advancedSettingsExpandButton.addEventListener("click", function () {
+		// Update the text before the animation, as the classlist will change after some time only
+		domElements.advancedSettingsExpandButton.innerText = domElements.advancedSettingsDiv.classList.contains("active") ? "Show Advanced Settings" : "Hide Advanced Settings";
+		domElements.advancedSettingsExpandButton.style.fontWeight = "bold";
+
+		animateSlideOut(domElements.advancedSettingsDiv);
+
+		manageDependents(domElements, domElements.advancedSettingsExpandButton, domElements.advancedSettingsDiv.classList.contains("active"));
+	});
+
+	// Custom API key: Option toggle
+	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
+		await setSyncStorageValue("useCustomApiKeyOption", this.checked);
+
+		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked);
+	});
+
+	// Database sharing: Option toggle
+	domElements.dbSharingOptionToggle.addEventListener("change", async function () {
+		await setSyncStorageValue("databaseSharingEnabledOption", this.checked);
+
+		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked);
+	});
+
+	// Custom API key: Input
+	domElements.customApiKeySubmitButton.addEventListener("click", async function () {
+		// Make sure the passed API key is valid
+		const newAPIKey = domElements.customApiKeyInputField.value;
+		const oldApiKey = configSync.customYoutubeApiKey;
+
+		if (newAPIKey.length > 0 && await validateApiKey(newAPIKey, domElements)) {
+			await setSyncStorageValue("customYoutubeApiKey", newAPIKey);
+		} else {
+			await removeSyncStorageValue("customYoutubeApiKey");
+			await setSyncStorageValue("databaseSharingEnabledOption", true);
+			domElements.customApiKeyInputField.value = "";
+		}
+
+		// If the user removed the API key, show a message in the info div
+		if (oldApiKey != undefined && newAPIKey.length === 0) {
+			domElements.customApiKeyInputInfoText.innerText = "Custom API key was successfully removed.";
+			domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
+		}
+
+		manageDbOptOutOption(domElements);
+
+		manageDependents(domElements, domElements.customApiKeySubmitButton, null);
 	});
 
 	// View changelog button

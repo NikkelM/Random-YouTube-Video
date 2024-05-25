@@ -1,9 +1,12 @@
 // Background service worker for the extension, which is run ("started") on extension initialization
 // Handles communication between the extension and the content script as well as Firebase interactions
 import { configSync, setSyncStorageValue } from "./chromeStorage.js";
+// We need to import utils.js to get the console rerouting function
+import { } from "./utils.js";
 
 // ---------- Initialization/Chrome event listeners ----------
 const isFirefox = typeof browser !== "undefined";
+await initExtension();
 
 // Check whether a new version was installed
 async function initExtension() {
@@ -25,7 +28,6 @@ async function initExtension() {
 
 	checkLocalStorageCapacity();
 }
-await initExtension();
 
 // Make sure we are not using too much local storage
 async function checkLocalStorageCapacity() {
