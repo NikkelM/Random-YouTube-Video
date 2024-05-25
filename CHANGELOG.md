@@ -4,6 +4,7 @@
 
 <!--Releasenotes start-->
 - Cleaned up the popup and moved some settings to a separate menu.
+- Fixed a bug where a correction of database corruption would reduce the user's daily API quota.
 <!--Releasenotes end-->
 
 ## v3.1.2
