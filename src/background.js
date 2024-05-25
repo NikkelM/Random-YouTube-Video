@@ -5,9 +5,13 @@ import { isFirefox, firebaseConfig } from "./config.js";
 import { userHasActiveSubscriptionRole } from "./stripe.js";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase, ref, child, update, get, remove } from "firebase/database";
+// We need to import utils.js to get the console rerouting function
+import { } from "./utils.js";
 
 // ---------- Initialization/Chrome event listeners ----------
-// Run the extension startup logic
+await initExtension();
+
+// Check whether a new version was installed
 async function initExtension() {
 	const manifestData = chrome.runtime.getManifest();
 	if (configSync.previousVersion === null) {
@@ -28,8 +32,6 @@ async function initExtension() {
 	await checkShufflePlusStatus();
 	checkLocalStorageCapacity();
 }
-
-await initExtension();
 
 // On every startup, we check the claim roles for the user
 async function checkShufflePlusStatus() {

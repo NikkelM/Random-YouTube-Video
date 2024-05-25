@@ -5,14 +5,15 @@
 const oldLog = console.log;
 console.log = function () {
 	// The last argument to console.log is a boolean that determines if the message should be shown in production
-	const showInProduction = arguments[arguments.length - 1] === true;
+	const showInProduction = (arguments.length > 1 && arguments[arguments.length - 1] === true);
 	// If we are either in development or the message should be shown in production, log the message
 	if (process.env.NODE_ENV !== "production" || showInProduction) {
 		if (arguments[0] !== "[random-youtube-video]:") {
 			Array.prototype.unshift.call(arguments, "[random-youtube-video]:");
 		}
 		// Remove the showInProduction flag from the arguments so it doesn't get logged
-		if (typeof arguments[arguments.length - 1] === "boolean") {
+		// Only remove the last argument if there are more than 2 arguments (prefix, normal argument, showInProduction flag)
+		if (arguments.length > 2 && typeof arguments[arguments.length - 1] === "boolean") {
 			Array.prototype.pop.call(arguments);
 		}
 		oldLog.apply(this, arguments);
