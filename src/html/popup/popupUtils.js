@@ -1,6 +1,7 @@
 // Helper functions for the popup
 import { getLength } from "../../utils.js";
 import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from "../../chromeStorage.js";
+import { animateSlideOut } from "../htmlUtils.js";
 
 // ---------- Dependency management ----------
 // ----- Public -----
@@ -10,19 +11,8 @@ export async function manageDependents(domElements, parent, value) {
 		case domElements.useCustomApiKeyOptionToggle:
 			// For this option, the value is the same as the checked state
 			if (value) {
-				// Show input field for custom API key
-				domElements.customApiKeyInputDiv.classList.remove("hidden");
-				domElements.customApiKeyInputDiv.classList.remove("hiddenTransition");
-				domElements.customApiKeyInputDiv.classList.add("visibleTransition");
 				// Set the value of the custom API key input field to the value in sync storage
 				domElements.customApiKeyInputField.value = configSync.customYoutubeApiKey ? configSync.customYoutubeApiKey : "";
-
-				// Show the guide on how to get a custom API key if the user has not already provided one
-				if (!configSync.customYoutubeApiKey) {
-					domElements.customApiKeyHowToGetDiv.classList.remove("hidden");
-				} else {
-					domElements.customApiKeyHowToGetDiv.classList.add("hidden");
-				}
 
 				manageDbOptOutOption(domElements);
 			} else {
@@ -32,22 +22,12 @@ export async function manageDependents(domElements, parent, value) {
 				await setSyncStorageValue("databaseSharingEnabledOption", true);
 
 				manageDbOptOutOption(domElements);
-
-				// Hide input field for custom API key
-				domElements.customApiKeyInputDiv.classList.remove("visibleTransition");
-				domElements.customApiKeyInputDiv.classList.add("hiddenTransition");
 			}
+			animateSlideOut(domElements.customApiKeyInputDiv);
 			updateFYIDiv(domElements);
 			break;
 
 		case domElements.customApiKeySubmitButton:
-			// Show the guide on how to get a custom API key if the user has not already provided one
-			if (!configSync.customYoutubeApiKey) {
-				domElements.customApiKeyHowToGetDiv.classList.remove("hidden");
-			} else {
-				domElements.customApiKeyHowToGetDiv.classList.add("hidden");
-			}
-
 			// This is called after validation of a provided API key
 			// Depending on whether or not it is valid, we need to update the FYI div
 			updateFYIDiv(domElements);
@@ -72,6 +52,15 @@ export async function manageDependents(domElements, parent, value) {
 				domElements.shuffleNumVideosInPlaylistDiv.classList.remove("disabled");
 			} else {
 				domElements.shuffleNumVideosInPlaylistDiv.classList.add("disabled");
+			}
+			break;
+
+		case domElements.advancedSettingsExpandButton:
+			// If true, it means the container is sliding out, so we need to slide out all dependent containers as well
+			if (value) {
+				if (configSync.useCustomApiKeyOption) {
+					animateSlideOut(domElements.customApiKeyInputDiv);
+				}
 			}
 			break;
 
@@ -140,6 +129,12 @@ export async function updateFYIDiv(domElements) {
 // ----- Public -----
 // Validates a YouTube API key by sending a short request
 export async function validateApiKey(customAPIKey, domElements) {
+	// Make sure the service worker is running
+	try {
+		await chrome.runtime.sendMessage({ command: "connectionTest" });
+	} catch (error) {
+		console.log("The background worker was stopped and had to be restarted.");
+	}
 	// APIKey is actually an array of objects here, despite the naming
 	let { APIKey } = await chrome.runtime.sendMessage({ command: "getDefaultAPIKeys" });
 
@@ -151,9 +146,9 @@ export async function validateApiKey(customAPIKey, domElements) {
 
 	// Users should not add default API keys
 	if (defaultAPIKeys.includes(customAPIKey)) {
-		domElements.customApiKeyInputInfoText.innerText = "This API key is used by the extension. Please enter your own.";
+		domElements.customApiKeyInputInfoText.innerText = "Error: API key not valid. Please pass a valid API key:";
 		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
-		
+
 		domElements.customApiKeyInputField.classList.add('invalid-input');
 		setTimeout(() => {
 			domElements.customApiKeyInputField.classList.remove('invalid-input');
@@ -166,7 +161,7 @@ export async function validateApiKey(customAPIKey, domElements) {
 		.then((response) => response.json());
 
 	if (apiResponse["error"]) {
-		domElements.customApiKeyInputInfoText.innerText = "Error: " + apiResponse["error"]["message"];
+		domElements.customApiKeyInputInfoText.innerText = "Error: API key not valid. Please pass a valid API key:";
 		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
 
 		domElements.customApiKeyInputField.classList.add('invalid-input');

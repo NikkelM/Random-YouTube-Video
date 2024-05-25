@@ -1,7 +1,6 @@
 // Shared utility functions for the various HTML pages' logic
 import { shufflingHints } from "../config.js";
 
-// ---------- Public ----------
 // ----- Shuffling Hints -----
 export async function buildShufflingHints(domElements) {
 	let currentHint = await displayShufflingHint(domElements.shufflingHintP);
@@ -23,7 +22,47 @@ async function displayShufflingHint(displayElement, currentHintIndex = null) {
 	return randomHintIndex;
 }
 
-// ----- Other utility functions -----
+// ----- Animations -----
+export function animateSlideOut(targetElement) {
+	// Sliding out
+	if (!targetElement.classList.contains("active")) {
+		targetElement.classList.add("active");
+		targetElement.style.height = "auto";
+
+		const targetHeight = targetElement.clientHeight;
+		targetElement.style.height = "0px";
+
+		setTimeout(function () {
+			targetElement.style.height = targetHeight + 'px';
+			adjustParentContainerHeight(targetElement, targetHeight);
+		}, 0);
+	} else {
+		// Sliding in
+		const oldHeight = targetElement.clientHeight;
+		targetElement.style.height = "0px";
+
+		adjustParentContainerHeight(targetElement, -oldHeight);
+
+		targetElement.addEventListener(
+			"transitionend",
+			function () {
+				targetElement.classList.remove("active");
+			}, {
+			once: true
+		});
+	}
+}
+
+function adjustParentContainerHeight(childElement, heightChange) {
+	const parentElement = childElement.parentElement;
+
+	if (parentElement && parentElement.classList.contains("active")) {
+		const currentParentHeight = parseInt(parentElement.style.height) || 0;
+		parentElement.style.height = (currentParentHeight + heightChange) + 'px';
+	}
+}
+
+// ----- Tab interaction -----
 export async function tryFocusingTab(tabUrl) {
 	let mustOpenTab = true;
 	let tabs = await chrome.tabs.query({});
