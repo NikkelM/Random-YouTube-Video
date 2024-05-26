@@ -24,10 +24,10 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 	try {
 		// While chooseRandomVideo is running, we need to keep the service worker alive
 		// Otherwise, it will get stopped after 30 seconds and we will get an error if fetching the videos takes longer
-		// So every 25 seconds, we send a message to the service worker to keep it alive
+		// So every 20 seconds, we send a message to the service worker to keep it alive
 		var keepServiceWorkerAlive = setInterval(() => {
 			chrome.runtime.sendMessage({ command: "connectionTest" });
-		}, 25000);
+		}, 20000);
 		/* c8 ignore stop */
 
 		// Each user has a set amount of quota they can use per day.
@@ -123,7 +123,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 
 		let chosenVideos;
 		var encounteredDeletedVideos;
-		({ chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase));
+		({ chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase, progressTextElement));
 
 		// Save the playlist to the database and locally
 		playlistInfo = await handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, encounteredDeletedVideos);
@@ -674,7 +674,7 @@ async function isShort(videoId) {
 	return videoIsShort;
 }
 
-// Requests the API key from the background script
+// Requests an API key from the background script
 async function getAPIKey(useAPIKeyAtIndex = null) {
 	const msg = {
 		command: "getAPIKey",
@@ -701,7 +701,7 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 	return { APIKey, isCustomKey, keyIndex };
 }
 
-async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase) {
+async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase, progressTextElement) {
 	let activeShuffleFilterOption = configSync.channelSettings[channelId]?.activeOption ?? "allVideosOption";
 	let activeOptionValue;
 
@@ -763,16 +763,21 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 
 	console.log(`Choosing ${numVideosToChoose} random video(s).`);
 
+	// We keep track of the progress of determining the video types if there is a shorts handling filter, to display on the button
+	let numVideosProcessed = 0;
+	const initialTotalNumVideos = videosToShuffle.length;
+
 	// We use this label to break out of both the for loop and the while loop if there are no more videos after encountering a deleted video
 	outerLoop:
 	for (let i = 0; i < numVideosToChoose; i++) {
 		if (videosToShuffle.length === 0) {
-			// All available videos were chosen from, so we need to terminate the loop early
+			// All available videos were chosen, so we need to terminate the loop early
 			console.log(`No more videos to choose from (${numVideosToChoose - i} videos too few uploaded on channel).`);
 			break outerLoop;
 		}
 
 		randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
+		numVideosProcessed++;
 
 		// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
 		if (!await testVideoExistence(randomVideo, allVideos[randomVideo])) {
@@ -786,6 +791,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 				// Remove the deleted video from the videosToShuffle array and choose a new random video
 				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
 				randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
+				numVideosProcessed++;
 
 				console.log(`The chosen video does not exist anymore, so it will be removed from the database. A new random video has been chosen: ${randomVideo}`);
 
@@ -818,8 +824,11 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			if (playlistInfo["videos"]["unknownType"][randomVideo] !== undefined) {
 				const videoIsShort = await isShort(randomVideo);
 
-				// What follows is dependent on if the video is a short or not, and the user's settings
+				// We display either the percentage of videos processed or the percentage of videos chosen (vs. needed), whichever is higher
+				const percentage = Math.max(Math.round(chosenVideos.length / numVideosToChoose * 100), Math.round(numVideosProcessed / initialTotalNumVideos * 100));
+				updateProgressTextElement(progressTextElement, `\xa0Sorting: ${percentage}%`, `${percentage}%`);
 
+				// What follows is dependent on if the video is a short or not, and the user's settings
 				// Case 1: !isShort && ignoreShorts => Success
 				if (!videoIsShort && configSync.shuffleIgnoreShortsOption == "2") {
 					// Move the video to the knownVideos subdictionary

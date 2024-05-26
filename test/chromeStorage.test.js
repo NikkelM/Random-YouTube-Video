@@ -1,6 +1,6 @@
 import expect from 'expect.js';
 
-import { configSync, setSyncStorageValue, removeSyncStorageValue, getUserQuotaRemainingToday } from '../src/chromeStorage.js';
+import { configSync, setSyncStorageValue, removeSyncStorageValue, getUserQuotaRemainingToday, validateConfigSync } from '../src/chromeStorage.js';
 import { configSyncDefaults } from '../src/config.js';
 
 describe('chromeStorage', function () {
@@ -75,7 +75,6 @@ describe('chromeStorage', function () {
 	});
 
 	context('removeSyncStorageValue()', function () {
-
 		it('should remove the value from the configSync object', async function () {
 			await setSyncStorageValue("testKey4", "testValue4");
 
@@ -86,10 +85,9 @@ describe('chromeStorage', function () {
 
 			expect(configSync).to.not.have.key("testKey4");
 		});
-
 	});
-	context('getUserQuotaRemainingToday()', function () {
 
+	context('getUserQuotaRemainingToday()', function () {
 		it('should return the number of requests the user can still make to the Youtube API today', async function () {
 			await setSyncStorageValue("userQuotaRemainingToday", 20);
 
@@ -117,7 +115,69 @@ describe('chromeStorage', function () {
 			// Check that the reset time is set to midnight
 			expect(configSync.userQuotaResetTime).to.be(new Date(new Date().setHours(24, 0, 0, 0)).getTime());
 		});
+	});
 
+	context('validateConfigSync()', function () {
+		context('fix incorrect settings', async function () {
+			it('should reset the useCustomApiKeyOption if no API key is set', async function () {
+				await setSyncStorageValue("useCustomApiKeyOption", true);
+				await setSyncStorageValue("customYoutubeApiKey", null);
+
+				await validateConfigSync();
+
+				expect(configSync.useCustomApiKeyOption).to.be(false);
+			});
+
+			it('should enable database sharing if no API key is set', async function () {
+				await setSyncStorageValue("useCustomApiKeyOption", false);
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+
+				await validateConfigSync();
+
+				expect(configSync.databaseSharingEnabledOption).to.be(true);
+			});
+
+			it('should disable reusing the new tab if shuffling does not open a new tab', async function () {
+				await setSyncStorageValue("shuffleOpenInNewTabOption", false);
+				await setSyncStorageValue("shuffleReUseNewTabOption", true);
+
+				await validateConfigSync();
+
+				expect(configSync.shuffleReUseNewTabOption).to.be(false);
+			});
+
+			it('should ensure valid values are set for ignoring shorts (0-2)', async function () {
+				// Too small
+				await setSyncStorageValue("shuffleIgnoreShortsOption", -1);
+
+				await validateConfigSync();
+
+				expect(configSync.shuffleIgnoreShortsOption).to.be(1);
+
+				// Too large
+				await setSyncStorageValue("shuffleIgnoreShortsOption", 3);
+
+				await validateConfigSync();
+
+				expect(configSync.shuffleIgnoreShortsOption).to.be(1);
+			});
+
+			it('should ensure valid values are set for the number of videos in a playlist', async function () {
+				// Too small
+				await setSyncStorageValue("shuffleNumVideosInPlaylist", 0);
+
+				await validateConfigSync();
+
+				expect(configSync.shuffleNumVideosInPlaylist).to.be(10);
+
+				// Too large
+				await setSyncStorageValue("shuffleNumVideosInPlaylist", 51);
+
+				await validateConfigSync();
+
+				expect(configSync.shuffleNumVideosInPlaylist).to.be(10);
+			});
+		});
 	});
 
 });
