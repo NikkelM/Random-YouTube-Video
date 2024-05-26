@@ -42,8 +42,7 @@ export async function getUserQuotaRemainingToday() {
 	return configSync.userQuotaRemainingToday;
 }
 
-// -- Private --
-async function validateConfigSync() {
+export async function validateConfigSync() {
 	const configSyncValues = await chrome.storage.sync.get();
 
 	// Set default values for config values that do not exist in sync storage
