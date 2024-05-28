@@ -5,6 +5,8 @@ import { isFirefox, firebaseConfig } from "./config.js";
 import { userHasActiveSubscriptionRole } from "./stripe.js";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase, ref, child, update, get, remove } from "firebase/database";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 // We need to import utils.js to get the console rerouting function
 import { } from "./utils.js";
 
@@ -187,6 +189,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		case "updateDBPlaylistToV1.0.0":
 			updateDBPlaylistToV1_0_0("uploadsPlaylists/" + request.data.key).then(sendResponse);
 			break;
+		// Uploads the configSync object to Firestore under the current user's ID
+		case "syncUserSettingsWithFirestore":
+			syncUserSettingsWithFirestore().then(sendResponse);
+			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":
 			getAPIKey(false, request.data.useAPIKeyAtIndex).then(sendResponse);
@@ -217,7 +223,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // ---------- Firebase ----------
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getDatabase(app);
+const firebase = getDatabase(app);
+const firestore = getFirestore(app);
 
 async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos) {
 	// Find out if the playlist already exists in the database
@@ -230,17 +237,17 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 	if (overwriteVideos || !playlistExists) {
 		console.log("Setting playlistInfo in the database...");
 		// Update the entire object. Due to the way Firebase works, this will overwrite the existing "videos" object, as it is nested within the playlist
-		update(ref(db, playlistId), playlistInfo);
+		update(ref(firebase, playlistId), playlistInfo);
 	} else {
 		console.log("Updating playlistInfo in the database...");
 		// Contains all properties except the videos
 		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, _]) => (key !== "videos")));
 
 		// Upload the "metadata"
-		update(ref(db, playlistId), playlistInfoWithoutVideos);
+		update(ref(firebase, playlistId), playlistInfoWithoutVideos);
 
 		// Update the videos separately to not overwrite existing videos
-		update(ref(db, playlistId + "/videos"), playlistInfo.videos);
+		update(ref(firebase, playlistId + "/videos"), playlistInfo.videos);
 	}
 
 	return "PlaylistInfo was sent to database.";
@@ -248,9 +255,17 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 
 async function updateDBPlaylistToV1_0_0(playlistId) {
 	// Remove all videos from the database
-	remove(ref(db, playlistId + "/videos"));
+	remove(ref(firebase, playlistId + "/videos"));
 
 	return "Videos were removed from the database playlist.";
+}
+
+async function syncUserSettingsWithFirestore() {
+	// TODO: Don't sync all settings in configSync, but only those that make sense (e.g. not googleOauth, customAPIKey, reviewMessageShown, previousVersion)
+	const userSettingsRef = doc(firestore, "users", getAuth().currentUser.uid, "userSettings", "configSync");
+	await setDoc(userSettingsRef, configSync);
+
+	return "User settings uploaded/synced to database.";
 }
 
 async function readDataOnce(key) {

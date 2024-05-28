@@ -2,6 +2,7 @@
 import { getLength } from "../../utils.js";
 import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from "../../chromeStorage.js";
 import { animateSlideOut } from "../htmlUtils.js";
+import { userHasActiveSubscriptionRole } from "../../stripe.js";
 
 // ---------- Dependency management ----------
 // ----- Public -----
@@ -19,7 +20,7 @@ export async function manageDependents(domElements, parent, value) {
 				// The user must share data with the database
 				domElements.dbSharingOptionToggle.checked = true;
 				configSync.databaseSharingEnabledOption = true;
-				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setUserSetting("databaseSharingEnabledOption", true);
 
 				manageDbOptOutOption(domElements);
 			}
@@ -42,7 +43,7 @@ export async function manageDependents(domElements, parent, value) {
 			} else {
 				// If the open in a new tab option gets disabled, we also want to disable the reuse tab option to avoid confusion
 				domElements.shuffleReUseNewTabOptionToggle.checked = false;
-				await setSyncStorageValue("shuffleReUseNewTabOption", false);
+				await setUserSetting("shuffleReUseNewTabOption", false);
 				domElements.shuffleReUseNewTabOptionToggle.parentElement.classList.add("disabled");
 			}
 			break;
@@ -81,7 +82,7 @@ export async function manageDbOptOutOption(domElements) {
 	// If the user may not opt out of database sharing but the latest record shows they would like to, make sure it's set correctly in sync storage
 	if (!(await checkDbOptOutOptionEligibility()) && !configSync.databaseSharingEnabledOption) {
 		configSync.databaseSharingEnabledOption = true;
-		await setSyncStorageValue("databaseSharingEnabledOption", true);
+		await setUserSetting("databaseSharingEnabledOption", true);
 	}
 	domElements.dbSharingOptionToggle.checked = configSync.databaseSharingEnabledOption;
 }
@@ -148,7 +149,7 @@ export async function validateApiKey(customAPIKey, domElements) {
 	if (defaultAPIKeys.includes(customAPIKey)) {
 		domElements.customApiKeyInputInfoText.innerText = "Error: API key not valid. Please pass a valid API key:";
 		domElements.customApiKeyInputInfoDiv.classList.remove("hidden");
-		
+
 		domElements.customApiKeyInputField.classList.add("invalid-input");
 		setTimeout(() => {
 			domElements.customApiKeyInputField.classList.remove("invalid-input");
@@ -176,6 +177,14 @@ export async function validateApiKey(customAPIKey, domElements) {
 	return true;
 }
 
+// Wrapper to sync settings with Firebase
+export async function setUserSetting(setting, value) {
+	await setSyncStorageValue(setting, value);
+	if (await userHasActiveSubscriptionRole() && configSync.plusSyncSettings) {
+		await chrome.runtime.sendMessage({ command: "syncUserSettingsWithFirestore" });
+	}
+}
+
 export async function setChannelSetting(channelId, setting, value) {
 	let channelSettings = configSync.channelSettings;
 	if (!channelSettings[channelId]) {
@@ -183,7 +192,7 @@ export async function setChannelSetting(channelId, setting, value) {
 	}
 	channelSettings[channelId][setting] = value;
 
-	await setSyncStorageValue("channelSettings", channelSettings);
+	await setUserSetting("channelSettings", channelSettings);
 }
 
 export async function removeChannelSetting(channelId, setting) {
@@ -198,5 +207,5 @@ export async function removeChannelSetting(channelId, setting) {
 		delete channelSettings[channelId];
 	}
 
-	await setSyncStorageValue("channelSettings", channelSettings);
+	await setUserSetting("channelSettings", channelSettings);
 }

@@ -7,7 +7,7 @@ import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithCredential }
 import { userHasActiveSubscriptionRole } from "./stripe.js";
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
+const firestore = getFirestore(app);
 const auth = getAuth(app);
 
 // Get user information from storage or by logging in to Google
@@ -158,7 +158,7 @@ async function fetchRefreshTokenFromFirestore(googleOauth, allowSelfRevoke) {
 	console.log("Getting the Google Oauth refresh token from Firestore, as it does not exist locally.");
 	let haveRefreshToken = true;
 
-	const authMetadataRef = doc(db, "users", getAuth().currentUser.uid, "authMetadata", "google");
+	const authMetadataRef = doc(firestore, "users", getAuth().currentUser.uid, "authMetadata", "google");
 	const authMetadataDoc = await getDoc(authMetadataRef);
 	if (authMetadataDoc.exists()) {
 		const data = authMetadataDoc.data();
@@ -220,7 +220,7 @@ async function runGoogleOauthAuthentication(action, passedToken, generatedState,
 
 	if (refreshToken) {
 		// Save the refresh token to Firestore
-		const authMetadataRef = doc(db, "users", getAuth().currentUser.uid, "authMetadata", "google");
+		const authMetadataRef = doc(firestore, "users", getAuth().currentUser.uid, "authMetadata", "google");
 		await setDoc(authMetadataRef, {
 			googleRefreshToken: refreshToken
 		}, { merge: true });
@@ -246,6 +246,7 @@ async function getLocalGoogleOauth() {
 
 // Gets all scopes granted by the user
 // TODO: Use this to check if the user has granted the youtube scope before we can enable features using it
+// TODO: Not used at the moment
 export async function getGrantedOauthScopes() {
 	// Refreshes the access token
 	const user = await getUser(false, false, false);
@@ -294,7 +295,7 @@ export async function revokeAccess(user = null, deleteUser = false) {
 					return setSyncStorageValue("googleOauth", null).then(async () => {
 						// TODO: If there is no active subscription, remove all user data from Firebase
 						// We always remove the refreshToken, as it is no longer active
-						const authMetadataRef = doc(db, "users", getAuth(app).currentUser.uid, "authMetadata", "google");
+						const authMetadataRef = doc(firestore, "users", getAuth(app).currentUser.uid, "authMetadata", "google");
 						await deleteDoc(authMetadataRef);
 						return true;
 					});

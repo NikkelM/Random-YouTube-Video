@@ -6,13 +6,13 @@ import { getFirestore, query, collection, where, getDocs, addDoc, onSnapshot, Fi
 import { getAuth } from "firebase/auth";
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
+const firestore = getFirestore(app);
 
 // Get products and pricing information from Firestore/Stripe
 async function getProducts(currency) {
 	const currencyRef = new FieldPath("metadata", "currency");
 	const productCurrencyQuery = query(
-		collection(db, "products"),
+		collection(firestore, "products"),
 		where("active", "==", true),
 		where(currencyRef, "==", currency)
 	);
@@ -83,7 +83,7 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 	};
 
 	const checkoutSessionRef = await addDoc(
-		collection(db, `users/${user.userInfo.firebaseUid}/checkout_sessions`),
+		collection(firestore, `users/${user.userInfo.firebaseUid}/checkout_sessions`),
 		checkoutSessionData
 	);
 
@@ -126,11 +126,11 @@ export async function getSubscriptions(user = null, activeOnly = true) {
 	let q;
 	if (activeOnly) {
 		q = query(
-			collection(db, `users/${user.userInfo.firebaseUid}/subscriptions`),
+			collection(firestore, `users/${user.userInfo.firebaseUid}/subscriptions`),
 			where("status", "in", ["active", "trialing"])
 		);
 	} else {
-		q = collection(db, `users/${user.userInfo.firebaseUid}/subscriptions`);
+		q = collection(firestore, `users/${user.userInfo.firebaseUid}/subscriptions`);
 	}
 
 	const querySnapshot = await getDocs(q);
@@ -143,7 +143,7 @@ export async function userHasActiveSubscriptionRole(user = null) {
 	return stripeRole == "shufflePlus";
 }
 
-// This will return shufflePlus if the user has an active subscription
+// This will return "shufflePlus" if the user has an active subscription
 async function getStripeRole(_user = null) {
 	_user ??= await getUser(false, true, false);
 	const decodedToken = await getAuth().currentUser?.getIdTokenResult();

@@ -1,7 +1,7 @@
 // Entry point for the popup page
 import { delay } from "../../utils.js";
-import { configSync, setSyncStorageValue, removeSyncStorageValue } from "../../chromeStorage.js";
-import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv } from "./popupUtils.js";
+import { configSync } from "../../chromeStorage.js";
+import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv, setUserSetting } from "./popupUtils.js";
 import { userHasActiveSubscriptionRole } from "../../stripe.js";
 import { tryFocusingTab, animateSlideOut } from "../htmlUtils.js";
 
@@ -211,28 +211,28 @@ async function setDomElementValuesFromConfig(domElements) {
 async function setDomElementEventListeners(domElements) {
 	// Shuffling: Open in new tab option toggle
 	domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked);
+		await setUserSetting("shuffleOpenInNewTabOption", this.checked);
 
 		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked);
 	});
 
 	// Shuffling: Reuse tab option toggle
 	domElements.shuffleReUseNewTabOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("shuffleReUseNewTabOption", this.checked);
+		await setUserSetting("shuffleReUseNewTabOption", this.checked);
 
 		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked);
 	});
 
 	// Shuffling: Ignore shorts option dropdown
 	domElements.shuffleIgnoreShortsOptionDropdown.addEventListener("change", async function () {
-		await setSyncStorageValue("shuffleIgnoreShortsOption", this.value);
+		await setUserSetting("shuffleIgnoreShortsOption", this.value);
 
 		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionDropdown, this.value);
 	});
 
 	// Shuffling: Open as playlist option toggle
 	domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked);
+		await setUserSetting("shuffleOpenAsPlaylistOption", this.checked);
 
 		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
 	});
@@ -263,7 +263,7 @@ async function setDomElementEventListeners(domElements) {
 				}, 1500);
 			}
 
-			await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value));
+			await setUserSetting("shuffleNumVideosInPlaylist", parseInt(this.value));
 
 			manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value);
 		});
@@ -405,14 +405,14 @@ async function setDomElementEventListeners(domElements) {
 
 	// Custom API key: Option toggle
 	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("useCustomApiKeyOption", this.checked);
+		await setUserSetting("useCustomApiKeyOption", this.checked);
 
 		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked);
 	});
 
 	// Database sharing: Option toggle
 	domElements.dbSharingOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("databaseSharingEnabledOption", this.checked);
+		await setUserSetting("databaseSharingEnabledOption", this.checked);
 
 		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked);
 	});
@@ -424,10 +424,10 @@ async function setDomElementEventListeners(domElements) {
 		const oldApiKey = configSync.customYoutubeApiKey;
 
 		if (newAPIKey.length > 0 && await validateApiKey(newAPIKey, domElements)) {
-			await setSyncStorageValue("customYoutubeApiKey", newAPIKey);
+			await setUserSetting("customYoutubeApiKey", newAPIKey);
 		} else {
-			await removeSyncStorageValue("customYoutubeApiKey");
-			await setSyncStorageValue("databaseSharingEnabledOption", true);
+			await setUserSetting("customYoutubeApiKey", null);
+			await setUserSetting("databaseSharingEnabledOption", true);
 			domElements.customApiKeyInputField.value = "";
 		}
 
@@ -444,7 +444,7 @@ async function setDomElementEventListeners(domElements) {
 
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
-		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
+		await setUserSetting("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
 
 		const changelogPage = chrome.runtime.getURL("html/changelog.html");
 		let mustOpenTab = await tryFocusingTab(changelogPage);
@@ -479,7 +479,7 @@ async function determineOverlayVisibility(domElements) {
 		if (!configSync.reviewMessageShown && configSync.numShuffledVideosTotal < 75 && configSync.numShuffledVideosTotal >= 10) {
 			domElements.reviewDiv.classList.remove("hidden");
 			domElements.reviewDonationDiv.classList.remove("hidden");
-			await setSyncStorageValue("reviewMessageShown", true);
+			await setUserSetting("reviewMessageShown", true);
 
 			domElements.reviewOverlayCloseButton.addEventListener("click", function () {
 				domElements.reviewDonationDiv.classList.add("hidden");
@@ -488,7 +488,7 @@ async function determineOverlayVisibility(domElements) {
 		} else if (!configSync.donationMessageShown && configSync.numShuffledVideosTotal >= 75) {
 			domElements.donationDiv.classList.remove("hidden");
 			domElements.reviewDonationDiv.classList.remove("hidden");
-			await setSyncStorageValue("donationMessageShown", true);
+			await setUserSetting("donationMessageShown", true);
 
 			domElements.donationOverlayCloseButton.addEventListener("click", function () {
 				domElements.reviewDonationDiv.classList.add("hidden");

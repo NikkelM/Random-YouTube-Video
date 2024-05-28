@@ -43,7 +43,10 @@ export const configSyncDefaults = {
 	// If the message asking for a donation has been shown yet
 	"donationMessageShown": false,
 	// Contains user information and tokens if the user is logged in with Google
-	"googleOauth": null
+	"googleOauth": null,
+	// ----- SHUFFLE PLUS OPTIONS -----
+	// Sync user & channel settings with Firebase
+	"plusSyncSettings": true
 };
 
 export const isFirefox = typeof browser !== "undefined";
@@ -82,7 +85,7 @@ export const shufflingHints = [
 	"Use the 'Open in playlist' option to open shuffled videos in the uploads playlist of the channel! You can customize how many videos are added to the playlist!",
 	"You can choose to ignore, include, or only shuffle from shorts uploaded on a channel!",
 	"Use the 'Use custom API key' option to provide your own YouTube API key, which will be used instead of the extension's keys. This removes the API quota limit and allows you to opt out of sharing video IDs with other users!",
-	
+
 	// Channel options
 	"The extension popup allows you to customize the shuffling experience for the most recently visited channel at any time!",
 	"You can choose from a number of filters to choose what videos are considered when shuffling from a specific channel!",

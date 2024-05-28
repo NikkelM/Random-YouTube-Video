@@ -1,6 +1,6 @@
 import expect from 'expect.js';
 
-import { configSync, setSyncStorageValue, removeSyncStorageValue, getUserQuotaRemainingToday, validateConfigSync } from '../src/chromeStorage.js';
+import { configSync, setSyncStorageValue, getUserQuotaRemainingToday, validateConfigSync } from '../src/chromeStorage.js';
 import { configSyncDefaults } from '../src/config.js';
 
 describe('chromeStorage', function () {
@@ -71,19 +71,6 @@ describe('chromeStorage', function () {
 
 			expect(configSync).to.have.key("testKey3");
 			expect(configSync.testKey3).to.have.key("testKey3b");
-		});
-	});
-
-	context('removeSyncStorageValue()', function () {
-		it('should remove the value from the configSync object', async function () {
-			await setSyncStorageValue("testKey4", "testValue4");
-
-			expect(configSync).to.have.key("testKey4");
-			expect(configSync.testKey4).to.be("testValue4");
-
-			await removeSyncStorageValue("testKey4");
-
-			expect(configSync).to.not.have.key("testKey4");
 		});
 	});
 
