@@ -1,4 +1,5 @@
 import { configSyncDefaults } from "../src/config.js";
+import { deepCopy } from "../src/utils.js";
 
 // ---------- Constants used by the permutations ----------
 // Keep these in sync with the values compared against in the tests
@@ -559,11 +560,6 @@ function makeLocalPlaylistFromVideos(localVideos, localDeletedVideos, localPlayl
 	}
 
 	return localPlaylist;
-}
-
-// Create a deep copy of an object
-export function deepCopy(obj) {
-	return JSON.parse(JSON.stringify(obj));
 }
 
 // Determine whether or not a permutation needs to interact with the database

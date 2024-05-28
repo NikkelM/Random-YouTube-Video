@@ -102,6 +102,11 @@ export function addHours(date, hours) {
 	return new Date(date.getTime() + hours * 3600000);
 }
 
+// Create a deep copy of an object
+export function deepCopy(obj) {
+	return JSON.parse(JSON.stringify(obj));
+}
+
 // ----- Errors -----
 export class RandomYoutubeVideoError extends Error {
 	constructor({ code = "RYV-0", message = "", solveHint = "", showTrace = true, canSavePlaylist = false }) {

@@ -46,6 +46,35 @@ export const configSyncDefaults = {
 	"googleOauth": null,
 	// ----- SHUFFLE PLUS OPTIONS -----
 	// Sync user & channel settings with Firebase
+	// TODO: Add a toggle in the popup
+	// TODO: Should the default be false? Not many people need this, so it might be unnecessary overhead
+	"plusSyncSettings": true
+};
+
+// true if the setting can be synced with Firestore, false otherwise
+export const configSyncFirestoreSyncable = {
+	"useCustomApiKeyOption": false,
+	"customYoutubeApiKey": false,
+	"databaseSharingEnabledOption": false,
+	"shuffleOpenInNewTabOption": true,
+	"shuffleReUseNewTabOption": true,
+	"shuffleIgnoreShortsOption": true,
+	"shuffleOpenAsPlaylistOption": true,
+	"shuffleNumVideosInPlaylist": true,
+	"shuffleTabId": false,
+	"channelSettings": true,
+	"currentChannelId": true,
+	"currentChannelName": true,
+	"numShuffledVideosTotal": true,
+	"userQuotaRemainingToday": false,
+	"userQuotaResetTime": false,
+	"nextAPIKeysCheckTime": false,
+	"lastViewedChangelogVersion": false,
+	"wasLastRickRolledInYear": false,
+	"previousVersion": false,
+	"reviewMessageShown": false,
+	"donationMessageShown": false,
+	"googleOauth": false,
 	"plusSyncSettings": true
 };
 

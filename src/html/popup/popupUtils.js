@@ -1,5 +1,6 @@
 // Helper functions for the popup
-import { getLength } from "../../utils.js";
+import { getLength, deepCopy } from "../../utils.js";
+import { configSyncFirestoreSyncable } from "../../config.js";
 import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from "../../chromeStorage.js";
 import { animateSlideOut } from "../htmlUtils.js";
 import { userHasActiveSubscriptionRole } from "../../stripe.js";
@@ -178,21 +179,31 @@ export async function validateApiKey(customAPIKey, domElements) {
 }
 
 // Wrapper to sync settings with Firebase
-export async function setUserSetting(setting, value) {
+export async function setUserSetting(setting, value, userIsShufflePlusSubscribed = null) {
+	userIsShufflePlusSubscribed ??= await userHasActiveSubscriptionRole();
+	const isSettingSyncable = configSyncFirestoreSyncable[setting] === true;
+	const previousValue = deepCopy(configSync[setting]);
+
 	await setSyncStorageValue(setting, value);
-	if (await userHasActiveSubscriptionRole() && configSync.plusSyncSettings) {
-		await chrome.runtime.sendMessage({ command: "syncUserSettingsWithFirestore" });
+
+	if (isSettingSyncable && configSync.plusSyncSettings && previousValue !== value && userIsShufflePlusSubscribed) {
+		chrome.runtime.sendMessage({ command: "syncUserSettingWithFirestore", data: { [setting]: value } });
 	}
 }
 
-export async function setChannelSetting(channelId, setting, value) {
+export async function setChannelSetting(channelId, setting, value, userIsShufflePlusSubscribed) {
 	let channelSettings = configSync.channelSettings;
 	if (!channelSettings[channelId]) {
 		channelSettings[channelId] = {};
 	}
 	channelSettings[channelId][setting] = value;
 
-	await setUserSetting("channelSettings", channelSettings);
+	// Also remove the channel settings object if it only contains the default setting
+	if (getLength(channelSettings[channelId]) === 1 && channelSettings[channelId].activeOption === "allVideosOption") {
+		delete channelSettings[channelId];
+	}
+
+	await setUserSetting("channelSettings", channelSettings, userIsShufflePlusSubscribed);
 }
 
 export async function removeChannelSetting(channelId, setting) {
@@ -204,6 +215,9 @@ export async function removeChannelSetting(channelId, setting) {
 
 	// If the channel settings object is empty, remove it entirely
 	if (getLength(channelSettings[channelId]) === 0) {
+		delete channelSettings[channelId];
+		// Also remove the channel settings object if it only contains the default setting
+	} else if (getLength(channelSettings[channelId]) === 1 && channelSettings[channelId]["activeOption"] === "allVideosOption") {
 		delete channelSettings[channelId];
 	}
 

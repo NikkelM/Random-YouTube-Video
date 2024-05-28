@@ -190,8 +190,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			updateDBPlaylistToV1_0_0("uploadsPlaylists/" + request.data.key).then(sendResponse);
 			break;
 		// Uploads the configSync object to Firestore under the current user's ID
-		case "syncUserSettingsWithFirestore":
-			syncUserSettingsWithFirestore().then(sendResponse);
+		case "syncUserSettingWithFirestore":
+			syncUserSettingWithFirestore(request.data).then(sendResponse);
 			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":
@@ -260,10 +260,9 @@ async function updateDBPlaylistToV1_0_0(playlistId) {
 	return "Videos were removed from the database playlist.";
 }
 
-async function syncUserSettingsWithFirestore() {
-	// TODO: Don't sync all settings in configSync, but only those that make sense (e.g. not googleOauth, customAPIKey, reviewMessageShown, previousVersion)
+async function syncUserSettingWithFirestore(settingToSync) {
 	const userSettingsRef = doc(firestore, "users", getAuth().currentUser.uid, "userSettings", "configSync");
-	await setDoc(userSettingsRef, configSync);
+	await setDoc(userSettingsRef, settingToSync, { merge: true });
 
 	return "User settings uploaded/synced to database.";
 }

@@ -2,10 +2,10 @@ import expect from 'expect.js';
 import sinon from 'sinon';
 import { JSDOM } from 'jsdom';
 
-import { RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
+import { deepCopy, RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
 import { chooseRandomVideo } from '../src/shuffleVideo.js';
 import { configSync, setSyncStorageValue } from '../src/chromeStorage.js';
-import { deepCopy, configSyncPermutations, playlistPermutations, needsDBInteraction, needsYTAPIInteraction } from './playlistPermutations.js';
+import { configSyncPermutations, playlistPermutations, needsDBInteraction, needsYTAPIInteraction } from './playlistPermutations.js';
 
 // ---------- Utility functions ----------
 // Utility to get the contents of localStorage at a certain key

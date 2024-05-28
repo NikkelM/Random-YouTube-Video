@@ -31,6 +31,7 @@ const domElements = getDomElements();
 await setDomElementValuesFromConfig(domElements);
 await setDomElementEventListeners(domElements);
 await determineOverlayVisibility(domElements);
+const userIsShufflePlusSubscribed = await userHasActiveSubscriptionRole();
 
 // Restart the background script if it was stopped to make sure the shuffle button immediately works
 try {
@@ -198,7 +199,7 @@ async function setDomElementValuesFromConfig(domElements) {
 	}
 
 	// Enables or disables the animation of the Shuffle+ button depending on if the user has an active subscription or not
-	if (!(await userHasActiveSubscriptionRole())) {
+	if (!userIsShufflePlusSubscribed) {
 		domElements.shufflePlusButton.classList.add("highlight-green-animated");
 		domElements.shufflePlusButton.classList.remove("highlight-green");
 	}
@@ -211,28 +212,28 @@ async function setDomElementValuesFromConfig(domElements) {
 async function setDomElementEventListeners(domElements) {
 	// Shuffling: Open in new tab option toggle
 	domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", async function () {
-		await setUserSetting("shuffleOpenInNewTabOption", this.checked);
+		await setUserSetting("shuffleOpenInNewTabOption", this.checked, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked);
 	});
 
 	// Shuffling: Reuse tab option toggle
 	domElements.shuffleReUseNewTabOptionToggle.addEventListener("change", async function () {
-		await setUserSetting("shuffleReUseNewTabOption", this.checked);
+		await setUserSetting("shuffleReUseNewTabOption", this.checked, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked);
 	});
 
 	// Shuffling: Ignore shorts option dropdown
 	domElements.shuffleIgnoreShortsOptionDropdown.addEventListener("change", async function () {
-		await setUserSetting("shuffleIgnoreShortsOption", this.value);
+		await setUserSetting("shuffleIgnoreShortsOption", this.value, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionDropdown, this.value);
 	});
 
 	// Shuffling: Open as playlist option toggle
 	domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", async function () {
-		await setUserSetting("shuffleOpenAsPlaylistOption", this.checked);
+		await setUserSetting("shuffleOpenAsPlaylistOption", this.checked, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
 	});
@@ -263,7 +264,7 @@ async function setDomElementEventListeners(domElements) {
 				}, 1500);
 			}
 
-			await setUserSetting("shuffleNumVideosInPlaylist", parseInt(this.value));
+			await setUserSetting("shuffleNumVideosInPlaylist", parseInt(this.value), userIsShufflePlusSubscribed);
 
 			manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value);
 		});
@@ -272,7 +273,7 @@ async function setDomElementEventListeners(domElements) {
 	// Custom options per channel: Dropdown menu
 	domElements.channelCustomOptionsDropdown.addEventListener("change", async function () {
 		// Set the value in configSync to the currently selected option
-		await setChannelSetting(configSync.currentChannelId, "activeOption", this.value);
+		await setChannelSetting(configSync.currentChannelId, "activeOption", this.value, userIsShufflePlusSubscribed);
 
 		updateChannelSettingsDropdownMenu(domElements);
 
@@ -280,26 +281,28 @@ async function setDomElementEventListeners(domElements) {
 	});
 
 	// Custom options per channel: Dropdown menu: Date input
-	domElements.channelCustomOptionsDateOptionInput.addEventListener("focusout", async function () {
-		// Make sure the date is valid. If it is not, set it to the previous value. If there is no previous value, set it to null
-		const selectedDate = new Date(this.value);
-		if (selectedDate > new Date()) {
-			this.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue ?? null;
+	"change focusout".split(" ").forEach(function (event) {
+		domElements.channelCustomOptionsDateOptionInput.addEventListener(event, async function () {
+			// Make sure the date is valid. If it is not, set it to the previous value. If there is no previous value, set it to null
+			const selectedDate = new Date(this.value);
+			if (selectedDate > new Date()) {
+				this.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue ?? null;
 
-			this.classList.add("invalid-input");
-			setTimeout(() => {
-				this.classList.remove("invalid-input");
-			}, 1500);
-		}
+				this.classList.add("invalid-input");
+				setTimeout(() => {
+					this.classList.remove("invalid-input");
+				}, 1500);
+			}
 
-		// Set the value in sync storage
-		if (this.value) {
-			await setChannelSetting(configSync.currentChannelId, "dateValue", this.value);
-		} else {
-			await removeChannelSetting(configSync.currentChannelId, "dateValue");
-		}
+			// Set the value in sync storage
+			if (this.value) {
+				await setChannelSetting(configSync.currentChannelId, "dateValue", this.value);
+			} else {
+				await removeChannelSetting(configSync.currentChannelId, "dateValue");
+			}
 
-		manageDependents(domElements, domElements.channelCustomOptionsDateOptionInput, this.value);
+			manageDependents(domElements, domElements.channelCustomOptionsDateOptionInput, this.value);
+		});
 	});
 
 	// Custom options per channel: Dropdown menu: Youtube Video Id input
@@ -405,14 +408,14 @@ async function setDomElementEventListeners(domElements) {
 
 	// Custom API key: Option toggle
 	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
-		await setUserSetting("useCustomApiKeyOption", this.checked);
+		await setUserSetting("useCustomApiKeyOption", this.checked, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked);
 	});
 
 	// Database sharing: Option toggle
 	domElements.dbSharingOptionToggle.addEventListener("change", async function () {
-		await setUserSetting("databaseSharingEnabledOption", this.checked);
+		await setUserSetting("databaseSharingEnabledOption", this.checked, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked);
 	});
@@ -424,10 +427,10 @@ async function setDomElementEventListeners(domElements) {
 		const oldApiKey = configSync.customYoutubeApiKey;
 
 		if (newAPIKey.length > 0 && await validateApiKey(newAPIKey, domElements)) {
-			await setUserSetting("customYoutubeApiKey", newAPIKey);
+			await setUserSetting("customYoutubeApiKey", newAPIKey, userIsShufflePlusSubscribed);
 		} else {
-			await setUserSetting("customYoutubeApiKey", null);
-			await setUserSetting("databaseSharingEnabledOption", true);
+			await setUserSetting("customYoutubeApiKey", null, userIsShufflePlusSubscribed);
+			await setUserSetting("databaseSharingEnabledOption", true, userIsShufflePlusSubscribed);
 			domElements.customApiKeyInputField.value = "";
 		}
 
@@ -444,7 +447,7 @@ async function setDomElementEventListeners(domElements) {
 
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
-		await setUserSetting("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
+		await setUserSetting("lastViewedChangelogVersion", chrome.runtime.getManifest().version, userIsShufflePlusSubscribed);
 
 		const changelogPage = chrome.runtime.getURL("html/changelog.html");
 		let mustOpenTab = await tryFocusingTab(changelogPage);
@@ -479,7 +482,7 @@ async function determineOverlayVisibility(domElements) {
 		if (!configSync.reviewMessageShown && configSync.numShuffledVideosTotal < 75 && configSync.numShuffledVideosTotal >= 10) {
 			domElements.reviewDiv.classList.remove("hidden");
 			domElements.reviewDonationDiv.classList.remove("hidden");
-			await setUserSetting("reviewMessageShown", true);
+			await setUserSetting("reviewMessageShown", true, userIsShufflePlusSubscribed);
 
 			domElements.reviewOverlayCloseButton.addEventListener("click", function () {
 				domElements.reviewDonationDiv.classList.add("hidden");
@@ -488,7 +491,7 @@ async function determineOverlayVisibility(domElements) {
 		} else if (!configSync.donationMessageShown && configSync.numShuffledVideosTotal >= 75) {
 			domElements.donationDiv.classList.remove("hidden");
 			domElements.reviewDonationDiv.classList.remove("hidden");
-			await setUserSetting("donationMessageShown", true);
+			await setUserSetting("donationMessageShown", true, userIsShufflePlusSubscribed);
 
 			domElements.donationOverlayCloseButton.addEventListener("click", function () {
 				domElements.reviewDonationDiv.classList.add("hidden");
