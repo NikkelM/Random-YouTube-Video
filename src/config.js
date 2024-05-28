@@ -46,7 +46,7 @@ export const configSyncDefaults = {
 	"googleOauth": null,
 	// ----- SHUFFLE PLUS OPTIONS -----
 	// Sync user & channel settings with Firebase
-	// TODO: Add a toggle in the popup
+	// TODO: Add a toggle in the popup. TODO on that: When the setting gets toggled on, sync all syncable settings to Firestore immediately. When turned off, remove all settings from Firestore
 	// TODO: Should the default be false? Not many people need this, so it might be unnecessary overhead
 	"plusSyncSettings": true
 };
