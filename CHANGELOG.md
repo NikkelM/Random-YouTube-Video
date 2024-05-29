@@ -8,8 +8,8 @@
 - You can find a list of all features on the new 'Shuffle+' page in the extension popup.
 - Sign in to the extension with your YouTube account, save your preferences and settings across devices and enable new features by giving access to your subscriptions and watched videos.
 - The extension icon will now reflect your Shuffle+ subscription status.
+- Fixed an animation in the popup.
 - A number of improvements to the maintainability of the extension's codebase.
-<!--Releasenotes end-->
 
 ## v3.1.3
 

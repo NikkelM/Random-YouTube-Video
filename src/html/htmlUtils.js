@@ -23,9 +23,13 @@ async function displayShufflingHint(displayElement, currentHintIndex = null) {
 }
 
 // ----- Animations -----
-export function animateSlideOut(targetElement) {
+export function animateSlideOut(targetElement, shouldSlideOut = null) {
+	if (shouldSlideOut) {
+		targetElement.classList.remove("active");
+	}
+
 	// Sliding out
-	if (!targetElement.classList.contains("active")) {
+	if (!targetElement.classList.contains("active") && (shouldSlideOut == null || shouldSlideOut)) {
 		targetElement.classList.add("active");
 		targetElement.style.height = "auto";
 
