@@ -60,7 +60,7 @@ export async function manageDependents(domElements, parent, value) {
 			// If true, it means the container is sliding out, so we need to slide out all dependent containers as well
 			if (value) {
 				if (configSync.useCustomApiKeyOption) {
-					animateSlideOut(domElements.customApiKeyInputDiv, !domElements.customApiKeyInputDiv.classList.contains("active"));
+					animateSlideOut(domElements.customApiKeyInputDiv);
 				}
 			}
 			break;
