@@ -1,12 +1,16 @@
 # Changelog
 
-## v3.1.3
+## v3.1.4-beta
 
 <!--Releasenotes start-->
+- Fixed an animation in the popup.
+<!--Releasenotes end-->
+
+## v3.1.3
+
 - When ignoring or only shuffling from shorts, the button will now more accurately display how long the shuffle will take.
 - Cleaned up the popup and moved some settings to a separate menu.
 - Fixed a bug where fixing a rare database corruption issue would reduce the user's daily API quota.
-<!--Releasenotes end-->
 
 ## v3.1.2
 

@@ -15,6 +15,7 @@ export async function manageDependents(domElements, parent, value) {
 				domElements.customApiKeyInputField.value = configSync.customYoutubeApiKey ? configSync.customYoutubeApiKey : "";
 
 				manageDbOptOutOption(domElements);
+				animateSlideOut(domElements.customApiKeyInputDiv, true);
 			} else {
 				// The user must share data with the database
 				domElements.dbSharingOptionToggle.checked = true;
@@ -22,8 +23,8 @@ export async function manageDependents(domElements, parent, value) {
 				await setSyncStorageValue("databaseSharingEnabledOption", true);
 
 				manageDbOptOutOption(domElements);
+				animateSlideOut(domElements.customApiKeyInputDiv, false);
 			}
-			animateSlideOut(domElements.customApiKeyInputDiv);
 			updateFYIDiv(domElements);
 			break;
 
