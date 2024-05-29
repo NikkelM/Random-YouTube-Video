@@ -15,6 +15,7 @@ export async function manageDependents(domElements, parent, value) {
 				domElements.customApiKeyInputField.value = configSync.customYoutubeApiKey ? configSync.customYoutubeApiKey : "";
 
 				manageDbOptOutOption(domElements);
+				animateSlideOut(domElements.customApiKeyInputDiv, true);
 			} else {
 				// The user must share data with the database
 				domElements.dbSharingOptionToggle.checked = true;
@@ -22,8 +23,8 @@ export async function manageDependents(domElements, parent, value) {
 				await setSyncStorageValue("databaseSharingEnabledOption", true);
 
 				manageDbOptOutOption(domElements);
+				animateSlideOut(domElements.customApiKeyInputDiv, false);
 			}
-			animateSlideOut(domElements.customApiKeyInputDiv);
 			updateFYIDiv(domElements);
 			break;
 
@@ -59,7 +60,7 @@ export async function manageDependents(domElements, parent, value) {
 			// If true, it means the container is sliding out, so we need to slide out all dependent containers as well
 			if (value) {
 				if (configSync.useCustomApiKeyOption) {
-					animateSlideOut(domElements.customApiKeyInputDiv);
+					animateSlideOut(domElements.customApiKeyInputDiv, !domElements.customApiKeyInputDiv.classList.contains("active"));
 				}
 			}
 			break;

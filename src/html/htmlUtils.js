@@ -23,16 +23,24 @@ async function displayShufflingHint(displayElement, currentHintIndex = null) {
 }
 
 // ----- Animations -----
-export function animateSlideOut(targetElement) {
+export function animateSlideOut(targetElement, shouldSlideOut) {
+	// Store the original transition property
+	const originalTransition = targetElement.style.transition;
+
+	// Stop any running animation
+	targetElement.style.transition = 'none';
+
 	// Sliding out
-	if (!targetElement.classList.contains("active")) {
+	if (shouldSlideOut) {
 		targetElement.classList.add("active");
 		targetElement.style.height = "auto";
 
 		const targetHeight = targetElement.clientHeight;
 		targetElement.style.height = "0px";
 
+		// Re-add the transition property after a delay to allow the height change to take effect
 		setTimeout(function () {
+			targetElement.style.transition = originalTransition;
 			targetElement.style.height = targetHeight + 'px';
 			adjustParentContainerHeight(targetElement, targetHeight);
 		}, 0);
@@ -42,6 +50,9 @@ export function animateSlideOut(targetElement) {
 		targetElement.style.height = "0px";
 
 		adjustParentContainerHeight(targetElement, -oldHeight);
+
+		// Reset the transition property
+		targetElement.style.transition = originalTransition;
 
 		targetElement.addEventListener(
 			"transitionend",
