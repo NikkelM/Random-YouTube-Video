@@ -10,6 +10,9 @@ import {
 } from "./utils.js";
 import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from "./chromeStorage.js";
 
+// The time when the shuffle started
+let shuffleStartTime = null;
+
 // --------------- Public ---------------
 // Chooses a random video uploaded on the current YouTube channel
 export async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
@@ -29,6 +32,8 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			chrome.runtime.sendMessage({ command: "connectionTest" });
 		}, 20000);
 		/* c8 ignore stop */
+
+		shuffleStartTime = new Date();
 
 		// Each user has a set amount of quota they can use per day.
 		// If they exceed it, they need to provide a custom API key, or wait until the quota resets the next day
@@ -824,10 +829,6 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			if (playlistInfo["videos"]["unknownType"][randomVideo] !== undefined) {
 				const videoIsShort = await isShort(randomVideo);
 
-				// We display either the percentage of videos processed or the percentage of videos chosen (vs. needed), whichever is higher
-				const percentage = Math.max(Math.round(chosenVideos.length / numVideosToChoose * 100), Math.round(numVideosProcessed / initialTotalNumVideos * 100));
-				updateProgressTextElement(progressTextElement, `\xa0Sorting: ${percentage}%`, `${percentage}%`);
-
 				// What follows is dependent on if the video is a short or not, and the user's settings
 				// Case 1: !isShort && ignoreShorts => Success
 				if (!videoIsShort && configSync.shuffleIgnoreShortsOption == "2") {
@@ -879,7 +880,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 					// We need to decrement i, as we did not choose a video in this iteration
 					i--;
 
-					/* c8 ignore start - This should never happen, but we want to test it anyway */
+					/* c8 ignore start - This should never happen */
 				} else {
 					throw new RandomYoutubeVideoError(
 						{
@@ -896,6 +897,13 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 				// Otherwise, the video must be a knownVideo, as we do not include knownShorts in allVideos
 				chosenVideos.push(randomVideo);
 				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
+			}
+
+			// Only if the shuffle started more than 1 second ago, update the button text
+			if (new Date() - shuffleStartTime > 1000) {
+				// We display either the percentage of videos processed or the percentage of videos chosen (vs. needed), whichever is higher
+				const percentage = Math.max(Math.round(chosenVideos.length / numVideosToChoose * 100), Math.round(numVideosProcessed / initialTotalNumVideos * 100));
+				updateProgressTextElement(progressTextElement, `\xa0Sorting: ${percentage}%`, `${percentage}%`);
 			}
 		} else {
 			// We are not ignoring shorts and the video exists
