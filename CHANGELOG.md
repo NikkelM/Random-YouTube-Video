@@ -4,6 +4,7 @@
 
 <!--Releasenotes start-->
 - Fixed an animation in the popup.
+- Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
 <!--Releasenotes end-->
 
 ## v3.1.3
