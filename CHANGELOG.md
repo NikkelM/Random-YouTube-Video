@@ -1,6 +1,6 @@
 # Changelog
 
-## v3.1.4-beta
+## v3.1.4
 
 <!--Releasenotes start-->
 - Fixed an animation in the popup.
