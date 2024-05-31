@@ -132,6 +132,7 @@ describe('shuffleVideo', function () {
 					// The error is that there is no channelId
 					await chooseRandomVideo(null, false, domElement);
 				} catch (error) {
+					// We do no validation here, as that's not the point of this test
 				}
 				expect(configSync.userQuotaRemainingToday).to.be(199);
 			});
@@ -589,8 +590,7 @@ describe('shuffleVideo', function () {
 
 						beforeEach(function () {
 							date = new Date();
-							date.setMonth(3);
-							date.setDate(1);
+							date.setMonth(3, 1);
 							clock = sinon.useFakeTimers(date.getTime());
 						});
 
@@ -599,11 +599,16 @@ describe('shuffleVideo', function () {
 						});
 
 						it('should open a rickroll video if the user has not been rickrolled yet (openInNewTab option)', async function () {
-							// Set the last rickroll date to null, so the user has not been rickrolled yet
+							// Set the last rickroll date to the default, so the user has not been rickrolled yet
 							configSync.wasLastRickRolledInYear = '1970';
 							configSync.shuffleOpenInNewTabOption = true;
 
-							await chooseRandomVideo(input.playlistId, false, domElement);
+							try {
+								await chooseRandomVideo(input.playlistId, false, domElement);
+							} catch (error) {
+								// This is an error thrown from the jsdom library we use to mock browser behaviour
+								expect(error.message).to.contain('Not implemented: navigation (except hash changes)');
+							}
 
 							expect(windowOpenStub.calledTwice).to.be(true);
 							expect(windowOpenStub.args[1][0]).to.be('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
@@ -612,7 +617,7 @@ describe('shuffleVideo', function () {
 						});
 
 						it('should open a rickroll video if the user has not been rickrolled yet (!openInNewTab option)', async function () {
-							// Set the last rickroll date to null, so the user has not been rickrolled yet
+							// Set the last rickroll date to the default, so the user has not been rickrolled yet
 							configSync.wasLastRickRolledInYear = '1970';
 							configSync.shuffleOpenInNewTabOption = false;
 
@@ -777,7 +782,7 @@ describe('shuffleVideo', function () {
 												});
 											}
 										} else if (config.shuffleIgnoreShortsOption == "1") {
-											if (!input.playlistId.includes('LocalPlaylistContainsNoShorts') && !input.playlistId.includes('LocalPlaylistContainsOnlyShorts') && input.playlistId.includes("NoNewVideoUploaded")) {
+											if (!input.playlistId.includes('LocalPlaylistContainsNoShorts') && !input.playlistId.includes('LocalPlaylistContainsOnlyShorts') && !input.playlistId.includes('LocalPlaylistContainsNoVideos') && input.playlistId.includes("NoNewVideoUploaded")) {
 												// This works because we choose more videos than there are only videos OR shorts in the playlist, so there will always be at least one of each
 												// If this suddenly starts failing, it may be that that assumption was changed
 												it('should be able to choose both shorts and videos', async function () {

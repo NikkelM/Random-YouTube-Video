@@ -114,7 +114,6 @@ async function shuffleButtonClicked() {
 			setDOMTextWithDelay(shuffleButtonTextElement, "Still shuffling...", 20000, () => { return ((shuffleButtonTextElement.innerText === "Should be done soon..." || shuffleButtonTextElement.innerText === "Fetching: 100%")); });
 		}
 
-		// await delay(100000);
 		await chooseRandomVideo(configSync.currentChannelId, true, shuffleButtonTextElement);
 
 		// Focus this tab when the shuffle completes
