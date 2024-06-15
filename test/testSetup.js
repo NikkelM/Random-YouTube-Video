@@ -133,7 +133,7 @@ afterEach(async function () {
 });
 
 // ----- Helpers -----
-// Reimplementation of the function in the background script
+// Re-implementation of the function in the background script
 async function getAPIKey(forceGetAllDefaultKeys, useAPIKeyAtIndex = null) {
 	// List of API keys that are stored in the database/locally
 	let availableAPIKeys;

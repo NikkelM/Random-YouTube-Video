@@ -232,7 +232,7 @@ async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, sho
 		playlistInfo["lastUpdatedDBAt"] = new Date().toISOString();
 
 		let videosToDatabase = {};
-		// If any videos need to be deleted, this should be the union of videos, newvideos, minus the videos to delete
+		// If any videos need to be deleted, this should be the union of videos, new videos, minus the videos to delete
 		if (encounteredDeletedVideos) {
 			console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
 			videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
@@ -798,7 +798,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 				randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
 				numVideosProcessed++;
 
-				console.log(`The chosen video does not exist anymore, so it will be removed from the database. A new random video has been chosen: ${randomVideo}`);
+				console.log(`The chosen video does not exist any more, so it will be removed from the database. A new random video has been chosen: ${randomVideo}`);
 
 				if (randomVideo === undefined) {
 					// If we haven't chosen any videos yet, the channel does not contain any videos
@@ -832,7 +832,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 				// What follows is dependent on if the video is a short or not, and the user's settings
 				// Case 1: !isShort && ignoreShorts => Success
 				if (!videoIsShort && configSync.shuffleIgnoreShortsOption == "2") {
-					// Move the video to the knownVideos subdictionary
+					// Move the video to the knownVideos sub-dictionary
 					playlistInfo["videos"]["knownVideos"][randomVideo] = playlistInfo["videos"]["unknownType"][randomVideo];
 					delete playlistInfo["videos"]["unknownType"][randomVideo];
 
@@ -844,7 +844,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 				} else if (videoIsShort && configSync.shuffleIgnoreShortsOption == "2") {
 					console.log("A chosen video was a short, but shorts are ignored. Choosing a new random video.");
 
-					// Move the video to the knownShorts subdictionary
+					// Move the video to the knownShorts sub-dictionary
 					playlistInfo["videos"]["knownShorts"][randomVideo] = playlistInfo["videos"]["unknownType"][randomVideo];
 					delete playlistInfo["videos"]["unknownType"][randomVideo];
 
@@ -857,7 +857,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 
 					// Case 3: isShort && onlyShorts => Success
 				} else if (videoIsShort && configSync.shuffleIgnoreShortsOption == "0") {
-					// Move the video to the knownShorts subdictionary
+					// Move the video to the knownShorts sub-dictionary
 					playlistInfo["videos"]["knownShorts"][randomVideo] = playlistInfo["videos"]["unknownType"][randomVideo];
 					delete playlistInfo["videos"]["unknownType"][randomVideo];
 
@@ -869,7 +869,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 				} else if (!videoIsShort && configSync.shuffleIgnoreShortsOption == "0") {
 					console.log("A chosen video was not a short, but only shorts should be shuffled. Choosing a new random video.");
 
-					// Move the video to the knownVideos subdictionary
+					// Move the video to the knownVideos sub-dictionary
 					playlistInfo["videos"]["knownVideos"][randomVideo] = playlistInfo["videos"]["unknownType"][randomVideo];
 					delete playlistInfo["videos"]["unknownType"][randomVideo];
 
@@ -1047,7 +1047,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 
 	// Open the video in a new tab, the reusable tab or the current tab
 	// If the shuffle button from the popup was used, we always open the video in the 'same tab' (==the shuffling page)
-	// If the user wants to reuse tabs, we only open in a new tab if the reusable tab is not open anymore
+	// If the user wants to reuse tabs, we only open in a new tab if the reusable tab is not open any more
 	if (configSync.shuffleOpenInNewTabOption && !firedFromPopup) {
 		const pageType = getPageTypeFromURL(window.location.href);
 		// Video page: Pause the current video if it is playing
@@ -1062,7 +1062,7 @@ async function playVideo(chosenVideos, firedFromPopup) {
 			if (featuredPlayer && featuredPlayer.classList.contains("playing-mode") && !featuredPlayer.classList.contains("unstarted-mode")) {
 				featuredPlayer.children[0].click();
 			}
-			// Any page: Pause the miniplayer if it exists and is playing
+			// Any page: Pause the mini-player if it exists and is playing
 			const miniPlayer = document.querySelector("ytd-player#ytd-player")?.children[0]?.children[0];
 			if (miniPlayer && miniPlayer.classList.contains("playing-mode") && !miniPlayer.classList.contains("unstarted-mode")) {
 				miniPlayer.children[0].click();

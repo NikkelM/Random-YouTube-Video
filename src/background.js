@@ -7,7 +7,7 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase, ref, child, update, get, remove } from "firebase/database";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-// We need to import utils.js to get the console rerouting function
+// We need to import utils.js to get the console re-routing function
 import { } from "./utils.js";
 
 // ---------- Initialization/Chrome event listeners ----------
@@ -185,7 +185,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		case "overwritePlaylistInfoInDB":
 			updatePlaylistInfoInDB("uploadsPlaylists/" + request.data.key, request.data.val, true).then(sendResponse);
 			break;
-		// Before v1.0.0 the videos were stored in an array without upload times, so they need to all be refetched
+		// Before v1.0.0 the videos were stored in an array without upload times, so they need to all be re-fetched
 		case "updateDBPlaylistToV1.0.0":
 			updateDBPlaylistToV1_0_0("uploadsPlaylists/" + request.data.key).then(sendResponse);
 			break;
