@@ -507,7 +507,7 @@ describe('shuffleVideo', function () {
 					beforeEach(function () {
 						// ---------- Fetch mock responses ----------
 						// ----- YT API responses -----
-						// Combine the local, db and newVideos into one object, but remove locally deleted videos, as they do not exist in the YT API anymore
+						// Combine the local, db and newVideos into one object, but remove locally deleted videos, as they do not exist in the YT API any more
 						let allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos });
 						for (const [videoId, publishTime] of Object.entries(allVideos)) {
 							if (videoId.startsWith('DEL_LOC')) {
@@ -918,7 +918,7 @@ describe('shuffleVideo', function () {
 					beforeEach(function () {
 						// ---------- Fetch mock responses ----------
 						// ----- YT API responses -----
-						// Combine the local, db and newVideos into one object, but remove locally deleted videos, as they do not exist in the YT API anymore
+						// Combine the local, db and newVideos into one object, but remove locally deleted videos, as they do not exist in the YT API any more
 						let allVideos = deepCopy({ ...input.dbVideos, ...input.localVideos, ...input.newUploadedVideos });
 						for (const [videoId, publishTime] of Object.entries(allVideos)) {
 							if (videoId.startsWith('DEL_LOC')) {
@@ -1072,10 +1072,10 @@ describe('shuffleVideo', function () {
 								const numDeletedVideosBefore = Object.keys(input.dbDeletedVideos).filter(videoId => videoId.includes('DEL')).length;
 								const numDeletedVideosAfter = Object.keys(getAllVideosAsOneObject(playlistInfoAfter)).filter(videoId => videoId.includes('DEL')).length;
 
-								// Callcount:
+								// Call count:
 								// 6 if we need to fetch from the YT API, with update or overwrite depending on if a video was deleted
 								// 5 if we don't need to fetch from the YT API, but need to overwrite the playlist in the DB
-								// 4 if we dont need to overwrite the playlist in the DB
+								// 4 if we don't need to overwrite the playlist in the DB
 								switch (chrome.runtime.sendMessage.callCount) {
 									case 4:
 										expect(numDeletedVideosBefore).to.be(numDeletedVideosAfter);
@@ -1116,9 +1116,9 @@ describe('shuffleVideo', function () {
 								expect(commands).to.contain('getAllYouTubeTabs');
 								expect(commands).to.contain('getCurrentTabId');
 
-								// Callcount:
+								// Call count:
 								// 6 if we need to fetch from the YT API, we consequently need to update the DB
-								// 4 if we dont need to fetch from the YT API
+								// 4 if we don't need to fetch from the YT API
 								if (needsYTAPIInteraction(input)) {
 									expect(chrome.runtime.sendMessage.callCount).to.be(6);
 									expect(commands).to.contain('getAPIKey');

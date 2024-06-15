@@ -1,7 +1,7 @@
 // Global utilities
 
-/* c8 ignore start - The console reroutings cannot be tested correctly */
-// ---------- Console rerouting ----------
+/* c8 ignore start - The console re-routings cannot be tested correctly */
+// ---------- Console re-routing ----------
 const oldLog = console.log;
 console.log = function () {
 	// The last argument to console.log is a boolean that determines if the message should be shown in production

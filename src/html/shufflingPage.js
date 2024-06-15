@@ -20,7 +20,7 @@ try {
 const port = chrome.runtime.connect({ name: "shufflingPage" });
 
 const domElements = getDomElements();
-await setDomElemenEventListeners(domElements);
+await setDomElementEventListeners(domElements);
 
 // If this page is open, it means the user has clicked the shuffle button
 shuffleButtonClicked();
@@ -59,7 +59,7 @@ function getDomElements() {
 }
 
 // Set event listeners for DOM elements
-async function setDomElemenEventListeners(domElements) {
+async function setDomElementEventListeners(domElements) {
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);

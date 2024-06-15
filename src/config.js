@@ -56,7 +56,7 @@ export const shufflingHints = [
 	"The 'Shuffle' button will display a progress percentage if the extension has to fetch data from the YouTube API!",
 
 	// Errors
-	"Whenever an error is encountered, an alert will open with more detailed information on what caused it, and how you may resolve it. If you still need assistence, please open an issue on GitHub and include the channel ID!",
+	"Whenever an error is encountered, an alert will open with more detailed information on what caused it, and how you may resolve it. If you still need assistance, please open an issue on GitHub and include the channel ID!",
 
 	// General options
 	"Use the 'Open in new tab' option to open each shuffled video in its own tab!",
