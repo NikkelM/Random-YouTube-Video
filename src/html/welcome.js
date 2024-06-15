@@ -26,7 +26,7 @@ const currentVersion = chrome.runtime.getManifest().version_name ?? chrome.runti
 domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
 
 await buildShufflingHints(domElements);
-await setPopupDomElemenEventListeners(domElements);
+await setPopupDomElementEventListeners(domElements);
 
 // ---------- DOM ----------
 // Get all relevant DOM elements
@@ -64,7 +64,7 @@ function getDomElements() {
 }
 
 // Set event listeners for DOM elements
-async function setPopupDomElemenEventListeners(domElements) {
+async function setPopupDomElementEventListeners(domElements) {
 	// Firefox permissions button
 	if (isFirefox && !await browser.permissions.contains({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] })) {
 		domElements.firefoxPermissionsDiv.classList.remove("hidden");

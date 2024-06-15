@@ -28,7 +28,7 @@ if (isPopup) {
 const isFirefox = typeof browser !== "undefined";
 const domElements = getPopupDomElements();
 await setPopupDomElementValuesFromConfig(domElements);
-await setPopupDomElemenEventListeners(domElements);
+await setPopupDomElementEventListeners(domElements);
 await determineOverlayVisibility(domElements);
 
 // Restart the background script if it was stopped to make sure the shuffle button immediately works
@@ -199,7 +199,7 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 }
 
 // Set event listeners for DOM elements
-async function setPopupDomElemenEventListeners(domElements) {
+async function setPopupDomElementEventListeners(domElements) {
 	// Shuffling: Open in new tab option toggle
 	domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", async function () {
 		await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked);

@@ -103,7 +103,7 @@ You may also test the extension with Firefox by running `npm run dev:firefox`, w
 ### Versioning
 
 The `manifest.json` contains two version numbers: `version` and `version_name`.
-Packages that are released/uploaded to webstores will have both of these version numbers set to the same value.
+Packages that are released/uploaded to web stores will have both of these version numbers set to the same value.
 During development, smaller changes may get pushed to the `main` branch.
 These packages will have the same `version` number as the latest release, but a newer `version_name` number, often including a `-beta` suffix, to distinguish them from the latest release.
 
