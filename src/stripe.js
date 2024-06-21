@@ -19,7 +19,6 @@ async function getProducts(currency) {
 
 	const productSnapshot = await getDocs(productCurrencyQuery);
 
-	// TODO: Currently returns null if no product with currency is found. Should return USD price instead
 	// For each product, get the product price info
 	const productsPromises = productSnapshot.docs.map(async (productDoc) => {
 		let productInfo = productDoc.data();
@@ -42,7 +41,7 @@ async function getProducts(currency) {
 
 	// If no products with the requested currency are found, return products with USD pricing
 	if (products.length == 0) {
-		console.log(`No products found with currency ${currency}`);
+		console.log(`No products found with currency ${currency}, trying to get products with USD pricing.`);
 		return getProducts("usd");
 	}
 
@@ -62,10 +61,6 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 	const shufflePlusTestProducts = products.find(p => p.name == requestedProduct);
 
 	let paymentMethods = ["paypal", "card", "link"];
-	if (currency == "gbp") {
-		// TODO: Confirm payment method works
-		paymentMethods.push("revolut_pay");
-	}
 
 	let checkoutSessionData = {
 		price: shufflePlusTestProducts.prices.find(
@@ -75,9 +70,12 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 				p.priceInfo.recurring.interval == requestedInterval &&
 				p.priceInfo.recurring.interval_count == requestedIntervalCount
 		).priceId,
-		// TODO: Proper redirect URL, cancellation URL. Current URL does nothing after completion
-		success_url: chrome.runtime.getURL("html/shufflePlus.html"), //"https://tinyurl.com/RYVShufflePlus?sessionId={CHECKOUT_SESSION_ID}",
-		cancel_url: chrome.runtime.getURL("html/shufflePlus.html"), //"https://google.com?sessionId={CHECKOUT_SESSION_ID}",
+		// TODO: Proper success URL, cancellation URL. Redirect to either Github or nikkelm.dev, if redirecting to extension is not possible?
+		//chrome runtime URL's are not valid for Stripe
+		// current success_url does nothing after completion (users stays on stripe checkout page)
+		success_url: "https://tinyurl.com/RYVShufflePlus?sessionId={CHECKOUT_SESSION_ID}", //chrome.runtime.getURL("html/shufflePlus.html"), 
+		// cancel_url is optional
+		// cancel_url: "https://google.com?sessionId={CHECKOUT_SESSION_ID}", //chrome.runtime.getURL("html/shufflePlus.html"), 
 		allow_promotion_codes: true,
 		payment_method_types: paymentMethods
 	};
