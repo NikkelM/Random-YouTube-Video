@@ -19,7 +19,7 @@
 			<br />
 
 			<div id="googleLoginButtonDiv" class="hidden">
-				<button id="googleLoginButton" class="randomYoutubeVideoButton highlight-green-animated" type="button"
+				<button id="googleLoginButton" class="randomYoutubeVideoButton highlight-green" type="button"
 					title="Sign in to Random YouTube Video with your Google account to enable the extension to view your YouTube account. Subscribe to Shuffle+ to take full advantage of the offered features!">
 					Sign in with Google
 				</button>
@@ -31,10 +31,20 @@
 				<p id="googleLoginSuccessP">Subscribe to Shuffle+ to get access to all premium features!</p>
 			</div>
 
+			<div id="currencySelector">
+				<label for="currencySelectorLabel">Currency:</label>
+				<select id="currencySelectorSelect" class="currencySelector" name="currencySelect">
+					<option value="USD">USD</option>
+					<option value="EUR">EUR</option>
+					<option value="GBP">GBP</option>
+					<option value="RUB">RUB</option>
+				</select>
+			</div>
+
 			<!-- Manage subscription/Subscribe button -->
 			<br />
 			<div id="manageSubscribtionButtonDiv">
-				<button id="manageSubscribtionButton" class="randomYoutubeVideoButton" type="button">
+				<button id="manageSubscribtionButton" class="randomYoutubeVideoButton highlight-green-animated" type="button">
 					Subscribe to Shuffle+
 				</button>
 			</div>

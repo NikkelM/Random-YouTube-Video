@@ -68,7 +68,8 @@ export async function openStripeCheckout(user, requestedProduct, requestedCurren
 				p.priceInfo.active &&
 				p.priceInfo.type == "recurring" &&
 				p.priceInfo.recurring.interval == requestedInterval &&
-				p.priceInfo.recurring.interval_count == requestedIntervalCount
+				// If using the monthly interval, get the requested kind
+				(requestedInterval == "year" || p.priceInfo.recurring.interval_count == requestedIntervalCount)
 		).priceId,
 		// TODO: Proper success URL, cancellation URL. Redirect to either Github or nikkelm.dev, if redirecting to extension is not possible?
 		//chrome runtime URL's are not valid for Stripe

@@ -7,6 +7,7 @@ import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase, ref, child, update, get, remove } from "firebase/database";
 import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { countryToCurrency } from "country-to-currency";
 // We need to import utils.js to get the console re-routing function
 import { } from "./utils.js";
 
@@ -49,6 +50,36 @@ async function checkShufflePlusStatus() {
 			}
 		});
 	}
+
+	await getUserLocaleInfo();
+}
+
+// Gets the user's IP, countryCode and local currency to store in session storage
+// We are not saving this permanently, as the user's location may change
+async function getUserLocaleInfo() {
+	// TODO: Find other things that would better be stored in session storage
+	// Store the user's country code and local currency in session storage
+	const userIP = await fetch("https://api.ipify.org?format=json").then(response => response.json()).then(data => data.ip);
+	let userCurrency, userCountryCode = null;
+	try {
+		const response = await fetch(`http://ip-api.com/json/${userIP}?fields=countryCode,currency`);
+		if (response.ok) {
+			const data = await response.json();
+			userCurrency = data.currency;
+			userCountryCode = data.countryCode;
+		}
+	} catch (error) {
+		console.error("Error fetching user currency:", error);
+	}
+
+	if (!userCurrency) {
+		userCurrency = countryToCurrency[navigator.language.split("-")[1]];
+	}
+	if (!userCountryCode) {
+		userCountryCode = navigator.language.split("-")[1];
+	}
+
+	chrome.storage.session.set({ userCurrency: userCurrency, userCountryCode: userCountryCode });
 }
 
 // Make sure we are not using too much local storage
