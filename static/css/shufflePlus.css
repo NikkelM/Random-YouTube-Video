@@ -21,6 +21,8 @@
 	align-items: center;
 	flex-direction: column;
 	text-align: left;
+	line-height: 1.5;
+	font-weight: 200;
 }
 
 .multiColumns {

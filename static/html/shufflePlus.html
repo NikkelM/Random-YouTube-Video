@@ -25,12 +25,15 @@
 					title="Sign in to Random YouTube Video with your Google account to enable the extension to view your YouTube account. Subscribe to Shuffle+ to take full advantage of the offered features!">
 					Sign in with Google
 				</button>
+				<br />
 			</div>
 			<div id="googleLoginErrorDiv" class="hidden">
 				<p id="googleLoginErrorP"></p>
+				<br />
 			</div>
 			<div id="googleLoginSuccessDiv" class="hidden">
 				<p id="googleLoginSuccessP">Subscribe to Shuffle+ to get access to all premium features!</p>
+				<br />
 			</div>
 
 			<div id="productOverviewDiv" class="outlinedContainer">
@@ -50,12 +53,12 @@
 					<p>Subscribe to Shuffle+ to gain access to a wide range of new features to further improve your experience:</p>
 					<ul id="benefitsList" style="text-align: left;">
 						<!-- TODO: Implement features -->
-						<li>Shuffle from your subscriptions/from multiple channels at once (coming soon)</li>
-						<li>Ignore already watched videos (coming soon)</li>
-						<li>More filter options (coming soon)</li>
-						<li>Favourite channels for quick access in the popup (coming soon)</li>
-						<li>Immediate access to all future premium features</li>
-						<li>Support the development and maintenance of the extension</li>
+						<li>Shuffle from your subscriptions or <b>multiple channels</b> at once (coming soon)</li>
+						<li><b>Ignore</b> already watched videos (coming soon)</li>
+						<li>More <b>filter options</b> (coming soon)</li>
+						<li><b>Favourite channels</b> for quick access in the popup (coming soon)</li>
+						<li>Immediate access to <b>all future premium features</b></li>
+						<li><b>Support the development</b> and maintenance of the extension</li>
 					</ul>
 					
 					<h3>Choose your plan:</h3>
@@ -63,19 +66,20 @@
 						<p class="displayInline" style="padding-top: 21px; transform: translate(30px)">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3-Monthly</p>
 						<div class="toggle">
 							<label id="switchPlanInterval">
-								<input type="checkbox" id="switchPlanIntervalToggle" />
+								<input type="checkbox" id="switchPlanIntervalToggle" checked/>
 								<span class="slider alwaysGreen"></span>
 							</label>
 						</div>
 						<p class="displayInline" style="padding-top: 21px; transform: translate(-30px)">Yearly (save 15%!)</p>
 					</div>
 
-					<button id="subscribeButton" class="randomYoutubeVideoButton highlight-green importantButton" type="button" style="min-width: 60px;">Subscribe for $9.99 / year</button>
+					<button id="subscribeButton" class="randomYoutubeVideoButton highlight-green importantButton" type="button">Subscribe to Shuffle+ now!</button>
 				</div>
 			</div>
 			
 			<!-- TODO: Open an overlay while logging in, or waiting for the stripe flow to complete, asking the user to follow instructions, and in case fo Stripe, reload page afterwards -->
 
+			<!-- TODO: Make this a mange button only -->
 			<!-- Manage subscription/Subscribe button -->
 			<br />
 			<div id="manageSubscriptionButtonDiv">
