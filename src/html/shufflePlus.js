@@ -37,7 +37,7 @@ function getDomElements() {
 		googleLoginSuccessP: document.getElementById("googleLoginSuccessP"),
 
 		// SUBSCRIBE
-		// TODO: Move into product overview
+		// TODO: Make manage button only (behaviour)
 		// Subscribe button
 		manageSubscriptionButtonDiv: document.getElementById("manageSubscriptionButtonDiv"),
 		manageSubscriptionButton: document.getElementById("manageSubscriptionButton"),
@@ -47,6 +47,10 @@ function getDomElements() {
 		productOverviewDiv: document.getElementById("productOverviewDiv"),
 		// Currency selector
 		currencySelectorSelect: document.getElementById("currencySelectorSelect"),
+		// Plan interval toggle
+		switchPlanIntervalToggle: document.getElementById("switchPlanIntervalToggle"),
+		// Subscribe button
+		subscribeButton: document.getElementById("subscribeButton"),
 
 		// FORGET ME
 		// Forget me button
@@ -86,7 +90,6 @@ async function setDomElementValuesFromConfig(domElements) {
 		await setSubscriptionUI(domElements, user);
 	} else {
 		domElements.googleLoginButtonDiv.classList.remove("hidden");
-		domElements.manageSubscriptionButtonDiv.classList.add("hidden");
 	}
 
 	// Set the value of the selector to the user currency, or USD if not found
@@ -111,7 +114,6 @@ async function setDomElementEventListeners(domElements) {
 			domElements.googleLoginErrorDiv.classList.add("hidden");
 			domElements.googleLoginSuccessDiv.classList.remove("hidden");
 			domElements.googleRevokeAccessButtonDiv.classList.remove("hidden");
-			domElements.manageSubscriptionButtonDiv.classList.remove("hidden");
 			await setSubscriptionUI(domElements, user);
 
 			if (await userHasActiveSubscriptionRole()) {
@@ -134,23 +136,21 @@ async function setDomElementEventListeners(domElements) {
 
 	// Manage subscription button
 	domElements.manageSubscriptionButton.addEventListener("click", async function () {
-		if (await userHasActiveSubscriptionRole()) {
-			// TODO: This is the test URL
-			const url = `https://billing.stripe.com/p/login/test_7sI5lw95Afu5fzqbII?prefilled_email=${user.userInfo.email}`;
-			await chrome.tabs.create({ url });
-		} else {
-			domElements.manageSubscriptionButton.textContent = "Preparing subscription...";
+		// TODO: This is the test URL
+		const url = `https://billing.stripe.com/p/login/test_7sI5lw95Afu5fzqbII?prefilled_email=${user.userInfo.email}`;
+		await chrome.tabs.create({ url });
 
-			// Get configuration from UI or use defaults
-			// TODO: Use correct product name
-			let requestedProduct = "Shuffle+ (Test)";
-			let requestedCurrency = domElements.currencySelectorSelect.value;
-			let requestedInterval = "year";
-			let requestedIntervalCount = 1; // Unused with yearly interval in this context
+		// TODO: Move to new button
+		// domElements.manageSubscriptionButton.textContent = "Preparing subscription...";
 
-			await openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval, requestedIntervalCount);
-			domElements.manageSubscriptionButton.textContent = "Subscribe to Shuffle+";
-		}
+		// // Get configuration from UI or use defaults
+		// // TODO: Use correct product name
+		// let requestedProduct = "Shuffle+ (Test)";
+		// let requestedCurrency = domElements.currencySelectorSelect.value;
+		// let requestedInterval = "year";
+		// let requestedIntervalCount = 1; // Unused with yearly interval in this context
+
+		// await openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval, requestedIntervalCount);
 	});
 
 	// Forget me button
@@ -218,13 +218,16 @@ async function setSubscriptionUI(domElements, user) {
 	const subscriptionStatus = await getSubscriptionStatus(user);
 
 	if (subscriptionStatus.hasActiveSubscription) {
+		domElements.manageSubscriptionButtonDiv.classList.remove("hidden");
+
 		if (subscriptionStatus.isCancelled) {
 			domElements.googleLoginSuccessP.textContent = `Your benefits will expire on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} if you do not renew your subscription beforehand!`;
 		} else {
 			domElements.googleLoginSuccessP.textContent = `Your subscription gives you access to all Shuffle+ benefits until ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} and will renew automatically.`;
 		}
-		domElements.manageSubscriptionButton.textContent = "Manage your subscription";
 	} else {
+		domElements.manageSubscriptionButtonDiv.classList.add("hidden");
+
 		if (subscriptionStatus.subscriptionEnd) {
 			if (subscriptionStatus.subscriptionEnd > Date.now()) {
 				domElements.googleLoginSuccessP.textContent = `Your benefits will expire on ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} if you do not renew your subscription beforehand!`;

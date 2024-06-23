@@ -137,6 +137,7 @@ export async function getSubscriptions(user = null, activeOnly = true) {
 	return subscriptions;
 }
 
+// TODO: Save if role exists in session storage?
 export async function userHasActiveSubscriptionRole(user = null) {
 	const stripeRole = await getStripeRole(user);
 	return stripeRole == "shufflePlus";
