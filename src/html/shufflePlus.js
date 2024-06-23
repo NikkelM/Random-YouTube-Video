@@ -39,8 +39,8 @@ function getDomElements() {
 		// SUBSCRIBE
 		// TODO: Move into product overview
 		// Subscribe button
-		manageSubscribtionButtonDiv: document.getElementById("manageSubscribtionButtonDiv"),
-		manageSubscribtionButton: document.getElementById("manageSubscribtionButton"),
+		manageSubscriptionButtonDiv: document.getElementById("manageSubscriptionButtonDiv"),
+		manageSubscriptionButton: document.getElementById("manageSubscriptionButton"),
 
 		// PRODUCT OVERVIEW
 		// Product overview div
@@ -86,7 +86,7 @@ async function setDomElementValuesFromConfig(domElements) {
 		await setSubscriptionUI(domElements, user);
 	} else {
 		domElements.googleLoginButtonDiv.classList.remove("hidden");
-		domElements.manageSubscribtionButtonDiv.classList.add("hidden");
+		domElements.manageSubscriptionButtonDiv.classList.add("hidden");
 	}
 
 	// Set the value of the selector to the user currency, or USD if not found
@@ -111,7 +111,7 @@ async function setDomElementEventListeners(domElements) {
 			domElements.googleLoginErrorDiv.classList.add("hidden");
 			domElements.googleLoginSuccessDiv.classList.remove("hidden");
 			domElements.googleRevokeAccessButtonDiv.classList.remove("hidden");
-			domElements.manageSubscribtionButtonDiv.classList.remove("hidden");
+			domElements.manageSubscriptionButtonDiv.classList.remove("hidden");
 			await setSubscriptionUI(domElements, user);
 
 			chrome.action.setIcon({
@@ -131,13 +131,13 @@ async function setDomElementEventListeners(domElements) {
 	});
 
 	// Manage subscription button
-	domElements.manageSubscribtionButton.addEventListener("click", async function () {
+	domElements.manageSubscriptionButton.addEventListener("click", async function () {
 		if (await userHasActiveSubscriptionRole()) {
 			// TODO: This is the test URL
 			const url = `https://billing.stripe.com/p/login/test_7sI5lw95Afu5fzqbII?prefilled_email=${user.userInfo.email}`;
 			await chrome.tabs.create({ url });
 		} else {
-			domElements.manageSubscribtionButton.textContent = "Preparing subscription...";
+			domElements.manageSubscriptionButton.textContent = "Preparing subscription...";
 
 			// Get configuration from UI or use defaults
 			// TODO: Use correct product name
@@ -147,21 +147,21 @@ async function setDomElementEventListeners(domElements) {
 			let requestedIntervalCount = 1; // Unused with yearly interval in this context
 
 			await openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval, requestedIntervalCount);
-			domElements.manageSubscribtionButton.textContent = "Subscribe to Shuffle+";
+			domElements.manageSubscriptionButton.textContent = "Subscribe to Shuffle+";
 		}
 	});
 
 	// Forget me button
-	let enableConfirmButtonTimout;
+	let enableConfirmButtonTimeout;
 	domElements.googleRevokeAccessButton.addEventListener("click", function () {
 		domElements.googleRevokeAccessConfirmationPopup.classList.remove("hidden");
 		domElements.googleRevokeAccessConfirmButton.disabled = true;
-		domElements.googleRevokeAccessConfirmButton.classList.add("button-fillup");
+		domElements.googleRevokeAccessConfirmButton.classList.add("buttonFillUp");
 
 		// Enable the confirm button after 5 seconds
-		enableConfirmButtonTimout = setTimeout(function () {
+		enableConfirmButtonTimeout = setTimeout(function () {
 			domElements.googleRevokeAccessConfirmButton.disabled = false;
-			domElements.googleRevokeAccessConfirmButton.classList.remove("button-fillup");
+			domElements.googleRevokeAccessConfirmButton.classList.remove("buttonFillUp");
 		}, 10000);
 	});
 
@@ -169,14 +169,14 @@ async function setDomElementEventListeners(domElements) {
 	domElements.googleRevokeAccessConfirmationPopup.addEventListener("click", function (event) {
 		if (event.target === this) {
 			domElements.googleRevokeAccessConfirmationPopup.classList.add("hidden");
-			clearTimeout(enableConfirmButtonTimout);
+			clearTimeout(enableConfirmButtonTimeout);
 		}
 	});
 
 	// Forget me - cancel button
 	domElements.googleRevokeAccessCancelButton.addEventListener("click", function () {
 		domElements.googleRevokeAccessConfirmationPopup.classList.add("hidden");
-		clearTimeout(enableConfirmButtonTimout);
+		clearTimeout(enableConfirmButtonTimeout);
 	});
 
 	// Forget me - confirm button
@@ -188,12 +188,12 @@ async function setDomElementEventListeners(domElements) {
 			domElements.googleLoginButtonDiv.classList.remove("hidden");
 			domElements.googleLoginSuccessDiv.classList.add("hidden");
 			domElements.googleRevokeAccessButtonDiv.classList.add("hidden");
-			domElements.manageSubscribtionButtonDiv.classList.add("hidden");
+			domElements.manageSubscriptionButtonDiv.classList.add("hidden");
 			domElements.googleRevokeAccessButton.textContent = "Forget me permanently";
-			domElements.welcomeHeader.textContent = "Logged out successfully! Sign in below to get started again";
+			domElements.welcomeHeader.textContent = "Account was successfully removed! Sign in to get started again";
 		} else {
 			domElements.googleLoginSuccessDiv.classList.add("hidden");
-			domElements.googleRevokeAccessButton.textContent = "Signout failed!";
+			domElements.googleRevokeAccessButton.textContent = "Removing account failed! Please try again later.";
 		}
 	});
 
@@ -221,7 +221,7 @@ async function setSubscriptionUI(domElements, user) {
 		} else {
 			domElements.googleLoginSuccessP.textContent = `Your subscription gives you access to all Shuffle+ benefits until ${new Date(subscriptionStatus.subscriptionEnd).toLocaleDateString()} and will renew automatically.`;
 		}
-		domElements.manageSubscribtionButton.textContent = "Manage your subscription";
+		domElements.manageSubscriptionButton.textContent = "Manage your subscription";
 	} else {
 		if (subscriptionStatus.subscriptionEnd) {
 			if (subscriptionStatus.subscriptionEnd > Date.now()) {
