@@ -37,9 +37,14 @@ function getDomElements() {
 		googleLoginSuccessP: document.getElementById("googleLoginSuccessP"),
 
 		// SUBSCRIBE
+		// TODO: Move into product overview
 		// Subscribe button
 		manageSubscribtionButtonDiv: document.getElementById("manageSubscribtionButtonDiv"),
 		manageSubscribtionButton: document.getElementById("manageSubscribtionButton"),
+
+		// PRODUCT OVERVIEW
+		// Product overview div
+		productOverviewDiv: document.getElementById("productOverviewDiv"),
 		// Currency selector
 		currencySelectorSelect: document.getElementById("currencySelectorSelect"),
 

@@ -4,8 +4,9 @@
 		<title>Shuffle+ - Random YouTube Video</title>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<link id="RandomYoutubeVideoStyleSheet" rel="stylesheet" href="../css/popup.css" />
-		<link id="RandomYoutubeVideoStyleSheet" rel="stylesheet" href="../css/loadingOverlay.css" />
+		<link rel="stylesheet" href="../css/popup.css" />
+		<link rel="stylesheet" href="../css/loadingOverlay.css" />
+		<link rel="stylesheet" href="../css/shufflePlus.css" />
 	</head>
 
 	<body id="randomYoutubeVideoBody">
@@ -19,7 +20,7 @@
 			<br />
 
 			<div id="googleLoginButtonDiv" class="hidden">
-				<button id="googleLoginButton" class="randomYoutubeVideoButton highlight-green" type="button"
+				<button id="googleLoginButton" class="randomYoutubeVideoButton highlight-green" type="button" style="margin-bottom: 10px;"
 					title="Sign in to Random YouTube Video with your Google account to enable the extension to view your YouTube account. Subscribe to Shuffle+ to take full advantage of the offered features!">
 					Sign in with Google
 				</button>
@@ -31,14 +32,44 @@
 				<p id="googleLoginSuccessP">Subscribe to Shuffle+ to get access to all premium features!</p>
 			</div>
 
-			<div id="currencySelector">
-				<label for="currencySelectorLabel">Currency:</label>
-				<select id="currencySelectorSelect" class="currencySelector" name="currencySelect">
-					<option value="USD">USD</option>
-					<option value="EUR">EUR</option>
-					<option value="GBP">GBP</option>
-					<option value="RUB">RUB</option>
-				</select>
+			<div id="productOverviewDiv" class="outlinedContainer">
+				<div id="currencySelectorContainer" class="alignTopRight">
+					<label for="currencySelector">Currency:</label>
+					<select id="currencySelectorSelect" class="currencySelector" name="currencySelect">
+						<option value="USD">USD</option>
+						<option value="EUR">EUR</option>
+						<option value="GBP">GBP</option>
+						<option value="RUB">RUB</option>
+					</select>
+				</div>
+				
+				<!-- Benefit showcase -->
+				<div id="benefitsShowcaseDiv" class="prettyList">
+					<h2>Shuffle+ benefits</h2>
+					<p>Subscribe to Shuffle+ to gain access to a wide range of new features to further improve your experience:</p>
+					<ul id="benefitsList" style="text-align: left;">
+						<!-- TODO: Implement features -->
+						<li>Shuffle from your subscriptions/from multiple channels at once (coming soon)</li>
+						<li>Ignore already watched videos (coming soon)</li>
+						<li>More filter options (coming soon)</li>
+						<li>Favourite channels for quick access in the popup (coming soon)</li>
+						<li>Immediate access to all future premium features</li>
+						<li>Support the development and maintenance of the extension</li>
+					</ul>
+				</div>
+	
+				<div id="pricingDiv" class="multiColumns">
+					<div class="productContainer">
+						<h3>3-monthly plan</h3>
+						<p>Stay flexible with this short-term plan, and get all benefits of the yearly plan!</p>
+						<button class="randomYoutubeVideoButton highlight-green" type="button" style="min-width: 60px;">$2.99 / quarter</button>
+					</div>
+					<div class="productContainer">
+						<h3>Yearly Plan</h3>
+						<p>Save over 15% when compared to the 3-monthly plan!</p>
+						<button class="randomYoutubeVideoButton highlight-green-animated" type="button" style="min-width: 60px;">$9.99 / year</button>
+					</div>
+				</div>
 			</div>
 
 			<!-- Manage subscription/Subscribe button -->
@@ -47,22 +78,6 @@
 				<button id="manageSubscribtionButton" class="randomYoutubeVideoButton highlight-green-animated" type="button">
 					Subscribe to Shuffle+
 				</button>
-			</div>
-
-			<!-- Benefit showcase -->
-			<br />
-			<br />
-			<div id="benefitsShowcaseDiv" style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
-				<h2>Shuffle+ benefits</h2>
-				<p>Subscribe to Shuffle+ to gain access to a wide range of new features to further improve your experience:</p>
-				<ul id="benefitsList" style="text-align: left;">
-					<li>Shuffle from your subscriptions/from multiple channels at once</li>
-					<li>Ignore already watched videos</li>
-					<li>More filter options</li>
-					<li>Favourite channels for quick access in the popup</li>
-					<li>All future premium features included</li>
-					<li>Support the development and maintenance of the extension</li>
-				</ul>
 			</div>
 
 			<div id="googleRevokeAccessConfirmationPopup" class="overlayDiv hidden">
