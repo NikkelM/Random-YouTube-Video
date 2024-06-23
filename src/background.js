@@ -65,7 +65,8 @@ async function getUserLocaleInfo() {
 		const response = await fetch(`http://ip-api.com/json/${userIP}?fields=countryCode,currency`);
 		if (response.ok) {
 			const data = await response.json();
-			userCurrency = data.currency;
+			// Lowercase, as that's the formatting in Stripe
+			userCurrency = data.currency.toLowerCase();
 			userCountryCode = data.countryCode;
 		}
 	} catch (error) {
@@ -73,7 +74,7 @@ async function getUserLocaleInfo() {
 	}
 
 	if (!userCurrency) {
-		userCurrency = countryToCurrency[navigator.language.split("-")[1]];
+		userCurrency = countryToCurrency[navigator.language.split("-")[1]].toLowerCase();
 	}
 	if (!userCountryCode) {
 		userCountryCode = navigator.language.split("-")[1];

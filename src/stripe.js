@@ -9,11 +9,12 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const firestore = getFirestore(app);
 
 // Get products and pricing information from Firestore/Stripe
-async function getProducts(currency) {
+export async function getProducts(currency, productName) {
 	const currencyRef = new FieldPath("metadata", "currency");
 	const productCurrencyQuery = query(
 		collection(firestore, "products"),
 		where("active", "==", true),
+		where("name", "==", productName),
 		where(currencyRef, "==", currency)
 	);
 
@@ -23,7 +24,7 @@ async function getProducts(currency) {
 	const productsPromises = productSnapshot.docs.map(async (productDoc) => {
 		let productInfo = productDoc.data();
 
-		// Fetch prices subcollection per product
+		// Fetch prices sub-collection per product
 		const priceQuerySnapshot = await getDocs(collection(productDoc.ref, "prices"));
 
 		// Iterate over all price documents and filter by currency
@@ -42,35 +43,36 @@ async function getProducts(currency) {
 	// If no products with the requested currency are found, return products with USD pricing
 	if (products.length == 0) {
 		console.log(`No products found with currency ${currency}, trying to get products with USD pricing.`);
-		return getProducts("usd");
+		if (currency == "usd") {
+			console.log("No products found with USD pricing, returning empty products array.");
+			return { products: [], currency: null };
+		}
+		return getProducts("usd", productName);
 	}
 
-	return {
-		products: products.filter(product => product !== null),
-		currency: currency
-	};
+	return products.filter(product => product !== null)[0];
+}
+
+export function getPriceFromProducts(products, requestedInterval, requestedIntervalCount) {
+	return products.prices.find(
+		p =>
+			p.priceInfo.active &&
+			p.priceInfo.type == "recurring" &&
+			p.priceInfo.recurring.interval == requestedInterval &&
+			// If using the monthly interval, get the requested kind
+			(requestedInterval == "year" || p.priceInfo.recurring.interval_count == requestedIntervalCount)
+	);
 }
 
 export async function openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval, requestedIntervalCount) {
 	user ??= await getUser(false, true, true);
-	// TODO: Do we want to scope to requestedProduct in getProducts as well?
 	// In case the requested currency is not available, we default to USD
-	const { products, currency } = await getProducts(requestedCurrency);
-
-	// In theory, there should always only be one matching product returned by getProducts
-	const shufflePlusTestProducts = products.find(p => p.name == requestedProduct);
+	const products = await getProducts(requestedCurrency, requestedProduct);
 
 	let paymentMethods = ["paypal", "card", "link"];
 
 	let checkoutSessionData = {
-		price: shufflePlusTestProducts.prices.find(
-			p =>
-				p.priceInfo.active &&
-				p.priceInfo.type == "recurring" &&
-				p.priceInfo.recurring.interval == requestedInterval &&
-				// If using the monthly interval, get the requested kind
-				(requestedInterval == "year" || p.priceInfo.recurring.interval_count == requestedIntervalCount)
-		).priceId,
+		price: getPriceFromProducts(products, requestedInterval, requestedIntervalCount).priceId,
 		// TODO: Proper success URL, cancellation URL. Redirect to either Github or nikkelm.dev, if redirecting to extension is not possible?
 		//chrome runtime URL's are not valid for Stripe
 		// current success_url does nothing after completion (users stays on stripe checkout page)

@@ -2,10 +2,13 @@
 import { setSyncStorageValue } from "../chromeStorage.js";
 import { getUser, revokeAccess } from "../googleOauth.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
-import { openStripeCheckout, getSubscriptions, userHasActiveSubscriptionRole } from "../stripe.js";
+import { openStripeCheckout, getSubscriptions, getProducts, getPriceFromProducts, userHasActiveSubscriptionRole } from "../stripe.js";
 
 // ----- Setup -----
 let user;
+let selectedProductInfo;
+// TODO: Change default
+const defaultProductName = "Shuffle+ (Test)";
 const domElements = getDomElements();
 await setDomElementValuesFromConfig(domElements);
 await setDomElementEventListeners(domElements);
@@ -93,7 +96,16 @@ async function setDomElementValuesFromConfig(domElements) {
 	}
 
 	// Set the value of the selector to the user currency, or USD if not found
-	domElements.currencySelectorSelect.value = (await chrome.storage.session.get("userCurrency")).userCurrency || "USD";
+	const userCurrency = (await chrome.storage.session.get("userCurrency")).userCurrency || "usd";
+	domElements.currencySelectorSelect.value = userCurrency;
+
+	selectedProductInfo = await getProducts(userCurrency, defaultProductName);
+	let requestedInterval = domElements.switchPlanIntervalToggle.checked ? "year" : "month";
+	// We offer a 3-monthly and a yearly plan
+	let requestedIntervalCount = requestedInterval == "year" ? 1 : 3;
+	const price = getPriceFromProducts(selectedProductInfo, requestedInterval, requestedIntervalCount);
+
+	domElements.subscribeButton.textContent = `Subscribe for ${domElements.currencySelectorSelect.value.toUpperCase()} ${price.priceInfo.unit_amount / 100}`;
 
 	// This must be last
 	domElements.loadingOverlay.classList.add("fadeOut");
@@ -134,23 +146,48 @@ async function setDomElementEventListeners(domElements) {
 		}
 	});
 
+	// Currency selector
+	domElements.currencySelectorSelect.addEventListener("change", async function () {
+		const userCurrency = domElements.currencySelectorSelect.value;
+		chrome.storage.session.set({ userCurrency: userCurrency });
+		
+		selectedProductInfo = await getProducts(userCurrency, defaultProductName);
+		let requestedInterval = domElements.switchPlanIntervalToggle.checked ? "year" : "month";
+		// We offer a 3-monthly and a yearly plan
+		let requestedIntervalCount = requestedInterval == "year" ? 1 : 3;
+		const price = getPriceFromProducts(selectedProductInfo, requestedInterval, requestedIntervalCount);
+
+		domElements.subscribeButton.textContent = `Subscribe for ${userCurrency.toUpperCase()} ${price.priceInfo.unit_amount / 100}`;
+	});
+
+	// Plan interval toggle
+	domElements.switchPlanIntervalToggle.addEventListener("change", async function () {
+		let requestedInterval = domElements.switchPlanIntervalToggle.checked ? "year" : "month";
+		// We offer a 3-monthly and a yearly plan
+		let requestedIntervalCount = requestedInterval == "year" ? 1 : 3;
+		const price = getPriceFromProducts(selectedProductInfo, requestedInterval, requestedIntervalCount);
+
+		domElements.subscribeButton.textContent = `Subscribe for ${domElements.currencySelectorSelect.value.toUpperCase()} ${price.priceInfo.unit_amount / 100}`;
+	});
+
+	// Subscribe button
+	domElements.subscribeButton.addEventListener("click", async function () {
+		domElements.subscribeButton.textContent = "Preparing subscription...";
+		// TODO: Use correct product name
+		let requestedProduct = "Shuffle+ (Test)";
+		let requestedCurrency = domElements.currencySelectorSelect.value;
+		let requestedInterval = domElements.switchPlanIntervalToggle.checked ? "year" : "month";
+		// We offer a 3-monthly and a yearly plan
+		let requestedIntervalCount = requestedInterval == "year" ? 1 : 3;
+
+		await openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval, requestedIntervalCount);
+	});
+
 	// Manage subscription button
 	domElements.manageSubscriptionButton.addEventListener("click", async function () {
 		// TODO: This is the test URL
 		const url = `https://billing.stripe.com/p/login/test_7sI5lw95Afu5fzqbII?prefilled_email=${user.userInfo.email}`;
 		await chrome.tabs.create({ url });
-
-		// TODO: Move to new button
-		// domElements.manageSubscriptionButton.textContent = "Preparing subscription...";
-
-		// // Get configuration from UI or use defaults
-		// // TODO: Use correct product name
-		// let requestedProduct = "Shuffle+ (Test)";
-		// let requestedCurrency = domElements.currencySelectorSelect.value;
-		// let requestedInterval = "year";
-		// let requestedIntervalCount = 1; // Unused with yearly interval in this context
-
-		// await openStripeCheckout(user, requestedProduct, requestedCurrency, requestedInterval, requestedIntervalCount);
 	});
 
 	// Forget me button
