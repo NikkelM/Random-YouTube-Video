@@ -1,11 +1,17 @@
 # Changelog
 
-## v3.1.4
+## v3.1.5
 
 <!--Releasenotes start-->
+- Added a news page that can be populated on extension updates.
+- Added news that playlist generation is currently broken.
+- Changed the default option for generating playlists to be disabled while the feature does not work.
+<!--Releasenotes end-->
+
+## v3.1.4
+
 - Fixed an animation in the popup.
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
-<!--Releasenotes end-->
 
 ## v3.1.3
 
