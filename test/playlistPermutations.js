@@ -20,6 +20,11 @@ export const times = {
 }
 
 // ---------- Config ----------
+// Any overrides to the default that needs to be different for the tests
+const overrides = {
+	shuffleOpenAsPlaylistOption: true
+};
+const configSyncTestDefaults = { ...configSyncDefaults, ...overrides };
 
 // The configSync should always be the default, with these settings being changed
 // This allows us to not have to define something for every setting
@@ -119,7 +124,7 @@ for (const useCustomApiKeyOption of configSyncModifiers[0]) {
 			// Exclude invalid combinations
 			if (!useCustomApiKeyOption && (customYoutubeApiKey !== null || databaseSharingEnabledOption)) continue;
 
-			let modifiedConfigSync = deepCopy(configSyncDefaults);
+			let modifiedConfigSync = deepCopy(configSyncTestDefaults);
 			modifiedConfigSync.useCustomApiKeyOption = useCustomApiKeyOption;
 			modifiedConfigSync.customYoutubeApiKey = customYoutubeApiKey;
 			modifiedConfigSync.databaseSharingEnabledOption = databaseSharingEnabledOption;
@@ -138,7 +143,7 @@ for (const shuffleOpenInNewTabOption of configSyncModifiers[3]) {
 			if (!shuffleOpenInNewTabOption && shuffleReUseNewTabOption) continue;
 			if (!shuffleReUseNewTabOption && shuffleTabId !== null) continue;
 
-			let modifiedConfigSync = deepCopy(configSyncDefaults);
+			let modifiedConfigSync = deepCopy(configSyncTestDefaults);
 			modifiedConfigSync.shuffleOpenInNewTabOption = shuffleOpenInNewTabOption;
 			modifiedConfigSync.shuffleReUseNewTabOption = shuffleReUseNewTabOption;
 			modifiedConfigSync.shuffleTabId = shuffleTabId;
@@ -152,7 +157,7 @@ configSyncPermutations.openInNewTabPermutations = openInNewTabPermutations;
 // Ignore shorts
 const ignoreShortsPermutations = [];
 for (const shuffleIgnoreShortsOption of configSyncModifiers[6]) {
-	let modifiedConfigSync = deepCopy(configSyncDefaults);
+	let modifiedConfigSync = deepCopy(configSyncTestDefaults);
 	modifiedConfigSync.shuffleIgnoreShortsOption = shuffleIgnoreShortsOption;
 
 	ignoreShortsPermutations.push(modifiedConfigSync);
@@ -163,7 +168,7 @@ configSyncPermutations.ignoreShortsPermutations = ignoreShortsPermutations;
 const openAsPlaylistPermutations = [];
 for (const shuffleOpenAsPlaylistOption of configSyncModifiers[7]) {
 	for (const shuffleNumVideosInPlaylist of configSyncModifiers[8]) {
-		let modifiedConfigSync = deepCopy(configSyncDefaults);
+		let modifiedConfigSync = deepCopy(configSyncTestDefaults);
 		// Always open in a new tab, so we can check the stub
 		modifiedConfigSync.shuffleOpenInNewTabOption = true;
 
@@ -185,7 +190,7 @@ for (const activeOption of configSyncModifiers[9]) {
 		// The allVideosOption and percentageOption do not error out if no value is set
 		if (["allVideosOption", "percentageOption"].includes(activeOption) && channelSettingsPermutation.type === "empty") continue;
 
-		let modifiedConfigSync = deepCopy(configSyncDefaults);
+		let modifiedConfigSync = deepCopy(configSyncTestDefaults);
 		let usedChannelSettingsPermutation = deepCopy(channelSettingsPermutation);
 
 		usedChannelSettingsPermutation.template.activeOption = activeOption;
@@ -569,7 +574,7 @@ export function needsDBInteraction(permutation) {
 }
 
 // Determine whether or not a permutation needs to interact with the YouTube API
-export function needsYTAPIInteraction(permutation, configSync = configSyncDefaults) {
+export function needsYTAPIInteraction(permutation, configSync = configSyncTestDefaults) {
 	const databaseSharing = configSync.databaseSharingEnabledOption;
 	if (databaseSharing) {
 		return (needsDBInteraction(permutation) &&

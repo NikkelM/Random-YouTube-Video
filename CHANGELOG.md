@@ -1,7 +1,6 @@
 # Changelog
 
 ## v4.0.0-beta
-
 <!--Releasenotes start-->
 - Introducing Shuffle+, a new way to shuffle, with more customization options than ever before.
 - Subscribe to Shuffle+ to gain access to exclusive new features, taking your shuffling experience to the next level.
@@ -11,6 +10,11 @@
 - A number of improvements to the maintainability of the extension's codebase.
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
 <!--Releasenotes end-->
+
+## v3.1.5
+- Added a news page that can be populated on extension updates.
+- Added news that playlist generation is currently broken.
+- Changed the default option for generating playlists to be disabled while the feature does not work.
 
 ## v3.1.4
 

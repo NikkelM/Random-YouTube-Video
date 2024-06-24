@@ -828,6 +828,8 @@ describe('shuffleVideo', function () {
 
 												await chooseRandomVideo(input.channelId, false, domElement);
 
+												console.log(windowOpenStub.args[0][0])
+
 												const chosenVideos = windowOpenStub.args[0][0].split('video_ids=')[1].split(',');
 
 												// Depending on the activeOption, make sure that only videos that match the filter are chosen
