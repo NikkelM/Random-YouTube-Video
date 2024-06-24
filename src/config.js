@@ -13,6 +13,7 @@ export const configSyncDefaults = {
 	"shuffleReUseNewTabOption": true,
 	// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
 	"shuffleIgnoreShortsOption": 1,
+	// TODO: Revert when fixed
 	"shuffleOpenAsPlaylistOption": false,
 	// How many random videos to add to a playlist (0-50)
 	"shuffleNumVideosInPlaylist": 10,
