@@ -13,7 +13,7 @@ export const configSyncDefaults = {
 	"shuffleReUseNewTabOption": true,
 	// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
 	"shuffleIgnoreShortsOption": 1,
-	"shuffleOpenAsPlaylistOption": true,
+	"shuffleOpenAsPlaylistOption": false,
 	// How many random videos to add to a playlist (0-50)
 	"shuffleNumVideosInPlaylist": 10,
 	// If shuffled videos are opened in a new tab, save the tab ID of that tab here to reuse the tab when the user shuffles again
