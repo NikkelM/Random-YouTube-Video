@@ -1,12 +1,16 @@
 # Changelog
 
-## v3.1.5
+## v3.1.6
 
 <!--Releasenotes start-->
+- Removed hints from the breaking news page.
+<!--Releasenotes end-->
+
+## v3.1.5
+
 - Added a news page that can be populated on extension updates.
 - Added news that playlist generation is currently broken.
 - Changed the default option for generating playlists to be disabled while the feature does not work.
-<!--Releasenotes end-->
 
 ## v3.1.4
 
