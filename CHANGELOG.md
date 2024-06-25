@@ -9,9 +9,11 @@
 - The extension icon will now reflect your Shuffle+ subscription status.
 - A number of improvements to the maintainability of the extension's codebase.
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
+- Removed hints from the breaking news page.
 <!--Releasenotes end-->
 
 ## v3.1.5
+
 - Added a news page that can be populated on extension updates.
 - Added news that playlist generation is currently broken.
 - Changed the default option for generating playlists to be disabled while the feature does not work.
