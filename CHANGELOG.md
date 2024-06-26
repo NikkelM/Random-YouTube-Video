@@ -9,7 +9,6 @@
 - The extension icon will now reflect your Shuffle+ subscription status.
 - A number of improvements to the maintainability of the extension's codebase.
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
-- Removed hints from the breaking news page.
 <!--Releasenotes end-->
 
 ## v3.1.5
