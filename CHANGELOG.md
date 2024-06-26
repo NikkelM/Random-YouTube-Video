@@ -11,6 +11,11 @@
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
 <!--Releasenotes end-->
 
+## v3.1.6
+
+- Reverted UI changes made while the playlist generation feature was broken.
+- Removed hints from the breaking news page.
+
 ## v3.1.5
 
 - Added a news page that can be populated on extension updates.

@@ -236,12 +236,6 @@ async function setDomElementEventListeners(domElements) {
 		await setUserSetting("shuffleOpenAsPlaylistOption", this.checked, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
-
-		// TODO: Revert when fixed
-		// v3.1.5: Playlist generation may be broken, open an overlay in the popup
-		if (this.checked) {
-			alert("A recent change to YouTube has broken playlist generation.\nThis feature may not work until the behaviour is fixed.");
-		}
 	});
 
 	// Shuffling: Number of videos in playlist input
