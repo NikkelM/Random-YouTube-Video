@@ -1,11 +1,15 @@
 # Changelog
 
-## v3.1.6
+## v3.1.7-beta
 
 <!--Releasenotes start-->
+- Added a hint in the popup if no channel has yet been visited.
+<!--Releasenotes end-->
+
+## v3.1.6
+
 - Reverted UI changes made while the playlist generation feature was broken.
 - Removed hints from the breaking news page.
-<!--Releasenotes end-->
 
 ## v3.1.5
 
