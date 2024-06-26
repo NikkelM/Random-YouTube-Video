@@ -9,6 +9,7 @@
 - The extension icon will now reflect your Shuffle+ subscription status.
 - A number of improvements to the maintainability of the extension's codebase.
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
+- Added a hint in the popup if no channel has yet been visited.
 <!--Releasenotes end-->
 
 ## v3.1.6

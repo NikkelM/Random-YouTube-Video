@@ -131,9 +131,11 @@
 
 			<!-- Settings for the most recently visited channel -->
 			<div id="channel">
-				<div id="channelCustomOptionsDiv" class="hidden">
+				<div id="channelCustomOptionsDiv">
 					<h3 id="channelCustomOptionsHeader">Channel settings</h3>
-					<p class="grey-text">Customize your most recently visited channel.</p>
+					<p id="channelCustomOptionsExplanationP" class="grey-text">Customize your most recently visited channel.</p>
+					<!-- Shown if no channel has yet been visited -->
+					<p id="channelNoneVisitedYetP" class="grey-text hidden">Visit a YouTube channel, video or short<br />to customize it's shuffle settings here!</p>
 					<!-- Custom options per channel: Choose option from dropdown -->
 					<div id="channelCustomOptionsDropdownDiv" class="optionTextInput" style="margin-top: 8px">
 						<p class="displayInline" title="Choose from one of the provided options in the dropdown to customize your shuffling experience on this channel.">Shuffle from</p>

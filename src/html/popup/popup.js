@@ -84,6 +84,10 @@ function getDomElements() {
 		channelCustomOptionsDiv: document.getElementById("channelCustomOptionsDiv"),
 		// Custom options per channel: Channel name and description
 		channelCustomOptionsHeader: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsHeader"),
+		// Custom options per channel: Options explanation
+		channelCustomOptionsExplanationP: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsExplanationP"),
+		// Custom options per channel: No channel has been visited div
+		channelNoneVisitedYetP: channelCustomOptionsDiv.children.namedItem("channelNoneVisitedYetP"),
 		// Custom options per channel: Dropdown menu Div (only for reference below)
 		channelCustomOptionsDropdownDiv: channelCustomOptionsDiv.children.namedItem("channelCustomOptionsDropdownDiv"),
 		// Dropdown menu div: Dropdown menu
@@ -186,8 +190,12 @@ async function setDomElementValuesFromConfig(domElements) {
 	updateDomElementsDependentOnChannel(domElements);
 
 	// ----- Custom options per channel div -----
-	if (configSync.currentChannelId) {
-		domElements.channelCustomOptionsDiv.classList.remove("hidden");
+	if (!configSync.currentChannelId) {
+		domElements.channelCustomOptionsExplanationP.classList.add("hidden");
+		domElements.channelNoneVisitedYetP.classList.remove("hidden");
+
+		domElements.popupShuffleButton.classList.add("hidden");
+		domElements.channelCustomOptionsDropdownDiv.classList.add("disabled");
 	}
 
 	// Contains logic for all the "For your information" div content
@@ -512,13 +520,13 @@ async function determineOverlayVisibility(domElements) {
 // Responsible for all DOM elements that need a reference to the current channel
 async function updateDomElementsDependentOnChannel(domElements) {
 	// ----- Custom options per channel: Channel name and description -----
-	domElements.channelCustomOptionsHeader.innerText = `Channel Settings: ${configSync.currentChannelName}`;
+	domElements.channelCustomOptionsHeader.innerText = configSync.currentChannelName ? `Channel Settings: ${configSync.currentChannelName}` : "Channel Settings";
 
 	// ----- Custom options per channel: Dropdown menu -----
 	updateChannelSettingsDropdownMenu(domElements);
 
 	// ----- Popup shuffle button -----
-	domElements.popupShuffleButton.innerText = `Shuffle from: ${configSync.currentChannelName}`;
+	domElements.popupShuffleButton.innerText = configSync.currentChannelName ? `Shuffle from: ${configSync.currentChannelName}`: "This will be a shuffle button!";
 }
 
 async function updateChannelSettingsDropdownMenu(domElements) {
