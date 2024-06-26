@@ -3,6 +3,7 @@
 ## v3.1.6
 
 <!--Releasenotes start-->
+- Reverted UI changes made while the playlist generation feature was broken.
 - Removed hints from the breaking news page.
 <!--Releasenotes end-->
 
