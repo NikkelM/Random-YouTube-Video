@@ -1,6 +1,7 @@
 # Changelog
 
 ## v4.0.0-beta
+
 <!--Releasenotes start-->
 - Introducing Shuffle+, a new way to shuffle, with more customization options than ever before.
 - Subscribe to Shuffle+ to gain access to exclusive new features, taking your shuffling experience to the next level.
