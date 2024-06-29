@@ -3,6 +3,8 @@
 ## v3.1.7-beta
 
 <!--Releasenotes start-->
+- The extensions's news page can now be updated with breaking changes or other important information without the need to update the extension itself.
+- Fixed some dynamic content on the News page.
 - Added a hint in the popup if no channel has yet been visited.
 <!--Releasenotes end-->
 

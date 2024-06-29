@@ -42,6 +42,23 @@ export const configSyncDefaults = {
 	"reviewMessageShown": false,
 	// If the message asking for a donation has been shown yet
 	"donationMessageShown": false,
+	// The id/date of the last viewed news article
+	"lastViewedNewsId": null,
+	// The next time we should check for news (once per day)
+	// We delay the first check by 24 hours to not immediately show the news after a user has installed the extension
+	"nextNewsCheckTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime()
+};
+
+export const isFirefox = typeof browser !== "undefined";
+
+export const firebaseConfig = {
+	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
+	authDomain: "random--video-ex-chrome.firebaseapp.com",
+	projectId: "random-youtube-video-ex-chrome",
+	storageBucket: "random-youtube-video-ex-chrome.appspot.com",
+	messagingSenderId: "141257152664",
+	appId: "1:141257152664:web:f70e46e35d02921a8818ed",
+	databaseURL: "https://random-youtube-video-ex-chrome-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
 export const shufflingHints = [
