@@ -6,7 +6,7 @@ await validateConfigSync();
 
 export let configSync = await chrome.storage.sync.get();
 
-/* c8 ignore start - This event listener cannot really be tested */
+/* c8 ignore start - This event listener cannot be tested */
 // Whenever someone changes a value in sync storage, we need to be notified to update the global configSync object
 chrome.storage.onChanged.addListener(async function (changes, namespace) {
 	// We only care about changes to the sync storage
@@ -31,6 +31,17 @@ export async function removeSyncStorageValue(key) {
 
 	await chrome.storage.sync.remove(key);
 }
+
+/* c8 ignore start - session storage cannot be mocked like the others, but under the hood behaves the same as sync storage, which we do test */
+export async function setSessionStorageValue(key, value) {
+	await chrome.storage.session.set({ [key]: value });
+}
+
+export async function getSessionStorageValue(key) {
+	// await is needed here, contrary to what intellisense says!
+	return (await chrome.storage.session.get(key))[key];
+}
+/* c8 ignore stop */
 
 // Returns the number of requests the user can still make to the Youtube API today
 export async function getUserQuotaRemainingToday() {
