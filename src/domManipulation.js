@@ -139,16 +139,26 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 	});
 }
 
-// With the way that YouTube handles navigation, the playlist title somehow won't get updated correctly when navigating if we change it here at any point
-// So we need to change it back if the user moves to a different playlist
-export function tryRenameUntitledList() {
-	let mainPlaylistElement = document.querySelector("ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy").querySelector("yt-formatted-string.title.style-scope.ytd-playlist-panel-renderer");
-	let collapsedPlaylistElement = document.querySelector("ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy").querySelector("yt-formatted-string.byline-title.style-scope.ytd-playlist-panel-renderer");
+export function tryRenameUntitledList(attempt = 1) {
+	let mainPlaylistElement = document.querySelector("ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy")?.querySelector("yt-formatted-string.title.style-scope.ytd-playlist-panel-renderer");
+	let collapsedPlaylistElement = document.querySelector("ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy")?.querySelector("yt-formatted-string.byline-title.style-scope.ytd-playlist-panel-renderer");
+
+	// Retry this a few times, in case the element has not yet loaded in
+	if (!mainPlaylistElement || !collapsedPlaylistElement) {
+		if (attempt <= 10) {
+			setTimeout(() => tryRenameUntitledList(attempt + 1), 200);
+			return;
+		} else {
+			return;
+		}
+	}
 
 	for (let playlistType of [mainPlaylistElement, collapsedPlaylistElement]) {
 		if (playlistType && window.location.href.includes("&list=TL") && playlistType.title == "Untitled List") {
 			playlistType.innerText = "Random YouTube Video - Playlist";
-			playlistType.title = "This playlist is unlisted, temporary and cannot be saved. Until it is removed by YouTube (which will happen automatically), you can revisit it using the link in the URL bar.";
+			playlistType.title = "This playlist is unlisted, temporary and cannot be saved. You can visit it using the link in the URL bar until it is removed by YouTube, which will happen automatically.";
+			// With the way that YouTube handles navigation, the playlist title somehow won't get updated correctly when navigating if we change it here at any point
+			// So we need to change it back if the user moves to a different playlist
 		} else if (playlistType) {
 			playlistType.innerText = playlistType.title;
 		}

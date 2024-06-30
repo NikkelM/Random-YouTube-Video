@@ -10,6 +10,8 @@
 - The extension icon will now reflect your Shuffle+ subscription status.
 - A number of improvements to the maintainability of the extension's codebase.
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
+- Fixed a bug where the shuffle button would sometimes not be added to the page if it was opened directly from a new tab.
+- Fixed a bug where the playlist created by the extension would sometimes not be renamed correctly.
 <!--Releasenotes end-->
 
 ## v3.1.7
