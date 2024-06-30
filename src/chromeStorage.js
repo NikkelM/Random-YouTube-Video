@@ -32,6 +32,15 @@ export async function removeSyncStorageValue(key) {
 	await chrome.storage.sync.remove(key);
 }
 
+export async function setSessionStorageValue(key, value) {
+	await chrome.storage.session.set({ [key]: value });
+}
+
+export async function getSessionStorageValue(key) {
+	// await is needed here, contrary to what intellisense says!
+	return (await chrome.storage.session.get(key))[key];
+}
+
 // Returns the number of requests the user can still make to the Youtube API today
 export async function getUserQuotaRemainingToday() {
 	// The quota gets reset at midnight

@@ -1,5 +1,5 @@
 // Checks Firestore for new news and opens the news page if there are
-import { configSync, setSyncStorageValue } from "../chromeStorage.js";
+import { configSync, getSessionStorageValue, setSyncStorageValue } from "../chromeStorage.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
 
 const domElements = getDomElements();
@@ -50,10 +50,11 @@ async function setDomElementEventListeners(domElements) {
 }
 
 async function buildNews() {
-	const news = (await chrome.storage.session.get("news")).news;
+	const news = await getSessionStorageValue("news");
 
 	// This normally shouldn't happen, as the news page is only opened if news have been added to session storage before
 	if (!news) {
+		console.log("No news found in session storage, even though there should be some!");
 		return;
 	}
 
