@@ -2,7 +2,7 @@
 	"name": "Random YouTube Video",
 	"description": "Customize, shuffle and play random videos from any YouTube channel.",
 	"version": "3.1.7",
-	"version_name": "3.1.7",
+	"version_name": "3.1.8-beta",
 	"manifest_version": 3,
 	"content_scripts": [
 		{
@@ -12,7 +12,7 @@
 			"matches": [
 				"*://*.youtube.com/*"
 			],
-			"run_at": "document_end"
+			"run_at": "document_start"
 		}
 	],
 	"permissions": [
