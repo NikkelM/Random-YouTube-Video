@@ -22,6 +22,11 @@ if (videoShuffleButton || channelShuffleButton || shortShuffleButton) {
 	window.location.reload(true);
 }
 
+// It might be that we got to this page after shuffling, in which case we want to check if there is a 'Untitled List' that we can rename
+if (getPageTypeFromURL(window.location.href) === "video") {
+	tryRenameUntitledList();
+}
+
 // After every navigation event, we need to check if this page needs a 'Shuffle' button
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
@@ -98,12 +103,6 @@ async function startDOMObserver(event) {
 }
 
 async function channelDetectedAction(pageType, channelId, channelName, eventVersion) {
-	// It might be that we got here after shuffling, in which case we want to check if there is a 'Untitled List' that we can rename
-	// We do this before anything else to prevent the previous text from showing shortly
-	if (pageType === "video") {
-		tryRenameUntitledList();
-	}
-
 	// We can get an error here if the extension context was invalidated and the user navigates without reloading the page
 	try {
 		// If we are still connected to the background worker, we can send a message to test the connection
