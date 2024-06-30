@@ -2,7 +2,7 @@ import expect from 'expect.js';
 
 describe('compatibility', function () {
 	context('YouTube', function () {
-		it('should redirect multiple videos to a temporary playlist URL', async function () {
+		it('should redirect a watch_videos URL to a temporary playlist URL', async function () {
 			const watchVideosUrl = 'https://www.youtube.com/watch_videos?video_ids=dQw4w9WgXcQ,dQw4w9WgXcQ,dQw4w9WgXcQ,dQw4w9WgXcQ';
 			const redirectedUrl = (await fetch(watchVideosUrl)).url;
 
