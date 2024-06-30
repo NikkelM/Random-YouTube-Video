@@ -225,13 +225,13 @@ async function shuffleVideos() {
 						shuffleButtonTextElementCopy.style.transform = `rotate(${rotation}deg)`;
 						rotation = (rotation + 5) % 360;
 					}, 25);
-				} else if (hasBeenShuffled) {
+				} else if (hasBeenShuffled && !shuffleButtonTextElementCopy.innerText == "autorenew") {
 					clearInterval(checkInterval);
 				}
 			}, 150);
 		}
 
-		await chooseRandomVideo(channelId, false, shuffleButtonTextElement);
+		await chooseRandomVideo(channelId, false, shuffleButtonTextElement, shuffleButtonTooltipElement);
 
 		isShuffling = false;
 		hasBeenShuffled = true;
