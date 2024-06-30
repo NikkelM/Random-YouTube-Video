@@ -14,21 +14,27 @@
 			<br />
 
 			<div id="newsDiv">
-				<h1 id="newsHeading">Playlists are broken!</h1>
-				<p id="newsContent">
-					A recent change to YouTube has broken the extension's ability to automatically create playlists.
-					<br />
-					<br />
-					The affected option in the popup is "<i>Open a playlist</i>". It is possible that this feature still works for you, but it likely will not.
-					<br />
-					I am actively monitoring the situation and looking for alternative ways of getting this functionality working again.
-				</p>
+				<h1 id="newsHeading">News will be displayed here</h1>
+				<div id="newsContent">
+					<p>If you're seeing this text, it means you either manually opened this page (in which case it won't work!),
+						<br />
+						or there are news but they couldn't be displayed correctly - please report this as a bug on GitHub!</p>
+				</div>
+				<br />
+				<br />
+				<p id="publishTime"></p>
 			</div>
 
 			<br />
 			<br />
 			<br />
 			<br />
+			<div id="shufflingHint">
+				<h3><i>Did you know...</i></h3>
+				<p id="shufflingHintP" class="thirdWidth">The hints could not be loaded - please report this bug on GitHub!</p>
+				<button id="nextHintButton" class="randomYoutubeVideoButton" style="margin-top: 6px">New Hint</button>
+			</div>
+
 			<br />
 			<br />
 			<footer id="randomYoutubeVideoFooter">
@@ -56,5 +62,7 @@
 				<a class="buttonLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension">Donate</a>
 			</footer>
 		</div>
+
+		<script src="../breakingNews.js" type="module"></script>
 	</body>
 </html>

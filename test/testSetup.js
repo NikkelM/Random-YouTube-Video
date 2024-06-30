@@ -36,6 +36,10 @@ chrome.storage.local.set.callsFake((obj) => {
 	Object.assign(mockedLocalStorage, deepCopy(obj));
 	return Promise.resolve();
 });
+chrome.storage.local.remove.callsFake((key) => {
+	delete mockedLocalStorage[key];
+	return Promise.resolve();
+});
 chrome.storage.local.clear.callsFake(() => {
 	for (const key in mockedLocalStorage) {
 		delete mockedLocalStorage[key];

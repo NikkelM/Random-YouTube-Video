@@ -1,11 +1,19 @@
 // Background service worker for the extension, which is run ("started") on extension initialization
 // Handles communication between the extension and the content script as well as Firebase interactions
-import { configSync, setSyncStorageValue } from "./chromeStorage.js";
+import { configSync, setSyncStorageValue, setSessionStorageValue } from "./chromeStorage.js";
+import { isFirefox, firebaseConfig } from "./config.js";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { getDatabase, ref, child, update, get, remove } from "firebase/database";
+import { getFirestore, query, collection, getDocs, orderBy, limit, where } from "firebase/firestore";
 // We need to import utils.js to get the console re-routing function
 import { } from "./utils.js";
 
 // ---------- Initialization/Chrome event listeners ----------
-const isFirefox = typeof browser !== "undefined";
+// ---------- Firebase ----------
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const firebase = getDatabase(app);
+const firestore = getFirestore(app);
+
 await initExtension();
 
 // Check whether a new version was installed
@@ -26,7 +34,8 @@ async function initExtension() {
 		await handleExtensionUpdate(manifestData, configSync.previousVersion);
 	}
 
-	checkLocalStorageCapacity();
+	await checkLocalStorageCapacity();
+	await checkForAndShowNews();
 }
 
 // Make sure we are not using too much local storage
@@ -201,21 +210,43 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ---------- Firebase ----------
-import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, child, update, get, remove } from 'firebase/database';
+// Interact with Firestore and get the latest news
+// createdAt is a custom field
+async function checkForAndShowNews() {
+	if (configSync.nextNewsCheckTime >= Date.now()) {
+		console.log(`Skipping news check until ${new Date(configSync.nextNewsCheckTime).toLocaleString()}`);
+		return;
+	}
 
-const firebaseConfig = {
-	apiKey: "AIzaSyA6d7Ahi7fMB4Ey8xXM8f9C9Iya97IGs-c",
-	authDomain: "random--video-ex-chrome.firebaseapp.com",
-	projectId: "random-youtube-video-ex-chrome",
-	storageBucket: "random-youtube-video-ex-chrome.appspot.com",
-	messagingSenderId: "141257152664",
-	appId: "1:141257152664:web:f70e46e35d02921a8818ed",
-	databaseURL: "https://random-youtube-video-ex-chrome-default-rtdb.europe-west1.firebasedatabase.app"
-};
+	const q = query(
+		collection(firestore, "news"),
+		where("published", "==", true),
+		orderBy("createdAt", "desc"),
+		limit(1)
+	);
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+	const querySnapshot = await getDocs(q);
+	if (querySnapshot.empty) {
+		console.log("No published news articles found in the database.");
+		return;
+	}
+
+	const doc = querySnapshot.docs[0];
+	const news = {
+		id: doc.id,
+		...doc.data()
+	};
+
+	// Set the next time to check for news to tomorrow
+	await setSyncStorageValue("nextNewsCheckTime", new Date(new Date().setHours(24, 0, 0, 0)).getTime());
+
+	// Check if the published flag is true, and if the user has not viewed this news article yet, indicated through the lastViewedNewsId
+	if (news && news.published && news.id !== configSync.lastViewedNewsId) {
+		setSyncStorageValue("lastViewedNewsId", news.id);
+		await setSessionStorageValue("news", news);
+		chrome.tabs.create({ url: "html/breakingNews.html" });
+	}
+}
 
 async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos) {
 	// Find out if the playlist already exists in the database
@@ -228,17 +259,17 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 	if (overwriteVideos || !playlistExists) {
 		console.log("Setting playlistInfo in the database...");
 		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested within the playlist
-		update(ref(db, playlistId), playlistInfo);
+		update(ref(firebase, playlistId), playlistInfo);
 	} else {
 		console.log("Updating playlistInfo in the database...");
 		// Contains all properties except the videos
 		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => (key !== "videos")));
 
 		// Upload the 'metadata'
-		update(ref(db, playlistId), playlistInfoWithoutVideos);
+		update(ref(firebase, playlistId), playlistInfoWithoutVideos);
 
 		// Update the videos separately to not overwrite existing videos
-		update(ref(db, playlistId + "/videos"), playlistInfo.videos);
+		update(ref(firebase, playlistId + "/videos"), playlistInfo.videos);
 	}
 
 	return "PlaylistInfo was sent to database.";
@@ -246,7 +277,7 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 
 async function updateDBPlaylistToV1_0_0(playlistId) {
 	// Remove all videos from the database
-	remove(ref(db, playlistId + '/videos'));
+	remove(ref(firebase, playlistId + '/videos'));
 
 	return "Videos were removed from the database playlist.";
 }
