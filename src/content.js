@@ -235,7 +235,14 @@ async function shuffleVideos() {
 
 		isShuffling = false;
 		hasBeenShuffled = true;
-		resetShuffleButtonText();
+
+		// Do not use resetShuffleButtonText() here, as that will break the spinner on the small button when sorting shorts
+		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
+			shuffleButtonTextElement.innerText = "\xa0Shuffle";
+		} else {
+			updateSmallButtonStyleForText(shuffleButtonTextElementCopy, false);
+			shuffleButtonTextElementCopy.innerText = "shuffle";
+		}
 	} catch (error) {
 		console.error(error);
 
