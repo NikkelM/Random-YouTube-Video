@@ -100,7 +100,7 @@ async function startDOMObserver(event) {
 async function channelDetectedAction(pageType, channelId, channelName, eventVersion) {
 	// It might be that we got to this page after shuffling, in which case we want to check if there is a 'Untitled List' that we can rename
 	// We do this before anything else to prevent the previous text from showing
-	if (getPageTypeFromURL(window.location.href) === "video") {
+	if (pageType === "video") {
 		tryRenameUntitledList();
 	}
 
