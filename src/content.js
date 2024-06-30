@@ -209,7 +209,7 @@ async function shuffleVideos() {
 					await delay(400);
 
 					// If we have finished the shuffle between the check and the delay, we don't want to change the text
-					if (hasBeenShuffled) {
+					if (hasBeenShuffled || (shuffleButtonTextElementCopy.innerText != "100%" && shuffleButtonTextElementCopy.innerText != "shuffle")) {
 						return;
 					}
 
@@ -218,14 +218,14 @@ async function shuffleVideos() {
 
 					let rotation = 0;
 					let rotateInterval = setInterval(() => {
-						if (hasBeenShuffled) {
+						if (hasBeenShuffled || shuffleButtonTextElementCopy.innerText != "autorenew") {
 							clearInterval(rotateInterval);
 							return;
 						}
 						shuffleButtonTextElementCopy.style.transform = `rotate(${rotation}deg)`;
 						rotation = (rotation + 5) % 360;
 					}, 25);
-				} else if (hasBeenShuffled && !shuffleButtonTextElementCopy.innerText == "autorenew") {
+				} else if (hasBeenShuffled && shuffleButtonTextElementCopy.innerText != "autorenew") {
 					clearInterval(checkInterval);
 				}
 			}, 150);
@@ -236,6 +236,7 @@ async function shuffleVideos() {
 		isShuffling = false;
 		hasBeenShuffled = true;
 
+		// TODO: Is this true? Confirm after fixing the bug!
 		// Do not use resetShuffleButtonText() here, as that will break the spinner on the small button when sorting shorts
 		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
 			shuffleButtonTextElement.innerText = "\xa0Shuffle";

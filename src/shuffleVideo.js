@@ -903,7 +903,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			if (new Date() - shuffleStartTime > 1000) {
 				// We display either the percentage of videos processed or the percentage of videos chosen (vs. needed), whichever is higher
 				const percentage = Math.max(Math.round(chosenVideos.length / numVideosToChoose * 100), Math.round(numVideosProcessed / initialTotalNumVideos * 100));
-				updateProgressTextElement(progressTextElement, `\xa0Sorting: ${percentage}%`, `${percentage}%`, shuffleButtonTooltipElement, "The extension is currently separating shorts and videos. Please wait...");
+				updateProgressTextElement(progressTextElement, `\xa0Sorting: ${percentage}%`, `${percentage}%`, shuffleButtonTooltipElement, "The extension is currently separating shorts and videos. Please wait...", "Sorting shorts...");
 			}
 		} else {
 			// We are not ignoring shorts and the video exists
@@ -1145,7 +1145,8 @@ function validatePlaylistInfo(playlistInfo) {
 }
 /* c8 ignore stop */
 
-function updateProgressTextElement(progressTextElement, largeButtonText, smallButtonText, shuffleButtonTooltipElement = null, tooltipText = null) {
+function updateProgressTextElement(progressTextElement, largeButtonText, smallButtonText, shuffleButtonTooltipElement = null, tooltipText = null, smallButtonTooltipText = null) {
+	console.log(smallButtonText)
 	if (progressTextElement.id.includes("large-shuffle-button") || progressTextElement.id == "fetchPercentageNoticeShufflingPage") {
 		progressTextElement.innerText = largeButtonText;
 	} else {
@@ -1159,8 +1160,12 @@ function updateProgressTextElement(progressTextElement, largeButtonText, smallBu
 	}
 
 	// Update the tooltip if requested
-	if (shuffleButtonTooltipElement && progressTextElement.id.includes("large-shuffle-button")) {
-		shuffleButtonTooltipElement.innerText = tooltipText;
+	if (shuffleButtonTooltipElement) {
+		if (progressTextElement.id.includes("large-shuffle-button")) {
+			shuffleButtonTooltipElement.innerText = tooltipText;
+		} else if (smallButtonTooltipText) {
+			shuffleButtonTooltipElement.innerText = smallButtonTooltipText;
+		}
 	}
 }
 
