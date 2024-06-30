@@ -1,17 +1,22 @@
 // Background service worker for the extension, which is run ("started") on extension initialization
 // Handles communication between the extension and the content script as well as Firebase interactions
-import { configSync, setSyncStorageValue } from "./chromeStorage.js";
+import { configSync, setSyncStorageValue, setSessionStorageValue } from "./chromeStorage.js";
 import { isFirefox, firebaseConfig } from "./config.js";
 import { userHasActiveSubscriptionRole } from "./stripe.js";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase, ref, child, update, get, remove } from "firebase/database";
-import { getFirestore, doc, setDoc } from "firebase/firestore";
+import { getFirestore, query, collection, getDocs, orderBy, limit, where } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { countryToCurrency } from "country-to-currency";
 // We need to import utils.js to get the console re-routing function
 import { } from "./utils.js";
 
 // ---------- Initialization/Chrome event listeners ----------
+// ---------- Firebase ----------
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const firebase = getDatabase(app);
+const firestore = getFirestore(app);
+
 await initExtension();
 
 // Check whether a new version was installed
@@ -33,7 +38,8 @@ async function initExtension() {
 	}
 
 	await checkShufflePlusStatus();
-	checkLocalStorageCapacity();
+	await checkLocalStorageCapacity();
+	await checkForAndShowNews();
 }
 
 // On every startup, we check the claim roles for the user
@@ -259,9 +265,43 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ---------- Firebase ----------
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const firebase = getDatabase(app);
-const firestore = getFirestore(app);
+// Interact with Firestore and get the latest news
+// createdAt is a custom field
+async function checkForAndShowNews() {
+	if (configSync.nextNewsCheckTime >= Date.now()) {
+		console.log(`Skipping news check until ${new Date(configSync.nextNewsCheckTime).toLocaleString()}`);
+		return;
+	}
+
+	const q = query(
+		collection(firestore, "news"),
+		where("published", "==", true),
+		orderBy("createdAt", "desc"),
+		limit(1)
+	);
+
+	const querySnapshot = await getDocs(q);
+	if (querySnapshot.empty) {
+		console.log("No published news articles found in the database.");
+		return;
+	}
+
+	const doc = querySnapshot.docs[0];
+	const news = {
+		id: doc.id,
+		...doc.data()
+	};
+
+	// Set the next time to check for news to tomorrow
+	await setSyncStorageValue("nextNewsCheckTime", new Date(new Date().setHours(24, 0, 0, 0)).getTime());
+
+	// Check if the published flag is true, and if the user has not viewed this news article yet, indicated through the lastViewedNewsId
+	if (news && news.published && news.id !== configSync.lastViewedNewsId) {
+		setSyncStorageValue("lastViewedNewsId", news.id);
+		await setSessionStorageValue("news", news);
+		chrome.tabs.create({ url: "html/breakingNews.html" });
+	}
+}
 
 async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos) {
 	// Find out if the playlist already exists in the database

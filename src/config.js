@@ -44,6 +44,11 @@ export const configSyncDefaults = {
 	"donationMessageShown": false,
 	// Contains user information and tokens if the user is logged in with Google
 	"googleOauth": null,
+	// The id/date of the last viewed news article
+	"lastViewedNewsId": null,
+	// The next time we should check for news (once per day)
+	// We delay the first check by 24 hours to not immediately show the news after a user has installed the extension
+	"nextNewsCheckTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(),
 	// ----- SHUFFLE PLUS OPTIONS -----
 	// Sync user & channel settings with Firebase
 	// TODO: Add a toggle in the popup. TODO on that: When the setting gets toggled on, sync all syncable settings to Firestore immediately. When turned off, remove all settings from Firestore
