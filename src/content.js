@@ -31,7 +31,6 @@ document.addEventListener("yt-navigate-finish", startDOMObserver);
 async function startDOMObserver(event) {
 	// Sometimes, YouTube changes contents of the event or the page structure. Whenever we encounter an identifying change, we update this variable to track it through the process
 	let eventVersion = "default";
-	// TODO: Do not reset/re-add the text/button if navigating within the same channel
 	resetShuffleButtonText();
 
 	let pageType = getPageTypeFromURL(window.location.href);
