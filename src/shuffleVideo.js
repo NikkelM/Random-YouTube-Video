@@ -1146,7 +1146,6 @@ function validatePlaylistInfo(playlistInfo) {
 /* c8 ignore stop */
 
 function updateProgressTextElement(progressTextElement, largeButtonText, smallButtonText, shuffleButtonTooltipElement = null, tooltipText = null, smallButtonTooltipText = null) {
-	console.log(smallButtonText)
 	if (progressTextElement.id.includes("large-shuffle-button") || progressTextElement.id == "fetchPercentageNoticeShufflingPage") {
 		progressTextElement.innerText = largeButtonText;
 	} else {
