@@ -1,6 +1,6 @@
 # Changelog
 
-## v3.1.7-beta
+## v3.1.7
 
 <!--Releasenotes start-->
 - The extensions's news page can now be updated with breaking changes or other important information without the need to update the extension itself.
