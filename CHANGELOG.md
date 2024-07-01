@@ -3,8 +3,11 @@
 ## v3.1.8-beta
 
 <!--Releasenotes start-->
+- The button's tooltip may now show additional information on the shuffle status.
+- Fixed a bug where clicking the shuffle button while the shuffle was running would start a second shuffle at the same time.
 - Fixed a bug where the shuffle button would sometimes not be added to the page if it was opened directly from a new tab.
 - Fixed a bug where the playlist created by the extension would sometimes not be renamed correctly.
+- Fixed an animation bug when ignoring shorts and shuffling a channel with many videos from a shorts page.
 <!--Releasenotes end-->
 
 ## v3.1.7
