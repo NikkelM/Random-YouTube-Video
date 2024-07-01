@@ -15,7 +15,7 @@ let shuffleStartTime = null;
 
 // --------------- Public ---------------
 // Chooses a random video uploaded on the current YouTube channel
-export async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement) {
+export async function chooseRandomVideo(channelId, firedFromPopup, progressTextElement, shuffleButtonTooltipElement = null) {
 	/* c8 ignore start */
 	try {
 		// The service worker will get stopped after 30 seconds
@@ -78,14 +78,14 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 				} else {
 					console.log("Fetching the uploads playlist for this channel from the YouTube API...");
 				}
-				({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
+				({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement, shuffleButtonTooltipElement));
 
 				shouldUpdateDatabase = true;
 			} else if (databaseSharing && (playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
 				// If the playlist exists in the database but is outdated, update it from the API.
 				console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
 
-				({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
+				({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement, shuffleButtonTooltipElement));
 
 				shouldUpdateDatabase = true;
 			}
@@ -104,13 +104,13 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			// With the current functionality and db rules, this shouldn't happen, except if the user has opted out of database sharing.
 			if (isEmpty(playlistInfo)) {
 				console.log(`${databaseSharing ? "Uploads playlist for this channel does not exist in the database. " : "Fetching it from the YouTube API..."}`);
-				({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
+				({ playlistInfo, userQuotaRemainingToday } = await getPlaylistFromAPI(uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement, shuffleButtonTooltipElement));
 
 				shouldUpdateDatabase = true;
 				// If the playlist exists in the database but is outdated there as well, update it from the API.
 			} else if ((playlistInfo["lastUpdatedDBAt"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()) {
 				console.log("Uploads playlist for this channel may be outdated in the database. Updating from the YouTube API...");
-				({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement));
+				({ playlistInfo, userQuotaRemainingToday } = await updatePlaylistFromAPI(playlistInfo, uploadsPlaylistId, null, userQuotaRemainingToday, progressTextElement, shuffleButtonTooltipElement));
 
 				shouldUpdateDatabase = true;
 			}
@@ -128,7 +128,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 
 		let chosenVideos;
 		var encounteredDeletedVideos;
-		({ chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase, progressTextElement));
+		({ chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase, progressTextElement, shuffleButtonTooltipElement));
 
 		// Save the playlist to the database and locally
 		playlistInfo = await handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, encounteredDeletedVideos);
@@ -291,7 +291,7 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsP
 }
 
 // ---------- YouTube API ----------
-async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemainingToday, progressTextElement, disregardUserQuota = false) {
+async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemainingToday, progressTextElement, shuffleButtonTooltipElement, disregardUserQuota = false) {
 	// Get an API key
 	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyAtIndex);
 	// We need to keep track of the original key's index, so we know when we have tried all keys
@@ -348,7 +348,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 	// If there are less than 50 videos, we don't need to show a progress percentage
 	if (totalResults > 50) {
 		const percentage = Math.round(resultsFetchedCount / totalResults * 100);
-		updateProgressTextElement(progressTextElement, `\xa0Fetching: ${percentage}%`, `${percentage}%`);
+		updateProgressTextElement(progressTextElement, `\xa0Fetching: ${percentage}%`, `${percentage}%`, shuffleButtonTooltipElement, "Fetching videos may take longer if the channel has a lot of uploads or your network speed is slow. Please wait...");
 	}
 
 	// For each video, add an entry in the form of videoId: uploadTime
@@ -380,7 +380,7 @@ async function getPlaylistFromAPI(playlistId, useAPIKeyAtIndex, userQuotaRemaini
 }
 
 // Get snippets from the API as long as new videos are being found
-async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex, userQuotaRemainingToday, progressTextElement) {
+async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex, userQuotaRemainingToday, progressTextElement, shuffleButtonTooltipElement) {
 	// Get an API key
 	let { APIKey, isCustomKey, keyIndex } = await getAPIKey(useAPIKeyAtIndex);
 	// We need to keep track of the original key's index, so we know when we have tried all keys
@@ -429,7 +429,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	// If there are less than 50 new videos, we don't need to show a progress percentage
 	if (totalExpectedNewResults > 50) {
 		const percentage = Math.min(Math.round(resultsFetchedCount / totalExpectedNewResults * 100), 100);
-		updateProgressTextElement(progressTextElement, `\xa0Fetching: ${percentage}%`, `${percentage}%`);
+		updateProgressTextElement(progressTextElement, `\xa0Fetching: ${percentage}%`, `${percentage}%`, shuffleButtonTooltipElement, "Fetching videos may take longer if the channel has a lot of uploads or your network speed is slow. Please wait...");
 	}
 
 	// Update the "last video published at" date (only for the most recent video)
@@ -443,7 +443,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 		// Make sure that we are not missing any videos in the database
 		if (totalNumVideosOnChannel > numLocallyKnownVideos) {
 			console.log(`There are less videos saved in the database than are uploaded on the channel (${numLocallyKnownVideos}/${totalNumVideosOnChannel}), so some videos are missing. Refetching all videos...`);
-			return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement, true);
+			return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement, shuffleButtonTooltipElement, true);
 		}
 
 		return { playlistInfo, userQuotaRemainingToday };
@@ -490,7 +490,7 @@ async function updatePlaylistFromAPI(playlistInfo, playlistId, useAPIKeyAtIndex,
 	const numVideosInDatabase = numLocallyKnownVideos + getLength(playlistInfo["newVideos"]);
 	if (totalNumVideosOnChannel > numVideosInDatabase) {
 		console.log(`There are less videos saved in the database than are uploaded on the channel (${numVideosInDatabase}/${totalNumVideosOnChannel}), so some videos are missing. Refetching all videos...`);
-		return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement, true);
+		return await getPlaylistFromAPI(playlistId, keyIndex, userQuotaRemainingToday, progressTextElement, shuffleButtonTooltipElement, true);
 	}
 
 	return { playlistInfo, userQuotaRemainingToday };
@@ -706,7 +706,7 @@ async function getAPIKey(useAPIKeyAtIndex = null) {
 	return { APIKey, isCustomKey, keyIndex };
 }
 
-async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase, progressTextElement) {
+async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase, progressTextElement, shuffleButtonTooltipElement) {
 	let activeShuffleFilterOption = configSync.channelSettings[channelId]?.activeOption ?? "allVideosOption";
 	let activeOptionValue;
 
@@ -903,7 +903,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			if (new Date() - shuffleStartTime > 1000) {
 				// We display either the percentage of videos processed or the percentage of videos chosen (vs. needed), whichever is higher
 				const percentage = Math.max(Math.round(chosenVideos.length / numVideosToChoose * 100), Math.round(numVideosProcessed / initialTotalNumVideos * 100));
-				updateProgressTextElement(progressTextElement, `\xa0Sorting: ${percentage}%`, `${percentage}%`);
+				updateProgressTextElement(progressTextElement, `\xa0Sorting: ${percentage}%`, `${percentage}%`, shuffleButtonTooltipElement, "The extension is currently separating shorts and videos. Please wait...", "Sorting shorts...");
 			}
 		} else {
 			// We are not ignoring shorts and the video exists
@@ -1145,17 +1145,26 @@ function validatePlaylistInfo(playlistInfo) {
 }
 /* c8 ignore stop */
 
-function updateProgressTextElement(progressTextElement, largeButtonText, smallButtonText) {
+function updateProgressTextElement(progressTextElement, largeButtonText, smallButtonText, shuffleButtonTooltipElement = null, tooltipText = null, smallButtonTooltipText = null) {
 	if (progressTextElement.id.includes("large-shuffle-button") || progressTextElement.id == "fetchPercentageNoticeShufflingPage") {
 		progressTextElement.innerText = largeButtonText;
 	} else {
-		// Make it the icon style if an icon is set, otherwise the text style
-		if (!["shuffle", "close"].includes(smallButtonText)) {
-			updateSmallButtonStyleForText(progressTextElement, true);
-		} else {
+		// Make it the text style if no icon is set, otherwise the icon style
+		if (["shuffle", "close"].includes(smallButtonText)) {
 			updateSmallButtonStyleForText(progressTextElement, false);
+		} else {
+			updateSmallButtonStyleForText(progressTextElement, true);
 		}
 		progressTextElement.innerText = smallButtonText;
+	}
+
+	// Update the tooltip if requested
+	if (shuffleButtonTooltipElement) {
+		if (progressTextElement.id.includes("large-shuffle-button")) {
+			shuffleButtonTooltipElement.innerText = tooltipText;
+		} else if (smallButtonTooltipText) {
+			shuffleButtonTooltipElement.innerText = smallButtonTooltipText;
+		}
 	}
 }
 

@@ -1,7 +1,7 @@
 // Content script that is injected into YouTube pages
 import { setDOMTextWithDelay, updateSmallButtonStyleForText, getPageTypeFromURL, RandomYoutubeVideoError, delay } from "./utils.js";
 import { configSync } from "./chromeStorage.js";
-import { buildShuffleButton, shuffleButton, shuffleButtonTextElement, tryRenameUntitledList } from "./domManipulation.js";
+import { buildShuffleButton, shuffleButton, shuffleButtonTextElement, shuffleButtonTooltipElement, tryRenameUntitledList } from "./domManipulation.js";
 import { chooseRandomVideo } from "./shuffleVideo.js";
 import { setUserSetting } from "./html/popup/popupUtils.js";
 
@@ -22,6 +22,9 @@ const shortShuffleButton = document.getElementById("youtube-random-video-small-s
 if (videoShuffleButton || channelShuffleButton || shortShuffleButton) {
 	window.location.reload(true);
 }
+
+// To track if the shuffle is already running and prevent bugs if the user clicks the button multiple times
+let isShuffling = false;
 
 // After every navigation event, we need to check if this page needs a "Shuffle" button
 document.addEventListener("yt-navigate-finish", startDOMObserver);
@@ -137,9 +140,11 @@ function resetShuffleButtonText() {
 	if (shuffleButtonTextElement) {
 		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
 			shuffleButtonTextElement.innerText = "\xa0Shuffle";
+			shuffleButtonTooltipElement.innerText = "Shuffle from this channel";
 		} else if (shuffleButtonTextElement.innerText !== "autorenew") {
 			updateSmallButtonStyleForText(shuffleButtonTextElement, false);
 			shuffleButtonTextElement.innerText = "shuffle";
+			shuffleButtonTooltipElement.innerText = "Shuffle from channel";
 		}
 	}
 }
@@ -147,6 +152,11 @@ function resetShuffleButtonText() {
 // ---------- Shuffle ----------
 // Called when the "Shuffle" button is clicked
 async function shuffleVideos() {
+	if (isShuffling) {
+		return;
+	}
+
+	isShuffling = true;
 	resetShuffleButtonText();
 
 	// Shorts pages make a copy of the shuffleButtonTextElement to be able to spin it even if the user scrolls to another short, to keep the animation going
@@ -176,6 +186,7 @@ async function shuffleVideos() {
 		// Only use this text if the button is the large shuffle button, the small one only has space for an icon
 		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
 			shuffleButtonTextElement.innerText = "\xa0Shuffling...";
+			shuffleButtonTooltipElement.innerText = "The shuffle has started, please wait while the extension gets the video data for this channel...";
 			setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still on it...", 5000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Shuffling..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
 			if (configSync.shuffleIgnoreShortsOption != "1") {
 				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Sorting shorts...", 10000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
@@ -189,6 +200,7 @@ async function shuffleVideos() {
 				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still shuffling...", 20000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
 			}
 		} else {
+			shuffleButtonTooltipElement.innerText = "Shuffling...";
 			let iterationsWaited = 0;
 
 			let checkInterval = setInterval(async () => {
@@ -197,7 +209,7 @@ async function shuffleVideos() {
 					await delay(400);
 
 					// If we have finished the shuffle between the check and the delay, we don't want to change the text
-					if (hasBeenShuffled) {
+					if (hasBeenShuffled || (shuffleButtonTextElementCopy.innerText != "100%" && shuffleButtonTextElementCopy.innerText != "shuffle")) {
 						return;
 					}
 
@@ -206,33 +218,31 @@ async function shuffleVideos() {
 
 					let rotation = 0;
 					let rotateInterval = setInterval(() => {
-						if (hasBeenShuffled) {
+						if (hasBeenShuffled || shuffleButtonTextElementCopy.innerText != "autorenew") {
 							clearInterval(rotateInterval);
 							return;
 						}
 						shuffleButtonTextElementCopy.style.transform = `rotate(${rotation}deg)`;
 						rotation = (rotation + 5) % 360;
 					}, 25);
-				} else if (hasBeenShuffled) {
+				} else if (hasBeenShuffled && shuffleButtonTextElementCopy.innerText != "autorenew") {
 					clearInterval(checkInterval);
 				}
 			}, 150);
 		}
 
-		await chooseRandomVideo(channelId, false, shuffleButtonTextElement);
+		await chooseRandomVideo(channelId, false, shuffleButtonTextElement, shuffleButtonTooltipElement);
+
+		isShuffling = false;
 		hasBeenShuffled = true;
 
-		// Reset the button text in case we opened the video in a new tab
-		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
-			shuffleButtonTextElement.innerText = "\xa0Shuffle";
-		} else {
-			updateSmallButtonStyleForText(shuffleButtonTextElementCopy, false);
-			shuffleButtonTextElementCopy.innerText = "shuffle";
-		}
+		resetShuffleButtonText();
 	} catch (error) {
 		console.error(error);
 
+		isShuffling = false;
 		hasBeenShuffled = true;
+
 		if (shuffleButton.id.includes("small-shuffle-button")) {
 			updateSmallButtonStyleForText(shuffleButtonTextElementCopy, true);
 		}

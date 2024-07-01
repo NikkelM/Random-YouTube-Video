@@ -3,6 +3,7 @@
 // ----- Public -----
 export let shuffleButton;
 export let shuffleButtonTextElement;
+export let shuffleButtonTooltipElement;
 
 export function buildShuffleButton(pageType, channelId, eventVersion, clickHandler) {
 	let buttonDivID;
@@ -217,7 +218,7 @@ function finalizeButton(pageType, channelId, clickHandler, isLargeButton, button
 	if (isLargeButton) {
 		buttonTooltip.innerText = "Shuffle from this channel";
 	} else {
-		buttonTooltip.innerText = "Shuffle channel";
+		buttonTooltip.innerText = "Shuffle from channel";
 	}
 
 	// Remove the original button tooltip, it does not have all required attributes
@@ -261,4 +262,5 @@ function finalizeButton(pageType, channelId, clickHandler, isLargeButton, button
 	} else {
 		shuffleButtonTextElement = shuffleButton.children[0].children[0].children[0].children[0].children[0];
 	}
+	shuffleButtonTooltipElement = shuffleButton.children[0].children[1].children[0];
 }
