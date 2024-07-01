@@ -1,4 +1,4 @@
-// Builds the 'Shuffle' buttons that are used by the extension, and handles other dom related tasks
+// Builds the "Shuffle" buttons that are used by the extension, and handles other dom related tasks
 
 // ----- Public -----
 export let shuffleButton;
@@ -42,7 +42,7 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 			return;
 	}
 
-	// If we are on a video page, modify the "min-width" of the two divs holding the buttons to make room for the 'Shuffle' button
+	// If we are on a video page, modify the "min-width" of the two divs holding the buttons to make room for the "Shuffle" button
 	// This doesn't fix them overlapping in all cases, but most times it does
 	if (pageType == "video") {
 		buttonDivOwner[0].style.minWidth = "calc(50% + 50px)";
@@ -52,7 +52,7 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 	// If the button should not be visible but exists, hide it
 	if (document.getElementById(buttonDivID) && !channelId) {
 		document.getElementById(buttonDivID).style.display = "none";
-		console.log('No channelId found: Button should not be visible, hiding it.');
+		console.log("No channelId found: Button should not be visible, hiding it.");
 		return;
 	}
 
@@ -76,7 +76,7 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 		button.style.display = "flex";
 
 		// Update the channelId
-		button.children[0].children[0].children[0].children.namedItem('channelId').innerText = channelId ?? "";
+		button.children[0].children[0].children[0].children.namedItem("channelId").innerText = channelId ?? "";
 
 		// Set the variables to the correct button reference
 		shuffleButton = button;
@@ -141,8 +141,8 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 }
 
 export function tryRenameUntitledList(attempt = 1) {
-	let mainPlaylistElement = document.querySelector('ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy')?.querySelector('yt-formatted-string.title.style-scope.ytd-playlist-panel-renderer');
-	let collapsedPlaylistElement = document.querySelector('ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy')?.querySelector('yt-formatted-string.byline-title.style-scope.ytd-playlist-panel-renderer');
+	let mainPlaylistElement = document.querySelector("ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy")?.querySelector("yt-formatted-string.title.style-scope.ytd-playlist-panel-renderer");
+	let collapsedPlaylistElement = document.querySelector("ytd-playlist-panel-renderer#playlist.style-scope.ytd-watch-flexy")?.querySelector("yt-formatted-string.byline-title.style-scope.ytd-playlist-panel-renderer");
 
 	// Retry this a few times, in case the element has not yet loaded in
 	if (!mainPlaylistElement || !collapsedPlaylistElement) {
