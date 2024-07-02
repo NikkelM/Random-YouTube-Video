@@ -13,7 +13,9 @@
     "lint": "eslint --ext .ts,.js --max-warnings=0 . --ignore-path .eslintignore",
     "lint:firefox": "web-ext lint --source-dir ./dist/firefox",
     "test": "c8 --reporter=lcov --reporter=text mocha ./test/testSetup.js ./test/chromeStorage.test.js ./test/**/*.test.js --exclude ./test/compatibility.test.js --require mocha-suppress-logs",
-    "test:compatibility": "mocha ./test/testSetup.js ./test/compatibility.test.js"
+    "test:compatibility": "mocha ./test/testSetup.js ./test/compatibility*.test.js",
+    "test:compatibility:headless": "mocha ./test/testSetup.js ./test/compatibility.headless.test.js",
+    "test:compatibility:headfull": "mocha ./test/testSetup.js ./test/compatibility.headfull.test.js"
   },
   "type": "module",
   "devDependencies": {

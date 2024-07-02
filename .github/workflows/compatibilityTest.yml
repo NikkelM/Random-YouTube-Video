@@ -19,8 +19,11 @@ jobs:
 
       - name: Set up node
         uses: actions/setup-node@v3
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
         with:
           node-version: 18
+          # args: install
 
       - name: Cache node modules
         id: cache-npm
@@ -52,10 +55,12 @@ jobs:
       - name: Setup Chrome for Puppeteer
         run: npx puppeteer browsers install chrome
 
-      - name: Setup Xvfb and run tests
-        uses: GabrielBB/xvfb-action@v1.5
-        with:
-          run: npm run test:compatibility
+      - name: Run headless compatibility tests
+        run: npm run test:compatibility:headless
 
-      # - name: Run compatibility tests
-      #   run: npm run test:compatibility
+      - name: Run headfull compatibility tests
+        uses: mujo-code/puppeteer-headful@18.9.0
+        env:
+          CI: "true"
+        with:
+          args: npm run test:compatibility:headfull
