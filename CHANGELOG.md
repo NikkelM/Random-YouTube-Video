@@ -8,6 +8,7 @@
 - Fixed a bug where the shuffle button would sometimes not be added to the page if it was opened directly from a new tab.
 - Fixed a bug where the playlist created by the extension would sometimes not be renamed correctly.
 - Fixed an animation bug when ignoring shorts and shuffling a channel with many videos from a shorts page.
+- Fixed the shuffle button not being added to the channel page with a new YouTube UI.
 <!--Releasenotes end-->
 
 ## v3.1.7

@@ -66,16 +66,16 @@ async function startDOMObserver(event) {
 		if (pageType === "channel") {
 			switch (eventVersion) {
 				case "default":
-					channelPageRequiredElementLoadComplete = document.getElementById("channel-header");
+					channelPageRequiredElementLoadComplete = document.getElementById("channel-header")?.querySelector("#inner-header-container")?.children?.namedItem("buttons");
 					break;
 				case "20240521":
-					channelPageRequiredElementLoadComplete = document.getElementById("page-header");
+					channelPageRequiredElementLoadComplete = document.getElementById("page-header")?.getElementsByTagName("yt-flexible-actions-view-model")[0];
 					break;
 			}
 		} else if (pageType === "video") {
-			videoPageRequiredElementLoadComplete = document.getElementById("player") && document.getElementById("above-the-fold");
+			videoPageRequiredElementLoadComplete = document.getElementById("above-the-fold")?.children?.namedItem("top-row")?.children?.namedItem("owner");
 		} else if (pageType === "short") {
-			shortsPageRequiredElementLoadComplete = true;
+			shortsPageRequiredElementLoadComplete = document.querySelectorAll("ytd-reel-video-renderer ytd-reel-player-overlay-renderer #actions");// true;
 		}
 
 		// If the required element has loaded, add the shuffle button

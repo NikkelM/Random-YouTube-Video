@@ -6,7 +6,7 @@ import { dirname, join } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("compatibility", function () {
-	this.timeout(15000);
+	this.timeout(20000);
 
 	context("YouTube", function () {
 		context("shuffle button insertion", function () {
@@ -42,16 +42,12 @@ describe("compatibility", function () {
 			});
 
 			it('should insert the shuffle button into the channel header', async function () {
-				// Wait for 1 second to allow the extension to load
-				await new Promise(resolve => setTimeout(resolve, 1500));
-
 				await page.goto("https://www.youtube.com/@RickAstleyYT");
 
 				await page.waitForSelector("#youtube-random-video-large-shuffle-button-channel");
 				const shuffleButton = await page.$("#youtube-random-video-large-shuffle-button-channel");
 
 				expect(shuffleButton).to.not.be(null);
-
 			});
 		});
 	});
