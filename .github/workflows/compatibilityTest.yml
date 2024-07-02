@@ -41,7 +41,7 @@ jobs:
           cache-name: cache-puppeteer-chrome
         with:
           path: |
-            node_modules/puppeteer/.local-chromium
+            ~/.cache/puppeteer
           key: ${{ runner.os }}-puppeteer-chrome-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-puppeteer-chrome-
