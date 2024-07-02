@@ -3,7 +3,7 @@
   "version": "3.1.7",
   "description": "Customize, shuffle and play random videos from any YouTube channel.",
   "scripts": {
-		"dev": "concurrently \"npm run dev:chromium\" \"npm run dev:firefox\"",
+    "dev": "concurrently \"npm run dev:chromium\" \"npm run dev:firefox\"",
     "dev:chromium": "webpack --env browser=chromium --watch --config webpack.dev.cjs",
     "dev:firefox": "concurrently --kill-others \"webpack --env browser=firefox --watch --config webpack.dev.cjs\" \"web-ext run --source-dir ./dist/firefox\"",
     "dev:android": "concurrently --kill-others \"webpack --env browser=firefox --watch --config webpack.dev.cjs\" \"web-ext run --source-dir ./dist/firefox -t firefox-android --adb-device emulator-5554 --firefox-apk org.mozilla.fenix\"",
@@ -13,7 +13,7 @@
     "lint": "eslint --ext .ts,.js --max-warnings=0 . --ignore-path .eslintignore",
     "lint:firefox": "web-ext lint --source-dir ./dist/firefox",
     "test": "c8 --reporter=lcov --reporter=text mocha ./test/testSetup.js ./test/chromeStorage.test.js ./test/**/*.test.js --exclude ./test/compatibility.test.js --require mocha-suppress-logs",
-    "test:compatibility": "mocha ./test/testSetup.js ./test/compatibility.test.js --require mocha-suppress-logs"
+    "test:compatibility": "mocha ./test/testSetup.js ./test/compatibility.test.js"
   },
   "type": "module",
   "devDependencies": {
@@ -39,6 +39,7 @@
     "mocha": "^10.2.0",
     "mocha-suppress-logs": "^0.3.1",
     "prettier": "^2.7.1",
+    "puppeteer": "^22.12.1",
     "sinon": "^15.1.0",
     "sinon-chrome": "^3.0.1",
     "web-ext": "^8.0.0",

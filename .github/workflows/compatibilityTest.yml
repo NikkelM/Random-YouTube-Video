@@ -2,7 +2,7 @@ name: Run Compatibility Tests
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
   push:
     branches:
       - main
@@ -16,12 +16,12 @@ jobs:
     steps:
       - name: Set up Git repository
         uses: actions/checkout@v3
-      
-      - name: Set up node 
+
+      - name: Set up node
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          
+
       - name: Cache node modules
         id: cache-npm
         uses: actions/cache@v3
@@ -34,9 +34,21 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
-  
+
+      - name: Cache Puppeteer Chrome
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules/puppeteer/.local-chromium
+          key: ${{ runner.os }}-puppeteer-chrome-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-puppeteer-chrome-
+
       - name: Install dependencies
         run: npm install
+
+      - name: Setup Chrome for Puppeteer
+        run: npx puppeteer browsers install chrome
 
       - name: Run compatibility tests
         run: npm run test:compatibility
