@@ -6,7 +6,7 @@ import { dirname, join } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("compatibility", function () {
-	this.timeout(15000);
+	this.timeout(20000);
 
 	context("YouTube", function () {
 		context("shuffle button insertion", function () {
@@ -18,9 +18,11 @@ describe("compatibility", function () {
 				browser = await puppeteer.launch({
 					headless: false, // Extensions only work in head-full mode
 					args: [
+						'--no-sandbox',
 						`--disable-extensions-except=${extensionPath}`,
 						`--load-extension=${extensionPath}`
-					]
+					],
+					executablePath: process.env.PUPPETEER_EXEC_PATH, // set by docker container
 				});
 				page = await browser.newPage();
 
