@@ -37,6 +37,8 @@ jobs:
 
       - name: Cache Puppeteer Chrome
         uses: actions/cache@v3
+        env:
+          cache-name: cache-puppeteer-chrome
         with:
           path: |
             node_modules/puppeteer/.local-chromium
