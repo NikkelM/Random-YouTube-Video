@@ -19,11 +19,8 @@ jobs:
 
       - name: Set up node
         uses: actions/setup-node@v3
-        env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
         with:
           node-version: 18
-          # args: install
 
       - name: Cache node modules
         id: cache-npm
@@ -58,9 +55,6 @@ jobs:
       - name: Run headless compatibility tests
         run: npm run test:compatibility:headless
 
-      - name: Run headfull compatibility tests
-        uses: mujo-code/puppeteer-headful@18.9.0
-        env:
-          CI: "true"
-        with:
-          args: npm run test:compatibility:headfull
+        # TODO: Find way to run headfull tests in GitHub Actions
+      # - name: Run headfull compatibility tests
+        # run: npm run test:compatibility:headfull
