@@ -18,9 +18,11 @@ describe("compatibility", function () {
 				browser = await puppeteer.launch({
 					headless: false, // Extensions only work in head-full mode
 					args: [
+						'--no-sandbox',
 						`--disable-extensions-except=${extensionPath}`,
 						`--load-extension=${extensionPath}`
-					]
+					],
+					executablePath: process.env.PUPPETEER_EXEC_PATH, // set by docker container
 				});
 				page = await browser.newPage();
 
@@ -33,8 +35,6 @@ describe("compatibility", function () {
 					'secure': true,
 					'httpOnly': false
 				});
-				// For these tests, we need to install the dist/chromium directory as an extension in the browser
-
 			});
 
 			afterEach(async () => {
