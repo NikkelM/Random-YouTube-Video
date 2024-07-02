@@ -52,5 +52,10 @@ jobs:
       - name: Setup Chrome for Puppeteer
         run: npx puppeteer browsers install chrome
 
-      - name: Run compatibility tests
-        run: npm run test:compatibility
+      - name: Setup Xvfb and run tests
+        uses: GabrielBB/xvfb-action@v1.5
+        with:
+          run: npm run test:compatibility
+
+      # - name: Run compatibility tests
+      #   run: npm run test:compatibility
