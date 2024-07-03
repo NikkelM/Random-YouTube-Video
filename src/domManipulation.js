@@ -22,7 +22,7 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 					buttonDivExtraStyle = "margin-left: 8px;";
 					break;
 				case "20240521":
-					buttonDivOwner = [document.getElementById("page-header").querySelector(".page-header-view-model-wiz__page-header-headline-info").getElementsByTagName("yt-flexible-actions-view-model")[0]];
+					buttonDivOwner = [document.getElementById("page-header").getElementsByTagName("yt-flexible-actions-view-model")[0]];
 					break;
 			}
 			break;
