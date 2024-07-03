@@ -64,5 +64,5 @@ jobs:
         env:
           CI: "true"
         with:
-          args: npm run test:compatibility
+          args: npm run build:chromium && npm run test:compatibility
         # run: npm run test:compatibility:headful

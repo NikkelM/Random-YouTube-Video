@@ -19,9 +19,9 @@ describe("compatibility", function () {
 				browser = await puppeteer.launch({
 					headless: false, // Extensions only work in head-full mode
 					args: [
-						'--no-sandbox',
 						`--disable-extensions-except=${extensionPath}`,
-						`--load-extension=${extensionPath}`
+						`--load-extension=${extensionPath}`,
+						'--no-sandbox'
 					],
 					executablePath: process.env.PUPPETEER_EXEC_PATH, // set by docker container
 				});
