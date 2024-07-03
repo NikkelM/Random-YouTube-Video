@@ -1,11 +1,7 @@
 import expect from "expect.js";
 import puppeteer from "puppeteer";
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-describe("compatibility", function () {
+describe("headless compatibility", function () {
 	this.timeout(15000);
 
 	context("YouTube", function () {
