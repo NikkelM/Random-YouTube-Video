@@ -7,7 +7,7 @@ import { dirname, join } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("compatibility", function () {
-	this.timeout(50000);
+	this.timeout(30000);
 
 	context("YouTube", function () {
 		context("shuffle button insertion", function () {
