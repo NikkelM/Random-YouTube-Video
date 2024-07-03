@@ -60,7 +60,7 @@ jobs:
 
         # TODO: Find way to run headful tests in GitHub Actions
       - name: Run compatibility tests
-        uses: nikkelm/puppeteer-headful@v1.0.0
+        uses: nikkelm/puppeteer-headful@master
         env:
           CI: "true"
         with:

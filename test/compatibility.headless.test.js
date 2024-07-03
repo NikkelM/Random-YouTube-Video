@@ -23,7 +23,11 @@ describe("compatibility", function () {
 			let browser, page;
 
 			beforeEach(async () => {
-				browser = await puppeteer.launch({ headless: true });
+				browser = await puppeteer.launch({
+					headless: true, // Extensions only work in head-full mode
+					args: ['--no-sandbox'],
+					executablePath: process.env.PUPPETEER_EXEC_PATH, // set by docker container
+				});
 				page = await browser.newPage();
 
 				// Set the SOCS cookie for YouTube (cookie banner)
@@ -148,7 +152,11 @@ describe("compatibility", function () {
 			let browser, page;
 
 			beforeEach(async () => {
-				browser = await puppeteer.launch({ headless: true });
+				browser = await puppeteer.launch({
+					headless: true, // Extensions only work in head-full mode
+					args: ['--no-sandbox'],
+					executablePath: process.env.PUPPETEER_EXEC_PATH, // set by docker container
+				});
 				page = await browser.newPage();
 
 				// Set the SOCS cookie for YouTube (cookie banner)
