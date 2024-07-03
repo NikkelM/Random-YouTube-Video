@@ -59,12 +59,67 @@ async function startDOMObserver(event) {
 		return;
 	}
 
-	if (channelId != configSync.currentChannelId) {
-		// If we are on a new channel, we need to reset the extension context in case a shuffle is running
-		resetShuffleButtonText();
-		if (isShuffling) {
-			window.location.reload();
+	// The user navigated within the channel page (using tabs such as Videos, Shorts, Community, etc.), so if we already have a button, we re-use it
+	// We check if it's the same channel, because otherwise we need to reload the page in case a shuffle is running
+	if (channelId == configSync.currentChannelId &&
+		(pageType == "channel" && shuffleButton?.id == "youtube-random-video-large-shuffle-button-channel" ||
+			pageType == "video" && shuffleButton?.id == "youtube-random-video-large-shuffle-button-video")
+	) {
+		// If the extension context was invalidated, the shuffle button handler won't work any more, so we need to reload to reset the context
+		try {
+			// If we are still connected to the background worker, we can send a message to test the connection
+			await chrome.runtime.sendMessage({ command: "connectionTest" });
+		} catch (error) {
+			// If the extension's background worker was reloaded, we need to reload the page to re-connect to the background worker
+			if (error.message === 'Extension context invalidated.') {
+				window.location.reload();
+			}
 		}
+
+		const observer = new MutationObserver(function (mutations, me) {
+			let channelPageRequiredElementLoadComplete, videoPageRequiredElementLoadComplete;
+			if (pageType === "channel") {
+				switch (eventVersion) {
+					case "default":
+						channelPageRequiredElementLoadComplete = document.getElementById("channel-header")?.querySelector("#inner-header-container")?.children?.namedItem("buttons");
+						break;
+					case "20240521":
+						channelPageRequiredElementLoadComplete = document.getElementById("page-header")?.getElementsByTagName("yt-flexible-actions-view-model")[0];
+						break;
+				}
+			} else if (pageType === "video") {
+				videoPageRequiredElementLoadComplete = document.getElementById("above-the-fold")?.children?.namedItem("top-row")?.children?.namedItem("owner");
+			}
+
+			if (channelPageRequiredElementLoadComplete) {
+				me.disconnect();
+				if (pageType === "channel") {
+					switch (eventVersion) {
+						case "default":
+							document.getElementById("channel-header")?.querySelector("#inner-header-container")?.children?.namedItem("buttons")?.appendChild(shuffleButton);
+							break;
+						case "20240521":
+							document.getElementById("page-header")?.getElementsByTagName("yt-flexible-actions-view-model")[0]?.appendChild(shuffleButton);
+							break;
+					}
+				} else if (pageType === "video") {
+					document.getElementById("above-the-fold")?.children?.namedItem("top-row")?.children?.namedItem("owner")?.appendChild(shuffleButton);
+				}
+				return;
+			}
+		});
+
+		observer.observe(document, {
+			childList: true,
+			subtree: true
+		});
+		return;
+	}
+
+	// The user navigated while a shuffle was running
+	// As we can't represent the shuffle still running, we need to reload the page to reset the extension context
+	if (isShuffling) {
+		window.location.reload();
 	}
 
 	// Wait until the required DOM element we add the button to is loaded
