@@ -31,7 +31,6 @@ document.addEventListener("yt-navigate-finish", startDOMObserver);
 async function startDOMObserver(event) {
 	// Sometimes, YouTube changes contents of the event or the page structure. Whenever we encounter an identifying change, we update this variable to track it through the process
 	let eventVersion = "default";
-	resetShuffleButtonText();
 
 	let pageType = getPageTypeFromURL(window.location.href);
 
@@ -58,6 +57,14 @@ async function startDOMObserver(event) {
 	if (!channelId?.startsWith("UC")) {
 		// If no valid channelId was provided in the event, we won't be able to add the button
 		return;
+	}
+
+	if (channelId != configSync.currentChannelId) {
+		// If we are on a new channel, we need to reset the extension context in case a shuffle is running
+		resetShuffleButtonText();
+		if (isShuffling) {
+			window.location.reload();
+		}
 	}
 
 	// Wait until the required DOM element we add the button to is loaded

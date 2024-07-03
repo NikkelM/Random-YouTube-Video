@@ -4,6 +4,7 @@
 
 <!--Releasenotes start-->
 - The button's tooltip may now show additional information on the shuffle status.
+- Fixed a bug where an active shuffle would continue in the background when the user navigated to a different channel.
 - Fixed a bug where clicking the shuffle button while the shuffle was running would start a second shuffle at the same time.
 - Fixed a bug where the shuffle button would sometimes not be added to the page if it was opened directly from a new tab.
 - Fixed a bug where the playlist created by the extension would sometimes not be renamed correctly.
