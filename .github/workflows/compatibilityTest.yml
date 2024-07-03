@@ -44,7 +44,7 @@ jobs:
         run: npm run build:chromium
 
       - name: Run compatibility tests
-        uses: nikkelm/puppeteer-headful@master
+        uses: nikkelm/puppeteer-headful@1.0.0
         env:
           CI: "true"
         with:
