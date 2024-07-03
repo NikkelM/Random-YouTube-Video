@@ -1,3 +1,4 @@
+// Puppeteer browser tests that install the extension and therefore require a headful browser to run.
 import expect from "expect.js";
 import puppeteer from "puppeteer";
 import { fileURLToPath } from 'url';
@@ -6,7 +7,7 @@ import { dirname, join } from 'path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("compatibility", function () {
-	this.timeout(20000);
+	this.timeout(50000);
 
 	context("YouTube", function () {
 		context("shuffle button insertion", function () {

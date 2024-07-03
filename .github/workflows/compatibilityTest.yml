@@ -23,7 +23,6 @@ jobs:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
         with:
           node-version: 18
-          args: install
 
       - name: Cache node modules
         id: cache-npm
@@ -64,5 +63,5 @@ jobs:
         env:
           CI: "true"
         with:
-          args: npm run test:compatibility:headful
+          args: npm run test:compatibility
         # run: npm run test:compatibility:headful
