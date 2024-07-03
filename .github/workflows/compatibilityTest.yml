@@ -38,31 +38,15 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
-      # - name: Cache Puppeteer Chrome
-      #   uses: actions/cache@v3
-      #   env:
-      #     cache-name: cache-puppeteer-chrome
-      #   with:
-      #     path: |
-      #       ~/.cache/puppeteer
-      #     key: ${{ runner.os }}-puppeteer-chrome-${{ hashFiles('**/package-lock.json') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-puppeteer-chrome-
-
       - name: Install dependencies
         run: npm install
+      
+      - name: Build extension
+        run: npm run build:chromium
 
-      # - name: Setup Chrome for Puppeteer
-      #   run: npx puppeteer browsers install chrome
-
-      # - name: Run headless compatibility tests
-      #   run: npm run test:compatibility:headless
-
-        # TODO: Find way to run headful tests in GitHub Actions
       - name: Run compatibility tests
         uses: nikkelm/puppeteer-headful@master
         env:
           CI: "true"
         with:
-          args: npm run build:chromium && npm run test:compatibility
-        # run: npm run test:compatibility:headful
+          args: npm run test:compatibility
