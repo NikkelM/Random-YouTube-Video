@@ -23,7 +23,6 @@ jobs:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
         with:
           node-version: 18
-          args: install
 
       - name: Cache node modules
         id: cache-npm
