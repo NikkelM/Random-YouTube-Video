@@ -5,7 +5,7 @@ import { isFirefox, firebaseConfig } from "./config.js";
 import { userHasActiveSubscriptionRole } from "./stripe.js";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase, ref, child, update, get, remove } from "firebase/database";
-import { getFirestore, query, collection, getDocs, orderBy, limit, where } from "firebase/firestore";
+import { getFirestore, query, collection, doc, setDoc, getDocs, orderBy, limit, where } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { countryToCurrency } from "country-to-currency";
 // We need to import utils.js to get the console re-routing function
