@@ -58,11 +58,11 @@ jobs:
       - name: Run headless compatibility tests
         run: npm run test:compatibility:headless
 
-        # TODO: Find way to run headfull tests in GitHub Actions
-      - name: Run headfull compatibility tests
-        uses: elliottback/puppeteer-headful@20.12.0
+        # TODO: Find way to run headful tests in GitHub Actions
+      - name: Run headful compatibility tests
+        uses: nikkelm/puppeteer-headful@v1.0.0
         env:
           CI: "true"
         with:
-          args: npm run test:compatibility:headfull
-        # run: npm run test:compatibility:headfull
+          args: npm run test:compatibility:headful
+        # run: npm run test:compatibility:headful
