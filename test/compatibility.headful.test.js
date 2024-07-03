@@ -1,4 +1,4 @@
-// Puppeteer browser tests that install the extension and therefore require a headful browser to run.
+// Puppeteer browser tests that install the extension and therefore require a headful browser.
 import expect from "expect.js";
 import puppeteer from "puppeteer";
 import { fileURLToPath } from 'url';

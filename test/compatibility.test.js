@@ -1,3 +1,4 @@
+// Compatibility tests that do not need puppeteer/a mocked browser environment
 import expect from "expect.js";
 
 describe("compatibility", function () {

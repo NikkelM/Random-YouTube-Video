@@ -1,3 +1,4 @@
+// Tests that can be run in a headless puppeteer browser.
 import expect from "expect.js";
 import puppeteer from "puppeteer";
 
@@ -178,11 +179,6 @@ describe("headless compatibility", function () {
 
 			expect(event.channelId).to.be("UCuAXFkgsw1L7xaCfnd5JJOw");
 			expect(event.channelName).to.be("Rick Astley");
-		});
-	});
-
-	context("DOM elements", function () {
-		it("should contain the expected channel header elements to insert the button into", async function () {
 		});
 	});
 });
