@@ -1,0 +1,51 @@
+name: Run Compatibility Tests
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  CompatibilityTest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v3
+
+      - name: Set up node
+        uses: actions/setup-node@v3
+        env:
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+        with:
+          node-version: 18
+
+      - name: Cache node modules
+        id: cache-npm
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Build extension
+        run: npm run build:chromium
+
+      - name: Run compatibility tests
+        uses: nikkelm/puppeteer-headful@1.0.0
+        env:
+          CI: "true"
+        with:
+          args: npm run test:compatibility
