@@ -75,7 +75,7 @@ async function startDOMObserver(event) {
 			await chrome.runtime.sendMessage({ command: "connectionTest" });
 		} catch (error) {
 			// If the extension's background worker was reloaded, we need to reload the page to re-connect to the background worker
-			if (error.message === 'Extension context invalidated.') {
+			if (error.message === "Extension context invalidated.") {
 				window.location.reload();
 			}
 		}
