@@ -56,7 +56,7 @@ async function startDOMObserver(event) {
 
 	// If no valid channelId was provided in the event, we won't be able to add the button
 	if (!channelId?.startsWith("UC")) {
-		if(isShuffling) {
+		if (isShuffling) {
 			window.location.reload();
 		}
 		return;
@@ -64,6 +64,8 @@ async function startDOMObserver(event) {
 
 	// The user navigated within the channel page (using tabs such as Videos, Shorts, Community, etc.), so if we already have a button, we re-use it
 	// We check if it's the same channel, because otherwise we need to reload the page in case a shuffle is running
+	// TODO: Reuse the button if navigating between channel and video page of the same channel. May need to reformat the button to fit the new page
+	// TODO: Move this logic of re-inserting the button to the buildShuffleButton function, or at least to domManipulation.js?
 	if (channelId == configSync.currentChannelId &&
 		(pageType == "channel" && shuffleButton?.id == "youtube-random-video-large-shuffle-button-channel" ||
 			pageType == "video" && shuffleButton?.id == "youtube-random-video-large-shuffle-button-video")
@@ -94,22 +96,21 @@ async function startDOMObserver(event) {
 				videoPageRequiredElementLoadComplete = document.getElementById("above-the-fold")?.children?.namedItem("top-row")?.children?.namedItem("owner");
 			}
 
-			if (channelPageRequiredElementLoadComplete) {
+			if (pageType === "channel" && channelPageRequiredElementLoadComplete) {
 				me.disconnect();
-				if (pageType === "channel") {
-					switch (eventVersion) {
-						case "default":
-							document.getElementById("channel-header")?.querySelector("#inner-header-container")?.children?.namedItem("buttons")?.appendChild(shuffleButton);
-							break;
-						case "20240521":
-							document.getElementById("page-header")?.getElementsByTagName("yt-flexible-actions-view-model")[0]?.appendChild(shuffleButton);
-							break;
-					}
-				} else if (pageType === "video") {
-					document.getElementById("above-the-fold")?.children?.namedItem("top-row")?.children?.namedItem("owner")?.appendChild(shuffleButton);
+				switch (eventVersion) {
+					case "default":
+						document.getElementById("channel-header")?.querySelector("#inner-header-container")?.children?.namedItem("buttons")?.appendChild(shuffleButton);
+						break;
+					case "20240521":
+						document.getElementById("page-header")?.getElementsByTagName("yt-flexible-actions-view-model")[0]?.appendChild(shuffleButton);
+						break;
 				}
-				return;
+			} else if (pageType === "video" && videoPageRequiredElementLoadComplete) {
+				me.disconnect();
+				document.getElementById("above-the-fold")?.children?.namedItem("top-row")?.children?.namedItem("owner")?.appendChild(shuffleButton);
 			}
+			return;
 		});
 
 		observer.observe(document, {
