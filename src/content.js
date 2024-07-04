@@ -64,8 +64,6 @@ async function startDOMObserver(event) {
 
 	// The user navigated within the channel page (using tabs such as Videos, Shorts, Community, etc.), so if we already have a button, we re-use it
 	// We check if it's the same channel, because otherwise we need to reload the page in case a shuffle is running
-	// TODO: Reuse the button if navigating between channel and video page of the same channel. May need to reformat the button to fit the new page
-	// TODO: Move this logic of re-inserting the button to the buildShuffleButton function, or at least to domManipulation.js?
 	if (channelId == configSync.currentChannelId &&
 		(pageType == "channel" && shuffleButton?.id == "youtube-random-video-large-shuffle-button-channel" ||
 			pageType == "video" && shuffleButton?.id == "youtube-random-video-large-shuffle-button-video")
