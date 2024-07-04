@@ -1,6 +1,6 @@
 # Changelog
 
-## v3.1.8-beta
+## v3.1.8
 
 <!--Releasenotes start-->
 - The button's tooltip may now show additional information on the shuffle status.
