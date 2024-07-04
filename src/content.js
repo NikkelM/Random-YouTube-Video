@@ -54,8 +54,11 @@ async function startDOMObserver(event) {
 		}
 	}
 
+	// If no valid channelId was provided in the event, we won't be able to add the button
 	if (!channelId?.startsWith("UC")) {
-		// If no valid channelId was provided in the event, we won't be able to add the button
+		if(isShuffling) {
+			window.location.reload();
+		}
 		return;
 	}
 
