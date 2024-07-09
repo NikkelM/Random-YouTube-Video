@@ -35,7 +35,8 @@ async function initExtension() {
 	}
 
 	await checkLocalStorageCapacity();
-	await checkForAndShowNews();
+	// TODO: Temporarily disabled due to too many read operations, need to investigate why
+	// await checkForAndShowNews();
 }
 
 // Make sure we are not using too much local storage
