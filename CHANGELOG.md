@@ -12,6 +12,10 @@
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
 <!--Releasenotes end-->
 
+## v3.1.9
+
+- Temporarily disabled the news feature.
+
 ## v3.1.8
 
 - The button's tooltip may now show additional information on the shuffle status.

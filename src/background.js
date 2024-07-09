@@ -39,7 +39,8 @@ async function initExtension() {
 
 	await checkShufflePlusStatus();
 	await checkLocalStorageCapacity();
-	await checkForAndShowNews();
+	// TODO: Temporarily disabled due to too many read operations, need to investigate why
+	// await checkForAndShowNews();
 }
 
 // On every startup, we check the claim roles for the user
