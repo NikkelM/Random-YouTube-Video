@@ -1,8 +1,13 @@
 # Changelog
 
-## v3.1.8
+## v3.1.9
 
 <!--Releasenotes start-->
+- Temporarily disabled the news feature.
+<!--Releasenotes end-->
+
+## v3.1.8
+
 - The button's tooltip may now show additional information on the shuffle status.
 - The extension will now show that a shuffle is still running when navigating within a channel.
 - Fixed a bug where an active shuffle would continue in the background when navigating to a different channel.
@@ -11,7 +16,6 @@
 - Fixed a bug where the playlist created by the extension would sometimes not be renamed correctly.
 - Fixed an animation bug when ignoring shorts and shuffling a channel with many videos from a shorts page.
 - Fixed the shuffle button not being added to the channel page if the browser is using a new YouTube UI.
-<!--Releasenotes end-->
 
 ## v3.1.7
 
