@@ -1,10 +1,14 @@
 # Changelog
 
-## v3.1.9
+## v3.1.10
 
 <!--Releasenotes start-->
-- Temporarily disabled the news feature.
+- News page will no longer open after updating from v3.1.5 or an earlier version.
 <!--Releasenotes end-->
+
+## v3.1.9
+
+- Temporarily disabled the news feature.
 
 ## v3.1.8
 

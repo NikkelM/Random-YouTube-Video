@@ -1,8 +1,8 @@
 {
 	"name": "Random YouTube Video",
 	"description": "Customize, shuffle and play random videos from any YouTube channel.",
-	"version": "3.1.9",
-	"version_name": "3.1.9",
+	"version": "3.1.10",
+	"version_name": "3.1.10",
 	"manifest_version": 3,
 	"content_scripts": [
 		{
