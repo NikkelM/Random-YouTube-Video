@@ -12,6 +12,10 @@
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
 <!--Releasenotes end-->
 
+## v3.1.10
+
+- News page will no longer open after updating from v3.1.5 or an earlier version.
+
 ## v3.1.9
 
 - Temporarily disabled the news feature.

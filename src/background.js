@@ -143,11 +143,6 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 }
 
 async function handleVersionSpecificUpdates(previousVersion) {
-	// v3.1.5 added a notice for people using playlists
-	if (previousVersion < "3.1.5") {
-		await chrome.tabs.create({ url: chrome.runtime.getURL("html/breakingNews.html") });
-	}
-
 	// v3.0.1 changed the data type for the shuffleIgnoreShortsOption from boolean to number
 	if (previousVersion < "3.0.1") {
 		console.log("Updating sync storage to v3.0.1 format...", true);
