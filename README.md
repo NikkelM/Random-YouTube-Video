@@ -105,7 +105,7 @@ You may also test the extension with Firefox by running `npm run dev:firefox`, w
 The project contains a number of different test suites, for different environments and purposes:
 
 - All tests: Run with `npm run test:all`
-- Unit tests: Run with `npm run test`
+- Unit tests: Run with `npm test`
 - "Compatibility tests": Run with `npm run test:compatibility` and optionally the `:headless` or `:headful` suffixes
 	- These tests are used to ensure that the extension runs as expected in a live browser environment, for Chrome only at the moment. They utilize `puppeteer` to start a browser session and interact with the extension.
 

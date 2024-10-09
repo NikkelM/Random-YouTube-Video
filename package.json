@@ -12,11 +12,11 @@
     "build:firefox": "webpack --env browser=firefox --config webpack.prod.cjs",
     "lint": "eslint --ext .ts,.js --max-warnings=0 . --ignore-path .eslintignore",
     "lint:firefox": "web-ext lint --source-dir ./dist/firefox",
-    "test": "c8 --reporter=lcov --reporter=text mocha ./test/testSetup.js ./test/chromeStorage.test.js ./test/**/*.test.js --exclude ./test/compatibility*.test.js --require mocha-suppress-logs",
+    "test": "c8 --reporter=lcov --reporter=text mocha ./test/testSetup.js ./test/chromeStorage.test.js ./test/*.test.js --require mocha-suppress-logs",
     "test:all": "npm run test && npm run test:compatibility",
-    "test:compatibility": "mocha ./test/testSetup.js ./test/compatibility*.test.js --require mocha-suppress-logs --retries 3",
-    "test:compatibility:headless": "mocha ./test/testSetup.js ./test/compatibility.test.js ./test/compatibility.headless.test.js --require mocha-suppress-logs --retries 3",
-    "test:compatibility:headful": "mocha ./test/testSetup.js ./test/compatibility.headful.test.js --require mocha-suppress-logs --retries 3"
+    "test:compatibility": "mocha ./test/testSetup.js ./test/compatibility/compatibility*.test.js --require mocha-suppress-logs --retries 3",
+    "test:compatibility:headless": "mocha ./test/testSetup.js ./test/compatibility/compatibility.test.js ./test/compatibility/compatibility.headless.test.js --require mocha-suppress-logs --retries 3",
+    "test:compatibility:headful": "mocha ./test/testSetup.js ./test/compatibility/compatibility.headful.test.js --require mocha-suppress-logs --retries 3"
   },
   "type": "module",
   "devDependencies": {

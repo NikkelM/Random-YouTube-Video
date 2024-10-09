@@ -13,7 +13,7 @@ describe("headful compatibility", function () {
 		let browser, page;
 
 		before(async () => {
-			const extensionPath = join(__dirname, "../dist/chromium");
+			const extensionPath = join(__dirname, "../../dist/chromium");
 
 			browser = await puppeteer.launch({
 				headless: false, // Extensions only work in head-full mode
