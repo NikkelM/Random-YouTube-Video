@@ -9,8 +9,8 @@ export const configSyncDefaults = {
 	// If the user has enabled sharing video ID's with the database
 	"databaseSharingEnabledOption": true,
 	// These properties influence the behavior of the "Shuffle" button
-	"shuffleOpenInNewTabOption": true,
-	"shuffleReUseNewTabOption": true,
+	"shuffleOpenInNewTabOption": false,
+	"shuffleReUseNewTabOption": false,
 	// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
 	"shuffleIgnoreShortsOption": 1,
 	"shuffleOpenAsPlaylistOption": true,

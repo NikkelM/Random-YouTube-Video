@@ -1,6 +1,6 @@
 {
   "name": "random-youtube-video",
-  "version": "3.1.10",
+  "version": "3.1.11",
   "description": "Customize, shuffle and play random videos from any YouTube channel.",
   "scripts": {
     "dev": "concurrently \"npm run dev:chromium\" \"npm run dev:firefox\"",
@@ -12,11 +12,11 @@
     "build:firefox": "webpack --env browser=firefox --config webpack.prod.cjs",
     "lint": "eslint --ext .ts,.js --max-warnings=0 . --ignore-path .eslintignore",
     "lint:firefox": "web-ext lint --source-dir ./dist/firefox",
-    "test": "c8 --reporter=lcov --reporter=text mocha ./test/testSetup.js ./test/chromeStorage.test.js ./test/**/*.test.js --exclude ./test/compatibility*.test.js --require mocha-suppress-logs",
+    "test": "c8 --reporter=lcov --reporter=text mocha ./test/testSetup.js ./test/chromeStorage.test.js ./test/*.test.js --require mocha-suppress-logs",
     "test:all": "npm run test && npm run test:compatibility",
-    "test:compatibility": "mocha ./test/testSetup.js ./test/compatibility*.test.js --require mocha-suppress-logs --retries 3",
-    "test:compatibility:headless": "mocha ./test/testSetup.js ./test/compatibility.test.js ./test/compatibility.headless.test.js --require mocha-suppress-logs --retries 3",
-    "test:compatibility:headful": "mocha ./test/testSetup.js ./test/compatibility.headful.test.js --require mocha-suppress-logs --retries 3"
+    "test:compatibility": "mocha ./test/testSetup.js ./test/compatibility/compatibility*.test.js --require mocha-suppress-logs --retries 3",
+    "test:compatibility:headless": "mocha ./test/testSetup.js ./test/compatibility/compatibility.test.js ./test/compatibility/compatibility.headless.test.js --require mocha-suppress-logs --retries 3",
+    "test:compatibility:headful": "mocha ./test/testSetup.js ./test/compatibility/compatibility.headful.test.js --require mocha-suppress-logs --retries 3"
   },
   "type": "module",
   "devDependencies": {
@@ -46,7 +46,7 @@
     "sinon": "^15.1.0",
     "sinon-chrome": "^3.0.1",
     "web-ext": "^8.0.0",
-    "webpack": "^5.73.0",
+    "webpack": "^5.95.0",
     "webpack-cli": "^4.10.0",
     "webpack-merge": "^5.8.0"
   },

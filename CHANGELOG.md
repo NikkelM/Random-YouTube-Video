@@ -12,6 +12,12 @@
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
 <!--Releasenotes end-->
 
+## v3.1.11
+
+- Changed the default settings to not open shuffled videos in a new tab.
+- Moved the informative text about remaining YouTube API quota to the advanced settings menu.
+- Updated the welcome page for a better experience.
+
 ## v3.1.10
 
 - News page will no longer open after updating from v3.1.5 or an earlier version.

@@ -44,7 +44,7 @@ try {
 // --- Private ---
 // Get relevant DOM elements
 function getDomElements() {
-	/* global reviewDonationDiv, reviewDiv, donationDiv, customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, dailyQuotaNoticeDiv */
+	/* global reviewDonationDiv, reviewDiv, donationDiv, customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, advancedSettingsDiv, dailyQuotaNoticeDiv */
 	/* eslint no-undef: "error" */
 	return {
 		body: document.body,
@@ -123,15 +123,16 @@ function getDomElements() {
 		// Database sharing: Option toggle
 		dbSharingOptionToggle: document.getElementById("dbSharingOptionToggle"),
 
+		// Daily quota notice div
+		dailyQuotaNoticeDiv: advancedSettingsDiv.children.namedItem("dailyQuotaNoticeDiv"),
+		// Daily quota notice: Text
+		dailyQuotaNoticeText: dailyQuotaNoticeDiv.children.namedItem("dailyQuotaNoticeText"),
+
 		// FYI - FOR YOUR INFORMATION
 		// FYI div
 		forYourInformationDiv: document.getElementById("forYourInformationDiv"),
 		// FYI: Number of shuffled videos text
 		numberOfShuffledVideosText: forYourInformationDiv.children.namedItem("numberOfShuffledVideosText"),
-		// FYI: Daily quota notice div
-		dailyQuotaNoticeDiv: forYourInformationDiv.children.namedItem("dailyQuotaNoticeDiv"),
-		// Daily quota notice: Text
-		dailyQuotaNoticeText: dailyQuotaNoticeDiv.children.namedItem("dailyQuotaNoticeText"),
 
 		// FOOTER
 		// View changelog button
