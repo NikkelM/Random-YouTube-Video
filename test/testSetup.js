@@ -1,6 +1,6 @@
 import sinonChrome from 'sinon-chrome';
 
-import { configSyncDefaults } from '../src/config.js';
+import { configSyncDefaults } from './testConfig.js';
 import { deepCopy, localPlaylistPermutations, databasePermutations } from './playlistPermutations.js';
 
 global.chrome = sinonChrome;

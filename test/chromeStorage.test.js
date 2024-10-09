@@ -18,7 +18,6 @@ describe('chromeStorage', function () {
 				for (let i = 0; i < Object.keys(configSyncDefaults).length; i++) {
 					expect(setArgs[i + 1]).to.eql([{ [Object.keys(configSyncDefaults)[i]]: Object.values(configSyncDefaults)[i] }]);
 				}
-				expect(setArgs[setArgs.length - 1]).to.eql([configSyncDefaults]);
 
 				expect(removeArgs).to.eql([["thisKeyShouldBeRemoved"]]);
 

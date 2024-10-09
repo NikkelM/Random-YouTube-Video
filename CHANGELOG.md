@@ -1,10 +1,16 @@
 # Changelog
 
-## v3.1.10
+## v3.1.11
 
 <!--Releasenotes start-->
-- News page will no longer open after updating from v3.1.5 or an earlier version.
+- Changed the default settings to not open shuffled videos in a new tab.
+- Moved the informative text about remaining YouTube API quota to the advanced settings menu.
+- Updated the welcome page for a better experience.
 <!--Releasenotes end-->
+
+## v3.1.10
+
+- News page will no longer open after updating from v3.1.5 or an earlier version.
 
 ## v3.1.9
 
