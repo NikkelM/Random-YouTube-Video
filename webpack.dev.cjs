@@ -5,7 +5,15 @@ module.exports = env => {
 	let mode = "development";
 	let devtool = 'inline-source-map';
 	let optimization = {
-		minimize: false
+		minimize: false,
+		concatenateModules: false,
+		flagIncludedChunks: false,
+		mergeDuplicateChunks: false,
+		removeAvailableModules: false,
+		removeEmptyChunks: false,
+		sideEffects: false,
+		providedExports: false,
+		usedExports: false,
 	};
 
 	env.mode = mode;
@@ -16,6 +24,10 @@ module.exports = env => {
 	return merge(common(env), {
 		mode,
 		devtool,
-		optimization
+		optimization,
+		output: {
+			filename: '[name].js',
+			chunkFilename: '[name].js'
+		}
 	});
 };
