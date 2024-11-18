@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.18.6",
-    "firebase": "^9.22.0"
+    "firebase": "^10.9.0"
   },
   "lint-staged": {
     "*.{ts,js}": [
