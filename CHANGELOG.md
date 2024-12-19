@@ -13,7 +13,7 @@
 <!--Releasenotes end-->
 
 ## v3.1.12
-
+<!-- TODO: Test if the tabs permission is required for the sign-in flow page etc. -->
 - Removed "tabs" permission from the extension, enhancing privacy.
 
 ## v3.1.11
