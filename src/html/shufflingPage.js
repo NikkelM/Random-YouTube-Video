@@ -64,10 +64,10 @@ async function setDomElementEventListeners(domElements) {
 	domElements.viewChangelogButton.addEventListener("click", async function () {
 		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
 
-		const tabUrl = chrome.runtime.getURL("html/changelog.html");
-		let mustOpenTab = await tryFocusingTab(tabUrl);
+		const changelogUrl = chrome.runtime.getURL("html/changelog.html");
+		let mustOpenTab = await tryFocusingTab(changelogUrl);
 		if (mustOpenTab) {
-			window.open(tabUrl, "_blank");
+			window.open(changelogUrl, "_blank");
 		}
 	});
 }

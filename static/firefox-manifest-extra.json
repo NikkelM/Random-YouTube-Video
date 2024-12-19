@@ -9,9 +9,6 @@
 			"id": "RandomYouTubeVideo@NikkelM"
 		}
 	},
-	"optional_permissions": [
-		"tabs"
-	],
 	"options_ui": {
 		"page": "html/popup.html"
 	}
