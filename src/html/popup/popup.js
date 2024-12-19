@@ -380,24 +380,24 @@ async function setDomElementEventListeners(domElements) {
 
 	// Popup shuffle button
 	domElements.popupShuffleButton.addEventListener("click", async function () {
-		const shufflingPage = chrome.runtime.getURL("html/shufflingPage.html");
+		const shufflingPageUrl = chrome.runtime.getURL("html/shufflingPage.html");
 
 		// Get the status of the shufflingPage, if it exists
 		const shufflingPageIsShuffling = await chrome.runtime.sendMessage({ command: "getShufflingPageShuffleStatus" });
 		// If the page is not shuffling, close it if it exists, as that means an error was encountered
 		if (!shufflingPageIsShuffling) {
-			const tabs = await chrome.tabs.query({});
+			const tabs = await chrome.tabs.query({ url: shufflingPageUrl });
 			for (const tab of tabs) {
-				if (tab.url === shufflingPage) {
+				if (tab.url === shufflingPageUrl) {
 					chrome.tabs.remove(tab.id);
 					break;
 				}
 			}
 		}
 
-		let mustOpenTab = await tryFocusingTab(shufflingPage);
+		let mustOpenTab = await tryFocusingTab(shufflingPageUrl);
 		if (mustOpenTab) {
-			await chrome.tabs.create({ url: shufflingPage });
+			await chrome.tabs.create({ url: shufflingPageUrl });
 		}
 
 		// Close the popup
@@ -480,11 +480,11 @@ async function setDomElementEventListeners(domElements) {
 // When the popup is opened, checks if an overlay should be shown
 async function determineOverlayVisibility(domElements) {
 	// If we are on Firefox and have not been granted permissions, show the overlay and then ask for permissions
-	if (isFirefox && !await browser.permissions.contains({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] })) {
+	if (isFirefox && !await browser.permissions.contains({ origins: ["*://*.youtube.com/*"] })) {
 		domElements.firefoxPermissionsNeededDiv.classList.remove("hidden");
 
 		domElements.firefoxPermissionsNeededButton.addEventListener("click", async function () {
-			browser.permissions.request({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] });
+			browser.permissions.request({ origins: ["*://*.youtube.com/*"] });
 			window.close();
 		});
 	} else {
@@ -527,7 +527,7 @@ async function updateDomElementsDependentOnChannel(domElements) {
 	updateChannelSettingsDropdownMenu(domElements);
 
 	// ----- Popup shuffle button -----
-	domElements.popupShuffleButton.innerText = configSync.currentChannelName ? `Shuffle from: ${configSync.currentChannelName}`: "This will be a shuffle button!";
+	domElements.popupShuffleButton.innerText = configSync.currentChannelName ? `Shuffle from: ${configSync.currentChannelName}` : "This will be a shuffle button!";
 }
 
 async function updateChannelSettingsDropdownMenu(domElements) {

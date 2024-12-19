@@ -9,18 +9,17 @@ import { userHasActiveSubscriptionRole } from "../stripe.js";
 const domElements = getDomElements();
 
 let mayShowReloadAllYouTubePagesDiv = false;
-chrome.tabs.query({}, function (tabs) {
-	for (let i = 0; i <= tabs.length - 1; i++) {
-		if (tabs[i].url.split("/")[2]?.includes("youtube")) {
-			mayShowReloadAllYouTubePagesDiv = true;
-			// Immediately show if we are not waiting for Firefox permissions
-			if (!isFirefox) {
-				domElements.needToReloadYouTubePagesDiv.classList.remove("hidden");
-			}
-			break;
+let tabs = await chrome.runtime.sendMessage({ command: "getAllYouTubeTabs" }) ?? [];
+for (let i = 0; i <= tabs.length - 1; i++) {
+	if (tabs[i].url.split("/")[2]?.includes("youtube")) {
+		mayShowReloadAllYouTubePagesDiv = true;
+		// Immediately show if we are not waiting for Firefox permissions
+		if (!isFirefox || await browser.permissions.contains({ origins: ["*://*.youtube.com/*"] })) {
+			domElements.needToReloadYouTubePagesDiv.classList.remove("hidden");
 		}
+		break;
 	}
-});
+}
 
 await setDomElementValuesFromConfig(domElements);
 await buildShufflingHints(domElements);
@@ -78,7 +77,7 @@ async function setDomElementValuesFromConfig(domElements) {
 // Set event listeners for DOM elements
 async function setDomElementEventListeners(domElements) {
 	// Firefox permissions button
-	if (isFirefox && !await browser.permissions.contains({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] })) {
+	if (isFirefox && !await browser.permissions.contains({ origins: ["*://*.youtube.com/*"] })) {
 		domElements.firefoxPermissionsDiv.classList.remove("hidden");
 
 		// This is so important that we will use a browser alert window to make sure the user sees and acknowledges it
@@ -88,7 +87,7 @@ async function setDomElementEventListeners(domElements) {
 		domElements.giveFirefoxPermissionsButton.addEventListener("click", async function () {
 			await requestFirefoxPermissions();
 			// If permissions were not granted we must ask again, without them the extension does not work
-			if (!await browser.permissions.contains({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] })) {
+			if (!await browser.permissions.contains({ origins: ["*://*.youtube.com/*"] })) {
 				alert("You must grant the extension the permission to access YouTube.com in order to use it. Please grant the permission using the highlighted button.");
 			} else {
 				domElements.firefoxPermissionsDiv.classList.add("hidden");
@@ -101,7 +100,7 @@ async function setDomElementEventListeners(domElements) {
 
 	// Reload all YouTube pages button
 	domElements.reloadAllYouTubePagesButton.addEventListener("click", async function () {
-		let tabs = await chrome.tabs.query({});
+		let tabs = await chrome.runtime.sendMessage({ command: "getAllYouTubeTabs" }) ?? [];
 		for (let i = 0; i <= tabs.length - 1; i++) {
 			if (tabs[i].url.split("/")[2]?.includes("youtube")) {
 				chrome.tabs.reload(tabs[i].id);
@@ -146,7 +145,6 @@ async function setDomElementEventListeners(domElements) {
 
 async function requestFirefoxPermissions() {
 	const permissionsToRequest = {
-		permissions: ["tabs"],
 		origins: ["*://*.youtube.com/*"]
 	};
 	await browser.permissions.request(permissionsToRequest);

@@ -67,9 +67,13 @@ function adjustParentContainerHeight(childElement, heightChange) {
 }
 
 // ----- Tab interaction -----
+// For Chromium, we are not allowed to query our own tabs, so this will always return mustOpenTab = true for Chromium with the current use cases
+// This is not a big problem, as we only use it to query if the changelog page is already open, or the shuffling page had an error and should be automatically closed
 export async function tryFocusingTab(tabUrl) {
 	let mustOpenTab = true;
-	let tabs = await chrome.tabs.query({});
+	// Only query for the requested URL (pattern), as we have not been granted the tabs permission which would allow querying all tabs
+	let tabs = await chrome.tabs.query({ url: tabUrl });
+
 	for (let i = 0; i <= tabs.length - 1; i++) {
 		if (tabs[i].url === tabUrl) {
 			// An instance of the page already exists, so don't create a new one

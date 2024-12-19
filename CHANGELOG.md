@@ -12,6 +12,10 @@
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
 <!--Releasenotes end-->
 
+## v3.1.12
+
+- Removed "tabs" permission from the extension, enhancing privacy.
+
 ## v3.1.11
 
 - Changed the default settings to not open shuffled videos in a new tab.

@@ -27,7 +27,7 @@ async function initExtension() {
 		await setSyncStorageValue("previousVersion", manifestData.version);
 		const welcomeUrl = chrome.runtime.getURL("html/welcome.html");
 		await chrome.tabs.create({ url: welcomeUrl });
-	} else if (isFirefox && !await browser.permissions.contains({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] })) {
+	} else if (isFirefox && !await browser.permissions.contains({ origins: ["*://*.youtube.com/*"] })) {
 		console.log("The extension is running in Firefox and does not have the required permissions.");
 		const welcomeUrl = chrome.runtime.getURL("html/welcome.html");
 		await chrome.tabs.create({ url: welcomeUrl });
@@ -422,6 +422,7 @@ function rot13(message, encrypt) {
 }
 
 // Get all tabs whose url is a YouTube page. Content scripts cannot access the chrome.tabs API
+// We are allowed to query tabs for which we have host permissions even without the tabs permission
 async function getAllYouTubeTabs() {
 	return await chrome.tabs.query({ url: "*://*.youtube.com/*" });
 }
