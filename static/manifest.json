@@ -16,8 +16,10 @@
 		}
 	],
 	"permissions": [
-		"storage",
-		"tabs"
+		"storage"
+	],
+	"host_permissions": [
+		"*://*.youtube.com/*"
 	],
 	"action": {
 		"default_popup": "html/popup.html",

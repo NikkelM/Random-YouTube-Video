@@ -374,6 +374,7 @@ async function setPopupDomElementEventListeners(domElements) {
 		const shufflingPageIsShuffling = await chrome.runtime.sendMessage({ command: "getShufflingPageShuffleStatus" });
 		// If the page is not shuffling, close it if it exists, as that means an error was encountered
 		if (!shufflingPageIsShuffling) {
+			// TODO: Try to get the exact page we want (extension ID needed)
 			const tabs = await chrome.tabs.query({});
 			for (const tab of tabs) {
 				if (tab.url === shufflingPage) {
@@ -459,11 +460,11 @@ async function setPopupDomElementEventListeners(domElements) {
 // When the popup is opened, checks if an overlay should be shown
 async function determineOverlayVisibility(domElements) {
 	// If we are on Firefox and have not been granted permissions, show the overlay and then ask for permissions
-	if (isFirefox && !await browser.permissions.contains({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] })) {
+	if (isFirefox && !await browser.permissions.contains({ origins: ["*://*.youtube.com/*"] })) {
 		domElements.firefoxPermissionsNeededDiv.classList.remove("hidden");
 
 		domElements.firefoxPermissionsNeededButton.addEventListener("click", async function () {
-			browser.permissions.request({ permissions: ["tabs"], origins: ["*://*.youtube.com/*"] });
+			browser.permissions.request({ origins: ["*://*.youtube.com/*"] });
 			window.close();
 		});
 	} else {
@@ -506,7 +507,7 @@ async function updateDomElementsDependentOnChannel(domElements) {
 	updateChannelSettingsDropdownMenu(domElements);
 
 	// ----- Popup shuffle button -----
-	domElements.popupShuffleButton.innerText = configSync.currentChannelName ? `Shuffle from: ${configSync.currentChannelName}`: "This will be a shuffle button!";
+	domElements.popupShuffleButton.innerText = configSync.currentChannelName ? `Shuffle from: ${configSync.currentChannelName}` : "This will be a shuffle button!";
 }
 
 async function updateChannelSettingsDropdownMenu(domElements) {
