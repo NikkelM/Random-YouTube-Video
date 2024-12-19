@@ -1,12 +1,16 @@
 # Changelog
 
-## v3.1.11
+## v3.1.12
 
 <!--Releasenotes start-->
+- Removed "tabs" permission from the extension, enhancing privacy.
+<!--Releasenotes end-->
+
+## v3.1.11
+
 - Changed the default settings to not open shuffled videos in a new tab.
 - Moved the informative text about remaining YouTube API quota to the advanced settings menu.
 - Updated the welcome page for a better experience.
-<!--Releasenotes end-->
 
 ## v3.1.10
 

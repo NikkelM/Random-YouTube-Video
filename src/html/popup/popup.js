@@ -368,25 +368,24 @@ async function setPopupDomElementEventListeners(domElements) {
 
 	// Popup shuffle button
 	domElements.popupShuffleButton.addEventListener("click", async function () {
-		const shufflingPage = chrome.runtime.getURL("html/shufflingPage.html");
+		const shufflingPageUrl = chrome.runtime.getURL("html/shufflingPage.html");
 
 		// Get the status of the shufflingPage, if it exists
 		const shufflingPageIsShuffling = await chrome.runtime.sendMessage({ command: "getShufflingPageShuffleStatus" });
 		// If the page is not shuffling, close it if it exists, as that means an error was encountered
 		if (!shufflingPageIsShuffling) {
-			// TODO: Try to get the exact page we want (extension ID needed)
-			const tabs = await chrome.tabs.query({});
+			const tabs = await chrome.tabs.query({ url: shufflingPageUrl });
 			for (const tab of tabs) {
-				if (tab.url === shufflingPage) {
+				if (tab.url === shufflingPageUrl) {
 					chrome.tabs.remove(tab.id);
 					break;
 				}
 			}
 		}
 
-		let mustOpenTab = await tryFocusingTab(shufflingPage);
+		let mustOpenTab = await tryFocusingTab(shufflingPageUrl);
 		if (mustOpenTab) {
-			await chrome.tabs.create({ url: shufflingPage });
+			await chrome.tabs.create({ url: shufflingPageUrl });
 		}
 
 		// Close the popup
