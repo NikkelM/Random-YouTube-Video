@@ -239,6 +239,10 @@
 	margin-bottom: 4px;
 }
 
+.optionTextInput input::placeholder {
+	color: #ddd;
+}
+
 .optionTextInput input.numberInput {
 	width: 40px;
 	text-align: left;
@@ -330,6 +334,12 @@ select:hover {
 /*
  * Links
  */
+.whiteLink {
+	color: var(--randomYoutubeVideo-fg-color);
+	display: inline-block;
+	text-decoration: none;
+}
+
 /* A link whose text is white and turns grey when hovered over */
 .whiteGreyLink {
 	color: var(--randomYoutubeVideo-fg-color);

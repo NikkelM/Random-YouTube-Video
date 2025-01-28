@@ -14,6 +14,10 @@ export const configSyncDefaults = {
 	// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
 	"shuffleIgnoreShortsOption": 1,
 	"shuffleOpenAsPlaylistOption": true,
+	// If the shuffle button should be shown on video pages
+	"showShuffleButtonOnVideoPagesOption": true,
+	// If the shuffle button should be shown on channel pages
+	"showShuffleButtonOnChannelPagesOption": true,
 	// How many random videos to add to a playlist (0-50)
 	"shuffleNumVideosInPlaylist": 10,
 	// If shuffled videos are opened in a new tab, save the tab ID of that tab here to reuse the tab when the user shuffles again
@@ -43,10 +47,10 @@ export const configSyncDefaults = {
 	// If the message asking for a donation has been shown yet
 	"donationMessageShown": false,
 	// The id/date of the last viewed news article
-	"lastViewedNewsId": null,
+	"lastViewedNewsId": null, // Currently not in use
 	// The next time we should check for news (once per day)
 	// We delay the first check by 24 hours to not immediately show the news after a user has installed the extension
-	"nextNewsCheckTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime()
+	"nextNewsCheckTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(), // Currently not in use
 };
 
 export const isFirefox = typeof browser !== "undefined";
@@ -81,7 +85,7 @@ export const shufflingHints = [
 	"Use the 'Open in playlist' option to open shuffled videos in the uploads playlist of the channel! You can customize how many videos are added to the playlist!",
 	"You can choose to ignore, include, or only shuffle from shorts uploaded on a channel!",
 	"Use the 'Use custom API key' option to provide your own YouTube API key, which will be used instead of the extension's keys. This removes the API quota limit and allows you to opt out of sharing video IDs with other users!",
-	
+
 	// Channel options
 	"The extension popup allows you to customize the shuffling experience for the most recently visited channel at any time!",
 	"You can choose from a number of filters to choose what videos are considered when shuffling from a specific channel!",
