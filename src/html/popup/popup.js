@@ -109,6 +109,12 @@ function getPopupDomElements() {
 		// Advanced settings expand button
 		advancedSettingsExpandButton: document.getElementById("advancedSettingsExpandButton"),
 
+		// Accessibility
+		// Hide button on video pages
+		showShuffleButtonOnVideoPagesOptionToggle: document.getElementById("showShuffleButtonOnVideoPagesOptionToggle"),
+		// Hide button on channel pages
+		showShuffleButtonOnChannelPagesOptionToggle: document.getElementById("showShuffleButtonOnChannelPagesOptionToggle"),
+
 		// Custom API key: Option toggle
 		useCustomApiKeyOptionToggle: document.getElementById("useCustomApiKeyOptionToggle"),
 		// Custom API key: Input
@@ -194,6 +200,10 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 		domElements.popupShuffleButton.classList.add("hidden");
 		domElements.channelCustomOptionsDropdownDiv.classList.add("disabled");
 	}
+
+	// ----- Accessibility
+	domElements.showShuffleButtonOnVideoPagesOptionToggle.checked = configSync.showShuffleButtonOnVideoPagesOption;
+	domElements.showShuffleButtonOnChannelPagesOptionToggle.checked = configSync.showShuffleButtonOnChannelPagesOption;
 
 	// Contains logic for all the "For your information" div content
 	updateFYIDiv(domElements);
@@ -401,6 +411,20 @@ async function setPopupDomElementEventListeners(domElements) {
 		animateSlideOut(domElements.advancedSettingsDiv);
 
 		manageDependents(domElements, domElements.advancedSettingsExpandButton, domElements.advancedSettingsDiv.classList.contains("active"));
+	});
+
+	// Accessibility: Show shuffle button on video pages
+	domElements.showShuffleButtonOnVideoPagesOptionToggle.addEventListener("change", async function () {
+		await setSyncStorageValue("showShuffleButtonOnVideoPagesOption", this.checked);
+
+		manageDependents(domElements, domElements.showShuffleButtonOnVideoPagesOptionToggle, this.checked);
+	});
+
+	// Accessibility: Show shuffle button on channel pages
+	domElements.showShuffleButtonOnChannelPagesOptionToggle.addEventListener("change", async function () {
+		await setSyncStorageValue("showShuffleButtonOnChannelPagesOption", this.checked);
+
+		manageDependents(domElements, domElements.showShuffleButtonOnChannelPagesOptionToggle, this.checked);
 	});
 
 	// Custom API key: Option toggle

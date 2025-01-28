@@ -1,30 +1,30 @@
 .toggle label {
-  position: relative;
-  display: inline-block;
-  width: 9em;
-  height: 3.5em;
+	position: relative;
+	display: inline-block;
+	width: 9em;
+	height: 3.5em;
 }
 
 .toggle input {
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  height: 1px;
-  overflow: hidden;
-  position: absolute;
-  white-space: nowrap;
-  width: 1px;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
 }
- 
+
 .toggle .slider {
-  position: absolute;
-  cursor: pointer;
-  top: 1.6em;
+	position: absolute;
+	cursor: pointer;
+	top: 1.6em;
 	left: 2.85em;
-  width: 3.5em;
-  height: 1.5em;
-  background-color: #c32e04; 
-  border-radius: 1em; 
-  transition: all .3s ease-in-out;
+	width: 3.5em;
+	height: 1.5em;
+	background-color: #c32e04;
+	border-radius: 1em;
+	transition: all 0.3s ease-in-out;
 }
 
 .toggle .disabled {
@@ -35,23 +35,23 @@
 .toggle .disabled > .slider {
 	cursor: default !important;
 }
- 
+
 .toggle .slider::before {
-  position: absolute;
-  content: "";
-  height: 1.1em;
-  width: 1.1em;
-  left: .2em;
-  bottom: .2em;
-  background-color: white;
-  border-radius: 50%;
-  transition: all .3s ease-in-out;
+	position: absolute;
+	content: "";
+	height: 1.1em;
+	width: 1.1em;
+	left: 0.2em;
+	bottom: 0.2em;
+	background-color: white;
+	border-radius: 50%;
+	transition: all 0.3s ease-in-out;
 }
 
 .toggle input:checked + .slider {
-  background-color: #5a9900; 
+	background-color: #5a9900;
 }
- 
+
 .toggle input:checked + .slider::before {
-  transform: translateX(2em);
+	transform: translateX(2em);
 }

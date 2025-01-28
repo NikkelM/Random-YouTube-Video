@@ -1,10 +1,15 @@
 # Changelog
 
-## v3.1.12
+## v3.1.13
 
 <!--Releasenotes start-->
-- Removed "tabs" permission from the extension, enhancing privacy.
+- Added accessibility options: Under "Advanced Settings", choose to not show shuffle buttons on video or channel pages.
+- Added some smoothed animations to the popup when expanding and collapsing the advanced settings.
 <!--Releasenotes end-->
+
+## v3.1.12
+
+- Removed "tabs" permission from the extension, enhancing privacy.
 
 ## v3.1.11
 

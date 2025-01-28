@@ -135,7 +135,7 @@
 					<h3 id="channelCustomOptionsHeader">Channel settings</h3>
 					<p id="channelCustomOptionsExplanationP" class="grey-text">Customize your most recently visited channel.</p>
 					<!-- Shown if no channel has yet been visited -->
-					<p id="channelNoneVisitedYetP" class="grey-text hidden">Visit a YouTube channel, video or short<br />to customize it's shuffle settings here!</p>
+					<p id="channelNoneVisitedYetP" class="grey-text hidden">Visit a YouTube channel, video or short<br />to customize a channels' shuffle settings here!</p>
 					<!-- Custom options per channel: Choose option from dropdown -->
 					<div id="channelCustomOptionsDropdownDiv" class="optionTextInput" style="margin-top: 8px">
 						<p class="displayInline" title="Choose from one of the provided options in the dropdown to customize your shuffling experience on this channel.">Shuffle from</p>
@@ -159,9 +159,35 @@
 				</div>
 			</div>
 
+			<!-- IMPORTANT: When changing content in this div, also adjust the animation duration in animateSlideOut() -->
 			<button id="advancedSettingsExpandButton" class="randomYoutubeVideoButton importantButton" title="These settings are for people with some technical knowledge. Don't worry if you don't know what they're about, they don't add any features!"><b>Show Advanced Settings</b></button>
-			<div id="advancedSettingsDiv" class="slideOutContainer">
+			<div id="advancedSettingsDiv" class="slideOutContainer" style="background-color: #111">
+				<!-- First row start -->
+				<h3 id="accessibilityOptionsHeader">Accessibility settings</h3>
+				<p id="showShuffleButtonOnPageTypesP" class="displayInline" title="Control which page types a shuffle button will be added to when browsing YouTube. Reload the page to apply the setting.">Show a shuffle button on...</p>
+				<div class="optionsRow">
+					<!-- Accessibility: Hide shuffle button on video/channel pages -->
+					<div class="toggle optionsRow-item">
+						<label id="showShuffleButtonOnVideoPagesOption" title="If this is enabled, a shuffle button will be shown on video pages. Disable if you notice issues with the YouTube layout or when zooming in on the page. Reload YouTube to apply the setting.">
+							Video pages
+							<input type="checkbox" id="showShuffleButtonOnVideoPagesOptionToggle" />
+							<span class="slider"></span>
+						</label>
+					</div>
+
+					<div class="toggle optionsRow-item">
+						<label id="showShuffleButtonOnChannelPagesOption" title="If this is enabled, a shuffle button will be shown on channel pages. Disable if you notice issues with the YouTube layout or when zooming in on the page. Reload YouTube to apply the setting.">
+							Channel pages
+							<input type="checkbox" id="showShuffleButtonOnChannelPagesOptionToggle" />
+							<span class="slider"></span>
+						</label>
+					</div>
+				</div>
+				<!-- First row end -->
+
+				<!-- Second row start -->
 				<!-- Custom API key: Option toggle -->
+				<h3 id="apiOptionsHeader">API settings</h3>
 				<div class="optionsRow">
 					<div class="toggle optionsRow-item">
 						<label
@@ -184,19 +210,20 @@
 						</label>
 					</div>
 				</div>
+				<!-- Second row end -->
 
 				<!-- Custom API key: Input -->
 				<div id="customApiKeyInputDiv" class="optionTextInput slideOutContainer">
 					<!-- Learn how to get an API key -->
 					<p class="grey-text displayInline">Follow the</p>
-					<a class="whiteGreyLink displayInline" href="https://developers.google.com/youtube/v3/getting-started" target="_blank" rel="noopener">official guide</a>
+					<a class="whiteLink displayInline" href="https://developers.google.com/youtube/v3/getting-started" target="_blank" rel="noopener">official guide</a>
 					<p class="grey-text displayInline">to learn how to get an API key.</p>
 
 					<!-- <p style="margin-top: 6px">Your custom API key:</p> -->
 					<div id="customApiKeyInputInfoDiv">
 						<p id="customApiKeyInputInfoText">Your custom API key:</p>
 					</div>
-					<input type="text" id="customApiKeyInputField" name="customApiKeyInputField" style="width: 80%" title="Enter your YouTube API key here. It will not be shared with anyone." placeholder="Enter API key here. It won't be shared with anyone." />
+					<input type="text" id="customApiKeyInputField" name="customApiKeyInputField" style="width: 80%;" title="Enter your YouTube API key here. It will not be shared with anyone." placeholder="Enter API key here. It won't be shared with anyone." />
 					<br />
 					<button class="randomYoutubeVideoButton" id="customApiKeySubmitButton" type="button">Submit</button>
 				</div>
@@ -211,6 +238,7 @@
 					<p class="displayInline">requests to the YouTube API remaining today.<br />Use a custom API key to remove this limit.</p>
 				</div>
 				<!-- Daily quota notice end -->
+				<br />
 			</div>
 			<!-- OPTIONS END -->
 
