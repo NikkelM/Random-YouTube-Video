@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html id="randomYoutubeVideoHTML" lang="en">
+	<head>
+		<title>Shuffle+ - Random YouTube Video</title>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="stylesheet" href="../css/popup.css" />
+		<link rel="stylesheet" href="../css/toggle.css" />
+		<link rel="stylesheet" href="../css/loadingOverlay.css" />
+		<link rel="stylesheet" href="../css/shufflePlus.css" />
+	</head>
+
+	<body id="randomYoutubeVideoBody">
+		<div id="randomYoutubeVideo" style="margin-top: 10px">
+			<div id="loadingOverlay">
+				<div id="loader"></div>
+				<h1 style="margin-top: 100px;">Loading content...</h1>
+			</div>
+			<h1>Shuffle+</h1>
+			<h2 id="welcomeHeader">Welcome! Sign in below to get started</h2>
+			<br />
+
+			<div id="googleLoginButtonDiv" class="hidden">
+				<button id="googleLoginButton" class="randomYoutubeVideoButton highlight-green" type="button" style="margin-bottom: 10px;"
+					title="Sign in to Random YouTube Video with your Google account to enable the extension to view your YouTube account. Subscribe to Shuffle+ to take full advantage of the offered features!">
+					Sign in with Google
+				</button>
+				<br />
+			</div>
+			<div id="googleLoginErrorDiv" class="hidden">
+				<p id="googleLoginErrorP"></p>
+				<br />
+			</div>
+			<div id="googleLoginSuccessDiv" class="hidden">
+				<p id="googleLoginSuccessP">Subscribe to Shuffle+ to get access to all premium features!</p>
+				<br />
+			</div>
+
+			<div id="productOverviewDiv" class="outlinedContainer">
+				<div id="currencySelectorContainer" class="alignTopRight">
+					<label for="currencySelector">Currency:</label>
+					<select id="currencySelectorSelect" class="currencySelector" name="currencySelect">
+						<option value="usd">USD</option>
+						<option value="eur">EUR</option>
+						<option value="gbp">GBP</option>
+						<option value="rub">RUB</option>
+					</select>
+				</div>
+	
+				<div id="benefitsShowcaseDiv" class="prettyList">
+					<!-- TODO: If the width is too low, move this to a second row (prevent overlapping with currency selector) -->
+					<h2>Shuffle+ benefits</h2>
+					<p>Subscribe to Shuffle+ to gain access to a wide range of new features to further improve your experience:</p>
+					<ul id="benefitsList" style="text-align: left;">
+						<!-- TODO: Implement features -->
+						<li>Shuffle from your subscriptions or <b>multiple channels</b> at once (coming soon)</li>
+						<li><b>Ignore</b> already watched videos (coming soon)</li>
+						<li>More <b>filter options</b> (coming soon)</li>
+						<li><b>Favourite channels</b> for quick access in the popup (coming soon)</li>
+						<li><b>Synchronize</b> your settings using your Google account</li>
+						<li>Immediate access to <b>all future premium features</b></li>
+						<li><b>Support the development</b> and maintenance of the extension</li>
+					</ul>
+					
+					<h3>Choose your plan:</h3>
+					<div id="switchPlanIntervalDiv" class="optionsRow">
+						<p class="displayInline" style="padding-top: 21px; transform: translate(30px)">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3-Monthly</p>
+						<div class="toggle">
+							<label id="switchPlanInterval">
+								<input type="checkbox" id="switchPlanIntervalToggle" checked/>
+								<span class="slider alwaysGreen"></span>
+							</label>
+						</div>
+						<p class="displayInline" style="padding-top: 21px; transform: translate(-30px)">Yearly (save <b>15%</b>!)</p>
+					</div>
+
+					<button id="subscribeButton" class="randomYoutubeVideoButton highlight-green importantButton" type="button">Subscribe to Shuffle+ now!</button>
+				</div>
+			</div>
+			
+			<!-- TODO: Open an overlay while logging in, or waiting for the stripe flow to complete, asking the user to follow instructions, and in case fo Stripe, reload page afterwards -->
+
+			<!-- TODO: Make this a manage button only -->
+			<!-- Manage subscription/Subscribe button -->
+			<br />
+			<div id="manageSubscriptionButtonDiv">
+				<button id="manageSubscriptionButton" class="randomYoutubeVideoButton highlight-green hidden" type="button">
+					Manage your subscription
+				</button>
+			</div>
+
+			<div id="googleRevokeAccessConfirmationPopup" class="overlayDiv hidden">
+				<div>
+					<h2>Are you sure you want to leave?</h3>
+					<br />
+					<p>Revoking access to your Google account and deleting your user account is irreversible!</p>
+					<p>You can always create a new account by signing in again.</p>
+					<br />
+					<br />
+					<p>If you still have an active Shuffle+ subscription, your user account will not be deleted,</p>
+					<p>but you will be logged out and the extension will no longer have access to your Google account.</p>
+					<br />
+					<p>Signing in again will restore your account and subscription.</p>
+					<br />
+					<button id="googleRevokeAccessCancelButton" class="randomYoutubeVideoButton" type="button">
+						Cancel
+					</button>
+					<button id="googleRevokeAccessConfirmButton" class="randomYoutubeVideoButton" type="button" disabled
+						title="This action is irreversible.">
+						Forget me permanently
+					</button>
+				</div>
+			</div>
+
+			<footer id="randomYoutubeVideoFooter">
+				<div id="shufflingHint">
+					<h3><i>Did you know...</i></h3>
+					<p id="shufflingHintP" class="thirdWidth">The hints could not be loaded - please report this bug on GitHub!</p>
+					<button id="nextHintButton" class="randomYoutubeVideoButton" style="margin-top: 6px">New Hint</button>
+				</div>
+
+				<br />
+				<br />
+				<a class="buttonLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank" rel="noopener" title="View the source code or get into contact with the developer">GitHub</a>
+				<button class="randomYoutubeVideoButton" id="viewChangelogButton" type="button" title="View the latest changes to the extension">Changelog</button>
+				<a class="buttonLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension">Donate</a>
+				<br />
+				Leave a review:
+				<a
+					class="buttonLink"
+					href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
+					target="_blank"
+					rel="noopener"
+					title="Leave a review on the Chrome Web Store"
+					>Chrome</a
+				>
+				<a class="buttonLink" href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/" target="_blank" rel="noopener" title="Leave a review on the Firefox Add-Ons page">Firefox</a>
+				<a
+					class="buttonLink"
+					href="https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe"
+					target="_blank"
+					rel="noopener"
+					title="Leave a review on the Edge Add-Ons page"
+					>Edge</a
+				>
+
+				<br />
+				<div id="googleRevokeAccessButtonDiv" class="hidden">
+					<br />
+					<button id="googleRevokeAccessButton" class="randomYoutubeVideoButton" type="button"
+						title="Sign out and revoke the extension's access to your Google account and delete your user account with the extension. If you have an active Shuffle+ subscription, your user account will not be deleted. If you wish to delete your user account before your subscription runs out, you will need to cancel it.">
+						Forget me permanently
+					</button>
+				</div>
+			</footer>
+		</div>
+
+		<script src="../utils.js" type="text/javascript"></script>
+		<script src="../htmlUtils.js" type="text/javascript"></script>
+		<script src="../shufflePlus.js" type="module"></script>
+	</body>
+</html>

@@ -1,7 +1,8 @@
 // Entry point for the popup page
 import { delay } from "../../utils.js";
-import { configSync, setSyncStorageValue, removeSyncStorageValue } from "../../chromeStorage.js";
-import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv } from "./popupUtils.js";
+import { configSync } from "../../chromeStorage.js";
+import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv, setUserSetting } from "./popupUtils.js";
+import { userHasActiveSubscriptionRole } from "../../stripe.js";
 import { tryFocusingTab, animateSlideOut } from "../htmlUtils.js";
 
 // ----- Setup -----
@@ -26,10 +27,11 @@ if (isPopup) {
 }
 
 const isFirefox = typeof browser !== "undefined";
-const domElements = getPopupDomElements();
-await setPopupDomElementValuesFromConfig(domElements);
-await setPopupDomElementEventListeners(domElements);
+const domElements = getDomElements();
+await setDomElementValuesFromConfig(domElements);
+await setDomElementEventListeners(domElements);
 await determineOverlayVisibility(domElements);
+const userIsShufflePlusSubscribed = await userHasActiveSubscriptionRole();
 
 // Restart the background script if it was stopped to make sure the shuffle button immediately works
 try {
@@ -41,7 +43,7 @@ try {
 // ----- DOM -----
 // --- Private ---
 // Get relevant DOM elements
-function getPopupDomElements() {
+function getDomElements() {
 	/* global reviewDonationDiv, reviewDiv, donationDiv, customApiKeyInputDiv, customApiKeyInputInfoDiv, shuffleNumVideosInPlaylistDiv, channelCustomOptionsDiv, channelCustomOptionsDropdownDiv, forYourInformationDiv, advancedSettingsDiv, dailyQuotaNoticeDiv */
 	/* eslint no-undef: "error" */
 	return {
@@ -141,11 +143,13 @@ function getPopupDomElements() {
 		// FOOTER
 		// View changelog button
 		viewChangelogButton: document.getElementById("viewChangelogButton"),
-	}
+		// Shuffle+ button
+		shufflePlusButton: document.getElementById("shufflePlusButton"),
+	};
 }
 
 // Set default values from configSync == user preferences
-async function setPopupDomElementValuesFromConfig(domElements) {
+async function setDomElementValuesFromConfig(domElements) {
 	// Disable animations to prevent them from playing when setting the values
 	toggleAnimations(domElements);
 
@@ -213,36 +217,42 @@ async function setPopupDomElementValuesFromConfig(domElements) {
 		domElements.viewChangelogButton.classList.add("highlight-green");
 	}
 
+	// Enables or disables the animation of the Shuffle+ button depending on if the user has an active subscription or not
+	if (!userIsShufflePlusSubscribed) {
+		domElements.shufflePlusButton.classList.add("highlight-green-animated");
+		domElements.shufflePlusButton.classList.remove("highlight-green");
+	}
+
 	// Enable animations
 	toggleAnimations(domElements);
 }
 
 // Set event listeners for DOM elements
-async function setPopupDomElementEventListeners(domElements) {
+async function setDomElementEventListeners(domElements) {
 	// Shuffling: Open in new tab option toggle
 	domElements.shuffleOpenInNewTabOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("shuffleOpenInNewTabOption", this.checked);
+		await setUserSetting("shuffleOpenInNewTabOption", this.checked, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.shuffleOpenInNewTabOptionToggle, this.checked);
 	});
 
 	// Shuffling: Reuse tab option toggle
 	domElements.shuffleReUseNewTabOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("shuffleReUseNewTabOption", this.checked);
+		await setUserSetting("shuffleReUseNewTabOption", this.checked, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.shuffleReUseNewTabOptionToggle, this.checked);
 	});
 
 	// Shuffling: Ignore shorts option dropdown
 	domElements.shuffleIgnoreShortsOptionDropdown.addEventListener("change", async function () {
-		await setSyncStorageValue("shuffleIgnoreShortsOption", this.value);
+		await setUserSetting("shuffleIgnoreShortsOption", this.value, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.shuffleIgnoreShortsOptionDropdown, this.value);
 	});
 
 	// Shuffling: Open as playlist option toggle
 	domElements.shuffleOpenAsPlaylistOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("shuffleOpenAsPlaylistOption", this.checked);
+		await setUserSetting("shuffleOpenAsPlaylistOption", this.checked, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.shuffleOpenAsPlaylistOptionToggle, this.checked);
 	});
@@ -255,9 +265,9 @@ async function setPopupDomElementEventListeners(domElements) {
 				// Set the previous value if the input is empty, or set it to 10 if there is no previous value
 				this.value = configSync.shuffleNumVideosInPlaylist ?? 10;
 
-				this.classList.add('invalid-input');
+				this.classList.add("invalid-input");
 				setTimeout(() => {
-					this.classList.remove('invalid-input');
+					this.classList.remove("invalid-input");
 				}, 1500);
 			}
 
@@ -267,22 +277,22 @@ async function setPopupDomElementEventListeners(domElements) {
 			if (this.value < minValue || this.value > maxValue) {
 				this.value = Math.min(Math.max(Math.round(this.value), minValue), maxValue);
 
-				this.classList.add('invalid-input');
+				this.classList.add("invalid-input");
 				setTimeout(() => {
-					this.classList.remove('invalid-input');
+					this.classList.remove("invalid-input");
 				}, 1500);
 			}
 
-			await setSyncStorageValue("shuffleNumVideosInPlaylist", parseInt(this.value));
+			await setUserSetting("shuffleNumVideosInPlaylist", parseInt(this.value), userIsShufflePlusSubscribed);
 
 			manageDependents(domElements, domElements.shuffleNumVideosInPlaylistInput, this.value);
-		})
+		});
 	});
 
 	// Custom options per channel: Dropdown menu
 	domElements.channelCustomOptionsDropdown.addEventListener("change", async function () {
 		// Set the value in configSync to the currently selected option
-		await setChannelSetting(configSync.currentChannelId, "activeOption", this.value);
+		await setChannelSetting(configSync.currentChannelId, "activeOption", this.value, userIsShufflePlusSubscribed);
 
 		updateChannelSettingsDropdownMenu(domElements);
 
@@ -290,26 +300,28 @@ async function setPopupDomElementEventListeners(domElements) {
 	});
 
 	// Custom options per channel: Dropdown menu: Date input
-	domElements.channelCustomOptionsDateOptionInput.addEventListener("focusout", async function () {
-		// Make sure the date is valid. If it is not, set it to the previous value. If there is no previous value, set it to null
-		const selectedDate = new Date(this.value);
-		if (selectedDate > new Date()) {
-			this.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue ?? null;
+	"change focusout".split(" ").forEach(function (event) {
+		domElements.channelCustomOptionsDateOptionInput.addEventListener(event, async function () {
+			// Make sure the date is valid. If it is not, set it to the previous value. If there is no previous value, set it to null
+			const selectedDate = new Date(this.value);
+			if (selectedDate > new Date()) {
+				this.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue ?? null;
 
-			this.classList.add('invalid-input');
-			setTimeout(() => {
-				this.classList.remove('invalid-input');
-			}, 1500);
-		}
+				this.classList.add("invalid-input");
+				setTimeout(() => {
+					this.classList.remove("invalid-input");
+				}, 1500);
+			}
 
-		// Set the value in sync storage
-		if (this.value) {
-			await setChannelSetting(configSync.currentChannelId, "dateValue", this.value);
-		} else {
-			await removeChannelSetting(configSync.currentChannelId, "dateValue");
-		}
+			// Set the value in sync storage
+			if (this.value) {
+				await setChannelSetting(configSync.currentChannelId, "dateValue", this.value);
+			} else {
+				await removeChannelSetting(configSync.currentChannelId, "dateValue");
+			}
 
-		manageDependents(domElements, domElements.channelCustomOptionsDateOptionInput, this.value);
+			manageDependents(domElements, domElements.channelCustomOptionsDateOptionInput, this.value);
+		});
 	});
 
 	// Custom options per channel: Dropdown menu: Youtube Video Id input
@@ -330,9 +342,9 @@ async function setPopupDomElementEventListeners(domElements) {
 				this.placeholder = "Invalid video ID";
 			}
 
-			this.classList.add('invalid-input');
+			this.classList.add("invalid-input");
 			setTimeout(() => {
-				this.classList.remove('invalid-input');
+				this.classList.remove("invalid-input");
 			}, 1500);
 		}
 
@@ -347,9 +359,9 @@ async function setPopupDomElementEventListeners(domElements) {
 				// Set the previous value if the input is empty, or set it to 100 if there is no previous value
 				this.value = configSync.channelSettings[configSync.currentChannelId]?.percentageValue ?? 100;
 
-				this.classList.add('invalid-input');
+				this.classList.add("invalid-input");
 				setTimeout(() => {
-					this.classList.remove('invalid-input');
+					this.classList.remove("invalid-input");
 				}, 1500);
 			}
 
@@ -359,9 +371,9 @@ async function setPopupDomElementEventListeners(domElements) {
 			if (this.value < minValue || this.value > maxValue) {
 				this.value = Math.min(Math.max(Math.round(this.value), minValue), maxValue);
 
-				this.classList.add('invalid-input');
+				this.classList.add("invalid-input");
 				setTimeout(() => {
-					this.classList.remove('invalid-input');
+					this.classList.remove("invalid-input");
 				}, 1500);
 			}
 
@@ -373,7 +385,7 @@ async function setPopupDomElementEventListeners(domElements) {
 			}
 
 			manageDependents(domElements, domElements.channelCustomOptionsPercentageOptionInput, this.value);
-		})
+		});
 	});
 
 	// Popup shuffle button
@@ -429,14 +441,14 @@ async function setPopupDomElementEventListeners(domElements) {
 
 	// Custom API key: Option toggle
 	domElements.useCustomApiKeyOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("useCustomApiKeyOption", this.checked);
+		await setUserSetting("useCustomApiKeyOption", this.checked, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.useCustomApiKeyOptionToggle, this.checked);
 	});
 
 	// Database sharing: Option toggle
 	domElements.dbSharingOptionToggle.addEventListener("change", async function () {
-		await setSyncStorageValue("databaseSharingEnabledOption", this.checked);
+		await setUserSetting("databaseSharingEnabledOption", this.checked, userIsShufflePlusSubscribed);
 
 		manageDependents(domElements, domElements.dbSharingOptionToggle, this.checked);
 	});
@@ -448,10 +460,10 @@ async function setPopupDomElementEventListeners(domElements) {
 		const oldApiKey = configSync.customYoutubeApiKey;
 
 		if (newAPIKey.length > 0 && await validateApiKey(newAPIKey, domElements)) {
-			await setSyncStorageValue("customYoutubeApiKey", newAPIKey);
+			await setUserSetting("customYoutubeApiKey", newAPIKey, userIsShufflePlusSubscribed);
 		} else {
-			await removeSyncStorageValue("customYoutubeApiKey");
-			await setSyncStorageValue("databaseSharingEnabledOption", true);
+			await setUserSetting("customYoutubeApiKey", null, userIsShufflePlusSubscribed);
+			await setUserSetting("databaseSharingEnabledOption", true, userIsShufflePlusSubscribed);
 			domElements.customApiKeyInputField.value = "";
 		}
 
@@ -468,7 +480,7 @@ async function setPopupDomElementEventListeners(domElements) {
 
 	// View changelog button
 	domElements.viewChangelogButton.addEventListener("click", async function () {
-		await setSyncStorageValue("lastViewedChangelogVersion", chrome.runtime.getManifest().version);
+		await setUserSetting("lastViewedChangelogVersion", chrome.runtime.getManifest().version, userIsShufflePlusSubscribed);
 
 		const changelogPage = chrome.runtime.getURL("html/changelog.html");
 		let mustOpenTab = await tryFocusingTab(changelogPage);
@@ -477,6 +489,15 @@ async function setPopupDomElementEventListeners(domElements) {
 		}
 
 		domElements.viewChangelogButton.classList.remove("highlight-green");
+	});
+
+	// Shuffle+ button
+	domElements.shufflePlusButton.addEventListener("click", async function () {
+		const shufflePlusPage = chrome.runtime.getURL("html/shufflePlus.html");
+		let mustOpenTab = await tryFocusingTab(shufflePlusPage);
+		if (mustOpenTab) {
+			await chrome.tabs.create({ url: shufflePlusPage });
+		}
 	});
 }
 
@@ -491,19 +512,19 @@ async function determineOverlayVisibility(domElements) {
 			window.close();
 		});
 	} else {
-		if (!configSync.reviewMessageShown && configSync.numShuffledVideosTotal < 150 && configSync.numShuffledVideosTotal >= 20) {
+		if (!configSync.reviewMessageShown && configSync.numShuffledVideosTotal < 75 && configSync.numShuffledVideosTotal >= 10) {
 			domElements.reviewDiv.classList.remove("hidden");
 			domElements.reviewDonationDiv.classList.remove("hidden");
-			await setSyncStorageValue("reviewMessageShown", true);
+			await setUserSetting("reviewMessageShown", true, userIsShufflePlusSubscribed);
 
 			domElements.reviewOverlayCloseButton.addEventListener("click", function () {
 				domElements.reviewDonationDiv.classList.add("hidden");
 				domElements.reviewDiv.classList.add("hidden");
 			});
-		} else if (!configSync.donationMessageShown && configSync.numShuffledVideosTotal >= 150) {
+		} else if (!configSync.donationMessageShown && configSync.numShuffledVideosTotal >= 75) {
 			domElements.donationDiv.classList.remove("hidden");
 			domElements.reviewDonationDiv.classList.remove("hidden");
-			await setSyncStorageValue("donationMessageShown", true);
+			await setUserSetting("donationMessageShown", true, userIsShufflePlusSubscribed);
 
 			domElements.donationOverlayCloseButton.addEventListener("click", function () {
 				domElements.reviewDonationDiv.classList.add("hidden");

@@ -1,0 +1,44 @@
+.outlinedContainer {
+	width: 60%;
+	margin: auto;
+	border: 1px solid #ccc; /* Slight border */
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	position: relative;
+}
+
+.alignTopRight {
+	position: absolute;
+	top: 0; /* Aligns the container to the top of the parent div */
+	right: 0; /* Aligns the container to the right of the parent div */
+	margin: 10px; /* Optional: Adjusts margin to ensure it sticks to the very top-right corner */
+}
+
+.prettyList {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+	text-align: left;
+	line-height: 1.5;
+	font-weight: 200;
+}
+
+.multiColumns {
+	display: flex;
+	flex-direction: row; /* Arrange children side by side */
+	justify-content: space-around; /* This will space out the product containers evenly */
+	align-items: flex-start; /* Align items at the start of the container */
+}
+
+.productContainer {
+	margin: 0 50px 10px;
+}
+
+@media (max-width: 768px) {
+	.multiColumns {
+		flex-direction: column;
+		align-items: center; /* Center align the product containers on smaller screens */
+	}
+}
