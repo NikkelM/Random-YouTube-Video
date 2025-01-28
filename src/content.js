@@ -35,6 +35,11 @@ async function startDOMObserver(event) {
 
 	let pageType = getPageTypeFromURL(window.location.href);
 
+	// Do not build a shuffle button if the user has opted to not show it on the current page type
+	if ((pageType == "video" && !configSync.showShuffleButtonOnVideoPagesOption) || (pageType == "channel" && !configSync.showShuffleButtonOnChannelPagesOption)) {
+		return;
+	}
+
 	// Get the channel id from the event data
 	let channelId;
 	let channelName;

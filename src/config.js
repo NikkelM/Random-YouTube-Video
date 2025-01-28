@@ -14,6 +14,10 @@ export const configSyncDefaults = {
 	// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
 	"shuffleIgnoreShortsOption": 1,
 	"shuffleOpenAsPlaylistOption": true,
+	// If the shuffle button should be shown on video pages
+	"showShuffleButtonOnVideoPagesOption": true,
+	// If the shuffle button should be shown on channel pages
+	"showShuffleButtonOnChannelPagesOption": true,
 	// How many random videos to add to a playlist (0-50)
 	"shuffleNumVideosInPlaylist": 10,
 	// If shuffled videos are opened in a new tab, save the tab ID of that tab here to reuse the tab when the user shuffles again
@@ -45,10 +49,10 @@ export const configSyncDefaults = {
 	// Contains user information and tokens if the user is logged in with Google
 	"googleOauth": null,
 	// The id/date of the last viewed news article
-	"lastViewedNewsId": null,
+	"lastViewedNewsId": null, // Currently not in use
 	// The next time we should check for news (once per day)
 	// We delay the first check by 24 hours to not immediately show the news after a user has installed the extension
-	"nextNewsCheckTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(),
+	"nextNewsCheckTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(), // Currently not in use
 	// ----- SHUFFLE PLUS OPTIONS -----
 	// Sync user & channel settings with Firebase
 	// TODO: Add a toggle in the popup. TODO on that: When the setting gets toggled on, sync all syncable settings to Firestore immediately. When turned off, remove all settings from Firestore

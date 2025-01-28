@@ -39,7 +39,32 @@ export function animateSlideOut(targetElement, shouldSlideOut = null) {
 		setTimeout(function () {
 			targetElement.style.height = targetHeight + "px";
 			adjustParentContainerHeight(targetElement, targetHeight);
+
+			// Start scrolling to the bottom of the page
+			const startTime = performance.now();
+			const duration = 800; // Adjust the duration to match the animation duration
+			const initialScrollY = window.scrollY;
+
+			function scrollStep(timestamp) {
+				const progress = Math.min((timestamp - startTime) / duration, 1);
+				window.scrollTo(0, initialScrollY + (document.body.scrollHeight - initialScrollY) * progress);
+
+				if (progress < 1) {
+					requestAnimationFrame(scrollStep);
+				}
+			}
+
+			requestAnimationFrame(scrollStep);
 		}, 0);
+
+		targetElement.addEventListener(
+			"transitionend",
+			function () {
+				// Ensure the page is scrolled to the bottom after the animation
+				window.scrollTo(0, document.body.scrollHeight);
+			}, {
+			once: true
+		});
 	} else {
 		// Sliding in
 		const oldHeight = targetElement.clientHeight;

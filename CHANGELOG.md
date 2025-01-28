@@ -12,6 +12,11 @@
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
 <!--Releasenotes end-->
 
+## v3.1.13
+
+- Added accessibility options: Under "Advanced Settings", choose to not show shuffle buttons on video or channel pages.
+- Added some smoothed animations to the popup when expanding and collapsing the advanced settings.
+
 ## v3.1.12
 <!-- TODO: Test if the tabs permission is required for the sign-in flow page etc. -->
 - Removed "tabs" permission from the extension, enhancing privacy.
