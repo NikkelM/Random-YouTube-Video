@@ -1,5 +1,5 @@
 // Shared utility functions for the various HTML pages' logic
-import { shufflingHints } from "../config.js";
+import { isFirefox, shufflingHints } from "../config.js";
 
 // ----- Shuffling Hints -----
 export async function buildShufflingHints(domElements) {
@@ -54,17 +54,21 @@ export function animateSlideOut(targetElement, shouldSlideOut = null) {
 				}
 			}
 
-			requestAnimationFrame(scrollStep);
+			if (!isFirefox) {
+				requestAnimationFrame(scrollStep);
+			}
 		}, 0);
 
-		targetElement.addEventListener(
-			"transitionend",
-			function () {
-				// Ensure the page is scrolled to the bottom after the animation
-				window.scrollTo(0, document.body.scrollHeight);
-			}, {
-			once: true
-		});
+		if (!isFirefox) {
+			targetElement.addEventListener(
+				"transitionend",
+				function () {
+					// Ensure the page is scrolled to the bottom after the animation
+					window.scrollTo(0, document.body.scrollHeight);
+				}, {
+				once: true
+			});
+		}
 	} else {
 		// Sliding in
 		const oldHeight = targetElement.clientHeight;
