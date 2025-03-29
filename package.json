@@ -42,7 +42,7 @@
     "mocha": "^10.2.0",
     "mocha-suppress-logs": "^0.3.1",
     "prettier": "^2.7.1",
-    "puppeteer": "^22.12.1",
+    "puppeteer": "^22.15.0",
     "sinon": "^15.1.0",
     "sinon-chrome": "^3.0.1",
     "web-ext": "^8.0.0",
