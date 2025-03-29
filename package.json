@@ -39,7 +39,7 @@
     "expect.js": "^0.3.1",
     "jsdom": "^22.1.0",
     "lint-staged": "^13.0.3",
-    "mocha": "^10.2.0",
+    "mocha": "^10.8.2",
     "mocha-suppress-logs": "^0.3.1",
     "prettier": "^2.7.1",
     "puppeteer": "^22.15.0",
