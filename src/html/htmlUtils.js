@@ -37,7 +37,7 @@ export function animateSlideOut(targetElement, shouldSlideOut = null) {
 		targetElement.style.height = "0px";
 
 		setTimeout(function () {
-			targetElement.style.height = targetHeight + 'px';
+			targetElement.style.height = targetHeight + "px";
 			adjustParentContainerHeight(targetElement, targetHeight);
 
 			// Start scrolling to the bottom of the page
@@ -91,7 +91,7 @@ function adjustParentContainerHeight(childElement, heightChange) {
 
 	if (parentElement && parentElement.classList.contains("active")) {
 		const currentParentHeight = parseInt(parentElement.style.height) || 0;
-		parentElement.style.height = (currentParentHeight + heightChange) + 'px';
+		parentElement.style.height = (currentParentHeight + heightChange) + "px";
 	}
 }
 

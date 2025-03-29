@@ -26,12 +26,6 @@ export async function setSyncStorageValue(key, value) {
 	await chrome.storage.sync.set({ [key]: value });
 }
 
-export async function removeSyncStorageValue(key) {
-	delete configSync[key];
-
-	await chrome.storage.sync.remove(key);
-}
-
 /* c8 ignore start - session storage cannot be mocked like the others, but under the hood behaves the same as sync storage, which we do test */
 export async function setSessionStorageValue(key, value) {
 	await chrome.storage.session.set({ [key]: value });
@@ -64,7 +58,7 @@ export async function validateConfigSync() {
 	}
 
 	// Remove old config values from sync storage
-	for (const [key, value] of Object.entries(configSyncValues)) {
+	for (const [key, _] of Object.entries(configSyncValues)) {
 		if (configSyncDefaults[key] === undefined) {
 			await chrome.storage.sync.remove(key);
 		}
