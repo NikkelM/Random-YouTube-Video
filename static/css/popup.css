@@ -70,7 +70,6 @@
 	margin: auto;
 }
 
-/* Disables various transitions */
 .no-transitions * {
 	transition: none !important;
 }
@@ -223,6 +222,41 @@
 	background-color: #07d400 !important;
 }
 
+@keyframes gradient {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 0%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+.randomYoutubeVideoButton.highlight-green-animated {
+	background: linear-gradient(45deg, #058101, #079c02, #09ff00);
+	background-size: 400% 400%;
+	animation: gradient 5s ease infinite;
+}
+
+@keyframes fillup {
+	0% {
+		background-size: 0% 100%;
+	}
+	100% {
+		background-size: 100% 100%;
+	}
+}
+
+/* The timing of the animation is synced up with other timers associated with the buttons */
+.randomYoutubeVideoButton.buttonFillUp {
+	background: linear-gradient(to right, #333, #333);
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
+	animation: fillup 10s forwards;
+}
+
 /* 
  * Input 
  */
@@ -299,11 +333,9 @@ input.invalid-input {
 	0% {
 		opacity: 1;
 	}
-
 	50% {
 		opacity: 0.5;
 	}
-
 	100% {
 		opacity: 1;
 	}

@@ -46,11 +46,44 @@ export const configSyncDefaults = {
 	"reviewMessageShown": false,
 	// If the message asking for a donation has been shown yet
 	"donationMessageShown": false,
+	// Contains user information and tokens if the user is logged in with Google
+	"googleOauth": null,
 	// The id/date of the last viewed news article
 	"lastViewedNewsId": null, // Currently not in use
 	// The next time we should check for news (once per day)
 	// We delay the first check by 24 hours to not immediately show the news after a user has installed the extension
 	"nextNewsCheckTime": new Date(new Date().setHours(24, 0, 0, 0)).getTime(), // Currently not in use
+	// ----- SHUFFLE PLUS OPTIONS -----
+	// Sync user & channel settings with Firebase
+	// TODO: Add a toggle in the popup. TODO on that: When the setting gets toggled on, sync all syncable settings to Firestore immediately. When turned off, remove all settings from Firestore
+	"plusSyncSettings": false
+};
+
+// true if the setting can be synced with Firestore, false otherwise
+export const configSyncFirestoreSyncable = {
+	"useCustomApiKeyOption": false,
+	"customYoutubeApiKey": false,
+	"databaseSharingEnabledOption": false,
+	"shuffleOpenInNewTabOption": true,
+	"shuffleReUseNewTabOption": true,
+	"shuffleIgnoreShortsOption": true,
+	"shuffleOpenAsPlaylistOption": true,
+	"shuffleNumVideosInPlaylist": true,
+	"shuffleTabId": false,
+	"channelSettings": true,
+	"currentChannelId": true,
+	"currentChannelName": true,
+	"numShuffledVideosTotal": true,
+	"userQuotaRemainingToday": false,
+	"userQuotaResetTime": false,
+	"nextAPIKeysCheckTime": false,
+	"lastViewedChangelogVersion": false,
+	"wasLastRickRolledInYear": false,
+	"previousVersion": false,
+	"reviewMessageShown": false,
+	"donationMessageShown": false,
+	"googleOauth": false,
+	"plusSyncSettings": true
 };
 
 export const isFirefox = typeof browser !== "undefined";
@@ -65,6 +98,7 @@ export const firebaseConfig = {
 	databaseURL: "https://random-youtube-video-ex-chrome-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
+// TODO: Add hints for Shuffle+
 export const shufflingHints = [
 	// General extension hints
 	"The extension adds a 'Shuffle' button to all channel, video and shorts pages on YouTube. This button has the same behaviour as shuffling from the popup!",
@@ -75,6 +109,9 @@ export const shufflingHints = [
 	"The list of videos uploaded on a channel is updated regularly, so don't worry if you don't immediately see a recently uploaded video when shuffling!",
 	"All video ID's are stored locally in your browser's storage, to make shuffling from a channel even faster the next time you visit it!",
 	"The 'Shuffle' button will display a progress percentage if the extension has to fetch data from the YouTube API!",
+
+	// Shuffle+
+	"Subscribe to Shuffle+ to get access to new features and enhance your shuffling experience!",
 
 	// Errors
 	"Whenever an error is encountered, an alert will open with more detailed information on what caused it, and how you may resolve it. If you still need assistance, please open an issue on GitHub and include the channel ID!",
@@ -110,4 +147,4 @@ export const shufflingHints = [
 	"If you want to stay up-to-date with the extension's development, consider starring the GitHub repository!",
 	"This extension is a hobby project - you can support it by sponsoring me on GitHub or donating on Ko-Fi!",
 	"The extension's source code is available on GitHub: https://github.com/NikkelM/Random-YouTube-Video"
-]
+];

@@ -1,8 +1,9 @@
 // Content script that is injected into YouTube pages
 import { setDOMTextWithDelay, updateSmallButtonStyleForText, getPageTypeFromURL, RandomYoutubeVideoError, delay } from "./utils.js";
-import { configSync, setSyncStorageValue } from "./chromeStorage.js";
+import { configSync } from "./chromeStorage.js";
 import { buildShuffleButton, shuffleButton, shuffleButtonTextElement, shuffleButtonTooltipElement, tryRenameUntitledList } from "./domManipulation.js";
 import { chooseRandomVideo } from "./shuffleVideo.js";
+import { setUserSetting } from "./html/popup/popupUtils.js";
 
 // ---------- Initialization ----------
 // Load the font used for the "shuffle" icon
@@ -25,7 +26,7 @@ if (videoShuffleButton || channelShuffleButton || shortShuffleButton) {
 // To track if the shuffle is already running and prevent bugs if the user clicks the button multiple times
 let isShuffling = false;
 
-// After every navigation event, we need to check if this page needs a 'Shuffle' button
+// After every navigation event, we need to check if this page needs a "Shuffle" button
 document.addEventListener("yt-navigate-finish", startDOMObserver);
 
 async function startDOMObserver(event) {
@@ -79,7 +80,7 @@ async function startDOMObserver(event) {
 			await chrome.runtime.sendMessage({ command: "connectionTest" });
 		} catch (error) {
 			// If the extension's background worker was reloaded, we need to reload the page to re-connect to the background worker
-			if (error.message === 'Extension context invalidated.') {
+			if (error.message === "Extension context invalidated.") {
 				window.location.reload();
 			}
 		}
@@ -170,7 +171,7 @@ async function startDOMObserver(event) {
 }
 
 async function channelDetectedAction(pageType, channelId, channelName, eventVersion) {
-	// It might be that we got to this page after shuffling, in which case we want to check if there is a 'Untitled List' that we can rename
+	// It might be that we got to this page after shuffling, in which case we want to check if there is a "Untitled List" that we can rename
 	// We do this before anything else to prevent the previous text from showing
 	if (pageType === "video") {
 		tryRenameUntitledList();
@@ -182,7 +183,7 @@ async function channelDetectedAction(pageType, channelId, channelName, eventVers
 		await chrome.runtime.sendMessage({ command: "connectionTest" });
 	} catch (error) {
 		// If the extension's background worker was reloaded, we need to reload the page to re-connect to the background worker
-		if (error.message === 'Extension context invalidated.') {
+		if (error.message === "Extension context invalidated.") {
 			window.location.reload();
 		}
 	}
@@ -193,8 +194,8 @@ async function channelDetectedAction(pageType, channelId, channelName, eventVers
 	}
 
 	// Save the current channelID and channelName in the extension's storage to be accessible by the popup
-	await setSyncStorageValue("currentChannelId", channelId);
-	await setSyncStorageValue("currentChannelName", channelName);
+	await setUserSetting("currentChannelId", channelId);
+	await setUserSetting("currentChannelName", channelName);
 
 	// Update the channel name in the popup in case it was opened while the navigation was still going on
 	// If we don't do this, the configSync and displayed value might diverge
@@ -218,7 +219,7 @@ function resetShuffleButtonText() {
 }
 
 // ---------- Shuffle ----------
-// Called when the 'Shuffle' button is clicked
+// Called when the "Shuffle" button is clicked
 async function shuffleVideos() {
 	if (isShuffling) {
 		return;
@@ -233,7 +234,7 @@ async function shuffleVideos() {
 	let channelId;
 	try {
 		// Get the saved channelId from the button
-		channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerText;
+		channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem("channelId")?.innerText;
 
 		// If the channelId somehow wasn't saved, throw an error
 		if (!channelId) {
@@ -245,7 +246,7 @@ async function shuffleVideos() {
 					showTrace: false,
 					canSavePlaylist: false
 				}
-			)
+			);
 		}
 
 		// We need this variable to make sure the button text is only changed if the shuffle hasn't finished within the time limit
@@ -339,7 +340,7 @@ async function shuffleVideos() {
 		}
 
 		// Special case: If the extension's background worker was reloaded, we need to reload the page to get the correct reference to the shuffle function again
-		if (error.message === 'Extension context invalidated.') {
+		if (error.message === "Extension context invalidated.") {
 			// We don't want the button text to change before the page is reloaded
 			hasBeenShuffled = true;
 
@@ -348,7 +349,7 @@ async function shuffleVideos() {
 
 The extension's background worker was reloaded. This happens after an extension update, or after you interrupted a shuffle that was started from the popup.
 
-The page will reload and you can try again.`)
+The page will reload and you can try again.`);
 
 			// Reload the page
 			window.location.reload();

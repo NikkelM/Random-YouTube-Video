@@ -1,14 +1,24 @@
 # Changelog
 
-## v3.1.13
+## v4.0.0-beta
 
 <!--Releasenotes start-->
-- Added accessibility options: Under "Advanced Settings", choose to not show shuffle buttons on video or channel pages.
-- Added some smoothed animations to the popup when expanding and collapsing the advanced settings.
+- Introducing Shuffle+, a new way to shuffle, with more customization options than ever before.
+- Subscribe to Shuffle+ to gain access to exclusive new features, taking your shuffling experience to the next level.
+- You can find a list of all features on the new 'Shuffle+' page in the extension popup.
+- Sign in to the extension with your YouTube account, save your preferences and settings across devices and enable new features by giving access to your subscriptions and watched videos.
+- The extension icon will now reflect your Shuffle+ subscription status.
+- A number of improvements to the maintainability of the extension's codebase.
+- Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
 <!--Releasenotes end-->
 
-## v3.1.12
+## v3.1.13
 
+- Added accessibility options: Under "Advanced Settings", choose to not show shuffle buttons on video or channel pages.
+- Added some smoothed animations to the popup when expanding and collapsing the advanced settings.
+
+## v3.1.12
+<!-- TODO: Test if the tabs permission is required for the sign-in flow page etc. -->
 - Removed "tabs" permission from the extension, enhancing privacy.
 
 ## v3.1.11

@@ -2,9 +2,12 @@
 // Handles communication between the extension and the content script as well as Firebase interactions
 import { configSync, setSyncStorageValue, setSessionStorageValue } from "./chromeStorage.js";
 import { isFirefox, firebaseConfig } from "./config.js";
+import { userHasActiveSubscriptionRole } from "./stripe.js";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase, ref, child, update, get, remove } from "firebase/database";
-import { getFirestore, query, collection, getDocs, orderBy, limit, where } from "firebase/firestore";
+import { getFirestore, query, collection, doc, setDoc, getDocs, orderBy, limit, where } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { countryToCurrency } from "country-to-currency";
 // We need to import utils.js to get the console re-routing function
 import { } from "./utils.js";
 
@@ -34,9 +37,57 @@ async function initExtension() {
 		await handleExtensionUpdate(manifestData, configSync.previousVersion);
 	}
 
+	await checkShufflePlusStatus();
 	await checkLocalStorageCapacity();
 	// TODO: Temporarily disabled due to too many read operations, need to investigate why
 	// await checkForAndShowNews();
+}
+
+// On every startup, we check the claim roles for the user
+async function checkShufflePlusStatus() {
+	// TODO: If the user has not yet been introduced to Shuffle+, open the introduction page
+	// Use a config flag to do so
+	if (await userHasActiveSubscriptionRole()) {
+		chrome.action.setIcon({
+			path: {
+				"16": chrome.runtime.getURL("icons/icon-16-white.png"),
+				"32": chrome.runtime.getURL("icons/icon-32-white.png"),
+				"48": chrome.runtime.getURL("icons/icon-48-white.png"),
+				"128": chrome.runtime.getURL("icons/icon-128-white.png")
+			}
+		});
+	}
+
+	await getUserLocaleInfo();
+}
+
+// Gets the user's IP, countryCode and local currency to store in session storage
+// We are not saving this permanently, as the user's location may change
+async function getUserLocaleInfo() {
+	// TODO: Find other things that would better be stored in session storage
+	// Store the user's country code and local currency in session storage
+	const userIP = await fetch("https://api.ipify.org?format=json").then(response => response.json()).then(data => data.ip);
+	let userCurrency, userCountryCode = null;
+	try {
+		const response = await fetch(`http://ip-api.com/json/${userIP}?fields=countryCode,currency`);
+		if (response.ok) {
+			const data = await response.json();
+			// Lowercase, as that's the formatting in Stripe
+			userCurrency = data.currency.toLowerCase();
+			userCountryCode = data.countryCode;
+		}
+	} catch (error) {
+		console.error("Error fetching user currency:", error);
+	}
+
+	if (!userCurrency) {
+		userCurrency = countryToCurrency[navigator.language.split("-")[1]].toLowerCase();
+	}
+	if (!userCountryCode) {
+		userCountryCode = navigator.language.split("-")[1];
+	}
+
+	chrome.storage.session.set({ userCurrency: userCurrency, userCountryCode: userCountryCode });
 }
 
 // Make sure we are not using too much local storage
@@ -55,7 +106,7 @@ async function checkLocalStorageCapacity() {
 		const localStorageContents = await chrome.storage.local.get();
 
 		// We only need the keys that hold playlists, which is signified by the existence of the "videos" sub-key
-		const allPlaylists = Object.fromEntries(Object.entries(localStorageContents).filter(([key, value]) => value["videos"]));
+		const allPlaylists = Object.fromEntries(Object.entries(localStorageContents).filter(([_, value]) => value["videos"]));
 
 		// Sort the playlists by lastAccessedLocally value
 		const sortedPlaylists = Object.entries(allPlaylists).sort((a, b) => {
@@ -64,7 +115,7 @@ async function checkLocalStorageCapacity() {
 
 		// Remove the 20% of playlists that have not been accessed the longest
 		const playlistsToRemove = sortedPlaylists.slice(Math.floor(sortedPlaylists.length * 0.8));
-		for (const [playlistId, playlistInfo] of playlistsToRemove) {
+		for (const [playlistId, _playlistInfo] of playlistsToRemove) {
 			console.log(`Removing playlist ${playlistId} from local storage...`, true);
 			chrome.storage.local.remove(playlistId);
 		}
@@ -110,7 +161,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 		let configSyncValues = await chrome.storage.sync.get();
 
 		// For each object entry in channelSettings that has the "shufflePercentage" item, rename it to "percentageValue" and add a new key "activeOption": "percentageOption"
-		for (const [channelID, channelSetting] of Object.entries(configSyncValues["channelSettings"])) {
+		for (const [_channelId, channelSetting] of Object.entries(configSyncValues["channelSettings"])) {
 			if (channelSetting["shufflePercentage"]) {
 				channelSetting["percentageValue"] = channelSetting["shufflePercentage"];
 				channelSetting["activeOption"] = "percentageOption";
@@ -163,19 +214,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			break;
 		// Tries to get a playlist from Firebase
 		case "getPlaylistFromDB":
-			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
+			readDataOnce("uploadsPlaylists/" + request.data).then(sendResponse);
 			break;
 		// Updates (not overwriting videos) a playlist in Firebase 
 		case "updatePlaylistInfoInDB":
-			updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, false).then(sendResponse);
+			updatePlaylistInfoInDB("uploadsPlaylists/" + request.data.key, request.data.val, false).then(sendResponse);
 			break;
 		// Updates (overwriting videos) a playlist in Firebase
 		case "overwritePlaylistInfoInDB":
-			updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, true).then(sendResponse);
+			updatePlaylistInfoInDB("uploadsPlaylists/" + request.data.key, request.data.val, true).then(sendResponse);
 			break;
 		// Before v1.0.0 the videos were stored in an array without upload times, so they need to all be re-fetched
-		case 'updateDBPlaylistToV1.0.0':
-			updateDBPlaylistToV1_0_0('uploadsPlaylists/' + request.data.key).then(sendResponse);
+		case "updateDBPlaylistToV1.0.0":
+			updateDBPlaylistToV1_0_0("uploadsPlaylists/" + request.data.key).then(sendResponse);
+			break;
+		// Uploads the configSync object to Firestore under the current user's ID
+		case "syncUserSettingWithFirestore":
+			syncUserSettingWithFirestore(request.data).then(sendResponse);
 			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":
@@ -254,14 +309,14 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 
 	if (overwriteVideos || !playlistExists) {
 		console.log("Setting playlistInfo in the database...");
-		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested within the playlist
+		// Update the entire object. Due to the way Firebase works, this will overwrite the existing "videos" object, as it is nested within the playlist
 		update(ref(firebase, playlistId), playlistInfo);
 	} else {
 		console.log("Updating playlistInfo in the database...");
 		// Contains all properties except the videos
-		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => (key !== "videos")));
+		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, _]) => (key !== "videos")));
 
-		// Upload the 'metadata'
+		// Upload the "metadata"
 		update(ref(firebase, playlistId), playlistInfoWithoutVideos);
 
 		// Update the videos separately to not overwrite existing videos
@@ -273,9 +328,16 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 
 async function updateDBPlaylistToV1_0_0(playlistId) {
 	// Remove all videos from the database
-	remove(ref(firebase, playlistId + '/videos'));
+	remove(ref(firebase, playlistId + "/videos"));
 
 	return "Videos were removed from the database playlist.";
+}
+
+async function syncUserSettingWithFirestore(settingToSync) {
+	const userSettingsRef = doc(firestore, "users", getAuth().currentUser.uid, "userSettings", "configSync");
+	await setDoc(userSettingsRef, settingToSync, { merge: true });
+
+	return "User settings uploaded/synced to database.";
 }
 
 async function readDataOnce(key) {
