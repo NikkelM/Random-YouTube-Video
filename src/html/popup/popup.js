@@ -1,6 +1,6 @@
 // Entry point for the popup page
 import { delay } from "../../utils.js";
-import { configSync } from "../../chromeStorage.js";
+import { configSync, setSyncStorageValue } from "../../chromeStorage.js";
 import { manageDependents, manageDbOptOutOption, validateApiKey, setChannelSetting, removeChannelSetting, updateFYIDiv, setUserSetting } from "./popupUtils.js";
 import { userHasActiveSubscriptionRole } from "../../stripe.js";
 import { tryFocusingTab, animateSlideOut } from "../htmlUtils.js";
