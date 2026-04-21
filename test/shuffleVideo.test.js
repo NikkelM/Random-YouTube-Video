@@ -223,7 +223,7 @@ describe('shuffleVideo', function () {
 					await chooseRandomVideo('UU_LocalPlaylistDidNotFetchDBRecently_DBEntryDoesNotExist_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
 				} catch (error) {
 					// The error should be body was already consumed, as we did not provide enough mock responses
-					expect(['The body has already been consumed.', 'Body is unusable']).to.contain(error.message);
+					expect(['The body has already been consumed.', 'Body is unusable', 'Body is unusable: Body has already been read']).to.contain(error.message);
 				}
 
 				expect(alertStub.calledOnce).to.be(true);
@@ -692,7 +692,7 @@ describe('shuffleVideo', function () {
 
 												// As a workaround, we check that JSDOM complains about window.location.assign not being implemented
 												expect(errorSpy.callCount).to.be(1);
-												expect(errorSpy.args[0][0]).to.contain('Error: Not implemented: navigation');
+												expect(errorSpy.args[0][0]).to.contain('Not implemented: navigation');
 											});
 										}
 									} else if (key === 'customAPIKeyPermutations') {
@@ -820,7 +820,7 @@ describe('shuffleVideo', function () {
 												}
 												expect().fail("No error was thrown");
 											});
-										} else if (!(input.playlistId.includes('LocalPlaylistContainsNoShorts') && config.channelSettings[input.channelId].activeOption === 'videoIdOption')) {
+										} else if (!(input.playlistId.includes('LocalPlaylistContainsNoShorts') && ['videoIdOption', 'videoIdBeforeOption'].includes(config.channelSettings[input.channelId].activeOption))) {
 											it('should apply the correct filter', async function () {
 												// The videos onto which the filter is applied includes the deleted videos (this changes the result e.g. for the percentageOption)
 												let filteredVideos = deepCopy({ ...input.dbVideos, ...input.dbDeletedVideos, ...input.localVideos, ...input.localDeletedVideos, ...input.newUploadedVideos });
@@ -842,12 +842,24 @@ describe('shuffleVideo', function () {
 															expect(filteredVideos[videoId]).to.be.greaterThan(config.channelSettings[input.channelId].dateValue);
 														}
 														break;
+													case 'dateBeforeOption':
+														for (const videoId of chosenVideos) {
+															expect(filteredVideos[videoId] <= config.channelSettings[input.channelId].dateValue).to.be(true);
+														}
+														break;
 													case 'videoIdOption':
-														// Get all videos from index 0 to index of the videoIdValue, excluding the videoIdValue
-														const videosAfterVideoWithId = Object.keys(filteredVideos).slice(0, Object.keys(filteredVideos).indexOf(config.channelSettings[input.channelId].videoIdValue));
+														// Get all videos from index 0 to and including the videoIdValue
+														const videosAfterVideoWithId = Object.keys(filteredVideos).slice(0, Object.keys(filteredVideos).indexOf(config.channelSettings[input.channelId].videoIdValue) + 1);
 														// All videos that were chosen must be in the videosAfterVideoWithId array
 														for (const videoId of chosenVideos) {
 															expect(videosAfterVideoWithId.includes(videoId)).to.be(true);
+														}
+														break;
+													case 'videoIdBeforeOption':
+														// Get all videos from the videoIdValue onwards in the sorted list (including the video itself and older videos)
+														const videosBeforeVideoWithId = Object.keys(filteredVideos).slice(Object.keys(filteredVideos).indexOf(config.channelSettings[input.channelId].videoIdValue));
+														for (const videoId of chosenVideos) {
+															expect(videosBeforeVideoWithId.includes(videoId)).to.be(true);
 														}
 														break;
 													case 'percentageOption':

@@ -12,6 +12,11 @@
 - Fixed the progress percentage displayed on the button when ignoring or only shuffling from shorts.
 <!--Releasenotes end-->
 
+## v3.1.14
+
+- Added "before" filter options: You can now shuffle from videos uploaded **before** a given date or video ID, in addition to the existing "after" filters.
+- Fixed the shuffle button missing styling after a recent YouTube UI update.
+
 ## v3.1.13
 
 - Added accessibility options: Under "Advanced Settings", choose to not show shuffle buttons on video or channel pages.

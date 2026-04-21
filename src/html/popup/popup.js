@@ -571,6 +571,7 @@ async function updateChannelSettingsDropdownMenu(domElements) {
 			domElements.channelCustomOptionsPercentageOptionP.classList.add("hidden");
 			break;
 		case "dateOption":
+		case "dateBeforeOption":
 			// Hide the other inputs and unhide this one
 			domElements.channelCustomOptionsDateOptionInput.classList.remove("hidden");
 			domElements.channelCustomOptionsVideoIdOptionInput.classList.add("hidden");
@@ -581,6 +582,7 @@ async function updateChannelSettingsDropdownMenu(domElements) {
 			domElements.channelCustomOptionsDateOptionInput.value = configSync.channelSettings[configSync.currentChannelId]?.dateValue ?? null;
 			break;
 		case "videoIdOption":
+		case "videoIdBeforeOption":
 			domElements.channelCustomOptionsDateOptionInput.classList.add("hidden");
 			domElements.channelCustomOptionsVideoIdOptionInput.classList.remove("hidden");
 			domElements.channelCustomOptionsPercentageOptionInput.classList.add("hidden");

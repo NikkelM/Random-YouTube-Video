@@ -715,9 +715,11 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 			activeOptionValue = null;
 			break;
 		case "dateOption":
+		case "dateBeforeOption":
 			activeOptionValue = configSync.channelSettings[channelId]?.dateValue;
 			break;
 		case "videoIdOption":
+		case "videoIdBeforeOption":
 			activeOptionValue = configSync.channelSettings[channelId]?.videoIdValue;
 			break;
 		case "percentageOption":
@@ -977,6 +979,23 @@ function applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, 
 				);
 			}
 			break;
+		case "dateBeforeOption":
+			// Take only videos that were released before the specified date
+			videosToShuffle = videosByDate.filter((videoId) => {
+				return new Date(allVideos[videoId]) <= new Date(activeOptionValue);
+			});
+			if (videosToShuffle.length === 0) {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-8E",
+						message: `There are no videos that were released before the specified date (${activeOptionValue}).`,
+						solveHint: "Please change the date or use a different shuffle filter option.",
+						showTrace: false,
+						canSavePlaylist: true
+					}
+				);
+			}
+			break;
 
 		case "videoIdOption":
 			// Take only videos that were released after the specified video
@@ -995,7 +1014,7 @@ function applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, 
 				);
 			}
 
-			videosToShuffle = videosByDate.slice(0, videoIndex);
+			videosToShuffle = videosByDate.slice(0, videoIndex + 1);
 
 			// If the list is empty, alert the user
 			if (videosToShuffle.length === 0) {
@@ -1004,6 +1023,35 @@ function applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, 
 						code: "RYV-8C",
 						message: `There are no videos that were released after the specified video ID (${activeOptionValue}), or the newest video has not yet been added to the database.`,
 						solveHint: "The extension updates playlists every 48 hours, so please wait for an update, change the video ID used in the filer or use a different filter option.",
+						showTrace: false,
+						canSavePlaylist: true
+					}
+				);
+			}
+			break;
+		case "videoIdBeforeOption":
+			// Take only videos that were released before the specified video
+			var videoBeforeIndex = videosByDate.indexOf(activeOptionValue);
+			if (videoBeforeIndex === -1) {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-8B",
+						message: `The video ID you specified (${activeOptionValue}) does not map to a video uploaded on this channel.`,
+						solveHint: "Please fix the video ID or use a different shuffle filter option.",
+						showTrace: false,
+						canSavePlaylist: true
+					}
+				);
+			}
+
+			videosToShuffle = videosByDate.slice(videoBeforeIndex);
+
+			if (videosToShuffle.length === 0) {
+				throw new RandomYoutubeVideoError(
+					{
+						code: "RYV-8F",
+						message: `There are no videos that were released before the specified video ID (${activeOptionValue}), or the oldest video has not yet been added to the database.`,
+						solveHint: "The extension updates playlists every 48 hours, so please wait for an update, change the video ID used in the filter or use a different filter option.",
 						showTrace: false,
 						canSavePlaylist: true
 					}
