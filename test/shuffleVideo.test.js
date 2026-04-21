@@ -223,7 +223,7 @@ describe('shuffleVideo', function () {
 					await chooseRandomVideo('UU_LocalPlaylistDidNotFetchDBRecently_DBEntryDoesNotExist_LocalPlaylistDoesNotExist_LocalPlaylistContainsNoDeletedVideos_MultipleNewVideosUploaded_DBContainsNoVideosNotInLocalPlaylist', false, domElement);
 				} catch (error) {
 					// The error should be body was already consumed, as we did not provide enough mock responses
-					expect(['The body has already been consumed.', 'Body is unusable']).to.contain(error.message);
+					expect(['The body has already been consumed.', 'Body is unusable', 'Body is unusable: Body has already been read']).to.contain(error.message);
 				}
 
 				expect(alertStub.calledOnce).to.be(true);

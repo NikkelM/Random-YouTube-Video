@@ -11,6 +11,62 @@ let iconFont = `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?f
 iconFont = new DOMParser().parseFromString(iconFont, "text/html").head.firstChild;
 document.head.appendChild(iconFont);
 
+// Inject self-contained CSS for shuffle buttons (independent of YouTube's internal CSS classes)
+let buttonStyles = document.createElement("style");
+buttonStyles.textContent = `
+.ryv-shuffle-btn {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 16px;
+	height: 36px;
+	border: none;
+	border-radius: 18px;
+	background: rgba(0, 0, 0, 0.05);
+	color: var(--yt-spec-text-primary, #0f0f0f);
+	font-family: "Roboto", "Arial", sans-serif;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	white-space: nowrap;
+	line-height: normal;
+}
+.ryv-shuffle-btn:hover {
+	background: rgba(0, 0, 0, 0.1);
+}
+html[dark] .ryv-shuffle-btn {
+	background: rgba(255, 255, 255, 0.1);
+	color: #fff;
+}
+html[dark] .ryv-shuffle-btn:hover {
+	background: rgba(255, 255, 255, 0.2);
+}
+.ryv-shuffle-btn-small {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 48px;
+	height: 48px;
+	border: none;
+	border-radius: 24px;
+	background: rgba(0, 0, 0, 0.05);
+	color: var(--yt-spec-text-primary, #0f0f0f);
+	cursor: pointer;
+	position: relative;
+	overflow: hidden;
+}
+.ryv-shuffle-btn-small:hover {
+	background: rgba(0, 0, 0, 0.1);
+}
+html[dark] .ryv-shuffle-btn-small {
+	background: rgba(255, 255, 255, 0.1);
+	color: #fff;
+}
+html[dark] .ryv-shuffle-btn-small:hover {
+	background: rgba(255, 255, 255, 0.2);
+}
+`;
+document.head.appendChild(buttonStyles);
+
 // ---------- DOM ----------
 // The only way for a button to already exist when the content script is loaded is if the extension was reloaded in the background
 // That will cause the content script to be re-injected into the page, but the DOM will not be reloaded
@@ -233,7 +289,7 @@ async function shuffleVideos() {
 	let channelId;
 	try {
 		// Get the saved channelId from the button
-		channelId = shuffleButton?.children[0]?.children[0]?.children[0]?.children?.namedItem('channelId')?.innerText;
+		channelId = shuffleButton?.querySelector('button')?.dataset?.channelId;
 
 		// If the channelId somehow wasn't saved, throw an error
 		if (!channelId) {
@@ -254,7 +310,8 @@ async function shuffleVideos() {
 		// Only use this text if the button is the large shuffle button, the small one only has space for an icon
 		if (shuffleButtonTextElement.id.includes("large-shuffle-button")) {
 			shuffleButtonTextElement.innerText = "\xa0Shuffling...";
-			shuffleButtonTooltipElement.innerText = "The shuffle has started, please wait while the extension gets the video data for this channel...";
+			// Delay tooltip update so Polymer hides the tooltip first on click; next hover shows new text centered
+			setTimeout(() => { shuffleButtonTooltipElement.innerText = "The shuffle has started, please wait while the extension gets the video data for this channel..."; }, 300);
 			setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still on it...", 5000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Shuffling..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
 			if (configSync.shuffleIgnoreShortsOption != "1") {
 				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Sorting shorts...", 10000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
@@ -268,7 +325,7 @@ async function shuffleVideos() {
 				setDOMTextWithDelay(shuffleButtonTextElement, "\xa0Still shuffling...", 20000, () => { return ((shuffleButtonTextElement.innerText === "\xa0Still on it..." || shuffleButtonTextElement.innerText === "\xa0Fetching: 100%") && !hasBeenShuffled); });
 			}
 		} else {
-			shuffleButtonTooltipElement.innerText = "Shuffling...";
+			setTimeout(() => { shuffleButtonTooltipElement.innerText = "Shuffling..."; }, 300);
 			let iterationsWaited = 0;
 
 			let checkInterval = setInterval(async () => {
