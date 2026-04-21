@@ -692,7 +692,7 @@ describe('shuffleVideo', function () {
 
 												// As a workaround, we check that JSDOM complains about window.location.assign not being implemented
 												expect(errorSpy.callCount).to.be(1);
-												expect(errorSpy.args[0][0]).to.contain('Error: Not implemented: navigation');
+												expect(errorSpy.args[0][0]).to.contain('Not implemented: navigation');
 											});
 										}
 									} else if (key === 'customAPIKeyPermutations') {
