@@ -74,7 +74,9 @@ const configSyncModifiers = [
 	[
 		"allVideosOption",
 		"dateOption",
+		"dateBeforeOption",
 		"videoIdOption",
+		"videoIdBeforeOption",
 		"percentageOption"
 	],
 	// channelSettingsPermutation
@@ -86,6 +88,7 @@ const configSyncModifiers = [
 				activeOption: null,
 				dateValue: sixDaysAgo,
 				videoIdValue: "LOC_S_00005",
+				videoIdBeforeValue: "LOC_S_00001",
 				percentageValue: 50
 			}
 		},
@@ -96,6 +99,7 @@ const configSyncModifiers = [
 				activeOption: null,
 				dateValue: tomorrow,
 				videoIdValue: "DoesNotExistId",
+				videoIdBeforeValue: "DoesNotExistId",
 				percentageValue: 0
 			}
 		},
@@ -182,11 +186,17 @@ for (const activeOption of configSyncModifiers[9]) {
 		if (activeOption === "allVideosOption" && channelSettingsPermutation.type !== "normal") continue;
 		// The allVideosOption and percentageOption do not error out if no value is set
 		if (["allVideosOption", "percentageOption"].includes(activeOption) && channelSettingsPermutation.type === "empty") continue;
+		// The "before" date/video options don't error with the "error" template values (tomorrow is valid for before-date, DoesNotExistId only applies to videoId options)
+		if (activeOption === "dateBeforeOption" && channelSettingsPermutation.type === "error") continue;
 
 		let modifiedConfigSync = deepCopy(configSyncDefaults);
 		let usedChannelSettingsPermutation = deepCopy(channelSettingsPermutation);
 
 		usedChannelSettingsPermutation.template.activeOption = activeOption;
+		// For videoIdBeforeOption, use the dedicated "before" video ID value
+		if (activeOption === "videoIdBeforeOption" && usedChannelSettingsPermutation.template.videoIdBeforeValue) {
+			usedChannelSettingsPermutation.template.videoIdValue = usedChannelSettingsPermutation.template.videoIdBeforeValue;
+		}
 		modifiedConfigSync.channelSettings = deepCopy(usedChannelSettingsPermutation);
 
 		channelSettingsPermutations.push(modifiedConfigSync);

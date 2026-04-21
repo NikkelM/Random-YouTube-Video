@@ -3,7 +3,8 @@
 ## v3.1.14
 
 <!--Releasenotes start-->
-- Fixed the shuffle button missing styling after a recent YouTube UI update. 
+- Added "before" filter options: You can now shuffle from videos uploaded **before** a given date or video ID, in addition to the existing "after" filters.
+- Fixed the shuffle button missing styling after a recent YouTube UI update.
 <!--Releasenotes end-->
 
 ## v3.1.13
