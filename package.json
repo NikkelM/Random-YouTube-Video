@@ -52,6 +52,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.27.0",
+    "country-to-currency": "^1.1.5",
     "firebase": "^12.12.1"
   },
   "lint-staged": {
