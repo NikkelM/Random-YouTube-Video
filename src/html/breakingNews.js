@@ -20,7 +20,7 @@ function getDomElements() {
 		// FOOTER
 		// View changelog button
 		viewChangelogButton: document.getElementById("viewChangelogButton"),
-	}
+	};
 }
 
 // Set default values from configSync == user preferences

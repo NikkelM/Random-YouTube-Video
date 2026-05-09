@@ -7,37 +7,44 @@ console.log = function () {
 	// The last argument to console.log is a boolean that determines if the message should be shown in production
 	const showInProduction = (arguments.length > 1 && arguments[arguments.length - 1] === true);
 	// If we are either in development or the message should be shown in production, log the message
-	if (process.env.NODE_ENV !== 'production' || showInProduction) {
+	if (process.env.NODE_ENV !== "production" || showInProduction) {
 		if (arguments[0] !== "[random-youtube-video]:") {
-			Array.prototype.unshift.call(arguments, '[random-youtube-video]:');
+			Array.prototype.unshift.call(arguments, "[random-youtube-video]:");
 		}
 		// Remove the showInProduction flag from the arguments so it doesn't get logged
 		// Only remove the last argument if there are more than 2 arguments (prefix, normal argument, showInProduction flag)
-		if (arguments.length > 2 && typeof arguments[arguments.length - 1] === 'boolean') {
+		if (arguments.length > 2 && typeof arguments[arguments.length - 1] === "boolean") {
 			Array.prototype.pop.call(arguments);
 		}
 		oldLog.apply(this, arguments);
 	}
-}
+};
 /* c8 ignore stop */
 
 // ---------- Utility functions ----------
 
 // ----- URLs -----
 export function isVideoUrl(url) {
-	if (!url) return false;
+	if (!url) {
+		return false;
+	}
 
 	const urlParts = url.split("/");
-	if (!urlParts[2]?.includes("youtube")) return false;
+	if (!urlParts[2]?.includes("youtube")) {
+		return false;
+	}
 	return urlParts[3]?.startsWith("watch?v=") ?? false;
 }
 
 export function getPageTypeFromURL(url) {
-	if (!url) return null;
+	if (!url) {
+		return null;
+	}
 
 	const urlParts = url.split("/");
-	if (!urlParts[2]?.includes("youtube")) return null;
-	if (urlParts[3]?.startsWith("watch?v=")) {
+	if (!urlParts[2]?.includes("youtube")) {
+		return null;
+	} else if (urlParts[3]?.startsWith("watch?v=")) {
 		return "video";
 	} else if (urlParts[3]?.startsWith("shorts")) {
 		return "short";
@@ -93,6 +100,11 @@ export function getLength(obj) {
 // Adds a number of hours to a date
 export function addHours(date, hours) {
 	return new Date(date.getTime() + hours * 3600000);
+}
+
+// Create a deep copy of an object
+export function deepCopy(obj) {
+	return JSON.parse(JSON.stringify(obj));
 }
 
 // ----- Errors -----

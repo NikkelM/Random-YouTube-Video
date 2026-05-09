@@ -1,10 +1,11 @@
 // Contains logic for the "Welcome" page
 import { setSyncStorageValue } from "../chromeStorage.js";
+import { isFirefox } from "../config.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
 import { delay } from "../utils.js";
+import { userHasActiveSubscriptionRole } from "../stripe.js";
 
 // ----- Setup -----
-const isFirefox = typeof browser !== "undefined";
 const domElements = getDomElements();
 
 let mayShowReloadAllYouTubePagesDiv = false;
@@ -20,12 +21,9 @@ for (let i = 0; i <= tabs.length - 1; i++) {
 	}
 }
 
-// --- Set headers ---
-const currentVersion = chrome.runtime.getManifest().version_name ?? chrome.runtime.getManifest().version;
-domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
-
+await setDomElementValuesFromConfig(domElements);
 await buildShufflingHints(domElements);
-await setPopupDomElementEventListeners(domElements);
+await setDomElementEventListeners(domElements);
 
 // ---------- DOM ----------
 // Get all relevant DOM elements
@@ -59,24 +57,38 @@ function getDomElements() {
 		// FOOTER
 		// View changelog button
 		viewChangelogButton: document.getElementById("viewChangelogButton"),
+		// Shuffle+ button
+		shufflePlusButton: document.getElementById("shufflePlusButton"),
+	};
+}
+
+async function setDomElementValuesFromConfig(domElements) {
+	// --- Set headers ---
+	const currentVersion = chrome.runtime.getManifest().version_name ?? chrome.runtime.getManifest().version;
+	domElements.updateHeading.innerText = `Random YouTube Video - v${currentVersion}`;
+
+	// Enables or disables the animation of the Shuffle+ button depending on if the user is subscribed or not
+	if (!(await userHasActiveSubscriptionRole())) {
+		domElements.shufflePlusButton.classList.add("highlight-green-animated");
+		domElements.shufflePlusButton.classList.remove("highlight-green");
 	}
 }
 
 // Set event listeners for DOM elements
-async function setPopupDomElementEventListeners(domElements) {
+async function setDomElementEventListeners(domElements) {
 	// Firefox permissions button
 	if (isFirefox && !await browser.permissions.contains({ origins: ["*://*.youtube.com/*"] })) {
 		domElements.firefoxPermissionsDiv.classList.remove("hidden");
 
 		// This is so important that we will use a browser alert window to make sure the user sees and acknowledges it
 		await delay(50);
-		alert("You need to grant the extension permission to run on YouTube in order to use it. Please grant permissions using the highlighted button.")
+		alert("You must grant the extension the permission to access YouTube.com in order to use it. Please grant the permission using the highlighted button.");
 
 		domElements.giveFirefoxPermissionsButton.addEventListener("click", async function () {
 			await requestFirefoxPermissions();
 			// If permissions were not granted we must ask again, without them the extension does not work
 			if (!await browser.permissions.contains({ origins: ["*://*.youtube.com/*"] })) {
-				alert("You need to grant the extension permission to run on YouTube in order to use it. Please grant permissions.")
+				alert("You must grant the extension the permission to access YouTube.com in order to use it. Please grant the permission using the highlighted button.");
 			} else {
 				domElements.firefoxPermissionsDiv.classList.add("hidden");
 				if (mayShowReloadAllYouTubePagesDiv) {
@@ -120,11 +132,20 @@ async function setPopupDomElementEventListeners(domElements) {
 			await chrome.tabs.create({ url: changelogUrl });
 		}
 	});
+
+	// Shuffle+ subscribe button
+	domElements.shufflePlusButton.addEventListener("click", async function () {
+		const shufflePlusPage = chrome.runtime.getURL("html/shufflePlus.html");
+		let mustOpenTab = await tryFocusingTab(shufflePlusPage);
+		if (mustOpenTab) {
+			await chrome.tabs.create({ url: shufflePlusPage });
+		}
+	});
 }
 
 async function requestFirefoxPermissions() {
 	const permissionsToRequest = {
 		origins: ["*://*.youtube.com/*"]
-	}
+	};
 	await browser.permissions.request(permissionsToRequest);
 }

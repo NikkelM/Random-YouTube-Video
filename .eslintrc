@@ -1,21 +1,18 @@
 {
-  "parser": "@typescript-eslint/parser",
-  "plugins": [
-    "@typescript-eslint"
-  ],
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/eslint-recommended",
-    "plugin:@typescript-eslint/recommended",
-    "prettier"
-  ],
-  "env": {
-    "browser": true,
-    "node": true,
+	"parser": "@typescript-eslint/parser",
+	"plugins": ["@typescript-eslint"],
+	"extends": ["eslint:recommended", "plugin:@typescript-eslint/eslint-recommended", "plugin:@typescript-eslint/recommended", "prettier"],
+	"env": {
+		"browser": true,
+		"node": true,
 		"webextensions": true,
 		"mocha": true
-  },
-  "rules": {
-    "@typescript-eslint/no-var-requires": 0
-  }
+	},
+	"rules": {
+		"@typescript-eslint/no-var-requires": 0,
+		"@typescript-eslint/no-unused-vars": ["warn", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }],
+		"semi": ["error", "always"],
+		"curly": "error",
+		"quotes": ["error", "double", { "avoidEscape": true, "allowTemplateLiterals": true }]
+	}
 }

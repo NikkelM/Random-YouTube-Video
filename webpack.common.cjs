@@ -14,11 +14,14 @@ module.exports = env => {
 			shuffleVideo: './src/shuffleVideo.js',
 			utils: './src/utils.js',
 			chromeStorage: './src/chromeStorage.js',
+			googleOauth: './src/googleOauth.js',
+			stripe: './src/stripe.js',
 			// HTML
 			changelog: './src/html/changelog.js',
 			htmlUtils: './src/html/htmlUtils.js',
 			shufflingPage: './src/html/shufflingPage.js',
 			welcome: './src/html/welcome.js',
+			shufflePlus: './src/html/shufflePlus.js',
 			breakingNews: './src/html/breakingNews.js',
 			// POPUP
 			popup: './src/html/popup/popup.js',

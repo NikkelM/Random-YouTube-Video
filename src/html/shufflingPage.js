@@ -3,6 +3,7 @@ import { delay, setDOMTextWithDelay } from "../utils.js";
 import { configSync, setSyncStorageValue } from "../chromeStorage.js";
 import { buildShufflingHints, tryFocusingTab } from "./htmlUtils.js";
 import { chooseRandomVideo } from "../shuffleVideo.js";
+import { userHasActiveSubscriptionRole } from "../stripe.js";
 
 // ----- Setup -----
 // Restart the background script if it was stopped to prevent a flash of an error page when shuffling
@@ -20,17 +21,13 @@ try {
 const port = chrome.runtime.connect({ name: "shufflingPage" });
 
 const domElements = getDomElements();
+await setDomElementValuesFromConfig(domElements);
+await buildShufflingHints(domElements);
 await setDomElementEventListeners(domElements);
 
 // If this page is open, it means the user has clicked the shuffle button
 shuffleButtonClicked();
 
-// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
-if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
-	domElements.viewChangelogButton.classList.add("highlight-green");
-}
-
-await buildShufflingHints(domElements);
 // Only show the contents of the page after a short delay, so that the user doesn't see the page at all for short loading times
 waitUntilShowingDivContents();
 
@@ -54,7 +51,22 @@ function getDomElements() {
 
 		// FOOTER
 		// View changelog button
-		viewChangelogButton: document.getElementById("viewChangelogButton")
+		viewChangelogButton: document.getElementById("viewChangelogButton"),
+		// Shuffle+ button
+		shufflePlusButton: document.getElementById("shufflePlusButton"),
+	};
+}
+
+async function setDomElementValuesFromConfig(domElements) {
+	// If the current extension version is newer than configSync.lastViewedChangelogVersion, highlight the changelog button
+	if (configSync.lastViewedChangelogVersion !== chrome.runtime.getManifest().version) {
+		domElements.viewChangelogButton.classList.add("highlight-green");
+	}
+
+	// Enables or disables the animation of the Shuffle+ button depending on if the user is subscribed or not
+	if (!(await userHasActiveSubscriptionRole())) {
+		domElements.shufflePlusButton.classList.add("highlight-green-animated");
+		domElements.shufflePlusButton.classList.remove("highlight-green");
 	}
 }
 
@@ -68,6 +80,15 @@ async function setDomElementEventListeners(domElements) {
 		let mustOpenTab = await tryFocusingTab(changelogUrl);
 		if (mustOpenTab) {
 			window.open(changelogUrl, "_blank");
+		}
+	});
+
+	// Shuffle+ subscribe button
+	domElements.shufflePlusButton.addEventListener("click", async function () {
+		const shufflePlusPage = chrome.runtime.getURL("html/shufflePlus.html");
+		let mustOpenTab = await tryFocusingTab(shufflePlusPage);
+		if (mustOpenTab) {
+			await chrome.tabs.create({ url: shufflePlusPage });
 		}
 	});
 }
@@ -96,7 +117,7 @@ async function shuffleButtonClicked() {
 		await chooseRandomVideo(configSync.currentChannelId, true, shuffleButtonTextElement);
 
 		// Focus this tab when the shuffle completes
-		chrome.tabs.query({ url: chrome.runtime.getURL('html/shufflingPage.html') }, function (tabs) {
+		chrome.tabs.query({ url: chrome.runtime.getURL("html/shufflingPage.html") }, function (tabs) {
 			if (tabs.length > 0) {
 				// Focus the tab
 				chrome.tabs.update(tabs[0].id, { active: true });

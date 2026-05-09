@@ -7,6 +7,7 @@
 		<link rel="stylesheet" href="../css/popup.css" />
 	</head>
 
+	<!-- TODO: Update welcome page with Shuffle+ information -->
 	<body id="randomYoutubeVideoBody">
 		<div id="randomYoutubeVideo" style="margin-top: 10px">
 			<h1 id="updateHeading">Random YouTube Video</h1>
@@ -16,13 +17,13 @@
 			<div id="firefoxPermissionsDiv" class="hidden">
 				<br />
 				<h3>To be able to use the extension, you <b>MUST</b></h3>
-				<button id="giveFirefoxPermissionsButton" class="randomYoutubeVideoButton highlight-green" style="font-size: 20px">give the extension permission to access YouTube</button>
+				<button id="giveFirefoxPermissionsButton" class="randomYoutubeVideoButton highlight-green" style="font-size: 20px">give the extension permission to access YouTube.com</button>
 			</div>
 
 			<div id="needToReloadYouTubePagesDiv" class="hidden">
 				<br />
 				<br />
-				<h3>Before you can start and see 'Shuffle' buttons, you need to</h3>
+				<h3>Before you can start and see 'Shuffle' buttons on YouTube, you need to</h3>
 				<button id="reloadAllYouTubePagesButton" class="randomYoutubeVideoButton highlight-green" style="font-size: 20px">click me to reload all <i>YouTube</i> pages</button>
 				<p>or do so manually.</p>
 				<p id="reloadText">
@@ -37,7 +38,7 @@
 			<br />
 			<h3>Customize your experience:</h3>
 			<button id="openOptionsPageButton" class="randomYoutubeVideoButton highlight-green" style="font-size: 20px">Open the options page</button>
-			<p>or open the popup for the same experience at any time.</p>
+			<p>or use the popup at any time.</p>
 
 			<br />
 			<br />
@@ -51,28 +52,15 @@
 			<br />
 			<br />
 			<footer id="randomYoutubeVideoFooter">
-				Leave a review:
-				<a
-					class="buttonLink"
-					href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf"
-					target="_blank"
-					rel="noopener"
-					title="Leave a review on the Chrome Web Store"
-					>Chrome</a
-				>
-				<a class="buttonLink" href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/" target="_blank" rel="noopener" title="Leave a review on the Firefox Add-Ons page">Firefox</a>
-				<a
-					class="buttonLink"
-					href="https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe"
-					target="_blank"
-					rel="noopener"
-					title="Leave a review on the Edge Add-Ons page"
-					>Edge</a
-				>
-				<br />
 				<a class="buttonLink" href="https://github.com/NikkelM/Random-YouTube-Video" target="_blank" rel="noopener" title="View the source code or get into contact with the developer">GitHub</a>
 				<button class="randomYoutubeVideoButton" id="viewChangelogButton" type="button" title="View the latest changes to the extension">Changelog</button>
 				<a class="buttonLink" href="https://ko-fi.com/nikkelm" target="_blank" rel="noopener" title="Show your appreciation and support the development of the extension">Donate</a>
+				<button class="randomYoutubeVideoButton highlight-green" id="shufflePlusButton" type="button" title="Check out the benefits and subscribe to Shuffle+">Shuffle+</button>
+				<br />
+				Leave a review:
+				<a class="buttonLink" href="https://chromewebstore.google.com/detail/random-youtube-video/kijgnjhogkjodpakfmhgleobifempckf" target="_blank" rel="noopener" title="Leave a review on the Chrome Web Store">Chrome</a>
+				<a class="buttonLink" href="https://addons.mozilla.org/en-GB/firefox/addon/random-youtube-video/" target="_blank" rel="noopener" title="Leave a review on the Firefox Add-Ons page">Firefox</a>
+				<a class="buttonLink" href="https://microsoftedge.microsoft.com/addons/detail/random-youtube-video/fccfflipicelkilpmgniblpoflkbhdbe" target="_blank" rel="noopener" title="Leave a review on the Edge Add-Ons page">Edge</a>
 			</footer>
 		</div>
 

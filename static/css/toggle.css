@@ -27,6 +27,10 @@
 	transition: all 0.3s ease-in-out;
 }
 
+.toggle .slider.alwaysGreen {
+  background-color: #5a9900; 
+}
+
 .toggle .disabled {
 	opacity: 0.5;
 	pointer-events: none;
