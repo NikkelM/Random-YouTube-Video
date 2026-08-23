@@ -414,7 +414,7 @@ describe('shuffleVideo', function () {
 				expect(playlistInfoAfter.lastFetchedFromDB).to.be(now);
 			});
 
-			it('should keep videos another tab added while the shuffle was running', async function () {
+			it('should not lose another tab\'s work when it shuffles at the same time', async function () {
 				const channelId = "UC_CONCURRENTTAB";
 				const playlistId = channelId.replace("UC", "UU");
 				const ourVideoId = "OURVIDEO_01";
@@ -441,15 +441,20 @@ describe('shuffleVideo', function () {
 				await setSyncStorageValue("databaseSharingEnabledOption", false);
 				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
 				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+				await setSyncStorageValue("numShuffledVideosTotal", 0);
 
-				// While this shuffle is checking its video, another tab stores an additional video for the same playlist
+				// While this shuffle is checking its video, another tab finishes a shuffle of the same channel
+				// It writes to storage directly, so our in-memory configSync stays stale, exactly as it would in a second tab
 				let otherTabHasShuffled = false;
 				global.fetch = sinon.stub().callsFake(async () => {
 					if (!otherTabHasShuffled) {
 						otherTabHasShuffled = true;
+
 						const storedByOtherTab = deepCopy((await chrome.storage.local.get([playlistId]))[playlistId]);
 						storedByOtherTab.videos.unknownType[otherTabVideoId] = uploadDate;
 						await chrome.storage.local.set({ [playlistId]: storedByOtherTab });
+
+						await chrome.storage.sync.set({ "numShuffledVideosTotal": 1 });
 					}
 					return { status: 200 };
 				});
@@ -459,6 +464,10 @@ describe('shuffleVideo', function () {
 				// Saving our own result must not undo the other tab's work
 				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
 				expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys([ourVideoId, otherTabVideoId]);
+
+				// Both shuffles have to be counted
+				// This cannot prove that the value is re-read, as the mocked sync storage and configSync are the same object, so configSync never goes stale in tests
+				expect(configSync.numShuffledVideosTotal).to.be(2);
 			});
 
 			it('should only send the deletions if the database already knows the playlist', async function () {
