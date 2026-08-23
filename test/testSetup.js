@@ -57,13 +57,16 @@ chrome.runtime.sendMessage.callsFake((request) => {
 			// Return a playlist from the database
 			return Promise.resolve(deepCopy(mockedDatabase[request.data] ?? null));
 
-		// With our mocked database, both commands have the same effect
-		case 'updatePlaylistInfoInDB':
-			request.data.val.videos = { ...mockedDatabase[request.data.key]?.videos ?? {}, ...deepCopy(request.data.val.videos) };
-		case 'overwritePlaylistInfoInDB':
-			// Update/Overwrite a playlist in the database
-			mockedDatabase[request.data.key] = deepCopy(request.data.val);
+		// Videos are merged, and only the videos explicitly marked for deletion are removed
+		case 'updatePlaylistInfoInDB': {
+			const existingVideos = mockedDatabase[request.data.key]?.videos ?? {};
+			const mergedVideos = Object.assign({}, existingVideos, deepCopy(request.data.val.videos));
+			for (const videoId of request.data.videosToDelete ?? []) {
+				delete mergedVideos[videoId];
+			}
+			mockedDatabase[request.data.key] = Object.assign(deepCopy(request.data.val), { videos: mergedVideos });
 			return "PlaylistInfo was sent to database.";
+		}
 
 		// Only for the tests
 		case "setKeyInDB":

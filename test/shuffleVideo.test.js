@@ -300,6 +300,69 @@ describe('shuffleVideo', function () {
 				expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys([videoId]);
 			});
 
+			it('should not remove videos another user added to the database while deleting a video that is gone', async function () {
+				const channelId = "UC_REMOTEMERGE";
+				const playlistId = channelId.replace("UC", "UU");
+				const keptVideoId = "KEEPVIDEO_1";
+				const goneVideoId = "GONEVIDEO_2";
+				// This video was added to the database by someone else after we last fetched the playlist
+				const remoteVideoId = "REMOTEVID_3";
+
+				const now = new Date().toISOString();
+				const uploadDate = now.substring(0, 10);
+				const lastVideoPublishedAt = now.slice(0, 19) + 'Z';
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastVideoPublishedAt: lastVideoPublishedAt,
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: {
+								[keptVideoId]: uploadDate,
+								[goneVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await chrome.runtime.sendMessage({
+					command: "setKeyInDB",
+					data: {
+						key: playlistId,
+						val: {
+							lastUpdatedDBAt: now,
+							lastVideoPublishedAt: lastVideoPublishedAt,
+							videos: {
+								[keptVideoId]: uploadDate,
+								[goneVideoId]: uploadDate,
+								[remoteVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				// Choose more videos than exist, so that both local videos are checked
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", true);
+				await setSyncStorageValue("shuffleNumVideosInPlaylist", 5);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${keptVideoId}`]: [{ status: 200 }],
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${goneVideoId}`]: [{ status: 404 }]
+				});
+
+				await chooseRandomVideo(channelId, false, domElement);
+
+				const playlistInDB = await chrome.runtime.sendMessage({ command: 'getPlaylistFromDB', data: playlistId });
+
+				// The video that is gone must be removed, without touching the video we never knew about
+				expect(Object.keys(playlistInDB.videos).sort()).to.eql([keptVideoId, remoteVideoId].sort());
+			});
+
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [
@@ -1176,10 +1239,11 @@ describe('shuffleVideo', function () {
 								expect(commands).to.contain('getCurrentTabId');
 
 								if (chrome.runtime.sendMessage.callCount === 4) {
-									expect(commands).to.contain('overwritePlaylistInfoInDB');
-									// One entry should contain a valid DB update
-									const overwriteMessages = messages.filter(arg => arg[0].command === 'overwritePlaylistInfoInDB');
-									checkPlaylistsUploadedToDB(overwriteMessages, input);
+									expect(commands).to.contain('updatePlaylistInfoInDB');
+									// One entry should contain a valid DB update that removes the videos that are gone
+									const updateMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+									checkPlaylistsUploadedToDB(updateMessages, input);
+									expect(updateMessages[0][0].data.videosToDelete).to.not.be.empty();
 								}
 
 							});
@@ -1206,30 +1270,29 @@ describe('shuffleVideo', function () {
 								const numDeletedVideosAfter = Object.keys(getAllVideosAsOneObject(playlistInfoAfter)).filter(videoId => videoId.includes('DEL')).length;
 
 								// Call count:
-								// 6 if we need to fetch from the YT API, with update or overwrite depending on if a video was deleted
-								// 5 if we don't need to fetch from the YT API, but need to overwrite the playlist in the DB
-								// 4 if we don't need to overwrite the playlist in the DB
+								// 6 if we need to fetch from the YT API, deleting videos individually if one was found to be gone
+								// 5 if we don't need to fetch from the YT API, but need to delete videos from the DB
+								// 4 if we don't need to change the playlist in the DB
 								switch (chrome.runtime.sendMessage.callCount) {
 									case 4:
 										expect(numDeletedVideosBefore).to.be(numDeletedVideosAfter);
 										break;
 									case 5:
-										expect(commands).to.contain('overwritePlaylistInfoInDB');
-										const overwriteMessages = messages.filter(arg => arg[0].command === 'overwritePlaylistInfoInDB');
-										checkPlaylistsUploadedToDB(overwriteMessages, input);
+										expect(commands).to.contain('updatePlaylistInfoInDB');
+										const deletionMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+										checkPlaylistsUploadedToDB(deletionMessages, input);
+										// The videos that are gone must be removed one by one instead of replacing all videos
+										expect(deletionMessages[0][0].data.videosToDelete).to.not.be.empty();
 
 										expect(numDeletedVideosBefore).to.be.greaterThan(numDeletedVideosAfter);
 										break;
 									case 6:
 										expect(commands).to.contain('getAPIKey');
+										expect(commands).to.contain('updatePlaylistInfoInDB');
+										const apiUpdateMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+										checkPlaylistsUploadedToDB(apiUpdateMessages, input);
 										if (numDeletedVideosBefore > numDeletedVideosAfter) {
-											expect(commands).to.contain('overwritePlaylistInfoInDB');
-											const overwriteMessages = messages.filter(arg => arg[0].command === 'overwritePlaylistInfoInDB');
-											checkPlaylistsUploadedToDB(overwriteMessages, input);
-										} else {
-											expect(commands).to.contain('updatePlaylistInfoInDB');
-											const updateMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
-											checkPlaylistsUploadedToDB(updateMessages, input);
+											expect(apiUpdateMessages[0][0].data.videosToDelete).to.not.be.empty();
 										}
 										break;
 									default:
@@ -1307,7 +1370,7 @@ describe('shuffleVideo', function () {
 								// Remove the video data from the database entry
 								let newPlaylistInfoInDB = deepCopy(await chrome.runtime.sendMessage({ command: 'getPlaylistFromDB', data: input.playlistId }));
 								delete newPlaylistInfoInDB["videos"];
-								await chrome.runtime.sendMessage({ command: 'overwritePlaylistInfoInDB', data: { key: input.playlistId, val: newPlaylistInfoInDB } });
+								await chrome.runtime.sendMessage({ command: 'setKeyInDB', data: { key: input.playlistId, val: newPlaylistInfoInDB } });
 
 								await chooseRandomVideo(input.channelId, false, domElement);
 
@@ -1317,7 +1380,7 @@ describe('shuffleVideo', function () {
 								expect(chrome.runtime.sendMessage.callCount).to.be(8);
 
 								// First two are from the test setup
-								expect(commands).to.contain('overwritePlaylistInfoInDB');
+								expect(commands).to.contain('setKeyInDB');
 								const getPlaylistFromDBCount = commands.filter(command => command === 'getPlaylistFromDB').length;
 								expect(getPlaylistFromDBCount).to.equal(2);
 								expect(commands).to.contain('connectionTest');

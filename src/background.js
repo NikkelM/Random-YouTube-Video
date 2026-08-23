@@ -165,13 +165,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		case "getPlaylistFromDB":
 			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
 			break;
-		// Updates (not overwriting videos) a playlist in Firebase 
+		// Updates a playlist in Firebase, adding new videos and removing videos that cannot be watched any more
 		case "updatePlaylistInfoInDB":
-			updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, false).then(sendResponse);
-			break;
-		// Updates (overwriting videos) a playlist in Firebase
-		case "overwritePlaylistInfoInDB":
-			updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, true).then(sendResponse);
+			updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, request.data.videosToDelete).then(sendResponse);
 			break;
 		// Before v1.0.0 the videos were stored in an array without upload times, so they need to all be re-fetched
 		case 'updateDBPlaylistToV1.0.0':
@@ -244,17 +240,13 @@ async function checkForAndShowNews() {
 	}
 }
 
-async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos) {
+async function updatePlaylistInfoInDB(playlistId, playlistInfo, videosToDelete = []) {
 	// Find out if the playlist already exists in the database
-	// We only need to send this request if we don't already have to overwrite the entry
-	let playlistExists = true;
-	if (!overwriteVideos) {
-		playlistExists = await readDataOnce(playlistId);
-	}
+	const playlistExists = await readDataOnce(playlistId);
 
-	if (overwriteVideos || !playlistExists) {
+	if (!playlistExists) {
 		console.log("Setting playlistInfo in the database...");
-		// Update the entire object. Due to the way Firebase works, this will overwrite the existing 'videos' object, as it is nested within the playlist
+		// The playlist does not exist yet, so we can safely set all of it at once
 		update(ref(firebase, playlistId), playlistInfo);
 	} else {
 		console.log("Updating playlistInfo in the database...");
@@ -264,8 +256,15 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, overwriteVideos)
 		// Upload the 'metadata'
 		update(ref(firebase, playlistId), playlistInfoWithoutVideos);
 
+		// Only touch the videos we know about, so videos added by someone else in the meantime are never lost
+		// Setting a video to null removes that single video from the database
+		const videoUpdates = Object.assign({}, playlistInfo.videos);
+		for (const videoId of videosToDelete ?? []) {
+			videoUpdates[videoId] = null;
+		}
+
 		// Update the videos separately to not overwrite existing videos
-		update(ref(firebase, playlistId + "/videos"), playlistInfo.videos);
+		update(ref(firebase, playlistId + "/videos"), videoUpdates);
 	}
 
 	return "PlaylistInfo was sent to database.";

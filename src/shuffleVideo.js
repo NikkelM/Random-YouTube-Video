@@ -139,11 +139,11 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		playlistInfo["videos"]["unknownType"] = Object.assign({}, playlistInfo["videos"]["unknownType"] ?? {}, playlistInfo["newVideos"] ?? {});
 
 		let chosenVideos;
-		var encounteredDeletedVideos;
-		({ chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase, progressTextElement, shuffleButtonTooltipElement));
+		var deletedVideos;
+		({ chosenVideos, playlistInfo, shouldUpdateDatabase, deletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase, progressTextElement, shuffleButtonTooltipElement));
 
 		// Save the playlist to the database and locally
-		playlistInfo = await handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, encounteredDeletedVideos);
+		playlistInfo = await handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, deletedVideos);
 		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfo);
 
 		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
@@ -154,7 +154,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 
 		// There are some errors that still allow us to save the playlist to the database and locally
 		if (error instanceof RandomYoutubeVideoError && error.canSavePlaylist == true) {
-			playlistInfo = await handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, encounteredDeletedVideos);
+			playlistInfo = await handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, deletedVideos);
 			await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfo);
 		}
 
@@ -237,28 +237,28 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 }
 
 // Prepare the playlist info object for saving to the database, and then upload it
-async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, encounteredDeletedVideos) {
+async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, deletedVideos) {
 	if (shouldUpdateDatabase && databaseSharing) {
 		console.log("Updating the database with the new playlist information...");
 
 		playlistInfo["lastUpdatedDBAt"] = new Date().toISOString();
 
-		let videosToDatabase = {};
-		// If any videos need to be deleted, this should be the union of videos, new videos, minus the videos to delete
-		if (encounteredDeletedVideos) {
-			console.log("Some videos need to be deleted from the database. All current videos will be uploaded to the database...");
-			videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
-		} else {
-			// Otherwise, we want to only upload new videos. If there are no "newVideos", we upload all videos, as this is the first time we are uploading the playlist
-			console.log("Uploading new video IDs to the database...");
-			if (getLength(playlistInfo["newVideos"] ?? {}) > 0) {
-				videosToDatabase = playlistInfo["newVideos"];
-			} else {
-				videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
-			}
+		const videosToDelete = deletedVideos ?? [];
+		if (videosToDelete.length > 0) {
+			console.log("Some videos need to be deleted from the database. They will be removed individually...");
 		}
 
-		await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, encounteredDeletedVideos);
+		// We only ever add videos, as videos that are gone are removed from the database one by one
+		// If there are no "newVideos", we upload all videos, as this may be the first time we are uploading the playlist
+		let videosToDatabase = {};
+		console.log("Uploading new video IDs to the database...");
+		if (getLength(playlistInfo["newVideos"] ?? {}) > 0) {
+			videosToDatabase = playlistInfo["newVideos"];
+		} else {
+			videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
+		}
+
+		await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, videosToDelete, uploadsPlaylistId);
 
 		// If we just updated the database, we automatically have the same version as it
 		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
@@ -268,7 +268,7 @@ async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, sho
 }
 
 // Upload a playlist to the database
-async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsPlaylistId, encounteredDeletedVideos) {
+async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, videosToDelete, uploadsPlaylistId) {
 	// Only upload the wanted keys
 	const playlistInfoForDatabase = {
 		"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"] ?? new Date().toISOString(),
@@ -285,17 +285,18 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, uploadsP
 		alert(`Random YouTube Video:\nPlease send this information to the developer:\n\nlastVideoPublishedAt has the wrong format (got ${playlistInfoForDatabase["lastVideoPublishedAt"]}).\nChannelId: ${uploadsPlaylistId}.`);
 		return;
 	}
-	if (getLength(playlistInfoForDatabase["videos"]) < 1) {
+	if (getLength(playlistInfoForDatabase["videos"]) < 1 && videosToDelete.length < 1) {
 		alert(`Random YouTube Video:\nPlease send this information to the developer:\n\nNo videos object was found.\nChannelId: ${uploadsPlaylistId}.`);
 		return;
 	}
 
 	// Send the playlist info to the database
 	const msg = {
-		command: encounteredDeletedVideos ? 'overwritePlaylistInfoInDB' : 'updatePlaylistInfoInDB',
+		command: 'updatePlaylistInfoInDB',
 		data: {
 			key: uploadsPlaylistId,
-			val: playlistInfoForDatabase
+			val: playlistInfoForDatabase,
+			videosToDelete: videosToDelete
 		}
 	};
 
@@ -777,7 +778,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 
 	let chosenVideos = [];
 	let randomVideo;
-	let encounteredDeletedVideos = false;
+	let deletedVideos = [];
 	let consecutiveUnverifiableVideos = 0;
 
 	const numVideosToChoose = configSync.shuffleOpenAsPlaylistOption ? configSync.shuffleNumVideosInPlaylist : 1;
@@ -805,7 +806,8 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		while (availability !== videoAvailability.available) {
 			if (availability === videoAvailability.unavailable) {
 				consecutiveUnverifiableVideos = 0;
-				encounteredDeletedVideos = true;
+				// Remember the video so it can be removed from the database individually
+				deletedVideos.push(randomVideo);
 				// Update the database by removing the deleted videos there as well
 				shouldUpdateDatabase = true;
 
@@ -963,7 +965,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 	}
 	console.log(`${chosenVideos.length} random video${chosenVideos.length > 1 ? "s have" : " has"} been chosen: [${chosenVideos}]`);
 
-	return { chosenVideos, playlistInfo, shouldUpdateDatabase, encounteredDeletedVideos };
+	return { chosenVideos, playlistInfo, shouldUpdateDatabase, deletedVideos };
 }
 
 function getVideoType(videoId, playlistInfo) {
