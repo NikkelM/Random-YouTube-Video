@@ -58,11 +58,15 @@ function checkPlaylistsUploadedToDB(messages, input) {
 		expect(Object.keys(data.val)).to.contain('lastVideoPublishedAt');
 		expect(data.val.lastVideoPublishedAt.length).to.be(20);
 		expect(Object.keys(data.val)).to.contain('videos');
-		expect(Object.keys(data.val.videos).length).to.be.greaterThan(0);
+		// An upload has to do something: either add videos or remove them
+		expect(Object.keys(data.val.videos).length + (data.videosToDelete?.length ?? 0)).to.be.greaterThan(0);
 		// Check the format of the videos
 		for (const [videoId, publishTime] of Object.entries(data.val.videos)) {
 			expect(videoId.length).to.be(11);
 			expect(publishTime.length).to.be(10);
+		}
+		for (const videoId of data.videosToDelete ?? []) {
+			expect(videoId.length).to.be(11);
 		}
 	});
 }
@@ -211,6 +215,417 @@ describe('shuffleVideo', function () {
 					expect(error).to.be.a(RandomYoutubeVideoError);
 					expect(error.code).to.be("RYV-6B");
 					expect(windowOpenStub.callCount).to.be(0);
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
+
+			it('should not remove videos from the playlist if their availability cannot be checked', async function () {
+				const channelId = "UC_TRANSIENTERR";
+				const playlistId = channelId.replace("UC", "UU");
+				const now = new Date().toISOString();
+				const videos = {
+					"TRANSIENT_1": now.substring(0, 10),
+					"TRANSIENT_2": now.substring(0, 10),
+					"TRANSIENT_3": now.substring(0, 10),
+					"TRANSIENT_4": now.substring(0, 10)
+				};
+				const playlistInfo = {
+					lastAccessedLocally: now,
+					lastFetchedFromDB: now,
+					lastVideoPublishedAt: now,
+					videos: {
+						knownVideos: {},
+						knownShorts: {},
+						unknownType: deepCopy(videos)
+					}
+				};
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+				await chrome.storage.local.set({ [playlistId]: playlistInfo });
+
+				// A server-side error means we cannot know if the videos still exist
+				setUpMockResponses({
+					'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=TRANSIENT': [{ status: 503 }]
+				});
+
+				try {
+					await chooseRandomVideo(channelId, false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-6C");
+					expect(windowOpenStub.callCount).to.be(0);
+
+					// None of the videos may be removed, as we never learned that they are gone
+					const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+					expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys(Object.keys(videos));
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
+
+			it('should retry a video whose availability check fails temporarily', async function () {
+				const channelId = "UC_RETRYCHECK";
+				const playlistId = channelId.replace("UC", "UU");
+				const videoId = "RETRY_VIDEO";
+				const now = new Date().toISOString();
+				const playlistInfo = {
+					lastAccessedLocally: now,
+					lastFetchedFromDB: now,
+					lastVideoPublishedAt: now,
+					videos: {
+						knownVideos: {},
+						knownShorts: {},
+						unknownType: {
+							[videoId]: now.substring(0, 10)
+						}
+					}
+				};
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+				await setSyncStorageValue("shuffleOpenInNewTabOption", true);
+				await chrome.storage.local.set({ [playlistId]: playlistInfo });
+
+				// The first check fails temporarily, the retry succeeds
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}`]: [{ status: 503 }, { status: 200 }]
+				});
+
+				await chooseRandomVideo(channelId, false, domElement);
+
+				expect(windowOpenStub.callCount).to.be(1);
+				expect(windowOpenStub.args[0][0]).to.contain(videoId);
+
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys([videoId]);
+			});
+
+			it('should not remove videos another user added to the database while deleting a video that is gone', async function () {
+				const channelId = "UC_REMOTEMERGE";
+				const playlistId = channelId.replace("UC", "UU");
+				const keptVideoId = "KEEPVIDEO_1";
+				const goneVideoId = "GONEVIDEO_2";
+				// This video was added to the database by someone else after we last fetched the playlist
+				const remoteVideoId = "REMOTEVID_3";
+
+				const now = new Date().toISOString();
+				const uploadDate = now.substring(0, 10);
+				const lastVideoPublishedAt = now.slice(0, 19) + 'Z';
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastVideoPublishedAt: lastVideoPublishedAt,
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: {
+								[keptVideoId]: uploadDate,
+								[goneVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await chrome.runtime.sendMessage({
+					command: "setKeyInDB",
+					data: {
+						key: playlistId,
+						val: {
+							lastUpdatedDBAt: now,
+							lastVideoPublishedAt: lastVideoPublishedAt,
+							videos: {
+								[keptVideoId]: uploadDate,
+								[goneVideoId]: uploadDate,
+								[remoteVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				// Choose more videos than exist, so that both local videos are checked
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", true);
+				await setSyncStorageValue("shuffleNumVideosInPlaylist", 5);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${keptVideoId}`]: [{ status: 200 }],
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${goneVideoId}`]: [{ status: 404 }]
+				});
+
+				await chooseRandomVideo(channelId, false, domElement);
+
+				const playlistInDB = await chrome.runtime.sendMessage({ command: 'getPlaylistFromDB', data: playlistId });
+
+				// The video that is gone must be removed, without touching the video we never knew about
+				expect(Object.keys(playlistInDB.videos).sort()).to.eql([keptVideoId, remoteVideoId].sort());
+			});
+
+			it('should not treat the playlist as up-to-date if the database write fails', async function () {
+				const channelId = "UC_FAILEDWRITE";
+				const playlistId = channelId.replace("UC", "UU");
+				const keptVideoId = "KEEPVIDEO_1";
+				const goneVideoId = "GONEVIDEO_2";
+
+				const now = new Date().toISOString();
+				const uploadDate = now.substring(0, 10);
+				const lastVideoPublishedAt = now.slice(0, 19) + 'Z';
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastUpdatedDBAt: now,
+						lastVideoPublishedAt: lastVideoPublishedAt,
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: {
+								[keptVideoId]: uploadDate,
+								[goneVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				// Choose more videos than exist, so that both local videos are checked
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", true);
+				await setSyncStorageValue("shuffleNumVideosInPlaylist", 5);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${keptVideoId}`]: [{ status: 200 }],
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${goneVideoId}`]: [{ status: 404 }]
+				});
+
+				global.failNextDatabaseWrite = true;
+
+				await chooseRandomVideo(channelId, false, domElement);
+
+				// As the write never reached the database, we may not remember the playlist as being in sync with it
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(playlistInfoAfter.lastFetchedFromDB).to.be(now);
+			});
+
+			it('should not lose another tab\'s work when it shuffles at the same time', async function () {
+				const channelId = "UC_CONCURRENTTAB";
+				const playlistId = channelId.replace("UC", "UU");
+				const ourVideoId = "OURVIDEO_01";
+				const otherTabVideoId = "OTHERTAB_01";
+
+				const now = new Date().toISOString();
+				const uploadDate = now.substring(0, 10);
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastVideoPublishedAt: now.slice(0, 19) + 'Z',
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: {
+								[ourVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+				await setSyncStorageValue("numShuffledVideosTotal", 0);
+
+				// While this shuffle is checking its video, another tab finishes a shuffle of the same channel
+				// It writes to storage directly, so our in-memory configSync stays stale, exactly as it would in a second tab
+				let otherTabHasShuffled = false;
+				global.fetch = sinon.stub().callsFake(async () => {
+					if (!otherTabHasShuffled) {
+						otherTabHasShuffled = true;
+
+						const storedByOtherTab = deepCopy((await chrome.storage.local.get([playlistId]))[playlistId]);
+						storedByOtherTab.videos.unknownType[otherTabVideoId] = uploadDate;
+						await chrome.storage.local.set({ [playlistId]: storedByOtherTab });
+
+						await chrome.storage.sync.set({ "numShuffledVideosTotal": 1 });
+					}
+					return { status: 200 };
+				});
+
+				await chooseRandomVideo(channelId, false, domElement);
+
+				// Saving our own result must not undo the other tab's work
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys([ourVideoId, otherTabVideoId]);
+
+				// Both shuffles have to be counted
+				// This cannot prove that the value is re-read, as the mocked sync storage and configSync are the same object, so configSync never goes stale in tests
+				expect(configSync.numShuffledVideosTotal).to.be(2);
+			});
+
+			it('should only send the deletions if the database already knows the playlist', async function () {
+				const channelId = "UC_DELETEONLY";
+				const playlistId = channelId.replace("UC", "UU");
+				const keptVideoId = "KEEPVIDEO_1";
+				const goneVideoId = "GONEVIDEO_2";
+
+				const now = new Date().toISOString();
+				const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+				const uploadDate = now.substring(0, 10);
+				const lastVideoPublishedAt = now.slice(0, 19) + 'Z';
+
+				// The local copy is stale, so the up-to-date database entry is read during the shuffle
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: threeDaysAgo,
+						lastVideoPublishedAt: lastVideoPublishedAt,
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: {
+								[keptVideoId]: uploadDate,
+								[goneVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await chrome.runtime.sendMessage({
+					command: "setKeyInDB",
+					data: {
+						key: playlistId,
+						val: {
+							lastUpdatedDBAt: now,
+							lastVideoPublishedAt: lastVideoPublishedAt,
+							videos: {
+								[keptVideoId]: uploadDate,
+								[goneVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				// Choose more videos than exist, so that both videos are checked
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", true);
+				await setSyncStorageValue("shuffleNumVideosInPlaylist", 5);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${keptVideoId}`]: [{ status: 200 }],
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${goneVideoId}`]: [{ status: 404 }]
+				});
+
+				chrome.runtime.sendMessage.resetHistory();
+				await chooseRandomVideo(channelId, false, domElement);
+
+				const updateMessages = chrome.runtime.sendMessage.args.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+				expect(updateMessages.length).to.be(1);
+
+				// There is nothing to add, so re-uploading every known video would be wasted bandwidth
+				expect(updateMessages[0][0].data.val.videos).to.eql({});
+				expect(updateMessages[0][0].data.videosToDelete).to.eql([goneVideoId]);
+			});
+
+			it('should not delete videos or write to the database if the connection fails', async function () {
+				const channelId = "UC_OFFLINE";
+				const playlistId = channelId.replace("UC", "UU");
+				const now = new Date().toISOString();
+				const videos = {
+					"OFFLINEVID1": now.substring(0, 10),
+					"OFFLINEVID2": now.substring(0, 10),
+					"OFFLINEVID3": now.substring(0, 10),
+					"OFFLINEVID4": now.substring(0, 10)
+				};
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastVideoPublishedAt: now.slice(0, 19) + 'Z',
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: deepCopy(videos)
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				// Every request fails outright, as it would if the user lost their connection
+				global.fetch = sinon.stub().rejects(new Error("Failed to fetch"));
+
+				chrome.runtime.sendMessage.resetHistory();
+
+				try {
+					await chooseRandomVideo(channelId, false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-6C");
+
+					// A connection problem must never be mistaken for videos being gone
+					const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+					expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys(Object.keys(videos));
+
+					const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+					expect(commands).to.not.contain('updatePlaylistInfoInDB');
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
+
+			it('should not delete videos if the requests are rate limited', async function () {
+				const channelId = "UC_RATELIMITED";
+				const playlistId = channelId.replace("UC", "UU");
+				const now = new Date().toISOString();
+				const videos = {
+					"LIMITEDVID1": now.substring(0, 10),
+					"LIMITEDVID2": now.substring(0, 10),
+					"LIMITEDVID3": now.substring(0, 10),
+					"LIMITEDVID4": now.substring(0, 10)
+				};
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastVideoPublishedAt: now.slice(0, 19) + 'Z',
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: deepCopy(videos)
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				// YouTube rate limits the requests, which says nothing about the videos themselves
+				setUpMockResponses({
+					'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LIMITED': [{ status: 429 }]
+				});
+
+				try {
+					await chooseRandomVideo(channelId, false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-6C");
+
+					const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+					expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys(Object.keys(videos));
 					return;
 				}
 				expect().fail("No error was thrown");
@@ -1092,10 +1507,11 @@ describe('shuffleVideo', function () {
 								expect(commands).to.contain('getCurrentTabId');
 
 								if (chrome.runtime.sendMessage.callCount === 4) {
-									expect(commands).to.contain('overwritePlaylistInfoInDB');
-									// One entry should contain a valid DB update
-									const overwriteMessages = messages.filter(arg => arg[0].command === 'overwritePlaylistInfoInDB');
-									checkPlaylistsUploadedToDB(overwriteMessages, input);
+									expect(commands).to.contain('updatePlaylistInfoInDB');
+									// One entry should contain a valid DB update that removes the videos that are gone
+									const updateMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+									checkPlaylistsUploadedToDB(updateMessages, input);
+									expect(updateMessages[0][0].data.videosToDelete).to.not.be.empty();
 								}
 
 							});
@@ -1122,30 +1538,29 @@ describe('shuffleVideo', function () {
 								const numDeletedVideosAfter = Object.keys(getAllVideosAsOneObject(playlistInfoAfter)).filter(videoId => videoId.includes('DEL')).length;
 
 								// Call count:
-								// 6 if we need to fetch from the YT API, with update or overwrite depending on if a video was deleted
-								// 5 if we don't need to fetch from the YT API, but need to overwrite the playlist in the DB
-								// 4 if we don't need to overwrite the playlist in the DB
+								// 6 if we need to fetch from the YT API, deleting videos individually if one was found to be gone
+								// 5 if we don't need to fetch from the YT API, but need to delete videos from the DB
+								// 4 if we don't need to change the playlist in the DB
 								switch (chrome.runtime.sendMessage.callCount) {
 									case 4:
 										expect(numDeletedVideosBefore).to.be(numDeletedVideosAfter);
 										break;
 									case 5:
-										expect(commands).to.contain('overwritePlaylistInfoInDB');
-										const overwriteMessages = messages.filter(arg => arg[0].command === 'overwritePlaylistInfoInDB');
-										checkPlaylistsUploadedToDB(overwriteMessages, input);
+										expect(commands).to.contain('updatePlaylistInfoInDB');
+										const deletionMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+										checkPlaylistsUploadedToDB(deletionMessages, input);
+										// The videos that are gone must be removed one by one instead of replacing all videos
+										expect(deletionMessages[0][0].data.videosToDelete).to.not.be.empty();
 
 										expect(numDeletedVideosBefore).to.be.greaterThan(numDeletedVideosAfter);
 										break;
 									case 6:
 										expect(commands).to.contain('getAPIKey');
+										expect(commands).to.contain('updatePlaylistInfoInDB');
+										const apiUpdateMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+										checkPlaylistsUploadedToDB(apiUpdateMessages, input);
 										if (numDeletedVideosBefore > numDeletedVideosAfter) {
-											expect(commands).to.contain('overwritePlaylistInfoInDB');
-											const overwriteMessages = messages.filter(arg => arg[0].command === 'overwritePlaylistInfoInDB');
-											checkPlaylistsUploadedToDB(overwriteMessages, input);
-										} else {
-											expect(commands).to.contain('updatePlaylistInfoInDB');
-											const updateMessages = messages.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
-											checkPlaylistsUploadedToDB(updateMessages, input);
+											expect(apiUpdateMessages[0][0].data.videosToDelete).to.not.be.empty();
 										}
 										break;
 									default:
@@ -1223,7 +1638,7 @@ describe('shuffleVideo', function () {
 								// Remove the video data from the database entry
 								let newPlaylistInfoInDB = deepCopy(await chrome.runtime.sendMessage({ command: 'getPlaylistFromDB', data: input.playlistId }));
 								delete newPlaylistInfoInDB["videos"];
-								await chrome.runtime.sendMessage({ command: 'overwritePlaylistInfoInDB', data: { key: input.playlistId, val: newPlaylistInfoInDB } });
+								await chrome.runtime.sendMessage({ command: 'setKeyInDB', data: { key: input.playlistId, val: newPlaylistInfoInDB } });
 
 								await chooseRandomVideo(input.channelId, false, domElement);
 
@@ -1233,7 +1648,7 @@ describe('shuffleVideo', function () {
 								expect(chrome.runtime.sendMessage.callCount).to.be(8);
 
 								// First two are from the test setup
-								expect(commands).to.contain('overwritePlaylistInfoInDB');
+								expect(commands).to.contain('setKeyInDB');
 								const getPlaylistFromDBCount = commands.filter(command => command === 'getPlaylistFromDB').length;
 								expect(getPlaylistFromDBCount).to.equal(2);
 								expect(commands).to.contain('connectionTest');

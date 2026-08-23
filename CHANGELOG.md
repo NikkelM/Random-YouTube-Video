@@ -1,10 +1,15 @@
 # Changelog
 
-## v3.1.15
+## v3.2.0
 
 <!--Releasenotes start-->
 - Fixed buttons on the bottom right of videos on the video page being shifted right into the "More Videos" section if a shuffle button is present.
 - Fixed an issue where private or deleted videos could be chosen when shuffling.
+- Fixed videos being removed from the extension's saved channel data if a connection problem prevented the extension from checking whether they can still be watched.
+- Fixed videos that other users had added to the database being lost when the extension removed a video that is not available any more.
+- Fixed the extension assuming that channel data was saved to the database even if sending it had failed.
+- Fixed shuffling in multiple tabs at once discarding channel data that was saved by the other tab.
+- The extension will now show a notice if the availability of multiple videos in a row cannot be checked.
 <!--Releasenotes end-->
 
 ## v3.1.14
