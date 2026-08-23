@@ -254,12 +254,16 @@ async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, sho
 		}
 
 		// We only ever add videos, as videos that are gone are removed from the database one by one
-		// If there are no "newVideos", we upload all videos, as this may be the first time we are uploading the playlist
 		let videosToDatabase = {};
-		console.log("Uploading new video IDs to the database...");
 		if (getLength(playlistInfo["newVideos"] ?? {}) > 0) {
+			console.log("Uploading new video IDs to the database...");
 			videosToDatabase = playlistInfo["newVideos"];
+		} else if (playlistInfo["lastUpdatedDBAt"] && videosToDelete.length > 0) {
+			// We read this playlist from the database during this shuffle, so it already knows all videos and only the deletions are left to send
+			console.log("Removing deleted video IDs from the database...");
 		} else {
+			// We cannot be sure that the database knows this playlist, so send everything we have
+			console.log("Uploading all known video IDs to the database...");
 			videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
 		}
 

@@ -58,11 +58,15 @@ function checkPlaylistsUploadedToDB(messages, input) {
 		expect(Object.keys(data.val)).to.contain('lastVideoPublishedAt');
 		expect(data.val.lastVideoPublishedAt.length).to.be(20);
 		expect(Object.keys(data.val)).to.contain('videos');
-		expect(Object.keys(data.val.videos).length).to.be.greaterThan(0);
+		// An upload has to do something: either add videos or remove them
+		expect(Object.keys(data.val.videos).length + (data.videosToDelete?.length ?? 0)).to.be.greaterThan(0);
 		// Check the format of the videos
 		for (const [videoId, publishTime] of Object.entries(data.val.videos)) {
 			expect(videoId.length).to.be(11);
 			expect(publishTime.length).to.be(10);
+		}
+		for (const videoId of data.videosToDelete ?? []) {
+			expect(videoId.length).to.be(11);
 		}
 	});
 }
@@ -455,6 +459,71 @@ describe('shuffleVideo', function () {
 				// Saving our own result must not undo the other tab's work
 				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
 				expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys([ourVideoId, otherTabVideoId]);
+			});
+
+			it('should only send the deletions if the database already knows the playlist', async function () {
+				const channelId = "UC_DELETEONLY";
+				const playlistId = channelId.replace("UC", "UU");
+				const keptVideoId = "KEEPVIDEO_1";
+				const goneVideoId = "GONEVIDEO_2";
+
+				const now = new Date().toISOString();
+				const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+				const uploadDate = now.substring(0, 10);
+				const lastVideoPublishedAt = now.slice(0, 19) + 'Z';
+
+				// The local copy is stale, so the up-to-date database entry is read during the shuffle
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: threeDaysAgo,
+						lastVideoPublishedAt: lastVideoPublishedAt,
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: {
+								[keptVideoId]: uploadDate,
+								[goneVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await chrome.runtime.sendMessage({
+					command: "setKeyInDB",
+					data: {
+						key: playlistId,
+						val: {
+							lastUpdatedDBAt: now,
+							lastVideoPublishedAt: lastVideoPublishedAt,
+							videos: {
+								[keptVideoId]: uploadDate,
+								[goneVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				// Choose more videos than exist, so that both videos are checked
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", true);
+				await setSyncStorageValue("shuffleNumVideosInPlaylist", 5);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${keptVideoId}`]: [{ status: 200 }],
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${goneVideoId}`]: [{ status: 404 }]
+				});
+
+				chrome.runtime.sendMessage.resetHistory();
+				await chooseRandomVideo(channelId, false, domElement);
+
+				const updateMessages = chrome.runtime.sendMessage.args.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+				expect(updateMessages.length).to.be(1);
+
+				// There is nothing to add, so re-uploading every known video would be wasted bandwidth
+				expect(updateMessages[0][0].data.val.videos).to.eql({});
+				expect(updateMessages[0][0].data.videosToDelete).to.eql([goneVideoId]);
 			});
 
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
