@@ -410,6 +410,53 @@ describe('shuffleVideo', function () {
 				expect(playlistInfoAfter.lastFetchedFromDB).to.be(now);
 			});
 
+			it('should keep videos another tab added while the shuffle was running', async function () {
+				const channelId = "UC_CONCURRENTTAB";
+				const playlistId = channelId.replace("UC", "UU");
+				const ourVideoId = "OURVIDEO_01";
+				const otherTabVideoId = "OTHERTAB_01";
+
+				const now = new Date().toISOString();
+				const uploadDate = now.substring(0, 10);
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastVideoPublishedAt: now.slice(0, 19) + 'Z',
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: {
+								[ourVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				// While this shuffle is checking its video, another tab stores an additional video for the same playlist
+				let otherTabHasShuffled = false;
+				global.fetch = sinon.stub().callsFake(async () => {
+					if (!otherTabHasShuffled) {
+						otherTabHasShuffled = true;
+						const storedByOtherTab = deepCopy((await chrome.storage.local.get([playlistId]))[playlistId]);
+						storedByOtherTab.videos.unknownType[otherTabVideoId] = uploadDate;
+						await chrome.storage.local.set({ [playlistId]: storedByOtherTab });
+					}
+					return { status: 200 };
+				});
+
+				await chooseRandomVideo(channelId, false, domElement);
+
+				// Saving our own result must not undo the other tab's work
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys([ourVideoId, otherTabVideoId]);
+			});
+
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [

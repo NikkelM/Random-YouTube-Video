@@ -76,6 +76,9 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		// Check if the playlist is already saved in local storage, so we don't need to access the database
 		var playlistInfo = await tryGetPlaylistFromLocalStorage(uploadsPlaylistId);
 
+		// Remember what we knew at the start, so that changes we make on purpose can be told apart from work another tab does while we shuffle
+		var initialVideoKnowledge = getVideoKnowledgeSnapshot(playlistInfo);
+
 		// The playlist does not exist locally. Try to get it from the database first
 		if (isEmpty(playlistInfo)) {
 			// No information for this playlist is saved in local storage
@@ -144,9 +147,11 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 
 		// Save the playlist to the database and locally
 		playlistInfo = await handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, deletedVideos);
-		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfo);
+		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfo, initialVideoKnowledge);
 
-		await setSyncStorageValue("numShuffledVideosTotal", configSync.numShuffledVideosTotal + 1);
+		// Re-read the counter, as another tab may have shuffled while this shuffle was running
+		const numShuffledVideosTotal = (await chrome.storage.sync.get("numShuffledVideosTotal")).numShuffledVideosTotal ?? configSync.numShuffledVideosTotal;
+		await setSyncStorageValue("numShuffledVideosTotal", numShuffledVideosTotal + 1);
 
 		await playVideo(chosenVideos, firedFromPopup);
 	} catch (error) {
@@ -155,7 +160,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		// There are some errors that still allow us to save the playlist to the database and locally
 		if (error instanceof RandomYoutubeVideoError && error.canSavePlaylist == true) {
 			playlistInfo = await handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, deletedVideos);
-			await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfo);
+			await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfo, initialVideoKnowledge);
 		}
 
 		throw error;
@@ -1284,18 +1289,84 @@ async function tryGetPlaylistFromLocalStorage(playlistId) {
 	});
 }
 
-async function savePlaylistToLocalStorage(playlistId, playlistInfo) {
+async function savePlaylistToLocalStorage(playlistId, playlistInfo, initialVideoKnowledge = { "allIds": new Set(), "classifiedIds": new Set() }) {
 	// Update the playlist locally
 	console.log("Saving playlist to local storage...");
+
+	// Another tab may have shuffled the same channel while we were running, so merge with what is stored now instead of replacing it
+	const storedPlaylistInfo = await tryGetPlaylistFromLocalStorage(playlistId);
 
 	// Only save the wanted keys
 	const playlistInfoForLocalStorage = {
 		// Remember the last time the playlist was accessed locally (==now)
 		"lastAccessedLocally": new Date().toISOString(),
-		"lastFetchedFromDB": playlistInfo["lastFetchedFromDB"] ?? new Date(0).toISOString(),
-		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
-		"videos": playlistInfo["videos"] ?? {}
+		"lastFetchedFromDB": newerTimestamp(playlistInfo["lastFetchedFromDB"], storedPlaylistInfo["lastFetchedFromDB"]) ?? new Date(0).toISOString(),
+		"lastVideoPublishedAt": newerTimestamp(playlistInfo["lastVideoPublishedAt"], storedPlaylistInfo["lastVideoPublishedAt"]) ?? new Date(0).toISOString().slice(0, 19) + 'Z',
+		"videos": mergeVideoKnowledge(storedPlaylistInfo["videos"], playlistInfo["videos"] ?? {}, initialVideoKnowledge)
 	};
 
 	await chrome.storage.local.set({ [playlistId]: playlistInfoForLocalStorage });
+}
+
+// Captures which videos we knew about and which of them already had a known type
+function getVideoKnowledgeSnapshot(playlistInfo) {
+	const videos = playlistInfo["videos"] ?? {};
+
+	return {
+		"allIds": new Set(Object.keys(Object.assign({}, videos["knownVideos"], videos["knownShorts"], videos["unknownType"]))),
+		"classifiedIds": new Set(Object.keys(Object.assign({}, videos["knownVideos"], videos["knownShorts"])))
+	};
+}
+
+// Both timestamps are ISO strings, so they can be compared directly
+function newerTimestamp(ourTimestamp, storedTimestamp) {
+	if (!ourTimestamp) {
+		return storedTimestamp;
+	}
+	if (!storedTimestamp) {
+		return ourTimestamp;
+	}
+
+	return ourTimestamp > storedTimestamp ? ourTimestamp : storedTimestamp;
+}
+
+// Combines what we learned during this shuffle with what is currently stored, so that work done in another tab is not thrown away
+function mergeVideoKnowledge(storedVideos, ourVideos, initialVideoKnowledge) {
+	const videoTypes = ["unknownType", "knownVideos", "knownShorts"];
+
+	const mergedVideos = {
+		"knownVideos": Object.assign({}, storedVideos?.["knownVideos"]),
+		"knownShorts": Object.assign({}, storedVideos?.["knownShorts"]),
+		"unknownType": Object.assign({}, storedVideos?.["unknownType"])
+	};
+
+	const ourVideoIds = new Set(Object.keys(Object.assign({}, ourVideos["knownVideos"], ourVideos["knownShorts"], ourVideos["unknownType"])));
+
+	// Videos we knew about at the start but no longer have were removed on purpose, so they must not come back from storage
+	for (const videoId of initialVideoKnowledge["allIds"]) {
+		if (!ourVideoIds.has(videoId)) {
+			for (const videoType of videoTypes) {
+				delete mergedVideos[videoType][videoId];
+			}
+		}
+	}
+
+	for (const videoType of videoTypes) {
+		for (const [videoId, uploadTime] of Object.entries(ourVideos[videoType] ?? {})) {
+			// Keep a type that another tab determined while we were running, but allow ourselves to reset a type we already had at the start
+			if (videoType === "unknownType"
+				&& (mergedVideos["knownVideos"][videoId] || mergedVideos["knownShorts"][videoId])
+				&& !initialVideoKnowledge["classifiedIds"].has(videoId)) {
+				continue;
+			}
+
+			for (const otherVideoType of videoTypes) {
+				delete mergedVideos[otherVideoType][videoId];
+			}
+
+			mergedVideos[videoType][videoId] = uploadTime;
+		}
+	}
+
+	return mergedVideos;
 }
