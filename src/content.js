@@ -33,6 +33,9 @@ buttonStyles.textContent = `
 .ryv-shuffle-btn:hover {
 	background: rgba(0, 0, 0, 0.1);
 }
+.ryv-video-shuffle-wrapper {
+	flex: none;
+}
 html[dark] .ryv-shuffle-btn {
 	background: rgba(255, 255, 255, 0.1);
 	color: #fff;
