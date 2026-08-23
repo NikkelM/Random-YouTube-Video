@@ -6,12 +6,24 @@ import {
 	RandomYoutubeVideoError,
 	YoutubeAPIError,
 	updateSmallButtonStyleForText,
-	getPageTypeFromURL
+	getPageTypeFromURL,
+	delay
 } from "./utils.js";
 import { configSync, setSyncStorageValue, getUserQuotaRemainingToday } from "./chromeStorage.js";
 
 // The time when the shuffle started
 let shuffleStartTime = null;
+
+// The possible outcomes of checking whether a video can still be watched
+// A video may only be removed from the playlist if we know for sure that it is gone, as we cannot get it back otherwise
+const videoAvailability = {
+	available: "available",
+	unavailable: "unavailable",
+	unknown: "unknown"
+};
+
+// If this many videos in a row cannot be verified, we assume there is a connection problem instead of shuffling through the whole playlist
+const maxConsecutiveUnverifiableVideos = 3;
 
 // --------------- Public ---------------
 // Chooses a random video uploaded on the current YouTube channel
@@ -598,38 +610,58 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 }
 
 // ---------- Utility ----------
-async function testVideoExistence(videoId) {
-	let videoExists;
+// Statuses that mean the request failed, not that the video is gone
+function isTransientStatus(status) {
+	return status === 408 || status === 429 || status >= 500;
+}
+
+// Determines whether a video can still be watched
+// Returns 'unknown' instead of 'unavailable' if the check itself failed, as the caller deletes unavailable videos
+async function testVideoExistence(videoId, retryTransientFailure = true) {
+	let availability;
 	try {
 		let response = await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}&format=json`, {
 			method: "HEAD"
 		});
 
-		// 401 unauthorized means the video may exist, but cannot be embedded
-		// As an alternative, we check if a thumbnail exists for this video id
-		if (response.status === 401) {
+		if (isTransientStatus(response.status)) {
+			availability = videoAvailability.unknown;
+			// 401 unauthorized means the video may exist, but cannot be embedded
+			// As an alternative, we check if a thumbnail exists for this video id
+		} else if (response.status === 401) {
 			let thumbResponse = await fetch(`https://img.youtube.com/vi/${videoId}/0.jpg`, {
 				method: "HEAD"
 			});
 
-			if (thumbResponse.status !== 200) {
-				console.log(`Video doesn't exist: ${videoId}`);
-				videoExists = false;
+			if (isTransientStatus(thumbResponse.status)) {
+				availability = videoAvailability.unknown;
+			} else if (thumbResponse.status !== 200) {
+				availability = videoAvailability.unavailable;
 			} else {
-				videoExists = true;
+				availability = videoAvailability.available;
 			}
 		} else if (response.status !== 200) {
-			console.log(`Video doesn't exist: ${videoId}`);
-			videoExists = false;
+			availability = videoAvailability.unavailable;
 		} else {
-			videoExists = true;
+			availability = videoAvailability.available;
 		}
 	} catch (error) {
-		console.log(`An error was encountered while checking for video existence, so it is assumed the video does not exist: ${videoId}`);
-		videoExists = false;
+		availability = videoAvailability.unknown;
 	}
 
-	return videoExists;
+	// Give a temporary problem one chance to resolve before we give up on this video for this shuffle
+	if (availability === videoAvailability.unknown && retryTransientFailure) {
+		await delay(500);
+		return await testVideoExistence(videoId, false);
+	}
+
+	if (availability === videoAvailability.unavailable) {
+		console.log(`Video doesn't exist: ${videoId}`);
+	} else if (availability === videoAvailability.unknown) {
+		console.log(`Could not check if a video exists, so it will be skipped without being removed: ${videoId}`);
+	}
+
+	return availability;
 }
 
 async function isShort(videoId) {
@@ -746,6 +778,7 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 	let chosenVideos = [];
 	let randomVideo;
 	let encounteredDeletedVideos = false;
+	let consecutiveUnverifiableVideos = 0;
 
 	const numVideosToChoose = configSync.shuffleOpenAsPlaylistOption ? configSync.shuffleNumVideosInPlaylist : 1;
 
@@ -767,44 +800,65 @@ async function chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpd
 		randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
 		numVideosProcessed++;
 
-		// If the video does not exist, remove it from the playlist and choose a new one, until we find one that exists
-		if (!await testVideoExistence(randomVideo)) {
-			encounteredDeletedVideos = true;
-			// Update the database by removing the deleted videos there as well
-			shouldUpdateDatabase = true;
-			do {
+		// Skip videos that cannot be watched any more, only removing them from the playlist if we know for sure that they are gone
+		let availability = await testVideoExistence(randomVideo);
+		while (availability !== videoAvailability.available) {
+			if (availability === videoAvailability.unavailable) {
+				consecutiveUnverifiableVideos = 0;
+				encounteredDeletedVideos = true;
+				// Update the database by removing the deleted videos there as well
+				shouldUpdateDatabase = true;
+
 				// Remove the video from the local playlist object
 				delete playlistInfo["videos"][getVideoType(randomVideo, playlistInfo)][randomVideo];
+			} else {
+				// We could not verify the video, so we keep it and only skip it for this shuffle
+				consecutiveUnverifiableVideos++;
 
-				// Remove the deleted video from the videosToShuffle array and choose a new random video
-				videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
-				randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
-				numVideosProcessed++;
-
-				console.log(`The chosen video does not exist any more, so it will be removed from the database. A new random video has been chosen: ${randomVideo}`);
-
-				if (randomVideo === undefined) {
-					// If we haven't chosen any videos yet, the channel does not contain any videos
-					if (chosenVideos.length === 0) {
-						throw new RandomYoutubeVideoError(
-							{
-								code: "RYV-6B",
-								message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring/only shuffling from shorts and the channel only has/has no shorts.",
-								solveHint: "If you are ignoring shorts, disable the option in the popup to shuffle from this channel.",
-								showTrace: false,
-								canSavePlaylist: true
-							}
-						)
-						// If we have chosen at least one video, we just return those
-						/* c8 ignore start - Same behaviour as earlier, but this only triggers if the last chosen videos was a deleted one */
-					} else {
-						console.log(`No more videos to choose from (${numVideosToChoose - i} videos too few uploaded on channel).`);
-						break outerLoop;
-					}
+				if (consecutiveUnverifiableVideos >= maxConsecutiveUnverifiableVideos) {
+					throw new RandomYoutubeVideoError(
+						{
+							code: "RYV-6C",
+							message: "Multiple videos in a row could not be checked for availability.",
+							solveHint: "Please make sure you are connected to the internet and try again in a few moments.",
+							showTrace: false,
+							canSavePlaylist: true
+						}
+					);
 				}
-				/* c8 ignore stop */
-			} while (!await testVideoExistence(randomVideo))
+			}
+
+			// Remove the video from the videosToShuffle array and choose a new random video
+			videosToShuffle.splice(videosToShuffle.indexOf(randomVideo), 1);
+			randomVideo = videosToShuffle[Math.floor(Math.random() * videosToShuffle.length)];
+			numVideosProcessed++;
+
+			console.log(`The chosen video cannot be watched, so a new random video has been chosen: ${randomVideo}`);
+
+			if (randomVideo === undefined) {
+				// If we haven't chosen any videos yet, the channel does not contain any videos
+				if (chosenVideos.length === 0) {
+					throw new RandomYoutubeVideoError(
+						{
+							code: "RYV-6B",
+							message: "All previously uploaded videos on this channel were deleted (the channel does not have any uploads) or you are ignoring/only shuffling from shorts and the channel only has/has no shorts.",
+							solveHint: "If you are ignoring shorts, disable the option in the popup to shuffle from this channel.",
+							showTrace: false,
+							canSavePlaylist: true
+						}
+					)
+					// If we have chosen at least one video, we just return those
+					/* c8 ignore start - Same behaviour as earlier, but this only triggers if the last chosen videos was a deleted one */
+				} else {
+					console.log(`No more videos to choose from (${numVideosToChoose - i} videos too few uploaded on channel).`);
+					break outerLoop;
+				}
+			}
+			/* c8 ignore stop */
+
+			availability = await testVideoExistence(randomVideo);
 		}
+		consecutiveUnverifiableVideos = 0;
 
 		// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
 		// If the user does not want to shuffle from shorts, or only wants to shuffle from shorts, and we do not yet know the type of the chosen video, we check if it is a short or not

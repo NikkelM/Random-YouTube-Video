@@ -216,6 +216,90 @@ describe('shuffleVideo', function () {
 				expect().fail("No error was thrown");
 			});
 
+			it('should not remove videos from the playlist if their availability cannot be checked', async function () {
+				const channelId = "UC_TRANSIENTERR";
+				const playlistId = channelId.replace("UC", "UU");
+				const now = new Date().toISOString();
+				const videos = {
+					"TRANSIENT_1": now.substring(0, 10),
+					"TRANSIENT_2": now.substring(0, 10),
+					"TRANSIENT_3": now.substring(0, 10),
+					"TRANSIENT_4": now.substring(0, 10)
+				};
+				const playlistInfo = {
+					lastAccessedLocally: now,
+					lastFetchedFromDB: now,
+					lastVideoPublishedAt: now,
+					videos: {
+						knownVideos: {},
+						knownShorts: {},
+						unknownType: deepCopy(videos)
+					}
+				};
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+				await chrome.storage.local.set({ [playlistId]: playlistInfo });
+
+				// A server-side error means we cannot know if the videos still exist
+				setUpMockResponses({
+					'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=TRANSIENT': [{ status: 503 }]
+				});
+
+				try {
+					await chooseRandomVideo(channelId, false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-6C");
+					expect(windowOpenStub.callCount).to.be(0);
+
+					// None of the videos may be removed, as we never learned that they are gone
+					const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+					expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys(Object.keys(videos));
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
+
+			it('should retry a video whose availability check fails temporarily', async function () {
+				const channelId = "UC_RETRYCHECK";
+				const playlistId = channelId.replace("UC", "UU");
+				const videoId = "RETRY_VIDEO";
+				const now = new Date().toISOString();
+				const playlistInfo = {
+					lastAccessedLocally: now,
+					lastFetchedFromDB: now,
+					lastVideoPublishedAt: now,
+					videos: {
+						knownVideos: {},
+						knownShorts: {},
+						unknownType: {
+							[videoId]: now.substring(0, 10)
+						}
+					}
+				};
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+				await setSyncStorageValue("shuffleOpenInNewTabOption", true);
+				await chrome.storage.local.set({ [playlistId]: playlistInfo });
+
+				// The first check fails temporarily, the retry succeeds
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}`]: [{ status: 503 }, { status: 200 }]
+				});
+
+				await chooseRandomVideo(channelId, false, domElement);
+
+				expect(windowOpenStub.callCount).to.be(1);
+				expect(windowOpenStub.args[0][0]).to.contain(videoId);
+
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys([videoId]);
+			});
+
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [
