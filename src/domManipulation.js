@@ -7,6 +7,7 @@ export let shuffleButtonTooltipElement;
 
 export function buildShuffleButton(pageType, channelId, eventVersion, clickHandler) {
 	let buttonDivID;
+	let buttonDivClass = "";
 	let buttonDivExtraStyle = "";
 	let buttonDivOwner;
 	let buttonDivAppend = true;
@@ -28,8 +29,10 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 			break;
 		case "video":
 			buttonDivID = "youtube-random-video-large-shuffle-button-video";
+			buttonDivClass = "ryv-video-shuffle-wrapper";
 			buttonDivExtraStyle = "margin-left: 8px;";
 			buttonDivOwner = [document.getElementById("above-the-fold").children.namedItem("top-row").children.namedItem("owner")];
+			buttonDivOwner[0].parentElement.children.namedItem("actions").style.minWidth = "0";
 			break;
 		case "short":
 			isLargeButton = false;
@@ -40,13 +43,6 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 		default:
 			console.warn(`Cannot build button: Unknown page type: ${pageType}`);
 			return;
-	}
-
-	// If we are on a video page, modify the "min-width" of the two divs holding the buttons to make room for the 'Shuffle' button
-	// This doesn't fix them overlapping in all cases, but most times it does
-	if (pageType == "video") {
-		buttonDivOwner[0].style.minWidth = "calc(50% + 50px)";
-		buttonDivOwner[0].parentElement.children.namedItem("actions").style.minWidth = "calc(50% - 62px)";
 	}
 
 	// If the button should not be visible but exists, hide it
@@ -107,7 +103,7 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 	let buttonDiv;
 	if (pageType === "channel" || pageType === "video") {
 		buttonDiv = `
-	<div id="${buttonDivID}" style="align-items: center; display: flex; flex-direction: row; flex: none; ${buttonDivExtraStyle}">
+	<div id="${buttonDivID}" class="${buttonDivClass}" style="align-items: center; display: flex; flex-direction: row; ${buttonDivExtraStyle}">
 	</div>`;
 	} else if (pageType === "short") {
 		buttonDiv = `

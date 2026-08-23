@@ -1,11 +1,15 @@
 # Changelog
 
-## v3.1.14
+## v3.1.15
 
 <!--Releasenotes start-->
+- Fixed buttons on the bottom right of videos on the video page being shifted right into the "More Videos" section if a shuffle button is present.
+<!--Releasenotes end-->
+
+## v3.1.14
+
 - Added "before" filter options: You can now shuffle from videos uploaded **before** a given date or video ID, in addition to the existing "after" filters.
 - Fixed the shuffle button missing styling after a recent YouTube UI update.
-<!--Releasenotes end-->
 
 ## v3.1.13
 
