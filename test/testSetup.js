@@ -47,6 +47,9 @@ chrome.storage.local.clear.callsFake(() => {
 	return Promise.resolve();
 });
 
+// Lets a test simulate a database write that does not go through
+global.failNextDatabaseWrite = false;
+
 // ---------- Chrome runtime message listener ----------
 chrome.runtime.sendMessage.callsFake((request) => {
 	switch (request.command) {
@@ -59,6 +62,11 @@ chrome.runtime.sendMessage.callsFake((request) => {
 
 		// Videos are merged, and only the videos explicitly marked for deletion are removed
 		case 'updatePlaylistInfoInDB': {
+			if (global.failNextDatabaseWrite) {
+				global.failNextDatabaseWrite = false;
+				return Promise.resolve({ error: "Simulated database error" });
+			}
+
 			const existingVideos = mockedDatabase[request.data.key]?.videos ?? {};
 			const mergedVideos = Object.assign({}, existingVideos, deepCopy(request.data.val.videos));
 			for (const videoId of request.data.videosToDelete ?? []) {

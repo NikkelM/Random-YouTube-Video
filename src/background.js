@@ -167,11 +167,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			break;
 		// Updates a playlist in Firebase, adding new videos and removing videos that cannot be watched any more
 		case "updatePlaylistInfoInDB":
-			updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, request.data.videosToDelete).then(sendResponse);
+			respondWithResult(updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, request.data.videosToDelete), sendResponse);
 			break;
 		// Before v1.0.0 the videos were stored in an array without upload times, so they need to all be re-fetched
 		case 'updateDBPlaylistToV1.0.0':
-			updateDBPlaylistToV1_0_0('uploadsPlaylists/' + request.data.key).then(sendResponse);
+			respondWithResult(updateDBPlaylistToV1_0_0('uploadsPlaylists/' + request.data.key), sendResponse);
 			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":
@@ -202,6 +202,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ---------- Firebase ----------
+// Answers a message with the result of a database write, so that a failed write is never reported as a success
+function respondWithResult(writePromise, sendResponse) {
+	writePromise
+		.then(sendResponse)
+		.catch((error) => {
+			console.log(`A database write failed: ${error?.message ?? error}`, true);
+			sendResponse({ error: error?.message ?? "Unknown error" });
+		});
+}
+
 // Interact with Firestore and get the latest news
 // createdAt is a custom field
 async function checkForAndShowNews() {
@@ -247,24 +257,24 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, videosToDelete =
 	if (!playlistExists) {
 		console.log("Setting playlistInfo in the database...");
 		// The playlist does not exist yet, so we can safely set all of it at once
-		update(ref(firebase, playlistId), playlistInfo);
+		await update(ref(firebase, playlistId), playlistInfo);
 	} else {
 		console.log("Updating playlistInfo in the database...");
-		// Contains all properties except the videos
-		const playlistInfoWithoutVideos = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => (key !== "videos")));
 
-		// Upload the 'metadata'
-		update(ref(firebase, playlistId), playlistInfoWithoutVideos);
+		// Everything is sent as one atomic update, so nobody can read the new metadata together with the old videos
+		const playlistUpdates = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => (key !== "videos")));
 
 		// Only touch the videos we know about, so videos added by someone else in the meantime are never lost
-		// Setting a video to null removes that single video from the database
-		const videoUpdates = Object.assign({}, playlistInfo.videos);
-		for (const videoId of videosToDelete ?? []) {
-			videoUpdates[videoId] = null;
+		for (const [videoId, uploadTime] of Object.entries(playlistInfo.videos ?? {})) {
+			playlistUpdates[`videos/${videoId}`] = uploadTime;
 		}
 
-		// Update the videos separately to not overwrite existing videos
-		update(ref(firebase, playlistId + "/videos"), videoUpdates);
+		// Setting a video to null removes that single video from the database
+		for (const videoId of videosToDelete ?? []) {
+			playlistUpdates[`videos/${videoId}`] = null;
+		}
+
+		await update(ref(firebase, playlistId), playlistUpdates);
 	}
 
 	return "PlaylistInfo was sent to database.";
@@ -272,7 +282,7 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, videosToDelete =
 
 async function updateDBPlaylistToV1_0_0(playlistId) {
 	// Remove all videos from the database
-	remove(ref(firebase, playlistId + '/videos'));
+	await remove(ref(firebase, playlistId + '/videos'));
 
 	return "Videos were removed from the database playlist.";
 }

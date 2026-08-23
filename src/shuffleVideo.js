@@ -241,7 +241,7 @@ async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, sho
 	if (shouldUpdateDatabase && databaseSharing) {
 		console.log("Updating the database with the new playlist information...");
 
-		playlistInfo["lastUpdatedDBAt"] = new Date().toISOString();
+		const lastUpdatedDBAt = new Date().toISOString();
 
 		const videosToDelete = deletedVideos ?? [];
 		if (videosToDelete.length > 0) {
@@ -258,20 +258,24 @@ async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, sho
 			videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
 		}
 
-		await uploadPlaylistToDatabase(playlistInfo, videosToDatabase, videosToDelete, uploadsPlaylistId);
+		const uploadSucceeded = await uploadPlaylistToDatabase(playlistInfo, lastUpdatedDBAt, videosToDatabase, videosToDelete, uploadsPlaylistId);
 
-		// If we just updated the database, we automatically have the same version as it
-		playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
+		// Only claim that we are in sync with the database if the upload actually went through
+		if (uploadSucceeded) {
+			playlistInfo["lastUpdatedDBAt"] = lastUpdatedDBAt;
+			// If we just updated the database, we automatically have the same version as it
+			playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
+		}
 	}
 
 	return playlistInfo;
 }
 
-// Upload a playlist to the database
-async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, videosToDelete, uploadsPlaylistId) {
+// Upload a playlist to the database, returning whether or not the upload succeeded
+async function uploadPlaylistToDatabase(playlistInfo, lastUpdatedDBAt, videosToDatabase, videosToDelete, uploadsPlaylistId) {
 	// Only upload the wanted keys
 	const playlistInfoForDatabase = {
-		"lastUpdatedDBAt": playlistInfo["lastUpdatedDBAt"] ?? new Date().toISOString(),
+		"lastUpdatedDBAt": lastUpdatedDBAt,
 		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
 		"videos": videosToDatabase
 	};
@@ -279,15 +283,15 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, videosTo
 	// Make sure the data is in the correct format
 	if (playlistInfoForDatabase["lastUpdatedDBAt"].length !== 24) {
 		alert(`Random YouTube Video:\nPlease send this information to the developer:\n\nlastUpdatedDBAt has the wrong format (got ${playlistInfoForDatabase["lastVideoPublishedAt"]}).\nChannelId: ${uploadsPlaylistId}.`);
-		return;
+		return false;
 	}
 	if (playlistInfoForDatabase["lastVideoPublishedAt"].length !== 20) {
 		alert(`Random YouTube Video:\nPlease send this information to the developer:\n\nlastVideoPublishedAt has the wrong format (got ${playlistInfoForDatabase["lastVideoPublishedAt"]}).\nChannelId: ${uploadsPlaylistId}.`);
-		return;
+		return false;
 	}
 	if (getLength(playlistInfoForDatabase["videos"]) < 1 && videosToDelete.length < 1) {
 		alert(`Random YouTube Video:\nPlease send this information to the developer:\n\nNo videos object was found.\nChannelId: ${uploadsPlaylistId}.`);
-		return;
+		return false;
 	}
 
 	// Send the playlist info to the database
@@ -300,7 +304,15 @@ async function uploadPlaylistToDatabase(playlistInfo, videosToDatabase, videosTo
 		}
 	};
 
-	await chrome.runtime.sendMessage(msg);
+	const response = await chrome.runtime.sendMessage(msg);
+
+	// The database write failed, so we must not remember the playlist as being in sync with the database
+	if (response?.error) {
+		console.log(`The playlist could not be sent to the database: ${response.error}`, true);
+		return false;
+	}
+
+	return true;
 }
 
 // ---------- YouTube API ----------

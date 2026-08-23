@@ -7,6 +7,7 @@
 - Fixed an issue where private or deleted videos could be chosen when shuffling.
 - Fixed videos being removed from the extension's saved channel data if a connection problem prevented the extension from checking whether they can still be watched.
 - Fixed videos that other users had added to the database being lost when the extension removed a video that is not available any more.
+- Fixed the extension assuming that channel data was saved to the database even if sending it had failed.
 - The extension will now show a notice if the availability of multiple videos in a row cannot be checked.
 <!--Releasenotes end-->
 

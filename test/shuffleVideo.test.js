@@ -363,6 +363,53 @@ describe('shuffleVideo', function () {
 				expect(Object.keys(playlistInDB.videos).sort()).to.eql([keptVideoId, remoteVideoId].sort());
 			});
 
+			it('should not treat the playlist as up-to-date if the database write fails', async function () {
+				const channelId = "UC_FAILEDWRITE";
+				const playlistId = channelId.replace("UC", "UU");
+				const keptVideoId = "KEEPVIDEO_1";
+				const goneVideoId = "GONEVIDEO_2";
+
+				const now = new Date().toISOString();
+				const uploadDate = now.substring(0, 10);
+				const lastVideoPublishedAt = now.slice(0, 19) + 'Z';
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastUpdatedDBAt: now,
+						lastVideoPublishedAt: lastVideoPublishedAt,
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: {
+								[keptVideoId]: uploadDate,
+								[goneVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				// Choose more videos than exist, so that both local videos are checked
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", true);
+				await setSyncStorageValue("shuffleNumVideosInPlaylist", 5);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${keptVideoId}`]: [{ status: 200 }],
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${goneVideoId}`]: [{ status: 404 }]
+				});
+
+				global.failNextDatabaseWrite = true;
+
+				await chooseRandomVideo(channelId, false, domElement);
+
+				// As the write never reached the database, we may not remember the playlist as being in sync with it
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(playlistInfoAfter.lastFetchedFromDB).to.be(now);
+			});
+
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [
