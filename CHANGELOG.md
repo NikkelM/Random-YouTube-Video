@@ -4,6 +4,7 @@
 
 <!--Releasenotes start-->
 - Fixed buttons on the bottom right of videos on the video page being shifted right into the "More Videos" section if a shuffle button is present.
+- Fixed an issue where private or deleted videos could be chosen when shuffling.
 <!--Releasenotes end-->
 
 ## v3.1.14
