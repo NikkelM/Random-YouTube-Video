@@ -179,6 +179,43 @@ describe('shuffleVideo', function () {
 				expect().fail("No error was thrown");
 			});
 
+			it('should not open a recently uploaded private video classified as a short', async function () {
+				const channelId = "UC_PRIVATE_VIDEO";
+				const playlistId = channelId.replace("UC", "UU");
+				const privateVideoId = "PRIVATE_VID";
+				const now = new Date().toISOString();
+				const playlistInfo = {
+					lastAccessedLocally: now,
+					lastFetchedFromDB: now,
+					lastVideoPublishedAt: now,
+					videos: {
+						knownVideos: {},
+						knownShorts: {},
+						unknownType: {
+							[privateVideoId]: now.substring(0, 10)
+						}
+					}
+				};
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "0");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+				await chrome.storage.local.set({ [playlistId]: playlistInfo });
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${privateVideoId}&format=json`]: [{ status: 403 }]
+				});
+
+				try {
+					await chooseRandomVideo(channelId, false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-6B");
+					expect(windowOpenStub.callCount).to.be(0);
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
+
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [
