@@ -155,8 +155,6 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 
 		await playVideo(chosenVideos, firedFromPopup);
 	} catch (error) {
-		await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, configSync.userQuotaRemainingToday - 1));
-
 		// There are some errors that still allow us to save the playlist to the database and locally
 		if (error instanceof RandomYoutubeVideoError && error.canSavePlaylist == true) {
 			playlistInfo = await handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, deletedVideos);
@@ -573,9 +571,9 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 
 			break;
 		} catch (error) {
-			// Immediately set the user quota in sync storage, as we won't be able to do so correctly later due to the error
-			// We will set it again in the error handler and remove 1 from it, so we need to add 1 here to compensate
-			await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, Math.min(200, userQuotaRemainingToday + 1)));
+			// The request was made but did not return anything usable, so it still costs the user one request
+			// We save the quota immediately, as the error may end the shuffle before we get another chance to do so
+			await setSyncStorageValue("userQuotaRemainingToday", Math.max(0, Math.min(200, userQuotaRemainingToday - 1)));
 
 			// We handle the case where an API key's quota was exceeded
 			if (error instanceof YoutubeAPIError && error.code === 403 && error.reason === "quotaExceeded") {
