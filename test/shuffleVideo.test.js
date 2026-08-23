@@ -526,6 +526,102 @@ describe('shuffleVideo', function () {
 				expect(updateMessages[0][0].data.videosToDelete).to.eql([goneVideoId]);
 			});
 
+			it('should not delete videos or write to the database if the connection fails', async function () {
+				const channelId = "UC_OFFLINE";
+				const playlistId = channelId.replace("UC", "UU");
+				const now = new Date().toISOString();
+				const videos = {
+					"OFFLINEVID1": now.substring(0, 10),
+					"OFFLINEVID2": now.substring(0, 10),
+					"OFFLINEVID3": now.substring(0, 10),
+					"OFFLINEVID4": now.substring(0, 10)
+				};
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastVideoPublishedAt: now.slice(0, 19) + 'Z',
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: deepCopy(videos)
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				// Every request fails outright, as it would if the user lost their connection
+				global.fetch = sinon.stub().rejects(new Error("Failed to fetch"));
+
+				chrome.runtime.sendMessage.resetHistory();
+
+				try {
+					await chooseRandomVideo(channelId, false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-6C");
+
+					// A connection problem must never be mistaken for videos being gone
+					const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+					expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys(Object.keys(videos));
+
+					const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+					expect(commands).to.not.contain('updatePlaylistInfoInDB');
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
+
+			it('should not delete videos if the requests are rate limited', async function () {
+				const channelId = "UC_RATELIMITED";
+				const playlistId = channelId.replace("UC", "UU");
+				const now = new Date().toISOString();
+				const videos = {
+					"LIMITEDVID1": now.substring(0, 10),
+					"LIMITEDVID2": now.substring(0, 10),
+					"LIMITEDVID3": now.substring(0, 10),
+					"LIMITEDVID4": now.substring(0, 10)
+				};
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastVideoPublishedAt: now.slice(0, 19) + 'Z',
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: deepCopy(videos)
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				// YouTube rate limits the requests, which says nothing about the videos themselves
+				setUpMockResponses({
+					'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=LIMITED': [{ status: 429 }]
+				});
+
+				try {
+					await chooseRandomVideo(channelId, false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-6C");
+
+					const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+					expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys(Object.keys(videos));
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
+
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [
