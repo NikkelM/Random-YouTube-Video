@@ -10,6 +10,7 @@
 - Fixed the extension assuming that channel data was saved to the database even if sending it had failed.
 - Fixed shuffling in multiple tabs at once discarding channel data that was saved by the other tab.
 - Fixed the daily YouTube API quota being used up by errors that never made a request to the YouTube API.
+- Fixed the saved custom API key being removed if a newly submitted key was invalid.
 - The extension will now show a notice if the availability of multiple videos in a row cannot be checked.
 <!--Releasenotes end-->
 
