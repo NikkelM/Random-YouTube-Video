@@ -21,9 +21,40 @@ chrome.storage.onChanged.addListener(async function (changes, namespace) {
 
 // This function also exists in background.js
 export async function setSyncStorageValue(key, value) {
+	if (valueIsUnchanged(configSync[key], value)) {
+		return;
+	}
+
 	configSync[key] = value;
 
 	await chrome.storage.sync.set({ [key]: value });
+}
+
+// Sets multiple values at once, as every call to the sync storage counts towards its write quota
+export async function setSyncStorageValues(values) {
+	const changedValues = Object.fromEntries(Object.entries(values).filter(([key, value]) => !valueIsUnchanged(configSync[key], value)));
+
+	if (Object.keys(changedValues).length === 0) {
+		return;
+	}
+
+	Object.assign(configSync, changedValues);
+
+	await chrome.storage.sync.set(changedValues);
+}
+
+// Writing a value that is already stored counts towards the sync storage write quota without changing anything, so those writes are skipped
+function valueIsUnchanged(currentValue, newValue) {
+	if (currentValue === newValue) {
+		return true;
+	}
+
+	// Objects are compared by their contents, as re-writing an identical object is just as wasteful
+	if (typeof currentValue === "object" && typeof newValue === "object" && currentValue !== null && newValue !== null) {
+		return JSON.stringify(currentValue) === JSON.stringify(newValue);
+	}
+
+	return false;
 }
 
 export async function removeSyncStorageValue(key) {
