@@ -163,7 +163,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			break;
 		// Tries to get a playlist from Firebase
 		case "getPlaylistFromDB":
-			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
+			// If the database cannot be reached we act as if the playlist is not in it, so the shuffle falls back to the YouTube API
+			respondWithFallback(readDataOnce('uploadsPlaylists/' + request.data), sendResponse, null);
 			break;
 		// Updates a playlist in Firebase, adding new videos and removing videos that cannot be watched any more
 		case "updatePlaylistInfoInDB":
@@ -175,20 +176,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":
-			getAPIKey(false, request.data.useAPIKeyAtIndex).then(sendResponse);
+			respondWithFallback(getAPIKey(false, request.data.useAPIKeyAtIndex), sendResponse, { APIKey: null, isCustomKey: false, keyIndex: null });
 			break;
 		// Gets the default API keys saved in the database
 		case "getDefaultAPIKeys":
-			getAPIKey(true, null).then(sendResponse);
+			respondWithFallback(getAPIKey(true, null), sendResponse, { APIKey: null, isCustomKey: false, keyIndex: null });
 			break;
 		case "getCurrentTabId":
-			getCurrentTabId().then(sendResponse);
+			respondWithFallback(getCurrentTabId(), sendResponse, null);
 			break;
 		case "getAllYouTubeTabs":
-			getAllYouTubeTabs().then(sendResponse);
+			respondWithFallback(getAllYouTubeTabs(), sendResponse, []);
 			break;
 		case "openVideoInTabWithId":
-			openVideoInTabWithId(request.data.tabId, request.data.videoUrl).then(sendResponse);
+			respondWithFallback(openVideoInTabWithId(request.data.tabId, request.data.videoUrl), sendResponse, false);
 			break;
 		case "getShufflingPageShuffleStatus":
 			sendResponse(shufflingPageIsShuffling);
@@ -202,6 +203,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ---------- Firebase ----------
+// Answers a message with a fallback value if the promise rejects
+// Without this the message would never be answered, leaving the sender waiting for a response that can never arrive
+function respondWithFallback(promise, sendResponse, fallbackValue) {
+	promise
+		.then(sendResponse)
+		.catch((error) => {
+			console.log(`A request to the service worker failed, continuing without its result: ${error?.message ?? error}`, true);
+			sendResponse(fallbackValue);
+		});
+}
+
 // Answers a message with the result of a database write, so that a failed write is never reported as a success
 function respondWithResult(writePromise, sendResponse) {
 	writePromise
