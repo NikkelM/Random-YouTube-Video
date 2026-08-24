@@ -327,19 +327,35 @@ async function getAPIKey(forceGetAllDefaultKeys, useAPIKeyAtIndex = null) {
 
 	// If there are no API keys saved in local storage or if we need to perform a periodic check, get them from the database.
 	if (!availableAPIKeys || configSync.nextAPIKeysCheckTime < Date.now()) {
-		availableAPIKeys = await readDataOnce("youtubeAPIKeys");
+		let keysFromDatabase;
+		let databaseWasReachable = true;
+		try {
+			keysFromDatabase = await readDataOnce("youtubeAPIKeys");
+		} catch (error) {
+			databaseWasReachable = false;
+			console.log(`Could not fetch the API keys from the database: ${error?.message ?? error}`, true);
+		}
 
+		if (databaseWasReachable) {
+			// The keys were removed from the database, so we must not keep using the ones we have saved
+			if (!keysFromDatabase) {
+				return { APIKey: null, isCustomKey: false, keyIndex: null };
+			}
+
+			// The API keys get scrambled and stored locally
+			availableAPIKeys = keysFromDatabase.map(key => rot13(key, true));
+			setInLocalStorage("youtubeAPIKeys", availableAPIKeys);
+
+			console.log("API keys were fetched. Next check will be in one week.");
+			// Set the next time to check for API keys to one week from now
+			// This only happens after a successful check, so an unreachable database is retried on the next shuffle
+			await setSyncStorageValue("nextAPIKeysCheckTime", new Date(new Date().setHours(168, 0, 0, 0)).getTime());
+		}
+
+		// If the database could not be reached, we keep using the keys we already have
 		if (!availableAPIKeys) {
 			return { APIKey: null, isCustomKey: false, keyIndex: null };
 		}
-
-		// The API keys get scrambled and stored locally
-		availableAPIKeys = availableAPIKeys.map(key => rot13(key, true));
-		setInLocalStorage("youtubeAPIKeys", availableAPIKeys);
-
-		console.log("API keys were fetched. Next check will be in one week.");
-		// Set the next time to check for API keys to one week from now
-		await setSyncStorageValue("nextAPIKeysCheckTime", new Date(new Date().setHours(168, 0, 0, 0)).getTime());
 	}
 
 	if (forceGetAllDefaultKeys) {
