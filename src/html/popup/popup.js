@@ -447,8 +447,11 @@ async function setPopupDomElementEventListeners(domElements) {
 		const newAPIKey = domElements.customApiKeyInputField.value;
 		const oldApiKey = configSync.customYoutubeApiKey;
 
-		if (newAPIKey.length > 0 && await validateApiKey(newAPIKey, domElements)) {
-			await setSyncStorageValue("customYoutubeApiKey", newAPIKey);
+		if (newAPIKey.length > 0) {
+			// A key that does not validate must not remove the key that is already saved, as the user may have simply mistyped it
+			if (await validateApiKey(newAPIKey, domElements)) {
+				await setSyncStorageValue("customYoutubeApiKey", newAPIKey);
+			}
 		} else {
 			await removeSyncStorageValue("customYoutubeApiKey");
 			await setSyncStorageValue("databaseSharingEnabledOption", true);

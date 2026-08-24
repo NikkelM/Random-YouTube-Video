@@ -1,6 +1,6 @@
 import expect from 'expect.js';
 
-import { configSync, setSyncStorageValue, removeSyncStorageValue, getUserQuotaRemainingToday, validateConfigSync } from '../src/chromeStorage.js';
+import { configSync, setSyncStorageValue, setSyncStorageValues, removeSyncStorageValue, getUserQuotaRemainingToday, validateConfigSync } from '../src/chromeStorage.js';
 import { configSyncDefaults } from '../src/config.js';
 
 describe('chromeStorage', function () {
@@ -70,6 +70,62 @@ describe('chromeStorage', function () {
 
 			expect(configSync).to.have.key("testKey3");
 			expect(configSync.testKey3).to.have.key("testKey3b");
+		});
+
+		// Every write counts towards the sync storage quota, which users can run into when shuffling or browsing a lot
+		it('should not write to storage if the value did not change', async function () {
+			await setSyncStorageValue("testKey5", "testValue5");
+			const numSetCalls = chrome.storage.sync.set.callCount;
+
+			await setSyncStorageValue("testKey5", "testValue5");
+
+			expect(chrome.storage.sync.set.callCount).to.be(numSetCalls);
+			expect(configSync.testKey5).to.be("testValue5");
+		});
+
+		it('should not write to storage if an object with the same contents is set', async function () {
+			await setSyncStorageValue("testKey6", { "a": 1 });
+			const numSetCalls = chrome.storage.sync.set.callCount;
+
+			await setSyncStorageValue("testKey6", { "a": 1 });
+
+			expect(chrome.storage.sync.set.callCount).to.be(numSetCalls);
+
+			await setSyncStorageValue("testKey6", { "a": 2 });
+
+			expect(chrome.storage.sync.set.callCount).to.be(numSetCalls + 1);
+			expect(configSync.testKey6).to.eql({ "a": 2 });
+		});
+	});
+
+	context('setSyncStorageValues()', function () {
+		it('should set multiple values in one write', async function () {
+			const numSetCalls = chrome.storage.sync.set.callCount;
+
+			await setSyncStorageValues({ "testKey7": "testValue7", "testKey8": "testValue8" });
+
+			expect(chrome.storage.sync.set.callCount).to.be(numSetCalls + 1);
+			expect(configSync.testKey7).to.be("testValue7");
+			expect(configSync.testKey8).to.be("testValue8");
+		});
+
+		it('should not write to storage if no value changed', async function () {
+			await setSyncStorageValues({ "testKey9": "testValue9" });
+			const numSetCalls = chrome.storage.sync.set.callCount;
+
+			await setSyncStorageValues({ "testKey9": "testValue9" });
+
+			expect(chrome.storage.sync.set.callCount).to.be(numSetCalls);
+		});
+
+		it('should only write the values that changed', async function () {
+			await setSyncStorageValues({ "testKey10": "testValue10", "testKey11": "testValue11" });
+			const numSetCalls = chrome.storage.sync.set.callCount;
+
+			await setSyncStorageValues({ "testKey10": "testValue10", "testKey11": "testValue11b" });
+
+			expect(chrome.storage.sync.set.callCount).to.be(numSetCalls + 1);
+			expect(chrome.storage.sync.set.lastCall.args[0]).to.eql({ "testKey11": "testValue11b" });
 		});
 	});
 

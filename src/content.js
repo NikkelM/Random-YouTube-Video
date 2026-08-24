@@ -1,6 +1,6 @@
 // Content script that is injected into YouTube pages
 import { setDOMTextWithDelay, updateSmallButtonStyleForText, getPageTypeFromURL, RandomYoutubeVideoError, delay } from "./utils.js";
-import { configSync, setSyncStorageValue } from "./chromeStorage.js";
+import { configSync, setSyncStorageValues } from "./chromeStorage.js";
 import { buildShuffleButton, shuffleButton, shuffleButtonTextElement, shuffleButtonTooltipElement, tryRenameUntitledList } from "./domManipulation.js";
 import { chooseRandomVideo } from "./shuffleVideo.js";
 
@@ -252,8 +252,7 @@ async function channelDetectedAction(pageType, channelId, channelName, eventVers
 	}
 
 	// Save the current channelID and channelName in the extension's storage to be accessible by the popup
-	await setSyncStorageValue("currentChannelId", channelId);
-	await setSyncStorageValue("currentChannelName", channelName);
+	await setSyncStorageValues({ "currentChannelId": channelId, "currentChannelName": channelName });
 
 	// Update the channel name in the popup in case it was opened while the navigation was still going on
 	// If we don't do this, the configSync and displayed value might diverge

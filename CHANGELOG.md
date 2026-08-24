@@ -9,6 +9,11 @@
 - Fixed videos that other users had added to the database being lost when the extension removed a video that is not available any more.
 - Fixed the extension assuming that channel data was saved to the database even if sending it had failed.
 - Fixed shuffling in multiple tabs at once discarding channel data that was saved by the other tab.
+- Fixed the daily YouTube API quota being used up by errors that never made a request to the YouTube API.
+- Fixed the saved custom API key being removed if a newly submitted key was invalid.
+- Fixed shuffling never finishing if the extension's database could not be reached.
+- Fixed the weekly check for API keys discarding the already saved keys if the database could not be reached.
+- Reduced how often settings are written to the browser's synced storage, which could previously lead to errors when shuffling or browsing a lot.
 - The extension will now show a notice if the availability of multiple videos in a row cannot be checked.
 <!--Releasenotes end-->
 

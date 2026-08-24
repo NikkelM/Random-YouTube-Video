@@ -130,7 +130,7 @@ describe('shuffleVideo', function () {
 				expect().fail("No error was thrown");
 			});
 
-			it('should reduce the userQuotaRemainingToday by one if an error is encountered', async function () {
+			it('should not reduce the userQuotaRemainingToday if no request to the YouTube API was made', async function () {
 				expect(configSync.userQuotaRemainingToday).to.be(200);
 				try {
 					// The error is that there is no channelId
@@ -138,7 +138,7 @@ describe('shuffleVideo', function () {
 				} catch (error) {
 					// We do no validation here, as that's not the point of this test
 				}
-				expect(configSync.userQuotaRemainingToday).to.be(199);
+				expect(configSync.userQuotaRemainingToday).to.be(200);
 			});
 
 			it('should throw an error if there are no API keys in the database', async function () {
@@ -580,6 +580,9 @@ describe('shuffleVideo', function () {
 
 					const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
 					expect(commands).to.not.contain('updatePlaylistInfoInDB');
+
+					// A failed availability check is not a request to the YouTube API, so it may not cost the user any quota
+					expect(configSync.userQuotaRemainingToday).to.be(200);
 					return;
 				}
 				expect().fail("No error was thrown");

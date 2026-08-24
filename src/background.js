@@ -163,7 +163,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			break;
 		// Tries to get a playlist from Firebase
 		case "getPlaylistFromDB":
-			readDataOnce('uploadsPlaylists/' + request.data).then(sendResponse);
+			// If the database cannot be reached we act as if the playlist is not in it, so the shuffle falls back to the YouTube API
+			respondWithFallback(readDataOnce('uploadsPlaylists/' + request.data), sendResponse, null);
 			break;
 		// Updates a playlist in Firebase, adding new videos and removing videos that cannot be watched any more
 		case "updatePlaylistInfoInDB":
@@ -175,20 +176,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":
-			getAPIKey(false, request.data.useAPIKeyAtIndex).then(sendResponse);
+			respondWithFallback(getAPIKey(false, request.data.useAPIKeyAtIndex), sendResponse, { APIKey: null, isCustomKey: false, keyIndex: null });
 			break;
 		// Gets the default API keys saved in the database
 		case "getDefaultAPIKeys":
-			getAPIKey(true, null).then(sendResponse);
+			respondWithFallback(getAPIKey(true, null), sendResponse, { APIKey: null, isCustomKey: false, keyIndex: null });
 			break;
 		case "getCurrentTabId":
-			getCurrentTabId().then(sendResponse);
+			respondWithFallback(getCurrentTabId(), sendResponse, null);
 			break;
 		case "getAllYouTubeTabs":
-			getAllYouTubeTabs().then(sendResponse);
+			respondWithFallback(getAllYouTubeTabs(), sendResponse, []);
 			break;
 		case "openVideoInTabWithId":
-			openVideoInTabWithId(request.data.tabId, request.data.videoUrl).then(sendResponse);
+			respondWithFallback(openVideoInTabWithId(request.data.tabId, request.data.videoUrl), sendResponse, false);
 			break;
 		case "getShufflingPageShuffleStatus":
 			sendResponse(shufflingPageIsShuffling);
@@ -202,6 +203,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // ---------- Firebase ----------
+// Answers a message with a fallback value if the promise rejects
+// Without this the message would never be answered, leaving the sender waiting for a response that can never arrive
+function respondWithFallback(promise, sendResponse, fallbackValue) {
+	promise
+		.then(sendResponse)
+		.catch((error) => {
+			console.log(`A request to the service worker failed, continuing without its result: ${error?.message ?? error}`, true);
+			sendResponse(fallbackValue);
+		});
+}
+
 // Answers a message with the result of a database write, so that a failed write is never reported as a success
 function respondWithResult(writePromise, sendResponse) {
 	writePromise
@@ -315,19 +327,35 @@ async function getAPIKey(forceGetAllDefaultKeys, useAPIKeyAtIndex = null) {
 
 	// If there are no API keys saved in local storage or if we need to perform a periodic check, get them from the database.
 	if (!availableAPIKeys || configSync.nextAPIKeysCheckTime < Date.now()) {
-		availableAPIKeys = await readDataOnce("youtubeAPIKeys");
+		let keysFromDatabase;
+		let databaseWasReachable = true;
+		try {
+			keysFromDatabase = await readDataOnce("youtubeAPIKeys");
+		} catch (error) {
+			databaseWasReachable = false;
+			console.log(`Could not fetch the API keys from the database: ${error?.message ?? error}`, true);
+		}
 
+		if (databaseWasReachable) {
+			// The keys were removed from the database, so we must not keep using the ones we have saved
+			if (!keysFromDatabase) {
+				return { APIKey: null, isCustomKey: false, keyIndex: null };
+			}
+
+			// The API keys get scrambled and stored locally
+			availableAPIKeys = keysFromDatabase.map(key => rot13(key, true));
+			setInLocalStorage("youtubeAPIKeys", availableAPIKeys);
+
+			console.log("API keys were fetched. Next check will be in one week.");
+			// Set the next time to check for API keys to one week from now
+			// This only happens after a successful check, so an unreachable database is retried on the next shuffle
+			await setSyncStorageValue("nextAPIKeysCheckTime", new Date(new Date().setHours(168, 0, 0, 0)).getTime());
+		}
+
+		// If the database could not be reached, we keep using the keys we already have
 		if (!availableAPIKeys) {
 			return { APIKey: null, isCustomKey: false, keyIndex: null };
 		}
-
-		// The API keys get scrambled and stored locally
-		availableAPIKeys = availableAPIKeys.map(key => rot13(key, true));
-		setInLocalStorage("youtubeAPIKeys", availableAPIKeys);
-
-		console.log("API keys were fetched. Next check will be in one week.");
-		// Set the next time to check for API keys to one week from now
-		await setSyncStorageValue("nextAPIKeysCheckTime", new Date(new Date().setHours(168, 0, 0, 0)).getTime());
 	}
 
 	if (forceGetAllDefaultKeys) {
