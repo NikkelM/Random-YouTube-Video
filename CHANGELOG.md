@@ -16,6 +16,7 @@
 - Fixed the weekly check for API keys discarding the already saved keys if the database could not be reached.
 - Reduced how often settings are written to the browser's synced storage, which could previously lead to errors when shuffling or browsing a lot.
 - The shuffle button on shorts pages now matches the spacing and styling of YouTube's own buttons.
+- Shuffled shorts are now opened on the shorts page instead of in the normal video player, unless they are opened as part of a playlist.
 - The extension will now show a notice if the availability of multiple videos in a row cannot be checked.
 <!--Releasenotes end-->
 
