@@ -2,13 +2,14 @@ name: Run Compatibility Tests
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 4 * * 5"
   push:
     branches:
       - main
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   CompatibilityTest:
@@ -19,33 +20,36 @@ jobs:
 
       - name: Set up node
         uses: actions/setup-node@v4
-        env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
         with:
           node-version: 22
-
-      - name: Cache node modules
-        id: cache-npm
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
-      
+        run: npm ci
+
+      - name: Cache Chrome for Testing
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/puppeteer
+          key: ${{ runner.os }}-chrome-for-testing-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-chrome-for-testing-
+
+      - name: Install Chrome for Testing
+        run: npx puppeteer browsers install chrome
+
       - name: Build extension
         run: npm run build:chromium
 
+      # An extension can only be loaded into a headful browser, so the tests need a virtual display
       - name: Run compatibility tests
-        uses: nikkelm/puppeteer-headful@1.0.0
+        if: github.event_name != 'schedule'
+        run: xvfb-run --auto-servernum npm run test:compatibility
         env:
           CI: "true"
-        with:
-          args: npm run test:compatibility
+
+      - name: Run all tests
+        if: github.event_name == 'schedule'
+        run: xvfb-run --auto-servernum npm run test:all
+        env:
+          CI: "true"
