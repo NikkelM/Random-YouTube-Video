@@ -145,6 +145,10 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		var deletedVideos;
 		({ chosenVideos, playlistInfo, shouldUpdateDatabase, deletedVideos } = await chooseRandomVideosFromPlaylist(playlistInfo, channelId, shouldUpdateDatabase, progressTextElement, shuffleButtonTooltipElement));
 
+		// A single video that is a short is opened on the shorts page, so we need to know its type before saving the playlist
+		const opensSingleVideo = !(configSync.shuffleOpenAsPlaylistOption && chosenVideos.length > 1);
+		const openOnShortsPage = opensSingleVideo && await chosenVideoIsShort(chosenVideos[0], playlistInfo);
+
 		// Save the playlist to the database and locally
 		playlistInfo = await handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, shouldUpdateDatabase, databaseSharing, deletedVideos);
 		await savePlaylistToLocalStorage(uploadsPlaylistId, playlistInfo, initialVideoKnowledge);
@@ -153,7 +157,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		const numShuffledVideosTotal = (await chrome.storage.sync.get("numShuffledVideosTotal")).numShuffledVideosTotal ?? configSync.numShuffledVideosTotal;
 		await setSyncStorageValue("numShuffledVideosTotal", numShuffledVideosTotal + 1);
 
-		await playVideo(chosenVideos, firedFromPopup);
+		await playVideo(chosenVideos, firedFromPopup, openOnShortsPage);
 	} catch (error) {
 		// There are some errors that still allow us to save the playlist to the database and locally
 		if (error instanceof RandomYoutubeVideoError && error.canSavePlaylist == true) {
@@ -630,6 +634,44 @@ async function getPlaylistSnippetFromAPI(playlistId, pageToken, APIKey, isCustom
 }
 
 // ---------- Utility ----------
+// Determines whether the video that is about to be opened is a short, so that it can be opened on the shorts page
+async function chosenVideoIsShort(videoId, playlistInfo) {
+	// 0 = only shorts, 1 = no option set (shorts are included), 2 = ignore shorts
+	// For these two we already know the type from the shuffle itself
+	if (configSync.shuffleIgnoreShortsOption == "0") {
+		return true;
+	}
+	if (configSync.shuffleIgnoreShortsOption == "2") {
+		return false;
+	}
+
+	// Shorts are shuffled together with normal videos, so the type is only known if it was determined at some earlier point
+	if (playlistInfo["videos"]["knownShorts"][videoId] !== undefined) {
+		return true;
+	}
+	if (playlistInfo["videos"]["knownVideos"][videoId] !== undefined) {
+		return false;
+	}
+
+	// We have never checked this video, so we find out now and remember the result for the next shuffle
+	let videoIsShort;
+	try {
+		videoIsShort = await isShort(videoId);
+	} catch (error) {
+		// The video is opened in the normal player if we cannot find out, which works for shorts as well
+		console.log(`Could not check whether the chosen video is a short: ${videoId}`);
+		return false;
+	}
+
+	const uploadTime = playlistInfo["videos"]["unknownType"][videoId];
+	if (uploadTime !== undefined) {
+		playlistInfo["videos"][videoIsShort ? "knownShorts" : "knownVideos"][videoId] = uploadTime;
+		delete playlistInfo["videos"]["unknownType"][videoId];
+	}
+
+	return videoIsShort;
+}
+
 // Statuses that mean the request failed, not that the video is gone
 function isTransientStatus(status) {
 	return status === 408 || status === 429 || status >= 500;
@@ -1135,12 +1177,14 @@ function applyShuffleFilter(allVideos, videosByDate, activeShuffleFilterOption, 
 	return videosToShuffle;
 }
 
-async function playVideo(chosenVideos, firedFromPopup) {
+async function playVideo(chosenVideos, firedFromPopup, openOnShortsPage = false) {
 	// Get the correct URL format
 	let randomVideoURL;
 	if (configSync.shuffleOpenAsPlaylistOption && chosenVideos.length > 1) {
 		const randomVideos = chosenVideos.join(",");
 		randomVideoURL = `https://www.youtube.com/watch_videos?video_ids=${randomVideos}`;
+	} else if (openOnShortsPage) {
+		randomVideoURL = `https://www.youtube.com/shorts/${chosenVideos[0]}`;
 	} else {
 		randomVideoURL = `https://www.youtube.com/watch?v=${chosenVideos[0]}`;
 	}

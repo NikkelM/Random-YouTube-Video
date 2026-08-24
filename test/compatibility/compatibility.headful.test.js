@@ -71,6 +71,23 @@ describe("headful compatibility", function () {
 			const shuffleButton = await page.$("#youtube-random-video-small-shuffle-button-short");
 
 			expect(shuffleButton).to.not.be(null);
+
+			// The button has to end up inside the action bar of the short being watched, not just somewhere on the page
+			const placement = await page.evaluate(() => {
+				const button = document.querySelector("#youtube-random-video-small-shuffle-button-short");
+				const actionContainer = button?.parentElement;
+				const boundingRect = button?.getBoundingClientRect();
+
+				return {
+					insideReelRenderer: button?.closest("ytd-reel-video-renderer") !== null,
+					containerHoldsNativeButtons: (actionContainer?.children.length ?? 0) > 1,
+					isVisible: boundingRect ? boundingRect.width > 0 && boundingRect.height > 0 : false
+				};
+			});
+
+			expect(placement.insideReelRenderer).to.be(true);
+			expect(placement.containerHoldsNativeButtons).to.be(true);
+			expect(placement.isVisible).to.be(true);
 		});
 	});
 });

@@ -1,7 +1,7 @@
 // Content script that is injected into YouTube pages
 import { setDOMTextWithDelay, updateSmallButtonStyleForText, getPageTypeFromURL, RandomYoutubeVideoError, delay } from "./utils.js";
 import { configSync, setSyncStorageValues } from "./chromeStorage.js";
-import { buildShuffleButton, shuffleButton, shuffleButtonTextElement, shuffleButtonTooltipElement, tryRenameUntitledList } from "./domManipulation.js";
+import { buildShuffleButton, getActiveShortsActionContainer, shuffleButton, shuffleButtonTextElement, shuffleButtonTooltipElement, tryRenameUntitledList } from "./domManipulation.js";
 import { chooseRandomVideo } from "./shuffleVideo.js";
 
 // ---------- Initialization ----------
@@ -52,17 +52,41 @@ html[dark] .ryv-shuffle-btn:hover {
 	border: none;
 	border-radius: 24px;
 	background: rgba(0, 0, 0, 0.05);
-	color: var(--yt-spec-text-primary, #0f0f0f);
+	color: #0f0f0f;
 	cursor: pointer;
 	position: relative;
 	overflow: hidden;
+}
+.ryv-shorts-shuffle-wrapper {
+	padding-bottom: 16px;
 }
 .ryv-shuffle-btn-small:hover {
 	background: rgba(0, 0, 0, 0.1);
 }
 html[dark] .ryv-shuffle-btn-small {
 	background: rgba(255, 255, 255, 0.1);
-	color: #fff;
+	color: #f1f1f1;
+}
+html[dark] .ryv-shuffle-btn-small::before,
+html[dark] .ryv-shuffle-btn-small::after {
+	content: "";
+	position: absolute;
+	pointer-events: none;
+}
+html[dark] .ryv-shuffle-btn-small::before {
+	inset: 0;
+	border-radius: inherit;
+	background: linear-gradient(rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0) 50%);
+}
+html[dark] .ryv-shuffle-btn-small::after {
+	inset: 0;
+	border-radius: inherit;
+	padding: 1px;
+	background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0) 75%);
+	-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	mask-composite: exclude;
 }
 html[dark] .ryv-shuffle-btn-small:hover {
 	background: rgba(255, 255, 255, 0.2);
@@ -203,7 +227,8 @@ async function startDOMObserver(event) {
 		} else if (pageType === "video") {
 			videoPageRequiredElementLoadComplete = document.getElementById("above-the-fold")?.children?.namedItem("top-row")?.children?.namedItem("owner");
 		} else if (pageType === "short") {
-			shortsPageRequiredElementLoadComplete = document.querySelectorAll("ytd-reel-video-renderer ytd-reel-player-overlay-renderer #actions");// true;
+			// A NodeList is truthy even when it is empty, so we check that the container the button is built into actually exists
+			shortsPageRequiredElementLoadComplete = getActiveShortsActionContainer() !== null;
 		}
 
 		// If the required element has loaded, add the shuffle button

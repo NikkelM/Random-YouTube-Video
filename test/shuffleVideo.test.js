@@ -634,6 +634,170 @@ describe('shuffleVideo', function () {
 				expect().fail("No error was thrown");
 			});
 
+			it('should open a shuffled short on the shorts page', async function () {
+				const channelId = "UC_SHORTSPLAY";
+				const playlistId = channelId.replace("UC", "UU");
+				const shortId = "SHORTVIDEO1";
+
+				const now = new Date().toISOString();
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastVideoPublishedAt: now.slice(0, 19) + 'Z',
+						videos: {
+							knownVideos: {},
+							// The video is already known to be a short, so its type does not have to be determined again
+							knownShorts: {
+								[shortId]: now.substring(0, 10)
+							},
+							unknownType: {}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				// 0 means only shorts are shuffled
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "0");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+				await setSyncStorageValue("shuffleOpenInNewTabOption", true);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${shortId}`]: [{ status: 200 }]
+				});
+
+				await chooseRandomVideo(channelId, false, domElement);
+
+				expect(windowOpenStub.callCount).to.be(1);
+				expect(windowOpenStub.args[0][0]).to.be(`https://www.youtube.com/shorts/${shortId}`);
+			});
+
+			it('should still open a playlist if only shorts are shuffled but playlists are enabled', async function () {
+				const channelId = "UC_SHORTSLIST";
+				const playlistId = channelId.replace("UC", "UU");
+				const firstShortId = "SHORTVIDEO1";
+				const secondShortId = "SHORTVIDEO2";
+
+				const now = new Date().toISOString();
+				const uploadDate = now.substring(0, 10);
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastVideoPublishedAt: now.slice(0, 19) + 'Z',
+						videos: {
+							knownVideos: {},
+							knownShorts: {
+								[firstShortId]: uploadDate,
+								[secondShortId]: uploadDate
+							},
+							unknownType: {}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "0");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", true);
+				await setSyncStorageValue("shuffleNumVideosInPlaylist", 2);
+				await setSyncStorageValue("shuffleOpenInNewTabOption", true);
+
+				setUpMockResponses({
+					'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=SHORTVIDEO': [{ status: 200 }]
+				});
+
+				await chooseRandomVideo(channelId, false, domElement);
+
+				expect(windowOpenStub.callCount).to.be(1);
+				expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch_videos?video_ids=');
+			});
+
+			it('should open a chosen short on the shorts page even if normal videos are shuffled too', async function () {
+				const channelId = "UC_MIXEDSHORTS";
+				const playlistId = channelId.replace("UC", "UU");
+				const shortId = "SHORTVIDEO1";
+
+				const now = new Date().toISOString();
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastVideoPublishedAt: now.slice(0, 19) + 'Z',
+						videos: {
+							knownVideos: {},
+							knownShorts: {
+								[shortId]: now.substring(0, 10)
+							},
+							unknownType: {}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				// 1 means shorts are shuffled together with normal videos
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+				await setSyncStorageValue("shuffleOpenInNewTabOption", true);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${shortId}`]: [{ status: 200 }]
+				});
+
+				await chooseRandomVideo(channelId, false, domElement);
+
+				expect(windowOpenStub.callCount).to.be(1);
+				expect(windowOpenStub.args[0][0]).to.be(`https://www.youtube.com/shorts/${shortId}`);
+			});
+
+			it('should remember the type of a video it had to check before opening it', async function () {
+				const channelId = "UC_TYPELEARNED";
+				const playlistId = channelId.replace("UC", "UU");
+				const shortId = "SHORTVIDEO1";
+
+				const now = new Date().toISOString();
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastVideoPublishedAt: now.slice(0, 19) + 'Z',
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							// The type of this video is not known yet, so it has to be checked before opening it
+							unknownType: {
+								[shortId]: now.substring(0, 10)
+							}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", false);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+				await setSyncStorageValue("shuffleOpenInNewTabOption", true);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${shortId}`]: [{ status: 200 }],
+					// A thumbnail ending in hq2.jpg means the video is a short
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/shorts/${shortId}`]: [new Response(JSON.stringify({
+						"thumbnail_url": `https://i.ytimg.com/vi/${shortId}/hq2.jpg`
+					}))]
+				});
+
+				await chooseRandomVideo(channelId, false, domElement);
+
+				expect(windowOpenStub.args[0][0]).to.be(`https://www.youtube.com/shorts/${shortId}`);
+
+				// The type it found out has to be saved, so the check does not have to be repeated on the next shuffle
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(playlistInfoAfter.videos.knownShorts).to.have.key(shortId);
+				expect(playlistInfoAfter.videos.unknownType).to.not.have.key(shortId);
+			});
+
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [
@@ -1189,7 +1353,9 @@ describe('shuffleVideo', function () {
 												await chooseRandomVideo(input.channelId, false, domElement);
 
 												expect(windowOpenStub.calledOnce).to.be(true);
-												expect(windowOpenStub.args[0][0]).to.contain('https://www.youtube.com/watch?v=');
+												// A single video is opened in the normal player, or on the shorts page if it is a short
+												expect(windowOpenStub.args[0][0]).to.not.contain('watch_videos');
+												expect(windowOpenStub.args[0][0]).to.match(/^https:\/\/www\.youtube\.com\/(watch\?v=|shorts\/)/);
 											});
 										}
 									} else if (key === 'ignoreShortsPermutations') {

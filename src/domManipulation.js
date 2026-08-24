@@ -5,6 +5,53 @@ export let shuffleButton;
 export let shuffleButtonTextElement;
 export let shuffleButtonTooltipElement;
 
+const shortsActionsVersions = [
+	{
+		version: "20260824",
+		selector: "ytd-reel-video-renderer reel-action-bar-view-model",
+		wrapperClass: "ryv-shorts-shuffle-wrapper"
+	},
+	{
+		version: "20231130",
+		selector: "ytd-reel-video-renderer ytd-reel-player-overlay-renderer #actions",
+		wrapperClass: "button-container style-scope ytd-reel-player-overlay-renderer"
+	}
+];
+
+// All containers the shorts button can be added to, one per short that is currently in the DOM
+export function getShortsActionContainers() {
+	for (const { version, selector, wrapperClass } of shortsActionsVersions) {
+		const containers = document.querySelectorAll(selector);
+		if (containers.length > 0) {
+			return { containers, version, wrapperClass };
+		}
+	}
+
+	return { containers: [], version: null, wrapperClass: "" };
+}
+
+// The container of the short the user is currently watching
+export function getActiveShortsActionContainer() {
+	const { containers } = getShortsActionContainers();
+
+	// Older layouts mark the short that is being watched
+	for (const container of containers) {
+		if (container.closest("ytd-reel-video-renderer[is-active]")) {
+			return container;
+		}
+	}
+
+	// Otherwise the container that is visible on screen belongs to the short that is being watched
+	for (const container of containers) {
+		const boundingRect = container.getBoundingClientRect();
+		if (boundingRect.height > 0 && boundingRect.top < window.innerHeight && boundingRect.bottom > 0) {
+			return container;
+		}
+	}
+
+	return containers[0] ?? null;
+}
+
 export function buildShuffleButton(pageType, channelId, eventVersion, clickHandler) {
 	let buttonDivID;
 	let buttonDivClass = "";
@@ -38,11 +85,20 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 			isLargeButton = false;
 			buttonDivID = "youtube-random-video-small-shuffle-button-short";
 			buttonDivAppend = false;
-			buttonDivOwner = document.querySelectorAll("ytd-reel-video-renderer ytd-reel-player-overlay-renderer #actions");
+			{
+				const shortsActions = getShortsActionContainers();
+				buttonDivOwner = shortsActions.containers;
+				buttonDivClass = shortsActions.wrapperClass;
+			}
 			break;
 		default:
 			console.warn(`Cannot build button: Unknown page type: ${pageType}`);
 			return;
+	}
+
+	if (buttonDivOwner.length === 0) {
+		console.log(`Cannot build button: Found no element to add the button to on this ${pageType} page.`);
+		return;
 	}
 
 	// If the button should not be visible but exists, hide it
@@ -59,14 +115,17 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 
 	// If all required buttons already exist, don't build them again, but only update values
 	let allButtonsOnPage = document.querySelectorAll(`#${buttonDivID}`);
-	if (allButtonsOnPage.length >= buttonDivOwner.length) {
-		let button;
-		if (pageType === "short") {
-			// If we are on a shorts page, get the button of the active renderer
-			button = document.querySelector("ytd-reel-video-renderer[is-active] ytd-reel-player-overlay-renderer #actions").children.namedItem(buttonDivID);
-		} else {
-			button = document.getElementById(buttonDivID);
-		}
+	let existingButton;
+	if (pageType === "short") {
+		// If we are on a shorts page, get the button of the short that is being watched
+		existingButton = getActiveShortsActionContainer()?.children.namedItem(buttonDivID);
+	} else {
+		existingButton = document.getElementById(buttonDivID);
+	}
+
+	// Only take the shortcut if the button we would have to update actually exists, as we otherwise have to build it
+	if (existingButton && allButtonsOnPage.length >= buttonDivOwner.length) {
+		const button = existingButton;
 
 		// Unhide the button if it was hidden
 		button.style.display = "flex";
@@ -107,7 +166,7 @@ export function buildShuffleButton(pageType, channelId, eventVersion, clickHandl
 	</div>`;
 	} else if (pageType === "short") {
 		buttonDiv = `
-	<div id="${buttonDivID}" class="button-container style-scope ytd-reel-player-overlay-renderer" style="${buttonDivExtraStyle}">
+	<div id="${buttonDivID}" class="${buttonDivClass}" style="${buttonDivExtraStyle}">
 	</div>`;
 	}
 	buttonDiv = new DOMParser().parseFromString(buttonDiv, "text/html").body.firstChild;
@@ -210,12 +269,17 @@ function finalizeButton(pageType, channelId, clickHandler, isLargeButton, button
 	// Set the references to the current button
 	let activeButton;
 	if (pageType === "short") {
-		activeButton = document.querySelector("ytd-reel-video-renderer[is-active] ytd-reel-player-overlay-renderer #actions").children.namedItem(buttonDivID);
+		activeButton = getActiveShortsActionContainer()?.children.namedItem(buttonDivID);
 	} else {
 		activeButton = document.getElementById(buttonDivID);
 	}
 
 	shuffleButton = activeButton;
+	if (!shuffleButton) {
+		console.log("Cannot finish building the button: The button that was just built could not be found again.");
+		return;
+	}
+
 	if (isLargeButton) {
 		shuffleButtonTextElement = shuffleButton.querySelector('#random-youtube-video-large-shuffle-button-text');
 	} else {
