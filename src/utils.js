@@ -95,6 +95,29 @@ export function addHours(date, hours) {
 	return new Date(date.getTime() + hours * 3600000);
 }
 
+export function versionIsOlderThan(version, otherVersion) {
+	const versionParts = getVersionParts(version);
+	const otherVersionParts = getVersionParts(otherVersion);
+
+	for (let i = 0; i < Math.max(versionParts.length, otherVersionParts.length); i++) {
+		const versionPart = versionParts[i] ?? 0;
+		const otherVersionPart = otherVersionParts[i] ?? 0;
+
+		if (versionPart !== otherVersionPart) {
+			return versionPart < otherVersionPart;
+		}
+	}
+
+	return false;
+}
+
+function getVersionParts(version) {
+	return String(version ?? "0").split(".").map((part) => {
+		const parsedPart = Number.parseInt(part, 10);
+		return Number.isNaN(parsedPart) ? 0 : parsedPart;
+	});
+}
+
 // ----- Errors -----
 export class RandomYoutubeVideoError extends Error {
 	constructor({ code = "RYV-0", message = "", solveHint = "", showTrace = true, canSavePlaylist = false }) {
