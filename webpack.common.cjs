@@ -6,23 +6,19 @@ const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = env => {
 	return {
+		// Only files that are loaded directly by the manifest or by an HTML page belong here
+		// Everything else is imported by one of these and does not need its own bundle
 		entry: {
 			// JS
 			background: './src/background.js',
-			domManipulation: './src/domManipulation.js',
 			content: './src/content.js',
-			shuffleVideo: './src/shuffleVideo.js',
-			utils: './src/utils.js',
-			chromeStorage: './src/chromeStorage.js',
 			// HTML
 			changelog: './src/html/changelog.js',
-			htmlUtils: './src/html/htmlUtils.js',
 			shufflingPage: './src/html/shufflingPage.js',
 			welcome: './src/html/welcome.js',
 			breakingNews: './src/html/breakingNews.js',
 			// POPUP
 			popup: './src/html/popup/popup.js',
-			popupUtils: './src/html/popup/popupUtils.js',
 		},
 		module: {
 			rules: [
