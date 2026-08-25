@@ -1192,6 +1192,75 @@ describe('shuffleVideo', function () {
 				expect(Object.keys(getAllVideosAsOneObject(playlistInfoAfter))).to.contain(addedVideoId);
 			});
 
+			it('should adopt an older lastVideoPublishedAt, so that it can match the database again', async function () {
+				const channelId = "UC_DELETEDNEWEST";
+				const playlistId = channelId.replace("UC", "UU");
+				const videoId = "STABLEVIDEO";
+
+				const anHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+				const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+				const twentyDaysAgo = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString();
+				const uploadDate = twentyDaysAgo.substring(0, 10);
+
+				// The newest video we knew about was deleted, so the database has an older timestamp than we do
+				const ourPublishedAt = threeDaysAgo.slice(0, 19) + 'Z';
+				const databasePublishedAt = twentyDaysAgo.slice(0, 19) + 'Z';
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: anHourAgo,
+						lastFetchedFromDB: threeDaysAgo,
+						lastDownloadedFromDB: anHourAgo,
+						lastUpdatedDBAt: anHourAgo,
+						lastVideosChangedAt: anHourAgo,
+						lastVideoPublishedAt: ourPublishedAt,
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: { [videoId]: uploadDate }
+						}
+					}
+				});
+
+				await chrome.runtime.sendMessage({
+					command: "setKeyInDB",
+					data: {
+						key: playlistId,
+						val: {
+							lastUpdatedDBAt: anHourAgo,
+							lastVideosChangedAt: anHourAgo,
+							lastVideoPublishedAt: databasePublishedAt,
+							videos: { [videoId]: uploadDate }
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}`]: [{ status: 200 }]
+				});
+
+				chrome.runtime.sendMessage.resetHistory();
+				await chooseRandomVideo(channelId, false, domElement);
+
+				// Only the timestamp the database has can ever match it again
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(playlistInfoAfter.lastVideoPublishedAt).to.be(databasePublishedAt);
+
+				// Keeping our own higher timestamp would mean downloading this playlist again on every single shuffle, forever
+				const stalePlaylistInfo = deepCopy(playlistInfoAfter);
+				stalePlaylistInfo.lastFetchedFromDB = threeDaysAgo;
+				await chrome.storage.local.set({ [playlistId]: stalePlaylistInfo });
+
+				chrome.runtime.sendMessage.resetHistory();
+				await chooseRandomVideo(channelId, false, domElement);
+
+				expect(chrome.runtime.sendMessage.args.map(arg => arg[0].command)).to.not.contain('getPlaylistFromDB');
+			});
+
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [

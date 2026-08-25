@@ -1387,7 +1387,8 @@ async function savePlaylistToLocalStorage(playlistId, playlistInfo, initialVideo
 		// Remember the last time the playlist was accessed locally (==now)
 		"lastAccessedLocally": new Date().toISOString(),
 		"lastFetchedFromDB": newerTimestamp(playlistInfo["lastFetchedFromDB"], storedPlaylistInfo["lastFetchedFromDB"]) ?? new Date(0).toISOString(),
-		"lastVideoPublishedAt": newerTimestamp(playlistInfo["lastVideoPublishedAt"], storedPlaylistInfo["lastVideoPublishedAt"]) ?? new Date(0).toISOString().slice(0, 19) + 'Z',
+		// The most recent video may have been deleted, which lowers this timestamp, so we need to take what the shuffle found to be true
+		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? storedPlaylistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
 		"videos": mergeVideoKnowledge(storedPlaylistInfo["videos"], playlistInfo["videos"] ?? {}, initialVideoKnowledge)
 	};
 
