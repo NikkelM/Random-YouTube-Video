@@ -95,7 +95,7 @@ export async function validateConfigSync() {
 	}
 
 	// Remove old config values from sync storage
-	for (const [key, value] of Object.entries(configSyncValues)) {
+	for (const key of Object.keys(configSyncValues)) {
 		if (configSyncDefaults[key] === undefined) {
 			await chrome.storage.sync.remove(key);
 		}
