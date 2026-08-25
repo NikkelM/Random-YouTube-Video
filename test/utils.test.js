@@ -2,7 +2,7 @@ import expect from 'expect.js';
 import sinon from 'sinon';
 import { JSDOM } from 'jsdom';
 
-import { isVideoUrl, getPageTypeFromURL, isEmpty, getLength, addHours, delay, setDOMTextWithDelay, versionIsOlderThan, RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
+import { isVideoUrl, getPageTypeFromURL, isEmpty, getLength, addHours, delay, setDOMTextWithDelay, versionIsOlderThan, getChangelogForVersion, RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
 
 describe('utils.js', function () {
 	context('URL helpers', function () {
@@ -260,8 +260,60 @@ describe('utils.js', function () {
 
 	});
 
-	context('custom errors', function () {
+	context('getChangelogForVersion()', function () {
+		const changelog = [
+			'# Changelog',
+			'',
+			'## v2.0.0',
+			'',
+			'<!--Releasenotes start-->',
+			'- Added something new.',
+			'<!--Releasenotes end-->',
+			'',
+			'## v1.10.0',
+			'',
+			'- Fixed something old.',
+			'- Fixed something else.',
+			'',
+			'## v1.9.0',
+			'',
+			'- The first release.'
+		].join('\n');
 
+		// The changelog is fetched from GitHub, so it may use either line ending, depending on how it was committed
+		['\n', '\r\n'].forEach(function (lineEnding) {
+			const lineEndingName = lineEnding === '\n' ? 'LF' : 'CRLF';
+			const thisChangelog = changelog.replace(/\n/g, lineEnding);
+
+			it(`should return the changelog of the requested version for ${lineEndingName} line endings`, function () {
+				expect(getChangelogForVersion(thisChangelog, 'v1.10.0').replace(/\r/g, '')).to.be('- Fixed something old.\n- Fixed something else.');
+			});
+
+			it(`should not include the heading of the next version for ${lineEndingName} line endings`, function () {
+				expect(getChangelogForVersion(thisChangelog, 'v2.0.0')).to.not.contain('## v1.10.0');
+			});
+
+			it(`should return the changelog of the last version for ${lineEndingName} line endings`, function () {
+				expect(getChangelogForVersion(thisChangelog, 'v1.9.0').replace(/\r/g, '')).to.be('- The first release.');
+			});
+
+			it(`should return an empty string for a version without a changelog for ${lineEndingName} line endings`, function () {
+				expect(getChangelogForVersion(thisChangelog, 'v3.0.0')).to.be('');
+			});
+		});
+
+		// Without an exact match, "v1.9.0" would also match the heading of "v1.9.0-beta"
+		it('should not match a version that only shares a prefix with the requested one', function () {
+			expect(getChangelogForVersion('## v1.9.0-beta\n\n- A beta release.', 'v1.9.0')).to.be('');
+		});
+
+		it('should return an empty string if no changelog was passed', function () {
+			expect(getChangelogForVersion('', 'v1.9.0')).to.be('');
+			expect(getChangelogForVersion(changelog, undefined)).to.be('');
+		});
+	});
+
+	context('custom errors', function () {
 		context('RandomYoutubeVideoError', function () {
 			it('should be an instance of Error', function () {
 				const e = new RandomYoutubeVideoError({});

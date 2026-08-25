@@ -1,5 +1,5 @@
 // Contains logic for the "Changelog" page
-import { delay } from "../utils.js";
+import { delay, getChangelogForVersion } from "../utils.js";
 import { buildShufflingHints } from "./htmlUtils.js";
 
 // ----- Setup -----
@@ -91,21 +91,17 @@ async function updateChangelog(forVersion = `v${currentVersion}`) {
 	}
 	domElements.whatsNewHeader.innerText = `What's new in ${forVersion}:`;
 
-	// Get the text between "## ${version}" and the next "##", or if there is none, the end of the changelog
-	const versionIndex = changelogText.indexOf(`## ${forVersion}\r\n`);
-	const nextVersionIndex = changelogText.indexOf("##", versionIndex + `## ${forVersion}`.length);
-	// If there is no next version, use the end of the changelog
-	const endIndex = nextVersionIndex !== -1 ? nextVersionIndex : changelogText.length;
-
-	let thisVersionChangelog = versionIndex !== -1
-		? changelogText.substring(
-			versionIndex + `## v${forVersion}`.length, endIndex)
-		: "";
+	const thisVersionChangelog = getChangelogForVersion(changelogText, forVersion);
 
 	// If the given version has no changelog available, try to get the changelog for the latest version
 	if (thisVersionChangelog === "") {
-		updateChangelog(availableVersions[0]);
 		domElements.noChangelogErrorP.classList.remove("hidden");
+
+		// Only try another version if it is a different one, as we would otherwise call this function forever
+		const mostRecentVersion = availableVersions?.[0];
+		if (mostRecentVersion && mostRecentVersion !== forVersion) {
+			await updateChangelog(mostRecentVersion);
+		}
 		return;
 	}
 
