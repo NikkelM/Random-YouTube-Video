@@ -63,6 +63,7 @@ chrome.runtime.sendMessage.callsFake((request) => {
 		case 'getPlaylistTimestampsFromDB':
 			// Return only the timestamps that tell a client whether it has to download the playlist
 			return Promise.resolve({
+				lastUpdatedDBAt: mockedDatabase[request.data]?.lastUpdatedDBAt ?? null,
 				lastVideosChangedAt: mockedDatabase[request.data]?.lastVideosChangedAt ?? null,
 				lastVideoPublishedAt: mockedDatabase[request.data]?.lastVideoPublishedAt ?? null
 			});

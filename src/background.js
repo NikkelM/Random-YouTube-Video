@@ -298,12 +298,13 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, videosToDelete =
 
 // Reads only the timestamps of a playlist instead of the whole thing, which is a fraction of the data
 async function readPlaylistTimestamps(playlistId) {
-	const [lastVideosChangedAt, lastVideoPublishedAt] = await Promise.all([
+	const [lastUpdatedDBAt, lastVideosChangedAt, lastVideoPublishedAt] = await Promise.all([
+		readDataOnce(playlistId + "/lastUpdatedDBAt"),
 		readDataOnce(playlistId + "/lastVideosChangedAt"),
 		readDataOnce(playlistId + "/lastVideoPublishedAt")
 	]);
 
-	return { lastVideosChangedAt, lastVideoPublishedAt };
+	return { lastUpdatedDBAt, lastVideosChangedAt, lastVideoPublishedAt };
 }
 
 async function readDataOnce(key) {

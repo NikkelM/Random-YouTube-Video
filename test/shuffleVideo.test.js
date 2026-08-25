@@ -1064,6 +1064,70 @@ describe('shuffleVideo', function () {
 				expect(chrome.runtime.sendMessage.args.map(arg => arg[0].command)).to.not.contain('getPlaylistFromDB');
 			});
 
+			it('should not fetch from the YouTube API if somebody else already refreshed the playlist', async function () {
+				const channelId = "UC_NOAPI";
+				const playlistId = channelId.replace("UC", "UU");
+				const videoId = "STABLEVIDEO";
+
+				const anHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+				const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+				const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+				const uploadDate = fiveDaysAgo.substring(0, 10);
+				const lastVideoPublishedAt = fiveDaysAgo.slice(0, 19) + 'Z';
+
+				// We last downloaded the playlist five days ago, so without any other information we would have to consult the YouTube API
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: threeDaysAgo,
+						lastFetchedFromDB: threeDaysAgo,
+						lastUpdatedDBAt: fiveDaysAgo,
+						lastVideosChangedAt: fiveDaysAgo,
+						lastVideoPublishedAt: lastVideoPublishedAt,
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: { [videoId]: uploadDate }
+						}
+					}
+				});
+
+				// Somebody else checked the playlist against the YouTube API an hour ago and found no new videos
+				await chrome.runtime.sendMessage({
+					command: "setKeyInDB",
+					data: {
+						key: playlistId,
+						val: {
+							lastUpdatedDBAt: anHourAgo,
+							lastVideosChangedAt: fiveDaysAgo,
+							lastVideoPublishedAt: lastVideoPublishedAt,
+							videos: { [videoId]: uploadDate }
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				const quotaBefore = configSync.userQuotaRemainingToday;
+
+				// Any request to the YouTube API would throw, as no response is mocked for it
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}`]: [{ status: 200 }]
+				});
+
+				chrome.runtime.sendMessage.resetHistory();
+				await chooseRandomVideo(channelId, false, domElement);
+
+				// Downloading the playlist is unnecessary, and so is spending quota on a check somebody else already did for us
+				expect(chrome.runtime.sendMessage.args.map(arg => arg[0].command)).to.not.contain('getPlaylistFromDB');
+				expect(configSync.userQuotaRemainingToday).to.be(quotaBefore);
+
+				// The timestamp of the database has to be adopted, or the next shuffle would consult the YouTube API again
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(playlistInfoAfter.lastUpdatedDBAt).to.be(anHourAgo);
+			});
+
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [

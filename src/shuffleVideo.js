@@ -113,12 +113,16 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			console.log(`Local uploads playlist for this channel may be outdated.${databaseSharing ? " Updating from the database..." : ""}`);
 
 			// Downloading a playlist is by far the largest request the extension makes, so we first ask the database whether anything changed at all
-			const playlistHasChanges = databaseSharing ? await playlistChangedInDB(uploadsPlaylistId, playlistInfo) : true;
+			const { playlistChanged, timestamps } = databaseSharing
+				? await getPlaylistChangesFromDB(uploadsPlaylistId, playlistInfo)
+				: { playlistChanged: true, timestamps: null };
 
-			if (!playlistHasChanges) {
+			if (!playlistChanged) {
 				console.log("The database does not have any videos we do not already know, so it does not have to be downloaded.");
 				// We just confirmed that we are in sync with the database
 				playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
+				// Somebody else may have checked the playlist against the YouTube API since we last downloaded it, which saves us from having to do it again
+				playlistInfo["lastUpdatedDBAt"] = newerTimestamp(playlistInfo["lastUpdatedDBAt"], timestamps.lastUpdatedDBAt);
 			} else {
 				// Try to get an updated version of the playlist, but keep the information about locally known videos and shorts
 				playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId, playlistInfo) : {};
@@ -184,22 +188,24 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 // ---------- Database ----------
 // Asks the database whether the videos of a playlist changed since we last downloaded them
 // Only the timestamps are read, which is a fraction of the size of the playlist itself
-async function playlistChangedInDB(playlistId, localPlaylistInfo) {
+async function getPlaylistChangesFromDB(playlistId, localPlaylistInfo) {
 	// We have never downloaded this playlist, so there is nothing to compare against
 	if (!localPlaylistInfo["lastVideosChangedAt"] || !localPlaylistInfo["lastVideoPublishedAt"]) {
-		return true;
+		return { playlistChanged: true, timestamps: null };
 	}
 
 	const timestamps = await chrome.runtime.sendMessage({ command: "getPlaylistTimestampsFromDB", data: playlistId });
 
 	// The playlist is not in the database (any more)
 	if (!timestamps?.lastVideosChangedAt) {
-		return true;
+		return { playlistChanged: true, timestamps: null };
 	}
 
 	// lastVideoPublishedAt is checked as well, as clients from before this field existed do not set it when they add videos
-	return timestamps.lastVideosChangedAt !== localPlaylistInfo["lastVideosChangedAt"]
+	const playlistChanged = timestamps.lastVideosChangedAt !== localPlaylistInfo["lastVideosChangedAt"]
 		|| timestamps.lastVideoPublishedAt !== localPlaylistInfo["lastVideoPublishedAt"];
+
+	return { playlistChanged, timestamps };
 }
 
 // Try to get the playlist from the database. If it does not exist, return an empty dictionary.
