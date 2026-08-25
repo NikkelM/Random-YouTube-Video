@@ -267,8 +267,8 @@ function respondWithResult(writePromise, sendResponse) {
 // }
 
 async function updatePlaylistInfoInDB(playlistId, playlistInfo, videosToDelete = []) {
-	// Find out if the playlist already exists in the database
-	const playlistExists = await readDataOnce(playlistId);
+	// Every playlist is required to have this timestamp, so reading it is enough to find out whether the playlist exists
+	const playlistExists = Boolean(await readDataOnce(playlistId + "/lastUpdatedDBAt"));
 
 	if (!playlistExists) {
 		console.log("Setting playlistInfo in the database...");

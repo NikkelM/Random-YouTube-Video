@@ -282,12 +282,15 @@ async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, sho
 		// Other clients use this to decide whether they have to download the videos again, so it may only change if they actually did
 		const videosChanged = getLength(newVideos) > 0 || videosToDelete.length > 0 || !databaseKnowsPlaylist;
 
-		const uploadSucceeded = await uploadPlaylistToDatabase(playlistInfo, lastUpdatedDBAt, videosToDatabase, videosToDelete, videosChanged, uploadsPlaylistId);
+		// Playlists uploaded by an older version do not have this timestamp yet, so it has to be backfilled before clients can compare against it
+		const setVideosChangedAt = videosChanged || !playlistInfo["lastVideosChangedAt"];
+
+		const uploadSucceeded = await uploadPlaylistToDatabase(playlistInfo, lastUpdatedDBAt, videosToDatabase, videosToDelete, videosChanged, setVideosChangedAt, uploadsPlaylistId);
 
 		// Only claim that we are in sync with the database if the upload actually went through
 		if (uploadSucceeded) {
 			playlistInfo["lastUpdatedDBAt"] = lastUpdatedDBAt;
-			if (videosChanged) {
+			if (setVideosChangedAt) {
 				playlistInfo["lastVideosChangedAt"] = lastUpdatedDBAt;
 			}
 			// If we just updated the database, we automatically have the same version as it
@@ -299,7 +302,7 @@ async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, sho
 }
 
 // Upload a playlist to the database, returning whether or not the upload succeeded
-async function uploadPlaylistToDatabase(playlistInfo, lastUpdatedDBAt, videosToDatabase, videosToDelete, videosChanged, uploadsPlaylistId) {
+async function uploadPlaylistToDatabase(playlistInfo, lastUpdatedDBAt, videosToDatabase, videosToDelete, videosChanged, setVideosChangedAt, uploadsPlaylistId) {
 	// Only upload the wanted keys
 	const playlistInfoForDatabase = {
 		"lastUpdatedDBAt": lastUpdatedDBAt,
@@ -308,7 +311,7 @@ async function uploadPlaylistToDatabase(playlistInfo, lastUpdatedDBAt, videosToD
 	};
 
 	// Other clients use this to see whether they have to download the videos again, so it may only change if they actually did
-	if (videosChanged) {
+	if (setVideosChangedAt) {
 		playlistInfoForDatabase["lastVideosChangedAt"] = lastUpdatedDBAt;
 	}
 

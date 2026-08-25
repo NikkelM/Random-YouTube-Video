@@ -58,13 +58,13 @@ function checkPlaylistsUploadedToDB(messages, input) {
 		expect(Object.keys(data.val)).to.contain('lastVideoPublishedAt');
 		expect(data.val.lastVideoPublishedAt.length).to.be(20);
 		expect(Object.keys(data.val)).to.contain('videos');
-		// An upload either changes the videos, in which case it has to carry some, or it only confirms that the playlist is still up to date
+		// Videos may only ever change together with the timestamp, which is also backfilled for playlists that do not have it yet
 		const numChangedVideos = Object.keys(data.val.videos).length + (data.videosToDelete?.length ?? 0);
+		if (numChangedVideos > 0) {
+			expect(Object.keys(data.val)).to.contain('lastVideosChangedAt');
+		}
 		if (data.val.lastVideosChangedAt) {
 			expect(data.val.lastVideosChangedAt.length).to.be(24);
-			expect(numChangedVideos).to.be.greaterThan(0);
-		} else {
-			expect(numChangedVideos).to.be(0);
 		}
 		// Check the format of the videos
 		for (const [videoId, publishTime] of Object.entries(data.val.videos)) {
@@ -998,6 +998,70 @@ describe('shuffleVideo', function () {
 				const secondCommands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
 				expect(secondCommands).to.contain('getPlaylistTimestampsFromDB');
 				expect(secondCommands).to.not.contain('getPlaylistFromDB');
+			});
+
+			it('should add the timestamp to playlists uploaded by an older version, even if no videos changed', async function () {
+				const channelId = "UC_BACKFILL";
+				const playlistId = channelId.replace("UC", "UU");
+				const videoId = "STABLEVIDEO";
+
+				const now = new Date().toISOString();
+				const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+				const uploadDate = threeDaysAgo.substring(0, 10);
+				const lastVideoPublishedAt = threeDaysAgo.slice(0, 19) + 'Z';
+
+				// An older version uploaded this playlist, so it does not have a lastVideosChangedAt yet, and it is old enough that the API is consulted
+				await chrome.runtime.sendMessage({
+					command: "setKeyInDB",
+					data: {
+						key: playlistId,
+						val: {
+							lastUpdatedDBAt: threeDaysAgo,
+							lastVideoPublishedAt: lastVideoPublishedAt,
+							videos: { [videoId]: uploadDate }
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				// The channel has not uploaded anything since, so the API returns the video the database already knows
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}`]: [{ status: 200 }],
+					'https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=50&pageToken=': [
+						new Response(JSON.stringify({
+							"kind": "youtube#playlistItemListResponse",
+							"pageInfo": { "totalResults": 1, "resultsPerPage": 50 },
+							"items": [{
+								"kind": "youtube#playlistItem",
+								"contentDetails": { "videoId": videoId, "videoPublishedAt": lastVideoPublishedAt }
+							}]
+						}))
+					]
+				});
+
+				chrome.runtime.sendMessage.resetHistory();
+				await chooseRandomVideo(channelId, false, domElement);
+
+				// Without the timestamp in the database, no client could ever skip the download, so it has to be backfilled
+				const uploads = chrome.runtime.sendMessage.args.filter(arg => arg[0].command === 'updatePlaylistInfoInDB');
+				expect(uploads.length).to.be(1);
+				expect(uploads[0][0].data.val.lastVideosChangedAt.length).to.be(24);
+
+				// The client has to remember what it wrote, or it would download the playlist again on the next shuffle
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(playlistInfoAfter.lastVideosChangedAt).to.be(uploads[0][0].data.val.lastVideosChangedAt);
+
+				const stalePlaylistInfo = deepCopy(playlistInfoAfter);
+				stalePlaylistInfo.lastFetchedFromDB = threeDaysAgo;
+				await chrome.storage.local.set({ [playlistId]: stalePlaylistInfo });
+
+				chrome.runtime.sendMessage.resetHistory();
+				await chooseRandomVideo(channelId, false, domElement);
+
+				expect(chrome.runtime.sendMessage.args.map(arg => arg[0].command)).to.not.contain('getPlaylistFromDB');
 			});
 
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
