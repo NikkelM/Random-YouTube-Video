@@ -60,6 +60,13 @@ chrome.runtime.sendMessage.callsFake((request) => {
 			// Return a playlist from the database
 			return Promise.resolve(deepCopy(mockedDatabase[request.data] ?? null));
 
+		case 'getPlaylistTimestampsFromDB':
+			// Return only the timestamps that tell a client whether it has to download the playlist
+			return Promise.resolve({
+				lastVideosChangedAt: mockedDatabase[request.data]?.lastVideosChangedAt ?? null,
+				lastVideoPublishedAt: mockedDatabase[request.data]?.lastVideoPublishedAt ?? null
+			});
+
 		// Videos are merged, and only the videos explicitly marked for deletion are removed
 		case 'updatePlaylistInfoInDB': {
 			if (global.failNextDatabaseWrite) {

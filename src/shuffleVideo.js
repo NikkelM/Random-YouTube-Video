@@ -112,8 +112,17 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 			(!databaseSharing && ((playlistInfo["lastAccessedLocally"] ?? new Date(0).toISOString()) < addHours(new Date(), -48).toISOString()))) {
 			console.log(`Local uploads playlist for this channel may be outdated.${databaseSharing ? " Updating from the database..." : ""}`);
 
-			// Try to get an updated version of the playlist, but keep the information about locally known videos and shorts
-			playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId, playlistInfo) : {};
+			// Downloading a playlist is by far the largest request the extension makes, so we first ask the database whether anything changed at all
+			const playlistHasChanges = databaseSharing ? await playlistChangedInDB(uploadsPlaylistId, playlistInfo) : true;
+
+			if (!playlistHasChanges) {
+				console.log("The database does not have any videos we do not already know, so it does not have to be downloaded.");
+				// We just confirmed that we are in sync with the database
+				playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
+			} else {
+				// Try to get an updated version of the playlist, but keep the information about locally known videos and shorts
+				playlistInfo = databaseSharing ? await tryGetPlaylistFromDB(uploadsPlaylistId, playlistInfo) : {};
+			}
 
 			// The playlist does not exist in the database (==it was deleted since the user last fetched it). Get it from the API.
 			// With the current functionality and db rules, this shouldn't happen, except if the user has opted out of database sharing.
@@ -173,6 +182,26 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 
 // --------------- Private ---------------
 // ---------- Database ----------
+// Asks the database whether the videos of a playlist changed since we last downloaded them
+// Only the timestamps are read, which is a fraction of the size of the playlist itself
+async function playlistChangedInDB(playlistId, localPlaylistInfo) {
+	// We have never downloaded this playlist, so there is nothing to compare against
+	if (!localPlaylistInfo["lastVideosChangedAt"] || !localPlaylistInfo["lastVideoPublishedAt"]) {
+		return true;
+	}
+
+	const timestamps = await chrome.runtime.sendMessage({ command: "getPlaylistTimestampsFromDB", data: playlistId });
+
+	// The playlist is not in the database (any more)
+	if (!timestamps?.lastVideosChangedAt) {
+		return true;
+	}
+
+	// lastVideoPublishedAt is checked as well, as clients from before this field existed do not set it when they add videos
+	return timestamps.lastVideosChangedAt !== localPlaylistInfo["lastVideosChangedAt"]
+		|| timestamps.lastVideoPublishedAt !== localPlaylistInfo["lastVideoPublishedAt"];
+}
+
 // Try to get the playlist from the database. If it does not exist, return an empty dictionary.
 async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 	const msg = {
@@ -231,29 +260,36 @@ async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, sho
 		const lastUpdatedDBAt = new Date().toISOString();
 
 		const videosToDelete = deletedVideos ?? [];
+		const newVideos = playlistInfo["newVideos"] ?? {};
+		// If we read this playlist from the database during this shuffle, it already knows every video we know about
+		const databaseKnowsPlaylist = Boolean(playlistInfo["lastUpdatedDBAt"]);
+
 		if (videosToDelete.length > 0) {
 			console.log("Some videos need to be deleted from the database. They will be removed individually...");
 		}
 
 		// We only ever add videos, as videos that are gone are removed from the database one by one
 		let videosToDatabase = {};
-		if (getLength(playlistInfo["newVideos"] ?? {}) > 0) {
-			console.log("Uploading new video IDs to the database...");
-			videosToDatabase = playlistInfo["newVideos"];
-		} else if (playlistInfo["lastUpdatedDBAt"] && videosToDelete.length > 0) {
-			// We read this playlist from the database during this shuffle, so it already knows all videos and only the deletions are left to send
-			console.log("Removing deleted video IDs from the database...");
+		if (databaseKnowsPlaylist) {
+			// Only what changed has to be sent, which is nothing at all if we just confirmed that the playlist is still up to date
+			videosToDatabase = newVideos;
 		} else {
 			// We cannot be sure that the database knows this playlist, so send everything we have
 			console.log("Uploading all known video IDs to the database...");
 			videosToDatabase = getAllVideosFromLocalPlaylist(playlistInfo);
 		}
 
-		const uploadSucceeded = await uploadPlaylistToDatabase(playlistInfo, lastUpdatedDBAt, videosToDatabase, videosToDelete, uploadsPlaylistId);
+		// Other clients use this to decide whether they have to download the videos again, so it may only change if they actually did
+		const videosChanged = getLength(newVideos) > 0 || videosToDelete.length > 0 || !databaseKnowsPlaylist;
+
+		const uploadSucceeded = await uploadPlaylistToDatabase(playlistInfo, lastUpdatedDBAt, videosToDatabase, videosToDelete, videosChanged, uploadsPlaylistId);
 
 		// Only claim that we are in sync with the database if the upload actually went through
 		if (uploadSucceeded) {
 			playlistInfo["lastUpdatedDBAt"] = lastUpdatedDBAt;
+			if (videosChanged) {
+				playlistInfo["lastVideosChangedAt"] = lastUpdatedDBAt;
+			}
 			// If we just updated the database, we automatically have the same version as it
 			playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
 		}
@@ -263,13 +299,18 @@ async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, sho
 }
 
 // Upload a playlist to the database, returning whether or not the upload succeeded
-async function uploadPlaylistToDatabase(playlistInfo, lastUpdatedDBAt, videosToDatabase, videosToDelete, uploadsPlaylistId) {
+async function uploadPlaylistToDatabase(playlistInfo, lastUpdatedDBAt, videosToDatabase, videosToDelete, videosChanged, uploadsPlaylistId) {
 	// Only upload the wanted keys
 	const playlistInfoForDatabase = {
 		"lastUpdatedDBAt": lastUpdatedDBAt,
 		"lastVideoPublishedAt": playlistInfo["lastVideoPublishedAt"] ?? new Date(0).toISOString().slice(0, 19) + 'Z',
 		"videos": videosToDatabase
 	};
+
+	// Other clients use this to see whether they have to download the videos again, so it may only change if they actually did
+	if (videosChanged) {
+		playlistInfoForDatabase["lastVideosChangedAt"] = lastUpdatedDBAt;
+	}
 
 	// Make sure the data is in the correct format
 	if (playlistInfoForDatabase["lastUpdatedDBAt"].length !== 24) {
@@ -280,7 +321,8 @@ async function uploadPlaylistToDatabase(playlistInfo, lastUpdatedDBAt, videosToD
 		alert(`Random YouTube Video:\nPlease send this information to the developer:\n\nlastVideoPublishedAt has the wrong format (got ${playlistInfoForDatabase["lastVideoPublishedAt"]}).\nChannelId: ${uploadsPlaylistId}.`);
 		return false;
 	}
-	if (getLength(playlistInfoForDatabase["videos"]) < 1 && videosToDelete.length < 1) {
+	// An upload that changes videos has to actually carry some, but confirming that a playlist is up to date sends only the timestamps
+	if (videosChanged && getLength(playlistInfoForDatabase["videos"]) < 1 && videosToDelete.length < 1) {
 		alert(`Random YouTube Video:\nPlease send this information to the developer:\n\nNo videos object was found.\nChannelId: ${uploadsPlaylistId}.`);
 		return false;
 	}
@@ -1330,6 +1372,14 @@ async function savePlaylistToLocalStorage(playlistId, playlistInfo, initialVideo
 		"lastVideoPublishedAt": newerTimestamp(playlistInfo["lastVideoPublishedAt"], storedPlaylistInfo["lastVideoPublishedAt"]) ?? new Date(0).toISOString().slice(0, 19) + 'Z',
 		"videos": mergeVideoKnowledge(storedPlaylistInfo["videos"], playlistInfo["videos"] ?? {}, initialVideoKnowledge)
 	};
+
+	// These are only known once the database has been read, and are what a later shuffle compares against to see if anything changed
+	if (playlistInfo["lastUpdatedDBAt"] ?? storedPlaylistInfo["lastUpdatedDBAt"]) {
+		playlistInfoForLocalStorage["lastUpdatedDBAt"] = newerTimestamp(playlistInfo["lastUpdatedDBAt"], storedPlaylistInfo["lastUpdatedDBAt"]);
+	}
+	if (playlistInfo["lastVideosChangedAt"] ?? storedPlaylistInfo["lastVideosChangedAt"]) {
+		playlistInfoForLocalStorage["lastVideosChangedAt"] = newerTimestamp(playlistInfo["lastVideosChangedAt"], storedPlaylistInfo["lastVideosChangedAt"]);
+	}
 
 	await chrome.storage.local.set({ [playlistId]: playlistInfoForLocalStorage });
 }

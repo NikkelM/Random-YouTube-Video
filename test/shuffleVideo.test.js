@@ -58,8 +58,14 @@ function checkPlaylistsUploadedToDB(messages, input) {
 		expect(Object.keys(data.val)).to.contain('lastVideoPublishedAt');
 		expect(data.val.lastVideoPublishedAt.length).to.be(20);
 		expect(Object.keys(data.val)).to.contain('videos');
-		// An upload has to do something: either add videos or remove them
-		expect(Object.keys(data.val.videos).length + (data.videosToDelete?.length ?? 0)).to.be.greaterThan(0);
+		// An upload either changes the videos, in which case it has to carry some, or it only confirms that the playlist is still up to date
+		const numChangedVideos = Object.keys(data.val.videos).length + (data.videosToDelete?.length ?? 0);
+		if (data.val.lastVideosChangedAt) {
+			expect(data.val.lastVideosChangedAt.length).to.be(24);
+			expect(numChangedVideos).to.be.greaterThan(0);
+		} else {
+			expect(numChangedVideos).to.be(0);
+		}
 		// Check the format of the videos
 		for (const [videoId, publishTime] of Object.entries(data.val.videos)) {
 			expect(videoId.length).to.be(11);
@@ -796,6 +802,202 @@ describe('shuffleVideo', function () {
 				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
 				expect(playlistInfoAfter.videos.knownShorts).to.have.key(shortId);
 				expect(playlistInfoAfter.videos.unknownType).to.not.have.key(shortId);
+			});
+
+			it('should not download the playlist again if its videos did not change', async function () {
+				const channelId = "UC_UNCHANGEDDB";
+				const playlistId = channelId.replace("UC", "UU");
+				const videoId = "STABLEVIDEO";
+
+				const now = new Date().toISOString();
+				const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+				const uploadDate = now.substring(0, 10);
+				const lastVideoPublishedAt = now.slice(0, 19) + 'Z';
+
+				// The local copy is stale enough that the database would normally be read again
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: threeDaysAgo,
+						lastUpdatedDBAt: now,
+						lastVideosChangedAt: now,
+						lastVideoPublishedAt: lastVideoPublishedAt,
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: { [videoId]: uploadDate }
+						}
+					}
+				});
+
+				await chrome.runtime.sendMessage({
+					command: "setKeyInDB",
+					data: {
+						key: playlistId,
+						val: {
+							lastUpdatedDBAt: now,
+							lastVideosChangedAt: now,
+							lastVideoPublishedAt: lastVideoPublishedAt,
+							videos: { [videoId]: uploadDate }
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}`]: [{ status: 200 }]
+				});
+
+				chrome.runtime.sendMessage.resetHistory();
+				await chooseRandomVideo(channelId, false, domElement);
+
+				const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+
+				// Only the timestamps may be read, as downloading the whole playlist would be wasted bandwidth
+				expect(commands).to.contain('getPlaylistTimestampsFromDB');
+				expect(commands).to.not.contain('getPlaylistFromDB');
+
+				// We are back in sync with the database, so the playlist does not have to be checked again for another 48 hours
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(playlistInfoAfter.lastFetchedFromDB).to.be.greaterThan(threeDaysAgo);
+			});
+
+			it('should download the playlist if its videos changed', async function () {
+				const channelId = "UC_CHANGEDDB";
+				const playlistId = channelId.replace("UC", "UU");
+				const knownVideoId = "STABLEVIDEO";
+				const addedVideoId = "ADDEDVIDEO1";
+
+				const now = new Date().toISOString();
+				const anHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+				const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+				const uploadDate = now.substring(0, 10);
+				const lastVideoPublishedAt = now.slice(0, 19) + 'Z';
+
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: threeDaysAgo,
+						lastUpdatedDBAt: anHourAgo,
+						lastVideosChangedAt: anHourAgo,
+						lastVideoPublishedAt: lastVideoPublishedAt,
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: { [knownVideoId]: uploadDate }
+						}
+					}
+				});
+
+				// Someone else added a video to the database since we last downloaded it
+				await chrome.runtime.sendMessage({
+					command: "setKeyInDB",
+					data: {
+						key: playlistId,
+						val: {
+							lastUpdatedDBAt: now,
+							lastVideosChangedAt: now,
+							lastVideoPublishedAt: lastVideoPublishedAt,
+							videos: {
+								[knownVideoId]: uploadDate,
+								[addedVideoId]: uploadDate
+							}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				setUpMockResponses({
+					'https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=': [{ status: 200 }]
+				});
+
+				chrome.runtime.sendMessage.resetHistory();
+				await chooseRandomVideo(channelId, false, domElement);
+
+				const commands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+				expect(commands).to.contain('getPlaylistTimestampsFromDB');
+				expect(commands).to.contain('getPlaylistFromDB');
+
+				// The video the other user added has to end up in the local playlist
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(getAllVideosAsOneObject(playlistInfoAfter)).to.have.keys([knownVideoId, addedVideoId]);
+			});
+
+			it('should skip the download on the next shuffle after it has stored the timestamps once', async function () {
+				const channelId = "UC_ROUNDTRIP";
+				const playlistId = channelId.replace("UC", "UU");
+				const videoId = "STABLEVIDEO";
+
+				const now = new Date().toISOString();
+				const anHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+				const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+				const uploadDate = now.substring(0, 10);
+				const lastVideoPublishedAt = now.slice(0, 19) + 'Z';
+
+				// The local copy is from before this field existed, so the first shuffle has to download the playlist
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: threeDaysAgo,
+						lastVideoPublishedAt: lastVideoPublishedAt,
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: { [videoId]: uploadDate }
+						}
+					}
+				});
+
+				await chrome.runtime.sendMessage({
+					command: "setKeyInDB",
+					data: {
+						key: playlistId,
+						val: {
+							lastUpdatedDBAt: now,
+							lastVideosChangedAt: anHourAgo,
+							lastVideoPublishedAt: lastVideoPublishedAt,
+							videos: { [videoId]: uploadDate }
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${videoId}`]: [{ status: 200 }]
+				});
+
+				chrome.runtime.sendMessage.resetHistory();
+				await chooseRandomVideo(channelId, false, domElement);
+
+				// The first shuffle has to download the playlist, as there is nothing to compare against yet
+				expect(chrome.runtime.sendMessage.args.map(arg => arg[0].command)).to.contain('getPlaylistFromDB');
+
+				// The timestamps of the database have to be stored exactly as they are, or they could never match again
+				const playlistInfoAfterFirst = await getKeyFromLocalStorage(playlistId);
+				expect(playlistInfoAfterFirst.lastVideosChangedAt).to.be(anHourAgo);
+				expect(playlistInfoAfterFirst.lastVideoPublishedAt).to.be(lastVideoPublishedAt);
+
+				// Make the local copy old enough that the database would be consulted again
+				const stalePlaylistInfo = deepCopy(playlistInfoAfterFirst);
+				stalePlaylistInfo.lastFetchedFromDB = threeDaysAgo;
+				await chrome.storage.local.set({ [playlistId]: stalePlaylistInfo });
+
+				chrome.runtime.sendMessage.resetHistory();
+				await chooseRandomVideo(channelId, false, domElement);
+
+				// Nothing changed in the database, so the second shuffle may only read the timestamps
+				const secondCommands = chrome.runtime.sendMessage.args.map(arg => arg[0].command);
+				expect(secondCommands).to.contain('getPlaylistTimestampsFromDB');
+				expect(secondCommands).to.not.contain('getPlaylistFromDB');
 			});
 
 			it('should alert the user if the channel has more than 20000 uploads', async function () {

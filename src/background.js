@@ -169,6 +169,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			// If the database cannot be reached we act as if the playlist is not in it, so the shuffle falls back to the YouTube API
 			respondWithFallback(readDataOnce('uploadsPlaylists/' + request.data), sendResponse, null);
 			break;
+		// Reads only the timestamps of a playlist, which tell us whether the whole playlist has to be downloaded
+		case "getPlaylistTimestampsFromDB":
+			respondWithFallback(readPlaylistTimestamps('uploadsPlaylists/' + request.data), sendResponse, null);
+			break;
 		// Updates a playlist in Firebase, adding new videos and removing videos that cannot be watched any more
 		case "updatePlaylistInfoInDB":
 			respondWithResult(updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, request.data.videosToDelete), sendResponse);
@@ -290,6 +294,16 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, videosToDelete =
 	}
 
 	return "PlaylistInfo was sent to database.";
+}
+
+// Reads only the timestamps of a playlist instead of the whole thing, which is a fraction of the data
+async function readPlaylistTimestamps(playlistId) {
+	const [lastVideosChangedAt, lastVideoPublishedAt] = await Promise.all([
+		readDataOnce(playlistId + "/lastVideosChangedAt"),
+		readDataOnce(playlistId + "/lastVideoPublishedAt")
+	]);
+
+	return { lastVideosChangedAt, lastVideoPublishedAt };
 }
 
 async function readDataOnce(key) {
