@@ -45,6 +45,10 @@ function setUpMockResponses(mockResponses) {
 	});
 }
 
+// Every key the database rules allow a playlist to have
+// The rules end in a catch-all that rejects everything else, so a single unknown key makes the entire write fail for every user
+const allowedDatabaseKeys = ['lastUpdatedDBAt', 'lastVideosChangedAt', 'lastVideoPublishedAt', 'videos'];
+
 // Checks that a set of messages contains the correct data format for the database
 function checkPlaylistsUploadedToDB(messages, input) {
 	messages.forEach((message) => {
@@ -53,6 +57,8 @@ function checkPlaylistsUploadedToDB(messages, input) {
 		expect(message.length).to.be(1);
 
 		expect(data.key).to.be(input.playlistId);
+		// Adding a key here without adding it to the rules first would break shuffling for everybody, so the shape has to be exact
+		expect(Object.keys(data.val).filter(key => !allowedDatabaseKeys.includes(key))).to.eql([]);
 		expect(Object.keys(data.val)).to.contain('lastUpdatedDBAt');
 		expect(data.val.lastUpdatedDBAt.length).to.be(24);
 		expect(Object.keys(data.val)).to.contain('lastVideoPublishedAt');
