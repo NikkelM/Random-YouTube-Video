@@ -3,7 +3,7 @@
 import { configSync, setSyncStorageValue, setSessionStorageValue } from "./chromeStorage.js";
 import { isFirefox, firebaseConfig } from "./config.js";
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getDatabase, ref, child, update, get, remove } from "firebase/database";
+import { getDatabase, ref, child, update, get } from "firebase/database";
 import { getFirestore, query, collection, getDocs, orderBy, limit, where } from "firebase/firestore";
 // We need to import utils.js to get the console re-routing function
 import { versionIsOlderThan } from "./utils.js";
@@ -170,10 +170,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		case "updatePlaylistInfoInDB":
 			respondWithResult(updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, request.data.videosToDelete), sendResponse);
 			break;
-		// Before v1.0.0 the videos were stored in an array without upload times, so they need to all be re-fetched
-		case 'updateDBPlaylistToV1.0.0':
-			respondWithResult(updateDBPlaylistToV1_0_0('uploadsPlaylists/' + request.data.key), sendResponse);
-			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":
 			respondWithFallback(getAPIKey(false, request.data.useAPIKeyAtIndex), sendResponse, { APIKey: null, isCustomKey: false, keyIndex: null });
@@ -290,13 +286,6 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, videosToDelete =
 	}
 
 	return "PlaylistInfo was sent to database.";
-}
-
-async function updateDBPlaylistToV1_0_0(playlistId) {
-	// Remove all videos from the database
-	await remove(ref(firebase, playlistId + '/videos'));
-
-	return "Videos were removed from the database playlist.";
 }
 
 async function readDataOnce(key) {
