@@ -1,18 +1,21 @@
 // Background service worker for the extension, which is run ("started") on extension initialization
 // Handles communication between the extension and the content script as well as Firebase interactions
-import { configSync, setSyncStorageValue, setSessionStorageValue } from "./chromeStorage.js";
+import { configSync, setSyncStorageValue } from "./chromeStorage.js";
 import { isFirefox, firebaseConfig } from "./config.js";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import { getDatabase, ref, child, update, get } from "firebase/database";
-import { getFirestore, query, collection, getDocs, orderBy, limit, where } from "firebase/firestore";
 // We need to import utils.js to get the console re-routing function
 import { versionIsOlderThan } from "./utils.js";
+
+// Disabled imports while the news feature is disabled to keep bundle size small
+// import { setSessionStorageValue } from "./chromeStorage.js";
+// import { getFirestore, query, collection, getDocs, orderBy, limit, where } from "firebase/firestore";
 
 // ---------- Initialization/Chrome event listeners ----------
 // ---------- Firebase ----------
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const firebase = getDatabase(app);
-const firestore = getFirestore(app);
+// const firestore = getFirestore(app);
 
 await initExtension();
 
@@ -55,7 +58,7 @@ async function checkLocalStorageCapacity() {
 		const localStorageContents = await chrome.storage.local.get();
 
 		// We only need the keys that hold playlists, which is signified by the existence of the "videos" sub-key
-		const allPlaylists = Object.fromEntries(Object.entries(localStorageContents).filter(([key, value]) => value["videos"]));
+		const allPlaylists = Object.fromEntries(Object.entries(localStorageContents).filter(([, playlist]) => playlist["videos"]));
 
 		// Sort the playlists by lastAccessedLocally value
 		const sortedPlaylists = Object.entries(allPlaylists).sort((a, b) => {
@@ -64,7 +67,7 @@ async function checkLocalStorageCapacity() {
 
 		// Remove the 20% of playlists that have not been accessed the longest
 		const playlistsToRemove = sortedPlaylists.slice(Math.floor(sortedPlaylists.length * 0.8));
-		for (const [playlistId, playlistInfo] of playlistsToRemove) {
+		for (const [playlistId] of playlistsToRemove) {
 			console.log(`Removing playlist ${playlistId} from local storage...`, true);
 			chrome.storage.local.remove(playlistId);
 		}
@@ -110,7 +113,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 		let configSyncValues = await chrome.storage.sync.get();
 
 		// For each object entry in channelSettings that has the "shufflePercentage" item, rename it to "percentageValue" and add a new key "activeOption": "percentageOption"
-		for (const [channelID, channelSetting] of Object.entries(configSyncValues["channelSettings"])) {
+		for (const [, channelSetting] of Object.entries(configSyncValues["channelSettings"])) {
 			if (channelSetting["shufflePercentage"]) {
 				channelSetting["percentageValue"] = channelSetting["shufflePercentage"];
 				channelSetting["activeOption"] = "percentageOption";
@@ -222,41 +225,42 @@ function respondWithResult(writePromise, sendResponse) {
 
 // Interact with Firestore and get the latest news
 // createdAt is a custom field
-async function checkForAndShowNews() {
-	if (configSync.nextNewsCheckTime >= Date.now()) {
-		console.log(`Skipping news check until ${new Date(configSync.nextNewsCheckTime).toLocaleString()}`);
-		return;
-	}
-
-	const q = query(
-		collection(firestore, "news"),
-		where("published", "==", true),
-		orderBy("createdAt", "desc"),
-		limit(1)
-	);
-
-	const querySnapshot = await getDocs(q);
-	if (querySnapshot.empty) {
-		console.log("No published news articles found in the database.");
-		return;
-	}
-
-	const doc = querySnapshot.docs[0];
-	const news = {
-		id: doc.id,
-		...doc.data()
-	};
-
-	// Set the next time to check for news to tomorrow
-	await setSyncStorageValue("nextNewsCheckTime", new Date(new Date().setHours(24, 0, 0, 0)).getTime());
-
-	// Check if the published flag is true, and if the user has not viewed this news article yet, indicated through the lastViewedNewsId
-	if (news && news.published && news.id !== configSync.lastViewedNewsId) {
-		setSyncStorageValue("lastViewedNewsId", news.id);
-		await setSessionStorageValue("news", news);
-		chrome.tabs.create({ url: "html/breakingNews.html" });
-	}
-}
+// Disabled together with the imports at the top of the file while the news feature is disabled to keep bundle size small
+// async function checkForAndShowNews() {
+// 	if (configSync.nextNewsCheckTime >= Date.now()) {
+// 		console.log(`Skipping news check until ${new Date(configSync.nextNewsCheckTime).toLocaleString()}`);
+// 		return;
+// 	}
+//
+// 	const q = query(
+// 		collection(firestore, "news"),
+// 		where("published", "==", true),
+// 		orderBy("createdAt", "desc"),
+// 		limit(1)
+// 	);
+//
+// 	const querySnapshot = await getDocs(q);
+// 	if (querySnapshot.empty) {
+// 		console.log("No published news articles found in the database.");
+// 		return;
+// 	}
+//
+// 	const doc = querySnapshot.docs[0];
+// 	const news = {
+// 		id: doc.id,
+// 		...doc.data()
+// 	};
+//
+// 	// Set the next time to check for news to tomorrow
+// 	await setSyncStorageValue("nextNewsCheckTime", new Date(new Date().setHours(24, 0, 0, 0)).getTime());
+//
+// 	// Check if the published flag is true, and if the user has not viewed this news article yet, indicated through the lastViewedNewsId
+// 	if (news && news.published && news.id !== configSync.lastViewedNewsId) {
+// 		setSyncStorageValue("lastViewedNewsId", news.id);
+// 		await setSessionStorageValue("news", news);
+// 		chrome.tabs.create({ url: "html/breakingNews.html" });
+// 	}
+// }
 
 async function updatePlaylistInfoInDB(playlistId, playlistInfo, videosToDelete = []) {
 	// Find out if the playlist already exists in the database
@@ -270,7 +274,7 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, videosToDelete =
 		console.log("Updating playlistInfo in the database...");
 
 		// Everything is sent as one atomic update, so nobody can read the new metadata together with the old videos
-		const playlistUpdates = Object.fromEntries(Object.entries(playlistInfo).filter(([key, value]) => (key !== "videos")));
+		const playlistUpdates = Object.fromEntries(Object.entries(playlistInfo).filter(([key]) => (key !== "videos")));
 
 		// Only touch the videos we know about, so videos added by someone else in the meantime are never lost
 		for (const [videoId, uploadTime] of Object.entries(playlistInfo.videos ?? {})) {
