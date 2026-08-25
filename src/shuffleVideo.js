@@ -183,26 +183,6 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 	// Some of the tests break if we do not create a deepCopy here, as the local and database object somehow get linked
 	let playlistInfo = await chrome.runtime.sendMessage(msg);
 
-	/* c8 ignore start - These are legacy conversions we don't want to test */
-	// In case the playlist is still in the old Array format (before v1.0.0) in the database, convert it to the new format
-	if (playlistInfo && playlistInfo["videos"] && Array.isArray(playlistInfo["videos"])) {
-		console.log("The playlist was found in the database, but it is in an old format (before v1.0.0). Removing...");
-
-		await chrome.runtime.sendMessage({ command: 'updateDBPlaylistToV1.0.0', data: { key: playlistId } });
-		return {};
-	}
-
-	// In case the videos have the upload date AND time in the database (before v1.3.0), convert it to only the date
-	if (playlistInfo && playlistInfo["videos"] && typeof playlistInfo["videos"] === "string" && playlistInfo["videos"][Object.keys(playlistInfo["videos"])[0]].length > 10) {
-		console.log("The playlist was found in the database, but it is in an old format (before v1.3.0). Updating format...");
-
-		// Convert the videos to contain only the date
-		for (const videoId in playlistInfo["videos"]) {
-			playlistInfo["videos"][videoId] = playlistInfo["videos"][videoId].substring(0, 10);
-		}
-	}
-	/* c8 ignore stop */
-
 	if (!playlistInfo || !playlistInfo["videos"]) {
 		return {};
 	}

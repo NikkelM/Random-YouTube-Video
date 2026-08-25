@@ -3,10 +3,10 @@
 import { configSync, setSyncStorageValue, setSessionStorageValue } from "./chromeStorage.js";
 import { isFirefox, firebaseConfig } from "./config.js";
 import { getApp, getApps, initializeApp } from "firebase/app";
-import { getDatabase, ref, child, update, get, remove } from "firebase/database";
+import { getDatabase, ref, child, update, get } from "firebase/database";
 import { getFirestore, query, collection, getDocs, orderBy, limit, where } from "firebase/firestore";
 // We need to import utils.js to get the console re-routing function
-import { } from "./utils.js";
+import { versionIsOlderThan } from "./utils.js";
 
 // ---------- Initialization/Chrome event listeners ----------
 // ---------- Firebase ----------
@@ -30,7 +30,7 @@ async function initExtension() {
 		await chrome.tabs.create({ url: welcomeUrl });
 	}
 	// 3.0.0 introduced the previousVersion config value, so the update would not be handled correctly here
-	if (configSync.previousVersion < manifestData.version || configSync.previousVersion === "3.0.0") {
+	if (versionIsOlderThan(configSync.previousVersion, manifestData.version) || configSync.previousVersion === "3.0.0") {
 		await handleExtensionUpdate(manifestData, configSync.previousVersion);
 	}
 
@@ -93,7 +93,7 @@ async function handleExtensionUpdate(manifestData, previousVersion) {
 
 async function handleVersionSpecificUpdates(previousVersion) {
 	// v3.0.1 changed the data type for the shuffleIgnoreShortsOption from boolean to number
-	if (previousVersion < "3.0.1") {
+	if (versionIsOlderThan(previousVersion, "3.0.1")) {
 		console.log("Updating sync storage to v3.0.1 format...", true);
 		const syncStorageContents = await chrome.storage.sync.get();
 		if (syncStorageContents["shuffleIgnoreShortsOption"] == true) {
@@ -104,7 +104,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 	}
 
 	// v1.5.0 renamed some keys in the channelSettings object
-	if (previousVersion < "1.5.0") {
+	if (versionIsOlderThan(previousVersion, "1.5.0")) {
 		console.log("Updating channelSettings to v1.5.0 format...", true);
 
 		let configSyncValues = await chrome.storage.sync.get();
@@ -121,7 +121,7 @@ async function handleVersionSpecificUpdates(previousVersion) {
 	}
 
 	// v1.3.0 removed the "youtubeAPIKey" key from local storage, which was replaced by the "youtubeAPIKeys" key
-	if (previousVersion < "1.3.0") {
+	if (versionIsOlderThan(previousVersion, "1.3.0")) {
 		console.log("Updating local storage to v1.3.0 format...", true);
 		const localStorageContents = await chrome.storage.local.get();
 		// Delete the youtubeAPIKey from local storage if it exists
@@ -169,10 +169,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		// Updates a playlist in Firebase, adding new videos and removing videos that cannot be watched any more
 		case "updatePlaylistInfoInDB":
 			respondWithResult(updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, request.data.videosToDelete), sendResponse);
-			break;
-		// Before v1.0.0 the videos were stored in an array without upload times, so they need to all be re-fetched
-		case 'updateDBPlaylistToV1.0.0':
-			respondWithResult(updateDBPlaylistToV1_0_0('uploadsPlaylists/' + request.data.key), sendResponse);
 			break;
 		// Gets an API key depending on user settings
 		case "getAPIKey":
@@ -290,13 +286,6 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, videosToDelete =
 	}
 
 	return "PlaylistInfo was sent to database.";
-}
-
-async function updateDBPlaylistToV1_0_0(playlistId) {
-	// Remove all videos from the database
-	await remove(ref(firebase, playlistId + '/videos'));
-
-	return "Videos were removed from the database playlist.";
 }
 
 async function readDataOnce(key) {

@@ -2,7 +2,7 @@ import expect from 'expect.js';
 import sinon from 'sinon';
 import { JSDOM } from 'jsdom';
 
-import { isVideoUrl, getPageTypeFromURL, isEmpty, getLength, addHours, delay, setDOMTextWithDelay, RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
+import { isVideoUrl, getPageTypeFromURL, isEmpty, getLength, addHours, delay, setDOMTextWithDelay, versionIsOlderThan, RandomYoutubeVideoError, YoutubeAPIError } from '../src/utils.js';
 
 describe('utils.js', function () {
 	context('URL helpers', function () {
@@ -185,6 +185,50 @@ describe('utils.js', function () {
 				let date = new Date("2019-01-01T00:00:00Z");
 				date = addHours(date, -1);
 				expect(date.toISOString()).to.be("2018-12-31T23:00:00.000Z");
+			});
+		});
+
+		context('versionIsOlderThan()', function () {
+			it('should compare the parts as numbers, not as text', function () {
+				// Comparing the strings directly would consider 3.0.9 to be newer than 3.0.10
+				expect(versionIsOlderThan("3.0.9", "3.0.10")).to.be(true);
+				expect(versionIsOlderThan("3.0.10", "3.0.9")).to.be(false);
+
+				expect(versionIsOlderThan("3.9.9", "3.10.0")).to.be(true);
+				expect(versionIsOlderThan("3.10.0", "3.9.9")).to.be(false);
+
+				expect(versionIsOlderThan("1.9.0", "10.0.0")).to.be(true);
+			});
+
+			it('should return false for the same version', function () {
+				expect(versionIsOlderThan("3.1.14", "3.1.14")).to.be(false);
+			});
+
+			it('should treat missing parts as zero', function () {
+				expect(versionIsOlderThan("3.1", "3.1.0")).to.be(false);
+				expect(versionIsOlderThan("3.1.0", "3.1")).to.be(false);
+				expect(versionIsOlderThan("3.1", "3.1.1")).to.be(true);
+			});
+
+			it('should compare each part in order', function () {
+				expect(versionIsOlderThan("2.99.99", "3.0.0")).to.be(true);
+				expect(versionIsOlderThan("3.0.0", "2.99.99")).to.be(false);
+			});
+
+			it('should not break if a version is missing or malformed', function () {
+				expect(versionIsOlderThan(null, "1.0.0")).to.be(true);
+				expect(versionIsOlderThan(undefined, "1.0.0")).to.be(true);
+				expect(versionIsOlderThan("1.0.0", null)).to.be(false);
+				expect(versionIsOlderThan("not a version", "1.0.0")).to.be(true);
+			});
+
+			it('should recognise the versions the update handling depends on', function () {
+				// These are the versions that trigger a migration
+				expect(versionIsOlderThan("1.2.9", "1.3.0")).to.be(true);
+				expect(versionIsOlderThan("1.3.0", "1.3.0")).to.be(false);
+				expect(versionIsOlderThan("1.4.10", "1.5.0")).to.be(true);
+				expect(versionIsOlderThan("3.0.0", "3.0.1")).to.be(true);
+				expect(versionIsOlderThan("3.1.14", "3.0.1")).to.be(false);
 			});
 		});
 
