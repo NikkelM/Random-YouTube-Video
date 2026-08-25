@@ -1261,6 +1261,56 @@ describe('shuffleVideo', function () {
 				expect(chrome.runtime.sendMessage.args.map(arg => arg[0].command)).to.not.contain('getPlaylistFromDB');
 			});
 
+			it('should not try to remove the last video of a playlist from the database', async function () {
+				const channelId = "UC_ALLGONE";
+				const playlistId = channelId.replace("UC", "UU");
+				const deletedVideoId = "DELETEDVIDE";
+
+				const now = new Date().toISOString();
+				const anHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+				const uploadDate = now.substring(0, 10);
+				const lastVideoPublishedAt = now.slice(0, 19) + 'Z';
+
+				// The only video this channel has is gone, so nothing would be left once it is removed
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: now,
+						lastFetchedFromDB: now,
+						lastDownloadedFromDB: now,
+						lastUpdatedDBAt: anHourAgo,
+						lastVideosChangedAt: anHourAgo,
+						lastVideoPublishedAt: lastVideoPublishedAt,
+						videos: {
+							knownVideos: { [deletedVideoId]: uploadDate },
+							knownShorts: {},
+							unknownType: {}
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${deletedVideoId}`]: [{ status: 400 }]
+				});
+
+				chrome.runtime.sendMessage.resetHistory();
+
+				try {
+					await chooseRandomVideo(channelId, false, domElement);
+				} catch (error) {
+					expect(error).to.be.a(RandomYoutubeVideoError);
+					expect(error.code).to.be("RYV-6B");
+
+					// The database rules reject a playlist without videos, so sending this would fail on every single shuffle
+					expect(chrome.runtime.sendMessage.args.map(arg => arg[0].command)).to.not.contain('updatePlaylistInfoInDB');
+					return;
+				}
+				expect().fail("No error was thrown");
+			});
+
 			it('should alert the user if the channel has more than 20000 uploads', async function () {
 				// Create a mock response with too many uploads
 				let YTResponses = [
