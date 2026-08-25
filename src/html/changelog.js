@@ -14,7 +14,7 @@ domElements.whatsNewHeader.innerText = `What's new in v${currentVersion}:`;
 // --- Build dropdown menu ---
 let changelogText = await fetchChangelog(`v${currentVersion}`);
 
-const availableVersions = changelogText.match(/v\d+(\.\d+)+(-\w+)?/g);
+const availableVersions = [...changelogText.matchAll(/^## (v\d+(?:\.\d+)+(?:-\w+)?)[ \t]*\r?$/gm)].map((heading) => heading[1]);
 try {
 	addVersionsToDropdown(availableVersions);
 } catch (error) {
