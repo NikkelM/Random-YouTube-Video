@@ -819,6 +819,7 @@ describe('shuffleVideo', function () {
 					[playlistId]: {
 						lastAccessedLocally: now,
 						lastFetchedFromDB: threeDaysAgo,
+						lastDownloadedFromDB: threeDaysAgo,
 						lastUpdatedDBAt: now,
 						lastVideosChangedAt: now,
 						lastVideoPublishedAt: lastVideoPublishedAt,
@@ -881,6 +882,7 @@ describe('shuffleVideo', function () {
 					[playlistId]: {
 						lastAccessedLocally: now,
 						lastFetchedFromDB: threeDaysAgo,
+						lastDownloadedFromDB: threeDaysAgo,
 						lastUpdatedDBAt: anHourAgo,
 						lastVideosChangedAt: anHourAgo,
 						lastVideoPublishedAt: lastVideoPublishedAt,
@@ -1080,6 +1082,7 @@ describe('shuffleVideo', function () {
 					[playlistId]: {
 						lastAccessedLocally: threeDaysAgo,
 						lastFetchedFromDB: threeDaysAgo,
+						lastDownloadedFromDB: threeDaysAgo,
 						lastUpdatedDBAt: fiveDaysAgo,
 						lastVideosChangedAt: fiveDaysAgo,
 						lastVideoPublishedAt: lastVideoPublishedAt,
@@ -1126,6 +1129,67 @@ describe('shuffleVideo', function () {
 				// The timestamp of the database has to be adopted, or the next shuffle would consult the YouTube API again
 				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
 				expect(playlistInfoAfter.lastUpdatedDBAt).to.be(anHourAgo);
+			});
+
+			it('should download the playlist again if it has not been downloaded in a long time', async function () {
+				const channelId = "UC_STALE";
+				const playlistId = channelId.replace("UC", "UU");
+				const knownVideoId = "KNOWNVIDEOA";
+				const addedVideoId = "ADDEDVIDEOB";
+
+				const anHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+				const twentyDaysAgo = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString();
+				const uploadDate = twentyDaysAgo.substring(0, 10);
+				const lastVideoPublishedAt = twentyDaysAgo.slice(0, 19) + 'Z';
+
+				// Every timestamp matches the database, so nothing would suggest that the playlist has to be downloaded
+				await chrome.storage.local.set({
+					[playlistId]: {
+						lastAccessedLocally: anHourAgo,
+						lastFetchedFromDB: twentyDaysAgo,
+						lastDownloadedFromDB: twentyDaysAgo,
+						lastUpdatedDBAt: anHourAgo,
+						lastVideosChangedAt: twentyDaysAgo,
+						lastVideoPublishedAt: lastVideoPublishedAt,
+						videos: {
+							knownVideos: {},
+							knownShorts: {},
+							unknownType: { [knownVideoId]: uploadDate }
+						}
+					}
+				});
+
+				// A client from before lastVideosChangedAt existed added a video without updating either timestamp
+				await chrome.runtime.sendMessage({
+					command: "setKeyInDB",
+					data: {
+						key: playlistId,
+						val: {
+							lastUpdatedDBAt: anHourAgo,
+							lastVideosChangedAt: twentyDaysAgo,
+							lastVideoPublishedAt: lastVideoPublishedAt,
+							videos: { [knownVideoId]: uploadDate, [addedVideoId]: uploadDate }
+						}
+					}
+				});
+
+				await setSyncStorageValue("databaseSharingEnabledOption", true);
+				await setSyncStorageValue("shuffleIgnoreShortsOption", "1");
+				await setSyncStorageValue("shuffleOpenAsPlaylistOption", false);
+
+				setUpMockResponses({
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${knownVideoId}`]: [{ status: 200 }],
+					[`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${addedVideoId}`]: [{ status: 200 }]
+				});
+
+				chrome.runtime.sendMessage.resetHistory();
+				await chooseRandomVideo(channelId, false, domElement);
+
+				// Without downloading the playlist every now and then, there would be no way to ever learn about the video the other client added
+				expect(chrome.runtime.sendMessage.args.map(arg => arg[0].command)).to.contain('getPlaylistFromDB');
+
+				const playlistInfoAfter = await getKeyFromLocalStorage(playlistId);
+				expect(Object.keys(getAllVideosAsOneObject(playlistInfoAfter))).to.contain(addedVideoId);
 			});
 
 			it('should alert the user if the channel has more than 20000 uploads', async function () {

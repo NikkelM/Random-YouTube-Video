@@ -191,14 +191,21 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 async function getPlaylistChangesFromDB(playlistId, localPlaylistInfo) {
 	// We have never downloaded this playlist, so there is nothing to compare against
 	if (!localPlaylistInfo["lastVideosChangedAt"] || !localPlaylistInfo["lastVideoPublishedAt"]) {
-		return { playlistChanged: true, timestamps: null };
+		return { playlistChanged: true, timestamps: {} };
+	}
+
+	// Bound how long we can be out of sync without noticing, no matter what the timestamps say
+	const forceDownloadAfterDays = 14;
+	const lastDownloaded = localPlaylistInfo["lastDownloadedFromDB"] ?? new Date(0).toISOString();
+	if (lastDownloaded < addHours(new Date(), -24 * forceDownloadAfterDays).toISOString()) {
+		return { playlistChanged: true, timestamps: {} };
 	}
 
 	const timestamps = await chrome.runtime.sendMessage({ command: "getPlaylistTimestampsFromDB", data: playlistId });
 
 	// The playlist is not in the database (any more)
 	if (!timestamps?.lastVideosChangedAt) {
-		return { playlistChanged: true, timestamps: null };
+		return { playlistChanged: true, timestamps: {} };
 	}
 
 	// lastVideoPublishedAt is checked as well, as clients from before this field existed do not set it when they add videos
@@ -223,6 +230,8 @@ async function tryGetPlaylistFromDB(playlistId, localPlaylistInfo = null) {
 	}
 
 	playlistInfo["lastFetchedFromDB"] = new Date().toISOString();
+	// Unlike lastFetchedFromDB, this only ever advances when the videos were actually downloaded, which is what bounds how stale we can get
+	playlistInfo["lastDownloadedFromDB"] = playlistInfo["lastFetchedFromDB"];
 
 	const videosCopy = JSON.parse(JSON.stringify(playlistInfo["videos"]));
 	if (!localPlaylistInfo) {
@@ -1388,6 +1397,9 @@ async function savePlaylistToLocalStorage(playlistId, playlistInfo, initialVideo
 	}
 	if (playlistInfo["lastVideosChangedAt"] ?? storedPlaylistInfo["lastVideosChangedAt"]) {
 		playlistInfoForLocalStorage["lastVideosChangedAt"] = newerTimestamp(playlistInfo["lastVideosChangedAt"], storedPlaylistInfo["lastVideosChangedAt"]);
+	}
+	if (playlistInfo["lastDownloadedFromDB"] ?? storedPlaylistInfo["lastDownloadedFromDB"]) {
+		playlistInfoForLocalStorage["lastDownloadedFromDB"] = newerTimestamp(playlistInfo["lastDownloadedFromDB"], storedPlaylistInfo["lastDownloadedFromDB"]);
 	}
 
 	await chrome.storage.local.set({ [playlistId]: playlistInfoForLocalStorage });
