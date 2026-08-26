@@ -8,6 +8,7 @@ import { getDatabase, ref, child, update, get } from "firebase/database";
 import { versionIsOlderThan } from "./utils.js";
 
 // Disabled imports while the news feature is disabled to keep bundle size small
+// Re-enabling the feature also needs its page built and copied again in webpack.common.cjs, and its config keys restored in config.js
 // import { setSessionStorageValue } from "./chromeStorage.js";
 // import { getFirestore, query, collection, getDocs, orderBy, limit, where } from "firebase/firestore";
 
@@ -169,6 +170,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			// If the database cannot be reached we act as if the playlist is not in it, so the shuffle falls back to the YouTube API
 			respondWithFallback(readDataOnce('uploadsPlaylists/' + request.data), sendResponse, null);
 			break;
+		// Reads only the timestamps of a playlist, which tell us whether the whole playlist has to be downloaded
+		case "getPlaylistTimestampsFromDB":
+			respondWithFallback(readPlaylistTimestamps('uploadsPlaylists/' + request.data), sendResponse, null);
+			break;
 		// Updates a playlist in Firebase, adding new videos and removing videos that cannot be watched any more
 		case "updatePlaylistInfoInDB":
 			respondWithResult(updatePlaylistInfoInDB('uploadsPlaylists/' + request.data.key, request.data.val, request.data.videosToDelete), sendResponse);
@@ -263,8 +268,8 @@ function respondWithResult(writePromise, sendResponse) {
 // }
 
 async function updatePlaylistInfoInDB(playlistId, playlistInfo, videosToDelete = []) {
-	// Find out if the playlist already exists in the database
-	const playlistExists = await readDataOnce(playlistId);
+	// Every playlist is required to have this timestamp, so reading it is enough to find out whether the playlist exists
+	const playlistExists = Boolean(await readDataOnce(playlistId + "/lastUpdatedDBAt"));
 
 	if (!playlistExists) {
 		console.log("Setting playlistInfo in the database...");
@@ -290,6 +295,17 @@ async function updatePlaylistInfoInDB(playlistId, playlistInfo, videosToDelete =
 	}
 
 	return "PlaylistInfo was sent to database.";
+}
+
+// Reads only the timestamps of a playlist instead of the whole thing, which is a fraction of the data
+async function readPlaylistTimestamps(playlistId) {
+	const [lastUpdatedDBAt, lastVideosChangedAt, lastVideoPublishedAt] = await Promise.all([
+		readDataOnce(playlistId + "/lastUpdatedDBAt"),
+		readDataOnce(playlistId + "/lastVideosChangedAt"),
+		readDataOnce(playlistId + "/lastVideoPublishedAt")
+	]);
+
+	return { lastUpdatedDBAt, lastVideosChangedAt, lastVideoPublishedAt };
 }
 
 async function readDataOnce(key) {

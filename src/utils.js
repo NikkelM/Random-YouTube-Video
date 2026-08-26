@@ -118,6 +118,24 @@ function getVersionParts(version) {
 	});
 }
 
+export function getChangelogForVersion(changelog, forVersion) {
+	if (!changelog || !forVersion) {
+		return "";
+	}
+
+	const escapedVersion = forVersion.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	const heading = changelog.match(new RegExp(`^## ${escapedVersion}[ \\t]*\r?$`, "m"));
+
+	if (!heading) {
+		return "";
+	}
+
+	const startIndex = heading.index + heading[0].length;
+	const nextHeadingIndex = changelog.indexOf("\n## ", startIndex);
+
+	return changelog.substring(startIndex, nextHeadingIndex !== -1 ? nextHeadingIndex : changelog.length).trim();
+}
+
 // ----- Errors -----
 export class RandomYoutubeVideoError extends Error {
 	constructor({ code = "RYV-0", message = "", solveHint = "", showTrace = true, canSavePlaylist = false }) {

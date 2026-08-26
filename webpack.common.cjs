@@ -16,7 +16,8 @@ module.exports = env => {
 			changelog: './src/html/changelog.js',
 			shufflingPage: './src/html/shufflingPage.js',
 			welcome: './src/html/welcome.js',
-			breakingNews: './src/html/breakingNews.js',
+			// Disabled together with the news feature in background.js, which is the only thing that could ever open this page
+			// breakingNews: './src/html/breakingNews.js',
 			// POPUP
 			popup: './src/html/popup/popup.js',
 		},
@@ -45,7 +46,8 @@ module.exports = env => {
 					{
 						from: 'static',
 						globOptions: {
-							ignore: ['**/*manifest*.json'],
+							// The news page is not shipped while the feature is disabled, as the script it loads is not built either
+							ignore: ['**/*manifest*.json', '**/breakingNews.html'],
 						},
 					},
 				],
