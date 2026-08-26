@@ -34,7 +34,7 @@ await determineOverlayVisibility(domElements);
 // Restart the background script if it was stopped to make sure the shuffle button immediately works
 try {
 	await chrome.runtime.sendMessage({ command: "connectionTest" });
-} catch (error) {
+} catch {
 	console.log("The background worker was stopped and had to be restarted.");
 }
 

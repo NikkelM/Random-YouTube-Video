@@ -33,7 +33,7 @@ export async function chooseRandomVideo(channelId, firedFromPopup, progressTextE
 		// The service worker will get stopped after 30 seconds
 		// This request will cause a "Receiving end does not exist" error, but starts the worker again as well
 		await chrome.runtime.sendMessage({ command: "connectionTest" });
-	} catch (error) {
+	} catch {
 		console.log("The service worker was stopped and had to be restarted.");
 	}
 	try {
@@ -284,7 +284,7 @@ async function handlePlaylistDatabaseUpload(playlistInfo, uploadsPlaylistId, sho
 		}
 
 		// We only ever add videos, as videos that are gone are removed from the database one by one
-		let videosToDatabase = {};
+		let videosToDatabase;
 		if (databaseKnowsPlaylist) {
 			// Only what changed has to be sent, which is nothing at all if we just confirmed that the playlist is still up to date
 			videosToDatabase = newVideos;
@@ -697,7 +697,7 @@ async function chosenVideoIsShort(videoId, playlistInfo) {
 	let videoIsShort;
 	try {
 		videoIsShort = await isShort(videoId);
-	} catch (error) {
+	} catch {
 		// The video is opened in the normal player if we cannot find out, which works for shorts as well
 		console.log(`Could not check whether the chosen video is a short: ${videoId}`);
 		return false;
@@ -747,7 +747,7 @@ async function testVideoExistence(videoId, retryTransientFailure = true) {
 		} else {
 			availability = videoAvailability.available;
 		}
-	} catch (error) {
+	} catch {
 		availability = videoAvailability.unknown;
 	}
 
@@ -781,7 +781,7 @@ async function isShort(videoId) {
 			});
 		// We get an 'Unauthorized' response if the video cannot be embedded, which cannot be parsed as JSON using res.json()
 		// This fallback tests if we get redirected to a normal video page, which means the video is not a short, but this takes longer
-	} catch (error) {
+	} catch {
 		await fetch(`https://www.youtube.com/shorts/${videoId}`)
 			.then(res => {
 				if (res.redirected) {

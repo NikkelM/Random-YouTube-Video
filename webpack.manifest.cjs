@@ -1,6 +1,5 @@
 // Adapted from https://github.com/ajayyy/SponsorBlock/blob/d5d766b429fb08802aabc72d187259d8db1e3a79/webpack/webpack.manifest.js
-const path = require('path');
-const fs = require('fs');
+const { sources, Compilation } = require('webpack');
 
 const manifest = require("./static/manifest.json");
 const firefoxManifestExtra = require("./static/firefox-manifest-extra.json");
@@ -11,21 +10,29 @@ class BuildManifest {
 		this.options = options;
 	}
 
-	apply() {
-		const distFolder = path.resolve(__dirname, 'dist', this.options.browser);
-		const distManifestFile = path.resolve(distFolder, "manifest.json");
+	apply(compiler) {
+		const browserManifest = JSON.parse(JSON.stringify(manifest));
 
 		// Add missing manifest elements
 		if (this.options.browser.toLowerCase() === "firefox") {
-			mergeObjects(manifest, firefoxManifestExtra);
+			mergeObjects(browserManifest, firefoxManifestExtra);
 		} else if (this.options.browser.toLowerCase() === "chromium") {
-			mergeObjects(manifest, chromiumManifestExtra);
+			mergeObjects(browserManifest, chromiumManifestExtra);
 		}
 
-		let result = JSON.stringify(manifest, null, 2);
+		const result = JSON.stringify(browserManifest, null, 2);
 
-		fs.mkdirSync(distFolder, { recursive: true });
-		fs.writeFileSync(distManifestFile, result);
+		compiler.hooks.thisCompilation.tap("BuildManifest", (compilation) => {
+			compilation.hooks.processAssets.tap(
+				{
+					name: "BuildManifest",
+					stage: Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL
+				},
+				() => {
+					compilation.emitAsset("manifest.json", new sources.RawSource(result));
+				}
+			);
+		});
 	}
 }
 

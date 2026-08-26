@@ -24,22 +24,22 @@ module.exports = env => {
 		module: {
 			rules: [
 				{
-					test: /\.(js|ts)x?$/,
+					test: /\.jsx?$/,
 					use: ['babel-loader'],
 					exclude: /node_modules/,
 				},
 			],
 		},
 		resolve: {
-			extensions: ['.ts', '.js'],
+			extensions: ['.js'],
 		},
 		output: {
-			path: path.resolve(__dirname, 'dist', env.browser)
+			path: path.resolve(__dirname, 'dist', env.browser),
+			clean: true
 		},
 		plugins: [
 			new ESLintPlugin({
-				extensions: ['js', 'ts'],
-				overrideConfigFile: path.resolve(__dirname, '.eslintrc'),
+				extensions: ['js'],
 			}),
 			new CopyPlugin({
 				patterns: [
