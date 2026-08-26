@@ -34,7 +34,8 @@ module.exports = env => {
 			extensions: ['.js'],
 		},
 		output: {
-			path: path.resolve(__dirname, 'dist', env.browser)
+			path: path.resolve(__dirname, 'dist', env.browser),
+			clean: true
 		},
 		plugins: [
 			new ESLintPlugin({
