@@ -8,6 +8,7 @@ import { getDatabase, ref, child, update, get } from "firebase/database";
 import { versionIsOlderThan } from "./utils.js";
 
 // Disabled imports while the news feature is disabled to keep bundle size small
+// Re-enabling the feature also needs its page built and copied again in webpack.common.cjs, and its config keys restored in config.js
 // import { setSessionStorageValue } from "./chromeStorage.js";
 // import { getFirestore, query, collection, getDocs, orderBy, limit, where } from "firebase/firestore";
 
