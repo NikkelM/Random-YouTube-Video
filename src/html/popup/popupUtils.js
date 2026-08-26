@@ -133,7 +133,7 @@ export async function validateApiKey(customAPIKey, domElements) {
 	// Make sure the service worker is running
 	try {
 		await chrome.runtime.sendMessage({ command: "connectionTest" });
-	} catch (error) {
+	} catch {
 		console.log("The background worker was stopped and had to be restarted.");
 	}
 	// APIKey is actually an array of objects here, despite the naming

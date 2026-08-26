@@ -399,7 +399,7 @@ async function shuffleVideos() {
 			updateSmallButtonStyleForText(shuffleButtonTextElementCopy, true);
 		}
 
-		let displayText = "";
+		let displayText;
 		if (shuffleButton?.id?.includes("large-shuffle-button")) {
 			switch (error.name) {
 				case "RandomYoutubeVideoError":

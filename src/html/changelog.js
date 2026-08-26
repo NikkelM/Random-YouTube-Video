@@ -17,7 +17,7 @@ let changelogText = await fetchChangelog(`v${currentVersion}`);
 const availableVersions = [...changelogText.matchAll(/^## (v\d+(?:\.\d+)+(?:-\w+)?)[ \t]*\r?$/gm)].map((heading) => heading[1]);
 try {
 	addVersionsToDropdown(availableVersions);
-} catch (error) {
+} catch {
 	domElements.genericErrorDiv.classList.remove("hidden");
 }
 
@@ -40,7 +40,7 @@ function addVersionsToDropdown(versions) {
 // Do this after adding the dropdown options, so that if there is no changelog for the current version, we know the most recent version that does have a changelog
 try {
 	await updateChangelog();
-} catch (error) {
+} catch {
 	domElements.genericErrorDiv.classList.remove("hidden");
 }
 // If this takes too long, display an error

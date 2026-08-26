@@ -8,7 +8,7 @@ import { chooseRandomVideo } from "../shuffleVideo.js";
 // Restart the background script if it was stopped to prevent a flash of an error page when shuffling
 try {
 	await chrome.runtime.sendMessage({ command: "connectionTest" });
-} catch (error) {
+} catch {
 	console.log("The background worker was stopped and had to be restarted.");
 	// Wait a bit to make sure the background script has time to restart and we don't get an error when connecting the port
 	await delay(10);
@@ -110,7 +110,7 @@ async function shuffleButtonClicked() {
 		console.error(error.stack);
 		console.error(error.message);
 
-		let errorHeading = "";
+		let errorHeading;
 		switch (error.name) {
 			case "RandomYoutubeVideoError":
 				errorHeading = `Error ${error.code}`;
