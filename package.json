@@ -37,7 +37,6 @@
     "expect.js": "^0.3.1",
     "globals": "^17.11.0",
     "jsdom": "^29.0.1",
-    "lint-staged": "^17.3.0",
     "mocha": "^11.8.0",
     "mocha-suppress-logs": "^0.6.0",
     "prettier": "^3.9.6",
@@ -52,11 +51,5 @@
   "dependencies": {
     "@babel/runtime": "^8.0.0",
     "firebase": "^12.12.1"
-  },
-  "lint-staged": {
-    "*.js": [
-      "npm run prettier",
-      "npm run lint"
-    ]
   }
 }
