@@ -178,25 +178,28 @@ export async function validateApiKey(customAPIKey, domElements) {
 }
 
 export async function setChannelSetting(channelId, setting, value) {
-	let channelSettings = configSync.channelSettings;
-	if (!channelSettings[channelId]) {
-		channelSettings[channelId] = {};
-	}
-	channelSettings[channelId][setting] = value;
+	const channelSettings = {
+		...configSync.channelSettings,
+		[channelId]: { ...configSync.channelSettings?.[channelId], [setting]: value }
+	};
 
 	await setSyncStorageValue("channelSettings", channelSettings);
 }
 
 export async function removeChannelSetting(channelId, setting) {
-	let channelSettings = configSync.channelSettings;
-	if (!channelSettings[channelId]) {
+	if (!configSync.channelSettings?.[channelId]) {
 		return;
 	}
-	delete channelSettings[channelId][setting];
+
+	const channelSettings = { ...configSync.channelSettings };
+	const settingsForChannel = { ...channelSettings[channelId] };
+	delete settingsForChannel[setting];
 
 	// If the channel settings object is empty, remove it entirely
-	if (getLength(channelSettings[channelId]) === 0) {
+	if (getLength(settingsForChannel) === 0) {
 		delete channelSettings[channelId];
+	} else {
+		channelSettings[channelId] = settingsForChannel;
 	}
 
 	await setSyncStorageValue("channelSettings", channelSettings);

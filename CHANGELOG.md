@@ -1,8 +1,13 @@
 # Changelog
 
-## v3.2.0
+## v3.2.1
 
 <!--Releasenotes start-->
+- Fixed the "Shuffle from" filters not being saved, which made them reset to "all videos on this channel".
+<!--Releasenotes end-->
+
+## v3.2.0
+
 - Fixed the shuffle button not being added to shorts pages.
 - Fixed buttons on the bottom right of videos on the video page being shifted right into the "More Videos" section if a shuffle button is present.
 - Fixed an issue where private or deleted videos could be chosen when shuffling.
@@ -20,7 +25,6 @@
 - The shuffle button on shorts pages now matches the spacing and styling of YouTube's own buttons.
 - Shuffled shorts are now opened on the shorts page instead of in the normal video player, unless they are opened as part of a playlist.
 - The extension will now show a notice if the availability of multiple videos in a row cannot be checked.
-<!--Releasenotes end-->
 
 ## v3.1.14
 

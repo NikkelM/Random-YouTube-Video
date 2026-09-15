@@ -45,16 +45,13 @@ export async function setSyncStorageValues(values) {
 
 // Writing a value that is already stored counts towards the sync storage write quota without changing anything, so those writes are skipped
 function valueIsUnchanged(currentValue, newValue) {
-	if (currentValue === newValue) {
-		return true;
-	}
-
 	// Objects are compared by their contents, as re-writing an identical object is just as wasteful
 	if (typeof currentValue === "object" && typeof newValue === "object" && currentValue !== null && newValue !== null) {
-		return JSON.stringify(currentValue) === JSON.stringify(newValue);
+		// The same reference tells us nothing, as the caller may have mutated the stored object in-place, so we must write to be safe
+		return currentValue !== newValue && JSON.stringify(currentValue) === JSON.stringify(newValue);
 	}
 
-	return false;
+	return currentValue === newValue;
 }
 
 export async function removeSyncStorageValue(key) {

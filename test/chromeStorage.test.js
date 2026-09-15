@@ -96,6 +96,19 @@ describe('chromeStorage', function () {
 			expect(chrome.storage.sync.set.callCount).to.be(numSetCalls + 1);
 			expect(configSync.testKey6).to.eql({ "a": 2 });
 		});
+
+		// A value taken from configSync and then changed is still the same reference, so its contents cannot tell us whether it was modified
+		it('should write to storage if the stored object was mutated in place', async function () {
+			await setSyncStorageValue("testKey12", { "a": 1 });
+			const numSetCalls = chrome.storage.sync.set.callCount;
+
+			const mutatedValue = configSync.testKey12;
+			mutatedValue.a = 2;
+			await setSyncStorageValue("testKey12", mutatedValue);
+
+			expect(chrome.storage.sync.set.callCount).to.be(numSetCalls + 1);
+			expect(configSync.testKey12).to.eql({ "a": 2 });
+		});
 	});
 
 	context('setSyncStorageValues()', function () {
