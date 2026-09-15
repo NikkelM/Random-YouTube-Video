@@ -325,7 +325,7 @@ async function setPopupDomElementEventListeners(domElements) {
 			await removeChannelSetting(configSync.currentChannelId, "videoIdValue");
 		} else {
 			// Else, the input was invalid
-			this.value = configSync.channelSettings[configSync.currentChannelId].videoIdValue ?? "";
+			this.value = configSync.channelSettings[configSync.currentChannelId]?.videoIdValue ?? "";
 			if (this.value === "") {
 				this.placeholder = "Invalid video ID";
 			}
